@@ -50,6 +50,28 @@ class AppLocalizations {
   String get play => 'Play';
   String get pause => 'Pause';
 
+  String get aboutTagline => 'Modern, privacy-first sound and voice recording.';
+  String get supportSonicNest => '☕ Support SonicNest';
+  String get supportOpenSourceHint =>
+      'Help keep SonicNest open source. Support is optional and never blocks recording.';
+  String get sonicNestOnGitHub => 'SonicNest on GitHub';
+  String get developerProfile => 'Developer profile';
+  String get business => 'Business';
+  String get businessAlternate => 'Business (alternate)';
+  String get support => 'Support';
+  String get openSourceLicenses => 'Open-source licenses';
+  String get reviewThirdPartyLicenses =>
+      'Review third-party licenses used by this build';
+  String get privacy => 'Privacy';
+  String get privacySummary =>
+      'The core recorder is designed to work offline. Recordings stay on your device unless you explicitly choose to share or export them. SonicNest does not include hidden analytics or automatic cloud uploads.';
+  String get openSourceLicense => 'Open source license';
+  String get apacheLicenseSummary =>
+      'Apache License 2.0. Third-party components keep their own licenses and notices.';
+  String get businessInquirySubject => 'SonicNest business inquiry';
+  String get supportEmailSubject => 'SonicNest support';
+  String versionLabel(String version) => 'Version $version';
+
   String get batchConvert => 'Batch Convert';
   String get selectAll => 'Select all';
   String get clearAll => 'Clear all';
