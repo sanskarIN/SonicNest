@@ -5,7 +5,9 @@
   <summary>Privacy-first sound and voice recorder</summary>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>Apache-2.0</project_license>
-  <developer_name>Sanskar</developer_name>
+  <developer id="io.github.sanskarIN">
+    <name>Sanskar</name>
+  </developer>
   <description>
     <p>
       SonicNest is a local-first, cross-platform sound and voice recorder with
@@ -29,4 +31,5 @@
     <category>Audio</category>
     <category>Utility</category>
   </categories>
+  <content_rating type="oars-1.1" />
 </component>
