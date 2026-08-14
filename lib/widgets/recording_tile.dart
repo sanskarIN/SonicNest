@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/formatters.dart';
 import '../models/recording_entry.dart';
+import '../models/recording_settings.dart';
 import 'waveform_view.dart';
 
 class RecordingTile extends StatelessWidget {
