@@ -63,7 +63,8 @@ class RecorderService extends ChangeNotifier {
   String? lastError;
   RecordConfig? effectiveConfig;
 
-  bool get isActive => status == RecorderStatus.recording || status == RecorderStatus.paused;
+  bool get isActive =>
+      status == RecorderStatus.recording || status == RecorderStatus.paused;
   List<double> get waveform => List.unmodifiable(_waveform);
   List<RecordingMarker> get markers => List.unmodifiable(_markers);
   InputDevice? get selectedDevice => _selectedDevice;
@@ -71,7 +72,11 @@ class RecorderService extends ChangeNotifier {
   Future<List<InputDevice>> listInputDevices() => _recorder.listInputDevices();
 
   void selectInputDevice(InputDevice? device) {
-    if (isActive) throw StateError('Input device cannot be changed during an active recording.');
+    if (isActive) {
+      throw StateError(
+        'Input device cannot be changed during an active recording.',
+      );
+    }
     _selectedDevice = device;
     notifyListeners();
   }
@@ -83,12 +88,16 @@ class RecorderService extends ChangeNotifier {
   }
 
   Future<void> start(RecordingSettings settings) async {
-    if (_transitioning || status != RecorderStatus.idle) return;
+    if (_transitioning || status != RecorderStatus.idle) {
+      return;
+    }
     _transitioning = true;
     try {
       lastError = null;
       final permission = await _recorder.hasPermission();
-      if (!permission) throw StateError('Microphone permission was not granted.');
+      if (!permission) {
+        throw StateError('Microphone permission was not granted.');
+      }
 
       _settings = settings;
       _title = _autoTitle(settings);
@@ -118,14 +127,19 @@ class RecorderService extends ChangeNotifier {
         captureExtension = 'm4a';
         _postTranscode = true;
       } else {
-        throw UnsupportedError('No compatible capture encoder is available on this platform.');
+        throw UnsupportedError(
+          'No compatible capture encoder is available on this platform.',
+        );
       }
 
       _capturePath = _postTranscode
           ? await _storage.uniqueTempPath('${_title}_capture', captureExtension)
           : await _storage.uniqueRecordingPath(_title!, captureExtension);
       _targetPath = _postTranscode
-          ? await _storage.uniqueRecordingPath(_title!, settings.format.extension)
+          ? await _storage.uniqueRecordingPath(
+              _title!,
+              settings.format.extension,
+            )
           : _capturePath;
 
       await _recorder.setOnConfigChanged((config) {
@@ -156,16 +170,20 @@ class RecorderService extends ChangeNotifier {
       });
       _amplitudeSubscription = _recorder
           .onAmplitudeChanged(const Duration(milliseconds: 100))
-          .listen(_onAmplitude, onError: (Object error, StackTrace stack) {
-        lastError = 'Amplitude monitor error: $error';
-        notifyListeners();
-      });
+          .listen(
+        _onAmplitude,
+        onError: (Object error, StackTrace stack) {
+          lastError = 'Amplitude monitor error: $error';
+          notifyListeners();
+        },
+      );
       status = RecorderStatus.recording;
       notifyListeners();
     } catch (error) {
       status = RecorderStatus.error;
       lastError = error.toString();
       await _safeStopBackground();
+      await _cleanupFailedCapture();
       notifyListeners();
       rethrow;
     } finally {
@@ -180,8 +198,11 @@ class RecorderService extends ChangeNotifier {
     peakAmplitude = math.max(peakAmplitude, normalized);
     clipping = currentDb > -1.0;
     if (_waveform.length >= AppConstants.maxWaveformSamples) {
-      for (var i = 0; i < _waveform.length ~/ 2; i++) {
-        _waveform[i] = math.max(_waveform[i * 2], _waveform[i * 2 + 1]);
+      for (var index = 0; index < _waveform.length ~/ 2; index++) {
+        _waveform[index] = math.max(
+          _waveform[index * 2],
+          _waveform[index * 2 + 1],
+        );
       }
       _waveform.removeRange(_waveform.length ~/ 2, _waveform.length);
     }
@@ -190,7 +211,9 @@ class RecorderService extends ChangeNotifier {
   }
 
   Future<void> pause() async {
-    if (_transitioning || status != RecorderStatus.recording) return;
+    if (_transitioning || status != RecorderStatus.recording) {
+      return;
+    }
     _transitioning = true;
     try {
       await _recorder.pause();
@@ -203,7 +226,9 @@ class RecorderService extends ChangeNotifier {
   }
 
   Future<void> resume() async {
-    if (_transitioning || status != RecorderStatus.paused) return;
+    if (_transitioning || status != RecorderStatus.paused) {
+      return;
+    }
     _transitioning = true;
     try {
       await _recorder.resume();
@@ -216,18 +241,26 @@ class RecorderService extends ChangeNotifier {
   }
 
   void addMarker({String? label, String note = ''}) {
-    if (!isActive) return;
+    if (!isActive) {
+      return;
+    }
     final index = _markers.length + 1;
-    _markers.add(RecordingMarker(
-      positionMs: elapsed.inMilliseconds,
-      label: label?.trim().isNotEmpty == true ? label!.trim() : 'Marker $index',
-      note: note.trim(),
-    ));
+    _markers.add(
+      RecordingMarker(
+        positionMs: elapsed.inMilliseconds,
+        label: label?.trim().isNotEmpty == true
+            ? label!.trim()
+            : 'Marker $index',
+        note: note.trim(),
+      ),
+    );
     notifyListeners();
   }
 
   Future<RecorderResult> stop() async {
-    if (_transitioning || !isActive) throw StateError('No active recording to stop.');
+    if (_transitioning || !isActive) {
+      throw StateError('No active recording to stop.');
+    }
     _transitioning = true;
     status = RecorderStatus.processing;
     notifyListeners();
@@ -258,7 +291,9 @@ class RecorderService extends ChangeNotifier {
         );
         await _storage.deleteIfExists(capturePath);
       }
-      if (!await File(finalPath).exists()) throw StateError('Recorded file was not saved.');
+      if (!await File(finalPath).exists()) {
+        throw StateError('Recorded file was not saved.');
+      }
 
       final result = RecorderResult(
         path: finalPath,
@@ -273,6 +308,7 @@ class RecorderService extends ChangeNotifier {
     } catch (error) {
       lastError = error.toString();
       status = RecorderStatus.error;
+      await _safeStopBackground();
       notifyListeners();
       rethrow;
     } finally {
@@ -281,7 +317,9 @@ class RecorderService extends ChangeNotifier {
   }
 
   Future<void> cancel() async {
-    if (_transitioning || !isActive) return;
+    if (_transitioning || !isActive) {
+      return;
+    }
     _transitioning = true;
     try {
       _timer?.cancel();
@@ -290,10 +328,7 @@ class RecorderService extends ChangeNotifier {
       _amplitudeSubscription = null;
       await _recorder.cancel();
       await _safeStopBackground();
-      if (_capturePath != null) await _storage.deleteIfExists(_capturePath!);
-      if (_targetPath != null && _targetPath != _capturePath) {
-        await _storage.deleteIfExists(_targetPath!);
-      }
+      await _deleteCaptureFiles();
       _resetState();
     } finally {
       _transitioning = false;
@@ -301,7 +336,9 @@ class RecorderService extends ChangeNotifier {
   }
 
   void acknowledgeError() {
-    if (status == RecorderStatus.error) _resetState();
+    if (status == RecorderStatus.error) {
+      _resetState();
+    }
   }
 
   Future<void> _safeStopBackground() async {
@@ -309,6 +346,26 @@ class RecorderService extends ChangeNotifier {
       await _background.stop();
     } catch (_) {
       // Core recording cleanup must not be blocked by a foreground-service error.
+    }
+  }
+
+  Future<void> _cleanupFailedCapture() async {
+    try {
+      await _recorder.cancel();
+    } catch (_) {
+      // The recorder may not have entered a capturable state yet.
+    }
+    await _deleteCaptureFiles();
+  }
+
+  Future<void> _deleteCaptureFiles() async {
+    final capturePath = _capturePath;
+    final targetPath = _targetPath;
+    if (capturePath != null) {
+      await _storage.deleteIfExists(capturePath);
+    }
+    if (targetPath != null && targetPath != capturePath) {
+      await _storage.deleteIfExists(targetPath);
     }
   }
 
