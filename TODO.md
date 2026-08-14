@@ -53,9 +53,15 @@ This file intentionally contains only work that is still incomplete, requires ph
 
 ## Branding and release assets
 
+- [x] Implement deterministic native launcher-icon source generation from SonicNest-controlled mark geometry.
+- [x] Implement reproducible Android/iOS native splash resource generation.
+- [x] Integrate launcher-icon generation for Android, iOS, macOS, and Windows build workflows.
+- [ ] Visually review generated Android launcher icons across legacy/adaptive/themed masks on real devices.
+- [ ] Visually review generated iOS and macOS icons at small/large OS sizes on real Apple hardware.
+- [ ] Visually review generated Windows icon in Explorer, taskbar, Start, shortcuts, and final package/installer surfaces.
+- [ ] Select a Linux distribution/package format and integrate the generated SonicNest icon into that package/desktop entry.
+- [ ] Verify native launch/splash assets in signed/release Android and iOS configurations, including dark mode.
 - [ ] Capture real screenshots from tested builds; do not use fabricated screenshots.
-- [ ] Generate/review final native app-icon sets from the approved SonicNest mark on each platform.
-- [ ] Verify native launch/splash assets in signed/release configurations.
 - [ ] Prepare store listing copy and privacy declarations for each selected distribution channel.
 
 ## Signing and distribution
@@ -68,12 +74,10 @@ This file intentionally contains only work that is still incomplete, requires ph
 - [ ] Complete the release checklist in `docs/RELEASING.md`.
 - [ ] Tag `v1.0.0` only after all required stable-release gates are complete.
 
-
 ## External batch export validation
 
 - [ ] Verify direct original-file multi-export on each supported platform.
 - [ ] Verify mixed-success direct export when one selected source disappears before copying.
-
 - [ ] Verify directory-picker availability/behavior on Android, iOS, macOS, Windows, and Linux.
 - [ ] Verify collision-safe numbering in real user folders.
 - [ ] Verify destination disappearance or permission revocation after selection.
@@ -81,7 +85,6 @@ This file intentionally contains only work that is still incomplete, requires ph
 - [ ] Verify Stop after current file during long conversions.
 - [ ] Verify closing/navigating away from Batch Convert during processing.
 - [ ] Profile very large batches and mixed-format batches.
-
 
 ## Localization
 
