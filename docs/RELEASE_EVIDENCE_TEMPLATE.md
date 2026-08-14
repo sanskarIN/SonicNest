@@ -19,12 +19,15 @@ Use one copy of this template for each release candidate that is being considere
 - Core analyzer/test workflow run:
 - Android build workflow run:
 - Linux build workflow run:
+- Linux Debian package workflow run:
 - Windows build workflow run:
 - macOS build workflow run:
 - unsigned iOS build workflow run:
 - Release-candidate artifact workflow run:
 - Android artifact SHA-256:
-- Linux artifact SHA-256:
+- Linux raw-bundle artifact SHA-256:
+- Linux Debian `.deb` artifact SHA-256:
+- Linux package structural verification result:
 - Windows artifact SHA-256:
 - macOS artifact SHA-256:
 - iOS validation artifact SHA-256:
@@ -177,10 +180,32 @@ Notes / evidence links:
 - iOS light/dark launch screen:
 - macOS Finder/Dock/Spotlight/app switcher:
 - Windows Explorer/taskbar/Start/shortcut:
-- Linux package/desktop-entry icon:
+- Linux Debian desktop-entry icon:
+- Linux launcher/menu/task-switcher icon behavior:
 - Real screenshots captured from this exact candidate:
 
 Screenshot/evidence links:
+
+## Linux Debian installation evidence
+
+Record this separately from CI structural verification. A CI-created `.deb` is not considered installation-tested until these observations exist on representative systems.
+
+- Distribution and version:
+- Desktop environment:
+- Package architecture:
+- Exact `.deb` filename:
+- SHA-256 matches candidate evidence:
+- Fresh install result:
+- Application-menu launcher result:
+- Direct `/opt/sonicnest/sonic_nest` launch result:
+- Microphone permission/capture result:
+- Playback/import/export result:
+- AppStream visibility/result where applicable:
+- Upgrade from prior candidate result:
+- Uninstall result:
+- Residual application payload check:
+
+Notes / evidence links:
 
 ## Performance and stress evidence
 
@@ -214,7 +239,8 @@ Leave blank until performed in the maintainer's secure environment.
 - iOS provisioning result:
 - macOS notarization result:
 - Windows signing identity/result:
-- Linux package/signing target/result:
+- Linux public distribution channel:
+- Linux package/repository signing identity/result:
 - Store metadata/privacy declarations reviewed:
 
 ## Defects and disposition
