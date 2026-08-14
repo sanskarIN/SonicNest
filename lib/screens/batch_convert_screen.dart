@@ -1,7 +1,4 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:path/path.dart' as p;
 
 import '../controllers/app_controller.dart';
 import '../models/recording_entry.dart';
@@ -301,7 +298,10 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
 
         if (exportDirectory != null) {
           try {
-            await _copyToExternalDirectory(output, exportDirectory);
+            await controller.external.copyFileToDirectoryCollisionSafe(
+              sourcePath: output,
+              directoryPath: exportDirectory,
+            );
             externalCopies++;
           } catch (error) {
             exportFailures.add('${entry.title}: $error');
@@ -352,34 +352,5 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
                   '${failures.take(2).join(' | ')}$exportText';
       _selectedIds.clear();
     });
-  }
-
-  Future<String> _copyToExternalDirectory(
-    String sourcePath,
-    String directoryPath,
-  ) async {
-    final source = File(sourcePath);
-    if (!await source.exists()) {
-      throw StateError('Converted source file no longer exists.');
-    }
-
-    final directory = Directory(directoryPath);
-    if (!await directory.exists()) {
-      throw StateError('The selected export folder is unavailable.');
-    }
-
-    final fileName = p.basename(sourcePath);
-    final stem = p.basenameWithoutExtension(fileName);
-    final extension = p.extension(fileName);
-    var candidate = p.join(directory.path, '$stem$extension');
-    var suffix = 2;
-
-    while (await File(candidate).exists()) {
-      candidate = p.join(directory.path, '$stem ($suffix)$extension');
-      suffix++;
-    }
-
-    final copied = await source.copy(candidate);
-    return copied.path;
   }
 }
