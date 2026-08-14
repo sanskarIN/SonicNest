@@ -113,7 +113,7 @@ class _FakeStorageService extends StorageService {
   @override
   Future<String> importFile(String sourcePath) async {
     if (importFailures.contains(sourcePath)) {
-      throw const FileSystemException('Selected audio file no longer exists.');
+      throw FileSystemException('Selected audio file no longer exists.');
     }
     return importedPaths[sourcePath] ?? sourcePath;
   }
@@ -129,12 +129,12 @@ class _FakeStorageService extends StorageService {
 
 class _FakeAudioProcessor extends AudioProcessor {
   _FakeAudioProcessor(
-    super.storage, {
+    StorageService storage, {
     this.durations = const {},
     this.waveforms = const {},
     this.probeFailures = const {},
     this.waveformFailures = const {},
-  });
+  }) : super(storage);
 
   final Map<String, Duration> durations;
   final Map<String, List<double>> waveforms;
