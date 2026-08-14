@@ -4,6 +4,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:record/record.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../core/constants.dart';
 import '../core/naming_template.dart';
@@ -60,6 +61,7 @@ class RecorderService extends ChangeNotifier {
   RecordingSettings? _settings;
   InputDevice? _selectedDevice;
   bool _postTranscode = false;
+  bool _screenWakeEnabled = false;
   int _countdownGeneration = 0;
 
   RecorderStatus status = RecorderStatus.idle;
@@ -147,6 +149,11 @@ class RecorderService extends ChangeNotifier {
         return;
       }
 
+      if (settings.keepScreenAwake) {
+        await WakelockPlus.enable();
+        _screenWakeEnabled = true;
+      }
+
       final requestedEncoder = settings.format.nativeEncoder;
       final directSupported = !settings.format.needsTranscode &&
           await _recorder.isEncoderSupported(requestedEncoder);
@@ -226,6 +233,7 @@ class RecorderService extends ChangeNotifier {
       countdownRemaining = 0;
       lastError = error.toString();
       await _safeStopBackground();
+      await _safeDisableScreenWake();
       await _cleanupFailedCapture();
       notifyListeners();
       rethrow;
@@ -346,12 +354,14 @@ class RecorderService extends ChangeNotifier {
         waveform: List<double>.from(_waveform),
         markers: List<RecordingMarker>.from(_markers),
       );
+      await _safeDisableScreenWake();
       _resetState();
       return result;
     } catch (error) {
       lastError = error.toString();
       status = RecorderStatus.error;
       await _safeStopBackground();
+      await _safeDisableScreenWake();
       notifyListeners();
       rethrow;
     } finally {
@@ -377,6 +387,7 @@ class RecorderService extends ChangeNotifier {
       _amplitudeSubscription = null;
       await _recorder.cancel();
       await _safeStopBackground();
+      await _safeDisableScreenWake();
       await _deleteCaptureFiles();
       _resetState();
     } finally {
@@ -395,6 +406,17 @@ class RecorderService extends ChangeNotifier {
       await _background.stop();
     } catch (_) {
       // Core recording cleanup must not be blocked by a foreground-service error.
+    }
+  }
+
+  Future<void> _safeDisableScreenWake() async {
+    if (!_screenWakeEnabled) {
+      return;
+    }
+    try {
+      await WakelockPlus.disable();
+    } finally {
+      _screenWakeEnabled = false;
     }
   }
 
@@ -442,6 +464,9 @@ class RecorderService extends ChangeNotifier {
     _countdownGeneration++;
     _timer?.cancel();
     unawaited(_amplitudeSubscription?.cancel());
+    if (_screenWakeEnabled) {
+      unawaited(WakelockPlus.disable());
+    }
     _recorder.dispose();
     super.dispose();
   }
