@@ -68,12 +68,14 @@ All notable project changes are documented here.
 - Linux Debian verifier checksum validation no longer depends on the current working directory.
 - Linux desktop entry no longer declares duplicate main menu categories.
 - Repository credential-material audit no longer false-positives on its own detector signature source while continuing to scan all other tracked text files.
+- AppStream developer metadata now uses the valid lowercase reverse-domain developer identifier required by current validation tooling.
 
 ### Validation
 - Source revision `985f2dd1500a03b0b65ee58b142cf31f545b0cc5` is green in core Flutter CI run `31772136038`: formatting, analyzer, unit tests, Android debug APK, and Linux debug build all succeeded.
 - The same source revision is green in Windows run `31772135970` and Apple run `31772136081` for Windows debug, macOS debug, and unsigned iOS debug builds.
 - Native branding source revision `40c4a758debef136c2d8c977c321446cca2697cd` is green in core run `31776174696`, Windows run `31776174725`, and Apple run `31776174715`; deterministic branding generation, analyzer/tests, Android/Linux/Windows/macOS debug builds, and unsigned iOS debug build all succeeded.
-- Linux package source revision `dd31bf7800becd09424309cc99e42d324f4f8f8e` is green in Linux Package CI run `31783018282`: release Linux build, `.deb` construction, package verification, desktop/AppStream validation, package inspection, checksum verification, and artifact upload all succeeded.
+- Linux package source revision `f2c773e1e03753ec62b9e4229a3f086871a26f29` is green in Linux Package CI run `31783749267`: release Linux build, `.deb` construction, package verification, desktop/AppStream validation, package inspection, checksum verification, and artifact upload all succeeded.
+- Earlier package run `31783467780` correctly rejected an invalid mixed-case AppStream developer identifier; the metadata was corrected before the latest green package validation.
 - The continuation intentionally does not convert physical-device microphone/background/interruption/routing/screen-wake/media-button/batch-performance/native-brand visual inspection/package-installation checks into false automated claims.
 - Exact newest workflow/run results are also recorded in `what_changed.md` and `PROJECT_STATE.md`.
 
@@ -117,4 +119,5 @@ All notable project changes are documented here.
 - Added `.deb` output to the manual release-candidate workflow while preserving non-public release warnings.
 - Added Linux packaging documentation and synchronized branding/build/release/roadmap/TODO/project-state documentation.
 - Fixed an initial verifier checksum-path failure and a desktop category validation warning in focused follow-up commits.
-- Validated source revision `dd31bf7800becd09424309cc99e42d324f4f8f8e` in Linux Package CI run `31783018282` with the complete release-build/package/verify/inspect/upload job succeeding.
+- Hardened AppStream metadata after validation correctly rejected an invalid mixed-case developer identifier.
+- Validated source revision `f2c773e1e03753ec62b9e4229a3f086871a26f29` in Linux Package CI run `31783749267` with the complete release-build/package/verify/inspect/upload job succeeding.
