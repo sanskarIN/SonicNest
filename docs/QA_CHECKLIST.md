@@ -326,3 +326,53 @@ A checkbox is evidence, not decoration. If a test requires physical hardware, a 
 - [ ] Verify destination disappearance/permission revocation produces a recoverable result.
 - [ ] Verify low-storage behavior.
 - [ ] Verify very large files and large selected batches on representative target hardware.
+
+
+## Native launcher and splash branding QA
+
+Repository implementation/automation evidence:
+
+- [x] Deterministic SonicNest brand raster generator executes in CI.
+- [x] Android launcher/splash generation executes before representative Android compilation.
+- [x] Windows icon generation executes before representative Windows compilation.
+- [x] macOS icon generation executes before representative macOS compilation.
+- [x] iOS icon/native-splash generation executes before representative unsigned-iOS compilation.
+- [x] Generated branding source PNGs are reproducible and ignored as authoritative Git source.
+
+Android real-device/release-candidate review:
+
+- [ ] Legacy launcher icon has safe margins and no clipped microphone/sound bars.
+- [ ] Adaptive icon looks correct under circle, rounded-square, squircle, and other launcher masks.
+- [ ] Themed/monochrome icon remains recognizable where supported.
+- [ ] Android 11-and-earlier native launch screen is visually correct.
+- [ ] Android 12+ splash is centered, correctly scaled, and not cropped.
+- [ ] Light and dark launch-screen backgrounds/contrast are acceptable.
+- [ ] App icon appearance is checked in launcher, app info/settings, recent-apps surfaces where applicable, and notification-related surfaces that use application branding.
+
+iOS/macOS real-device/release-candidate review:
+
+- [ ] iOS icon is inspected on at least one real iPhone at normal home-screen scale.
+- [ ] iOS icon remains readable at smaller Settings/Search/App Library surfaces.
+- [ ] iOS launch screen is checked in light and dark appearance on representative device sizes.
+- [ ] macOS icon is checked in Finder, Dock, Spotlight, and application-switcher surfaces.
+- [ ] macOS icon remains readable at small Finder/list sizes and large Dock sizes.
+
+Windows real-device/release-candidate review:
+
+- [ ] Windows icon is checked in Explorer.
+- [ ] Windows icon is checked in taskbar/pinned-taskbar surfaces.
+- [ ] Windows icon is checked in Start/Search and shortcut surfaces.
+- [ ] Final installer/package icon is checked once a distribution format is selected.
+
+Linux packaging review:
+
+- [ ] Select a Linux package/distribution format.
+- [ ] Install the generated SonicNest icon into the selected desktop-entry/package metadata.
+- [ ] Check application menu/launcher, task switcher, and desktop-entry surfaces on the selected desktop environments.
+
+Release evidence:
+
+- [ ] Capture real screenshots from the exact tested release candidate.
+- [ ] Record device/OS versions used for native-brand visual QA.
+- [ ] Confirm the signed/release package still contains the reviewed native resources.
+- [ ] Do not substitute generated mockups for real release-candidate screenshots.
