@@ -106,6 +106,24 @@ class AppLocalizations {
   String get smallFile => 'Small File';
   String get custom => 'Custom';
 
+  String get nowPlaying => 'Now Playing';
+  String get removeFromFavorites => 'Remove from favorites';
+  String get addToFavorites => 'Add to favorites';
+  String get share => 'Share';
+  String get previousRecording => 'Previous recording';
+  String jumpBackSeconds(int seconds) => 'Jump back $seconds seconds';
+  String jumpForwardSeconds(int seconds) => 'Jump forward $seconds seconds';
+  String get nextRecording => 'Next recording';
+  String get repeat => 'Repeat';
+  String get abLoop => 'A–B loop';
+  String get clearLoop => 'Clear loop';
+  String get skipSilence => 'Skip silence';
+  String get bookmarks => 'Bookmarks';
+  String get cancel => 'Cancel';
+  String get loopSelection => 'Loop selection';
+  String get audioPlaying => 'Audio playing';
+  String get audioRecording => 'Audio recording';
+
   String get batchConvert => 'Batch Convert';
   String get selectAll => 'Select all';
   String get clearAll => 'Clear all';
