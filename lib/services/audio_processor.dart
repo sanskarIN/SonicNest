@@ -1,8 +1,10 @@
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:ffmpeg_kit_flutter_new_audio/ffmpeg_kit.dart';
 import 'package:ffmpeg_kit_flutter_new_audio/return_code.dart';
 
+import '../core/constants.dart';
 import '../models/recording_settings.dart';
 import 'storage_service.dart';
 
@@ -40,6 +42,51 @@ class AudioProcessor {
         RecordingFormat.wav => '-codec:a pcm_s16le',
       };
 
+  Future<List<double>> extractWaveformEnvelope(
+    String inputPath, {
+    int points = AppConstants.maxWaveformSamples,
+  }) async {
+    if (points <= 0) return const [];
+    final pcmPath = await _storage.uniqueTempPath('waveform_envelope', 'pcm');
+    try {
+      await _run(
+        '-y -i ${_q(inputPath)} -vn -ac 1 -ar 8000 -f s16le ${_q(pcmPath)}',
+      );
+      final pcm = File(pcmPath);
+      if (!await pcm.exists()) return const [];
+      final length = await pcm.length();
+      if (length < 2) return const [];
+
+      final sampleCount = length ~/ 2;
+      final envelopePoints = math.min(points, sampleCount);
+      var bytesPerBin = (length / envelopePoints).ceil();
+      if (bytesPerBin.isOdd) bytesPerBin++;
+      bytesPerBin = math.max(2, bytesPerBin);
+
+      final result = <double>[];
+      final handle = await pcm.open();
+      try {
+        for (var offset = 0; offset < length && result.length < envelopePoints; offset += bytesPerBin) {
+          await handle.setPosition(offset);
+          final remaining = length - offset;
+          final bytes = await handle.read(math.min(bytesPerBin, remaining));
+          var peak = 0;
+          for (var index = 0; index + 1 < bytes.length; index += 2) {
+            var value = bytes[index] | (bytes[index + 1] << 8);
+            if (value >= 0x8000) value -= 0x10000;
+            peak = math.max(peak, value.abs());
+          }
+          result.add((peak / 32768.0).clamp(0.0, 1.0).toDouble());
+        }
+      } finally {
+        await handle.close();
+      }
+      return result;
+    } finally {
+      await _storage.deleteIfExists(pcmPath);
+    }
+  }
+
   Future<String> transcode({
     required String inputPath,
     required String outputTitle,
@@ -51,7 +98,9 @@ class AudioProcessor {
     final output = await _storage.uniqueRecordingPath(outputTitle, format.extension);
     final args = _codecArgs(format, bitRate);
     await _run('-y -i ${_q(inputPath)} -vn -ar $sampleRate -ac $channels $args ${_q(output)}');
-    if (!await File(output).exists()) throw const AudioProcessingException('Output file was not created.');
+    if (!await File(output).exists()) {
+      throw const AudioProcessingException('Output file was not created.');
+    }
     return output;
   }
 
@@ -81,7 +130,9 @@ class AudioProcessor {
     required Duration at,
     required int bitRate,
   }) async {
-    if (at <= Duration.zero) throw const AudioProcessingException('Split point must be greater than zero.');
+    if (at <= Duration.zero) {
+      throw const AudioProcessingException('Split point must be greater than zero.');
+    }
     final first = await _storage.uniqueRecordingPath('$outputTitle Part 1', format.extension);
     final second = await _storage.uniqueRecordingPath('$outputTitle Part 2', format.extension);
     final args = _codecArgs(format, bitRate);
@@ -97,7 +148,9 @@ class AudioProcessor {
     required RecordingFormat format,
     required int bitRate,
   }) async {
-    if (inputPaths.length < 2) throw const AudioProcessingException('Choose at least two files to merge.');
+    if (inputPaths.length < 2) {
+      throw const AudioProcessingException('Choose at least two files to merge.');
+    }
     final output = await _storage.uniqueRecordingPath(outputTitle, format.extension);
     final temp = await _storage.uniqueTempPath('sonicnest_concat', 'txt');
     final listFile = File(temp);
@@ -118,7 +171,8 @@ class AudioProcessor {
     required String outputTitle,
     required RecordingFormat format,
     required int bitRate,
-  }) => _filter(
+  }) =>
+      _filter(
         inputPath: inputPath,
         outputTitle: outputTitle,
         format: format,
@@ -152,7 +206,8 @@ class AudioProcessor {
     required String outputTitle,
     required RecordingFormat format,
     required int bitRate,
-  }) => _filter(
+  }) =>
+      _filter(
         inputPath: inputPath,
         outputTitle: outputTitle,
         format: format,
