@@ -12,7 +12,7 @@ fi
 if [[ ! -d android || ! -d ios || ! -d macos || ! -d linux || ! -d windows ]]; then
   flutter create . \
     --project-name sonic_nest \
-    --org in.sanskar \
+    --org io.github.sanskarin \
     --platforms=android,ios,macos,linux,windows \
     --no-pub
 fi
@@ -22,11 +22,11 @@ fi
 rm -f test/widget_test.dart
 
 cp tool/platform_overrides/android/app/src/main/AndroidManifest.xml android/app/src/main/AndroidManifest.xml
-mkdir -p android/app/src/main/kotlin/in/sanskar/sonic_nest
-cp tool/platform_overrides/android/app/src/main/kotlin/in/sanskar/sonic_nest/MainActivity.kt \
-  android/app/src/main/kotlin/in/sanskar/sonic_nest/MainActivity.kt
-cp tool/platform_overrides/android/app/src/main/kotlin/in/sanskar/sonic_nest/RecordingForegroundService.kt \
-  android/app/src/main/kotlin/in/sanskar/sonic_nest/RecordingForegroundService.kt
+mkdir -p android/app/src/main/kotlin/io/github/sanskarin/sonic_nest
+cp tool/platform_overrides/android/app/src/main/kotlin/io/github/sanskarin/sonic_nest/MainActivity.kt \
+  android/app/src/main/kotlin/io/github/sanskarin/sonic_nest/MainActivity.kt
+cp tool/platform_overrides/android/app/src/main/kotlin/io/github/sanskarin/sonic_nest/RecordingForegroundService.kt \
+  android/app/src/main/kotlin/io/github/sanskarin/sonic_nest/RecordingForegroundService.kt
 
 python3 tool/patch_generated_platforms.py
 
