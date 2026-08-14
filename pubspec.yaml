@@ -1,0 +1,38 @@
+name: sonic_nest
+description: Privacy-first, cross-platform sound and voice recorder.
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: '>=3.12.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  file_picker: ^11.0.2
+  ffmpeg_kit_flutter_new_audio: ^2.5.0
+  intl: ^0.20.3
+  just_audio: ^0.10.6
+  just_audio_media_kit: ^2.1.0
+  media_kit_libs_linux: ^1.2.1
+  media_kit_libs_windows_audio: ^1.0.9
+  package_info_plus: ^10.2.1
+  path: ^1.9.1
+  path_provider: ^2.1.6
+  record: ^7.1.1
+  share_plus: ^13.3.0
+  shared_preferences: ^2.5.5
+  url_launcher: ^6.3.2
+  uuid: ^4.6.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/logo/sonicnest_logo.svg
+    - assets/logo/sonicnest_mark.svg

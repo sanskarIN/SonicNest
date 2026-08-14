@@ -1,0 +1,47 @@
+# Dart / Flutter
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+coverage/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Generated platform files created by tool/bootstrap_platforms.sh
+android/.gradle/
+android/local.properties
+android/key.properties
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/ephemeral/
+macos/Pods/
+macos/Flutter/ephemeral/
+linux/flutter/ephemeral/
+windows/flutter/ephemeral/
+
+# IDE
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets / signing
+*.jks
+*.keystore
+*.p12
+*.mobileprovision
+*.cer
+.env
+.env.*
+!.env.example
+
+# Logs and local recordings
+*.log
+recordings/
+exports/
