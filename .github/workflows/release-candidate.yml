@@ -1,0 +1,213 @@
+name: Release Candidate Validation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sonicnest-release-candidate-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    name: Source preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install Linux audio prerequisites
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg pulseaudio-utils libjson-glib-dev
+      - name: Run release-candidate preflight
+        run: bash tool/release_preflight.sh
+
+  android:
+    name: Android release-mode artifacts
+    needs: preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: bash tool/bootstrap_platforms.sh
+      - run: flutter pub get
+      - run: bash tool/apply_branding.sh
+      - name: Build release-mode APK and AAB
+        run: |
+          flutter build apk --release
+          flutter build appbundle --release
+      - name: Prepare checksums and warning
+        run: |
+          mkdir -p build/release-candidate/android
+          cp build/app/outputs/flutter-apk/app-release.apk build/release-candidate/android/sonicnest-android-release-unsigned.apk
+          cp build/app/outputs/bundle/release/app-release.aab build/release-candidate/android/sonicnest-android-release-unsigned.aab
+          cat > build/release-candidate/android/RELEASE_CANDIDATE_WARNING.txt <<'TXT'
+          SonicNest release-candidate validation artifact.
+          This output is not approved for public/store distribution.
+          It has not passed the repository's physical-device, accessibility, signing, store, and final visual-QA gates.
+          Maintainer-owned production signing credentials are intentionally not stored in this repository.
+          TXT
+          cd build/release-candidate/android
+          sha256sum sonicnest-android-release-unsigned.apk sonicnest-android-release-unsigned.aab > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sonicnest-android-release-candidate
+          path: build/release-candidate/android
+          if-no-files-found: error
+          retention-days: 7
+
+  linux:
+    name: Linux release-mode artifact
+    needs: preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install Linux build dependencies
+        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev ffmpeg pulseaudio-utils libjson-glib-dev
+      - run: flutter config --enable-linux-desktop
+      - run: bash tool/bootstrap_platforms.sh
+      - run: flutter pub get
+      - run: dart tool/generate_brand_assets_v2.dart
+      - run: flutter build linux --release
+      - name: Package release-mode bundle
+        run: |
+          mkdir -p build/release-candidate/linux
+          tar -C build/linux/x64/release -czf build/release-candidate/linux/sonicnest-linux-release-unsigned.tar.gz bundle
+          cat > build/release-candidate/linux/RELEASE_CANDIDATE_WARNING.txt <<'TXT'
+          SonicNest release-candidate validation artifact.
+          This tarball is not a finalized Linux package and is not approved for public distribution.
+          A Linux package/distribution target, desktop-entry icon integration, signing policy, and real-platform QA remain release gates.
+          TXT
+          cd build/release-candidate/linux
+          sha256sum sonicnest-linux-release-unsigned.tar.gz > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sonicnest-linux-release-candidate
+          path: build/release-candidate/linux
+          if-no-files-found: error
+          retention-days: 7
+
+  windows:
+    name: Windows release-mode artifact
+    needs: preflight
+    runs-on: windows-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter config --enable-windows-desktop
+      - shell: pwsh
+        run: ./tool/bootstrap_platforms.ps1
+      - run: flutter pub get
+      - shell: pwsh
+        run: ./tool/apply_branding.ps1
+      - run: flutter build windows --release
+      - name: Package release-mode bundle
+        shell: pwsh
+        run: |
+          $Out = 'build\release-candidate\windows'
+          New-Item -ItemType Directory -Force -Path $Out | Out-Null
+          $Zip = Join-Path $Out 'sonicnest-windows-release-unsigned.zip'
+          Compress-Archive -Path 'build\windows\x64\runner\Release\*' -DestinationPath $Zip -Force
+          @'
+          SonicNest release-candidate validation artifact.
+          This archive is unsigned and is not approved for public distribution.
+          Windows signing, installer/package selection, real-machine QA, and final visual review remain release gates.
+          '@ | Set-Content -Path (Join-Path $Out 'RELEASE_CANDIDATE_WARNING.txt') -Encoding UTF8
+          $Hash = (Get-FileHash -Algorithm SHA256 $Zip).Hash.ToLowerInvariant()
+          "$Hash  sonicnest-windows-release-unsigned.zip" | Set-Content -Path (Join-Path $Out 'SHA256SUMS.txt') -Encoding ASCII
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sonicnest-windows-release-candidate
+          path: build/release-candidate/windows
+          if-no-files-found: error
+          retention-days: 7
+
+  macos:
+    name: macOS release-mode artifact
+    needs: preflight
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter config --enable-macos-desktop
+      - run: bash tool/bootstrap_platforms.sh
+      - run: flutter pub get
+      - run: bash tool/apply_branding.sh
+      - run: flutter build macos --release
+      - name: Package release-mode app
+        run: |
+          set -euo pipefail
+          OUT=build/release-candidate/macos
+          mkdir -p "$OUT"
+          APP_PATH="$(find build/macos/Build/Products/Release -maxdepth 1 -name '*.app' -print -quit)"
+          test -n "$APP_PATH"
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$OUT/sonicnest-macos-release-unsigned.zip"
+          cat > "$OUT/RELEASE_CANDIDATE_WARNING.txt" <<'TXT'
+          SonicNest release-candidate validation artifact.
+          This macOS application archive is not notarized/signed for public distribution.
+          Real-hardware QA, Apple signing, notarization, accessibility, and final visual review remain release gates.
+          TXT
+          (cd "$OUT" && shasum -a 256 sonicnest-macos-release-unsigned.zip > SHA256SUMS.txt)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sonicnest-macos-release-candidate
+          path: build/release-candidate/macos
+          if-no-files-found: error
+          retention-days: 7
+
+  ios:
+    name: iOS no-codesign release-mode artifact
+    needs: preflight
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: bash tool/bootstrap_platforms.sh
+      - run: flutter pub get
+      - run: bash tool/apply_branding.sh
+      - run: flutter build ios --release --no-codesign
+      - name: Package no-codesign app bundle
+        run: |
+          set -euo pipefail
+          OUT=build/release-candidate/ios
+          mkdir -p "$OUT"
+          APP_PATH="$(find build/ios/iphoneos -maxdepth 1 -name '*.app' -print -quit)"
+          test -n "$APP_PATH"
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$OUT/sonicnest-ios-release-unsigned.zip"
+          cat > "$OUT/RELEASE_CANDIDATE_WARNING.txt" <<'TXT'
+          SonicNest release-candidate validation artifact.
+          This iOS application bundle is not codesigned and is not an installable App Store package.
+          Provisioning, signing, real-device QA, accessibility, store metadata, and final visual review remain release gates.
+          TXT
+          (cd "$OUT" && shasum -a 256 sonicnest-ios-release-unsigned.zip > SHA256SUMS.txt)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sonicnest-ios-release-candidate
+          path: build/release-candidate/ios
+          if-no-files-found: error
+          retention-days: 7
