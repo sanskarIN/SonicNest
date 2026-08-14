@@ -747,5 +747,119 @@ Source-equivalent desktop/Apple validation from the same final source revision b
 - Source revision validated by those workflows: `3eed20635099bbcc2b4777d8a9881c0eb34caae0`
 
 All commits after that Apple/Windows source revision and before the core CI workflow correction were documentation-only; the core run above validates the current source plus the CI workflow correction itself.
-
 This completes the repository-automatable validation for this continuation. It does **not** complete the physical-device, accessibility, long-duration, listening-quality, signing, packaging, or store-release gates listed above and in `TODO.md` / `docs/QA_CHECKLIST.md`.
+
+---
+
+# Batch conversion and desktop context-action continuation
+
+This section records the repository-implementable work completed after the advanced continuation above. The earlier history is intentionally preserved in full and has not been shortened.
+
+## Desktop secondary/right-click recording actions
+
+`RecordingTile` now accepts secondary-click gestures. On desktop pointer systems, a secondary/right-click opens the same complete recording action surface that was already available through the explicit More button. This preserves the existing primary-click, touch, long-press, selection, favorite, and menu behavior instead of introducing a separate inconsistent action model.
+
+Implemented behavior:
+
+- secondary/right-click support at the recording-tile interaction layer
+- optional secondary-tap callback hook for future cursor-anchored menu work
+- default secondary-click fallback to the existing `onMore` action surface
+- no removal or replacement of touch/long-press behavior
+
+Focused commits:
+
+- `feat: support desktop recording context gestures`
+- `feat: open recording actions on desktop right click`
+
+A cursor-anchored platform-native context menu remains optional future work and should only be added if Windows/macOS/Linux usability testing shows that it materially improves the implemented action surface.
+
+## Multi-recording batch conversion
+
+Added `lib/screens/batch_convert_screen.dart` and exposed it from the Home screen through a dedicated **Batch Convert** entry.
+
+The workflow supports:
+
+- selecting one or many saved non-Trash recordings
+- select-all / clear-all selection behavior
+- selecting a target `RecordingFormat`
+- sequential conversion with visible progress
+- per-file success/failure isolation
+- preserving the original source recordings
+- retaining recording markers on converted copies
+- reusing each source recording's known bitrate/sample-rate/channel metadata when available
+- falling back to current recording settings when imported media has unknown metadata
+- registering successful outputs through the normal processed-file/library pipeline
+- deleting an output path after a failed registration attempt where cleanup is possible
+- continuing later items after one conversion fails
+- user-visible completion status showing successful and failed counts
+
+The batch workflow intentionally processes sequentially instead of launching every FFmpeg job simultaneously. This keeps memory/storage pressure more predictable and makes per-file progress/failure handling easier to audit. Very large batches remain a performance/manual-QA gate.
+
+Focused commits:
+
+- `feat: add multi-recording batch conversion workflow`
+- `feat: expose batch conversion from home`
+
+## Documentation synchronized after batch/context work
+
+The following project-state files were updated without replacing the historical continuation record:
+
+- `PROJECT_STATE.md`
+- `CHANGELOG.md`
+- `ROADMAP.md`
+- `README.md`
+- `TODO.md`
+- `what_changed.md`
+
+The documentation now distinguishes completed multi-recording format conversion from the separate possible enhancement of direct multi-file export into a user-selected external destination.
+
+Focused documentation commits include:
+
+- `docs: record validated batch conversion and desktop actions`
+- `docs: record batch conversion and desktop context access`
+- `docs: advance batch conversion and desktop interaction roadmap`
+- `docs: document batch conversion and desktop context actions`
+- `docs: track batch and desktop validation gates`
+- this `what_changed.md` append commit
+
+## Exact validation for batch conversion and desktop context actions
+
+Validated source revision:
+
+- `985f2dd1500a03b0b65ee58b142cf31f545b0cc5`
+
+Core Flutter CI:
+
+- Run ID: `31772136038`
+- Dart formatting: SUCCESS
+- Flutter static analysis: SUCCESS
+- Unit tests: SUCCESS
+- Android debug APK: SUCCESS
+- Linux debug build: SUCCESS
+
+Windows CI:
+
+- Run ID: `31772135970`
+- Windows debug build: SUCCESS
+
+Apple CI:
+
+- Run ID: `31772136081`
+- macOS debug build: SUCCESS
+- unsigned iOS debug build: SUCCESS
+
+All listed workflows validate the same source revision. Documentation-only synchronization commits after that revision do not alter application source and do not trigger the core Flutter workflow because its path filters intentionally exclude documentation-only changes.
+
+## Remaining evidence-dependent gates after this continuation
+
+Repository automation is green, but the following remain intentionally unclaimed until real evidence exists:
+
+- large batch conversion performance and storage-pressure testing
+- low-storage batch failure/recovery behavior
+- mixed/corrupt-media batch conversion testing
+- secondary/right-click ergonomics on real Windows, macOS, and Linux desktop systems
+- whether a cursor-anchored native context menu is actually preferable
+- direct multi-file export to a user-selected external destination
+- all previously listed microphone, routing, interruption, background, screen-wake, media-session, accessibility, localization, soak, signing, packaging, screenshot, and store-release gates
+
+The exact continuation point is now: repository-implementable smart naming, countdown, screen wake, advanced filtering, A-B playback, expanded non-destructive editor processing, localization scaffolding, media-session source integration, managed storage, desktop shortcuts, secondary-click recording actions, and multi-recording batch format conversion are implemented. Future work should be driven primarily by real device/desktop QA, large-batch/large-library performance, listening tests, localization completion, release assets, signing, packaging, and defects discovered from those evidence-producing checks.
