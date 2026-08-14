@@ -1,6 +1,6 @@
 # SonicNest Documentation
 
-This directory contains the maintained technical, user, QA, branding, and release documentation for SonicNest.
+This directory contains the maintained technical, user, QA, branding, packaging, and release documentation for SonicNest.
 
 ## Start here
 
@@ -13,7 +13,8 @@ This directory contains the maintained technical, user, QA, branding, and releas
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — application layers, storage model, recording pipeline, editor pipeline, and platform-host strategy.
 - [`CODECS.md`](CODECS.md) — format/container/encoder behavior, native capability checks, fallback/transcoding rules, and codec limitations.
 - [`BUILDING.md`](BUILDING.md) — development prerequisites, platform bootstrap, native-brand generation, verification commands, and platform build commands.
-- [`BRANDING.md`](BRANDING.md) — deterministic SonicNest brand source, generated native assets, Android/iOS/macOS/Windows integration, and Linux packaging boundary.
+- [`BRANDING.md`](BRANDING.md) — deterministic SonicNest brand source and generated native asset integration.
+- [`LINUX_PACKAGING.md`](LINUX_PACKAGING.md) — Debian `.deb` package layout, deterministic build/verification commands, desktop icon integration, installation testing, and release boundaries.
 
 ## Quality assurance
 
