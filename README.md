@@ -96,6 +96,8 @@ GitHub Actions additionally compiles representative debug builds for Android, Li
 
 The current batch-conversion/right-click source revision `985f2dd1500a03b0b65ee58b142cf31f545b0cc5` passed analyzer and unit tests plus Android, Linux, Windows, macOS, and unsigned iOS debug builds in GitHub Actions. This automated result does not replace the physical-device release checklist.
 
+The metadata/import reliability revision `a88aeadadda017b0aced4dbc25c8426a27364b77` passed formatting, static analysis, all unit tests, Android debug APK, and Linux debug build in core Flutter CI run `31807193932`. The cross-platform import-controller source revision `3bf63e69186a7a538f7d0587f3d361e00c2e29e9` also passed Windows run `31807141053` and Apple run `31807141166` for Windows, macOS, and unsigned-iOS debug builds. Repository Integrity Audit run `31807662729` passed after obsolete one-shot workflows were removed and the permanent workflow allowlist/read-only invariant was active. These automated results do not substitute for real malformed-media corpus, low-storage/permission/power-loss, large-library UI/performance, accessibility, hardware, or signing/release evidence.
+
 ## Build a Linux Debian package
 
 On a Debian/Ubuntu-compatible Linux build host with the Flutter Linux prerequisites, `dpkg-deb`, `desktop-file-utils`, and AppStream tools installed:
