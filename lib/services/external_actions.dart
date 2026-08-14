@@ -7,7 +7,15 @@ class ExternalActions {
     final result = await FilePicker.platform.pickFiles(
       allowMultiple: true,
       type: FileType.custom,
-      allowedExtensions: const ['m4a', 'wav', 'flac', 'opus', 'mp3', 'ogg', 'aac'],
+      allowedExtensions: const [
+        'm4a',
+        'wav',
+        'flac',
+        'opus',
+        'mp3',
+        'ogg',
+        'aac',
+      ],
     );
     if (result == null) {
       return [];
@@ -19,7 +27,15 @@ class ExternalActions {
     final result = await FilePicker.platform.pickFiles(
       allowMultiple: false,
       type: FileType.custom,
-      allowedExtensions: const ['m4a', 'wav', 'flac', 'opus', 'mp3', 'ogg', 'aac'],
+      allowedExtensions: const [
+        'm4a',
+        'wav',
+        'flac',
+        'opus',
+        'mp3',
+        'ogg',
+        'aac',
+      ],
     );
     return result?.files.single.path;
   }
@@ -28,6 +44,12 @@ class ExternalActions {
     return FilePicker.platform.saveFile(
       dialogTitle: 'Export recording',
       fileName: fileName,
+    );
+  }
+
+  Future<String?> chooseExportDirectory() {
+    return FilePicker.platform.getDirectoryPath(
+      dialogTitle: 'Choose export folder',
     );
   }
 
