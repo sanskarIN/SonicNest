@@ -1,0 +1,153 @@
+name: Device / Release QA report
+description: Record hardware, accessibility, branding, routing, storage, or release-candidate validation evidence.
+title: "[QA] "
+labels:
+  - qa
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for evidence from a real SonicNest build on real target hardware or a real desktop environment. Do not mark a release gate complete based only on compilation.
+
+  - type: input
+    id: commit
+    attributes:
+      label: Exact Git commit SHA
+      description: The full source revision used to produce the tested build.
+      placeholder: 40-character commit SHA
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: SonicNest version/build
+      placeholder: 0.1.0+1
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Android
+        - iOS
+        - macOS
+        - Windows
+        - Linux
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: Device / machine
+      description: Model and relevant hardware details. Avoid posting serial numbers or other private identifiers.
+      placeholder: Device model or PC/Mac hardware description
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: OS version
+      placeholder: Exact OS version/build where practical
+    validations:
+      required: true
+
+  - type: input
+    id: build_source
+    attributes:
+      label: Build/artifact source
+      description: Workflow run, local build command, or signed release-candidate identifier.
+      placeholder: Workflow run ID or build command
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: QA area
+      options:
+        - Microphone permission
+        - Recorder lifecycle
+        - Audio input routing
+        - Background / interruption
+        - Codec / file compatibility
+        - Library / Trash / metadata
+        - Batch conversion / export
+        - Playback / media session
+        - Editor / listening quality
+        - Accessibility
+        - Native icon / splash branding
+        - Performance / stress
+        - Low storage / filesystem failure
+        - Signing / packaging / distribution
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: setup
+    attributes:
+      label: Test setup
+      description: Include input/output device type, route, relevant settings, file format/preset, and any assistive technology used.
+      placeholder: Built-in/USB/Bluetooth input, preset, format, accessibility tool, storage condition, etc.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps performed
+      description: Give reproducible steps in the order actually tested.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+    validations:
+      required: true
+
+  - type: dropdown
+    id: result
+    attributes:
+      label: Result
+      options:
+        - Pass
+        - Fail
+        - Blocked / unable to complete
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Add safe screenshots, logs, checksums, or notes. Remove personal/private information and do not upload signing keys, certificates, tokens, or credentials.
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction frequency / follow-up
+      description: For failures, include whether it reproduces consistently and whether the issue persists after restart/reinstall/reconnect when appropriate.
+
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Evidence hygiene
+      options:
+        - label: I did not include passwords, tokens, private signing material, serial numbers, or other sensitive credentials.
+          required: true
+        - label: This report refers to the exact commit/build identified above.
+          required: true
