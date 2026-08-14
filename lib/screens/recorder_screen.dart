@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../controllers/app_controller.dart';
 import '../core/formatters.dart';
+import '../l10n/app_localizations.dart';
 import '../models/recording_settings.dart';
 import '../services/recorder_service.dart';
 import '../widgets/waveform_view.dart';
@@ -13,6 +14,7 @@ class RecorderScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final recorder = controller.recorder;
     final settings = controller.settings.recording;
     final active = recorder.isActive;
@@ -20,7 +22,7 @@ class RecorderScreen extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       children: [
         Text(
-          'Recorder',
+          l10n.recorder,
           style: Theme.of(context)
               .textTheme
               .headlineMedium
@@ -28,9 +30,9 @@ class RecorderScreen extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          '${settings.preset.name} • ${settings.format.label} • '
+          '${_presetLabel(settings.preset, l10n)} • ${settings.format.label} • '
           '${settings.sampleRate ~/ 1000} kHz • '
-          '${settings.channels == 1 ? 'Mono' : 'Stereo'}',
+          '${settings.channels == 1 ? l10n.mono : l10n.stereo}',
         ),
         const SizedBox(height: 24),
         Card(
@@ -46,7 +48,7 @@ class RecorderScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      _statusText(recorder),
+                      _statusText(recorder, l10n),
                       style: Theme.of(context)
                           .textTheme
                           .titleMedium
@@ -58,8 +60,9 @@ class RecorderScreen extends StatelessWidget {
                 if (recorder.status == RecorderStatus.countdown)
                   Semantics(
                     liveRegion: true,
-                    label:
-                        'Recording starts in ${recorder.countdownRemaining} seconds',
+                    label: l10n.recordingStartsIn(
+                      recorder.countdownRemaining,
+                    ),
                     child: Text(
                       '${recorder.countdownRemaining}',
                       style: Theme.of(context)
@@ -89,9 +92,9 @@ class RecorderScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: 10),
                     if (recorder.clipping)
-                      const Tooltip(
-                        message: 'Input is clipping',
-                        child: Icon(Icons.warning_amber_rounded),
+                      Tooltip(
+                        message: l10n.inputIsClipping,
+                        child: const Icon(Icons.warning_amber_rounded),
                       ),
                   ],
                 ),
@@ -102,7 +105,7 @@ class RecorderScreen extends StatelessWidget {
                   OutlinedButton.icon(
                     onPressed: recorder.addMarker,
                     icon: const Icon(Icons.bookmark_add_outlined),
-                    label: Text('Add marker (${recorder.markers.length})'),
+                    label: Text(l10n.addMarker(recorder.markers.length)),
                   ),
                 ],
               ],
@@ -128,17 +131,17 @@ class RecorderScreen extends StatelessWidget {
                 ),
                 _InfoChip(
                   icon: Icons.spatial_audio_off,
-                  label: settings.channels == 1 ? 'Mono' : 'Stereo',
+                  label: settings.channels == 1 ? l10n.mono : l10n.stereo,
                 ),
                 if (settings.noiseSuppress)
-                  const _InfoChip(
+                  _InfoChip(
                     icon: Icons.noise_control_off,
-                    label: 'Noise suppression',
+                    label: l10n.noiseSuppression,
                   ),
                 if (settings.echoCancel)
-                  const _InfoChip(
+                  _InfoChip(
                     icon: Icons.speaker_group_outlined,
-                    label: 'Echo cancellation',
+                    label: l10n.echoCancellation,
                   ),
               ],
             ),
@@ -149,11 +152,11 @@ class RecorderScreen extends StatelessWidget {
           Card(
             child: ListTile(
               leading: const Icon(Icons.error_outline),
-              title: const Text('Recorder error'),
+              title: Text(l10n.recorderError),
               subtitle: Text(recorder.lastError!),
               trailing: TextButton(
                 onPressed: recorder.acknowledgeError,
-                child: const Text('Dismiss'),
+                child: Text(l10n.dismiss),
               ),
             ),
           ),
@@ -164,14 +167,32 @@ class RecorderScreen extends StatelessWidget {
     );
   }
 
-  String _statusText(RecorderService recorder) => switch (recorder.status) {
-        RecorderStatus.idle => 'Ready',
+  String _statusText(
+    RecorderService recorder,
+    AppLocalizations l10n,
+  ) =>
+      switch (recorder.status) {
+        RecorderStatus.idle => l10n.ready,
         RecorderStatus.countdown =>
-          'Starting in ${recorder.countdownRemaining}…',
-        RecorderStatus.recording => 'Recording',
-        RecorderStatus.paused => 'Paused',
-        RecorderStatus.processing => 'Processing audio',
-        RecorderStatus.error => 'Needs attention',
+          l10n.startingIn(recorder.countdownRemaining),
+        RecorderStatus.recording => l10n.recordingStatus,
+        RecorderStatus.paused => l10n.pausedStatus,
+        RecorderStatus.processing => l10n.processingAudio,
+        RecorderStatus.error => l10n.needsAttention,
+      };
+
+  String _presetLabel(QualityPreset preset, AppLocalizations l10n) =>
+      switch (preset) {
+        QualityPreset.speech => l10n.speech,
+        QualityPreset.meeting => l10n.meeting,
+        QualityPreset.lecture => l10n.lecture,
+        QualityPreset.interview => l10n.interview,
+        QualityPreset.podcast => l10n.podcast,
+        QualityPreset.music => l10n.music,
+        QualityPreset.highQuality => l10n.highQuality,
+        QualityPreset.lossless => l10n.lossless,
+        QualityPreset.smallFile => l10n.smallFile,
+        QualityPreset.custom => l10n.custom,
       };
 }
 
@@ -200,6 +221,7 @@ class _Controls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final recorder = controller.recorder;
     if (recorder.status == RecorderStatus.processing) {
       return const CircularProgressIndicator();
@@ -208,14 +230,14 @@ class _Controls extends StatelessWidget {
       return OutlinedButton.icon(
         onPressed: controller.cancelRecording,
         icon: const Icon(Icons.close),
-        label: const Text('Cancel countdown'),
+        label: Text(l10n.cancelCountdown),
       );
     }
     if (recorder.status == RecorderStatus.idle ||
         recorder.status == RecorderStatus.error) {
       return Semantics(
         button: true,
-        label: 'Start recording',
+        label: l10n.startRecording,
         child: FilledButton.icon(
           style: FilledButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 18),
@@ -232,7 +254,7 @@ class _Controls extends StatelessWidget {
             }
           },
           icon: const Icon(Icons.mic),
-          label: const Text('Start recording'),
+          label: Text(l10n.startRecording),
         ),
       );
     }
@@ -251,7 +273,9 @@ class _Controls extends StatelessWidget {
                 : Icons.play_arrow,
           ),
           label: Text(
-            recorder.status == RecorderStatus.recording ? 'Pause' : 'Resume',
+            recorder.status == RecorderStatus.recording
+                ? l10n.pause
+                : l10n.resume,
           ),
         ),
         FilledButton.icon(
@@ -268,12 +292,12 @@ class _Controls extends StatelessWidget {
             }
           },
           icon: const Icon(Icons.stop),
-          label: const Text('Stop & save'),
+          label: Text(l10n.stopAndSave),
         ),
         OutlinedButton.icon(
           onPressed: controller.cancelRecording,
           icon: const Icon(Icons.delete_outline),
-          label: const Text('Discard'),
+          label: Text(l10n.discard),
         ),
       ],
     );
@@ -287,49 +311,59 @@ class _PresetSelector extends StatelessWidget {
   final bool enabled;
 
   @override
-  Widget build(BuildContext context) => Card(
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Quality preset',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<QualityPreset>(
-                initialValue: controller.settings.recording.preset,
-                items: QualityPreset.values
-                    .map(
-                      (preset) => DropdownMenuItem(
-                        value: preset,
-                        child: Text(_label(preset)),
-                      ),
-                    )
-                    .toList(),
-                onChanged: enabled
-                    ? (preset) {
-                        if (preset != null) {
-                          controller.updateRecordingSettings(
-                            RecordingSettings.forPreset(preset),
-                          );
-                        }
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.qualityPreset,
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<QualityPreset>(
+              initialValue: controller.settings.recording.preset,
+              items: QualityPreset.values
+                  .map(
+                    (preset) => DropdownMenuItem(
+                      value: preset,
+                      child: Text(_label(preset, l10n)),
+                    ),
+                  )
+                  .toList(),
+              onChanged: enabled
+                  ? (preset) {
+                      if (preset != null) {
+                        controller.updateRecordingSettings(
+                          RecordingSettings.forPreset(preset),
+                        );
                       }
-                    : null,
-              ),
-            ],
-          ),
+                    }
+                  : null,
+            ),
+          ],
         ),
-      );
+      ),
+    );
+  }
 
-  String _label(QualityPreset preset) => switch (preset) {
-        QualityPreset.highQuality => 'High Quality',
-        QualityPreset.smallFile => 'Small File',
-        _ => '${preset.name[0].toUpperCase()}${preset.name.substring(1)}',
+  String _label(QualityPreset preset, AppLocalizations l10n) => switch (preset) {
+        QualityPreset.speech => l10n.speech,
+        QualityPreset.meeting => l10n.meeting,
+        QualityPreset.lecture => l10n.lecture,
+        QualityPreset.interview => l10n.interview,
+        QualityPreset.podcast => l10n.podcast,
+        QualityPreset.music => l10n.music,
+        QualityPreset.highQuality => l10n.highQuality,
+        QualityPreset.lossless => l10n.lossless,
+        QualityPreset.smallFile => l10n.smallFile,
+        QualityPreset.custom => l10n.custom,
       };
 }
 
