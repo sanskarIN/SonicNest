@@ -100,6 +100,40 @@ void main() {
     expect(entries.last.markers.single.label, 'Marker');
   });
 
+  test('missing primary metadata recovers an interrupted backup', () async {
+    final store = createStore();
+    await store.save([_entry(7)]);
+    final backup = File('${metadataFile.path}.bak');
+    await metadataFile.rename(backup.path);
+
+    final restored = await createStore().load();
+
+    expect(restored, hasLength(1));
+    expect(restored.single.id, 'recording-7');
+    expect(await metadataFile.exists(), isTrue);
+    expect(await backup.exists(), isFalse);
+  });
+
+  test('corrupt primary metadata falls back to a valid backup', () async {
+    final store = createStore();
+    await store.save([_entry(9)]);
+    final backup = File('${metadataFile.path}.bak');
+    await metadataFile.copy(backup.path);
+    await metadataFile.writeAsString('{broken-primary');
+
+    final restored = await createStore().load();
+
+    expect(restored, hasLength(1));
+    expect(restored.single.id, 'recording-9');
+    expect(await backup.exists(), isFalse);
+    expect(jsonDecode(await metadataFile.readAsString()), isA<Map>());
+    final corruptCopy = File(
+      '${metadataFile.path}.corrupt.${fixedClock.millisecondsSinceEpoch}',
+    );
+    expect(await corruptCopy.exists(), isTrue);
+    expect(await corruptCopy.readAsString(), '{broken-primary');
+  });
+
   test('save and load roundtrip supports thousands of entries', () async {
     const entryCount = 3000;
     final original = List<RecordingEntry>.generate(
