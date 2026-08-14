@@ -44,6 +44,9 @@ completed_features:
   - multi-selection bulk favorite pin share trash restore delete actions
   - managed storage statistics for recordings Trash and temporary files
   - guarded temporary-file cleanup
+  - multi-recording batch format conversion with target-format selection progress and per-file failure isolation
+  - batch conversion preserves source recordings and imports successful converted copies back into the managed library
+  - desktop secondary/right-click access to existing recording action surfaces
   - playback seek speed volume repeat and optional skip-silence
   - previous and next non-Trash recording navigation
   - A-B playback selection loop
@@ -70,8 +73,8 @@ completed_features:
 partial_features:
   - additional languages are not shipped yet; remaining hard-coded presentation strings must be migrated before translation expansion
   - Windows and Linux do not yet expose a dedicated SonicNest system-wide media-session integration beyond the selected desktop playback backend
-  - richer native desktop context menus remain conditional on usability evidence
-  - true multi-file batch conversion/export remains a roadmap item
+  - desktop secondary-click opens the complete action surface but a cursor-anchored platform-native context menu can still be evaluated after usability testing
+  - batch format conversion is implemented; direct multi-file export into a user-selected external destination remains a separate possible enhancement
   - advanced filter defaults require listening tests before claiming mastering-grade behavior
 pending_manual_validation:
   - microphone permission accepted denied revoked and permanently denied behavior on devices
@@ -82,6 +85,8 @@ pending_manual_validation:
   - headphone Bluetooth reconnect and media-button behavior
   - low-storage failure and recovery
   - malformed audio imports across supported operating systems
+  - batch conversion quality and large-batch behavior on representative real recordings
+  - desktop secondary-click ergonomics on Windows macOS and Linux
   - advanced editor output quality on representative voice and music recordings
   - 30-minute and multi-hour recording soak tests
   - screen-reader audits with TalkBack VoiceOver Narrator and desktop tooling
@@ -89,9 +94,9 @@ pending_manual_validation:
   - real screenshots final native icon/launch asset review and store metadata
   - store packaging signing certificates provisioning notarization and release credentials
 latest_automated_validation:
+  validated_source_commit: 985f2dd1500a03b0b65ee58b142cf31f545b0cc5
   core_flutter_ci:
-    run_id: 31771542490
-    validated_commit: 594f94a7b55826d1f27abbdf2aadd0a17ae42991
+    run_id: 31772136038
     platform_bootstrap: success
     dependency_resolution: success
     formatter: success
@@ -100,23 +105,21 @@ latest_automated_validation:
     android_debug_apk: success
     linux_debug_build: success
   windows_ci:
-    run_id: 31771214266
-    validated_source_commit: 3eed20635099bbcc2b4777d8a9881c0eb34caae0
+    run_id: 31772135970
     windows_debug_build: success
   apple_ci:
-    run_id: 31771214284
-    validated_source_commit: 3eed20635099bbcc2b4777d8a9881c0eb34caae0
+    run_id: 31772136081
     macos_debug_build: success
     ios_debug_no_codesign: success
   validation_relationship:
-    - commits after 3eed20635099bbcc2b4777d8a9881c0eb34caae0 and before 594f94a7b55826d1f27abbdf2aadd0a17ae42991 changed documentation or core CI configuration, not application source
-    - run 31771542490 validates the current application source plus the core CI workflow correction
-    - documentation-only state/log commits after the validated commit do not trigger core CI by design
+    - all listed core Windows and Apple workflows validate the same source revision 985f2dd1500a03b0b65ee58b142cf31f545b0cc5
+    - documentation-only synchronization commits after the validated source do not trigger core CI by design
 known_limitations:
   - codec availability and effective sample bitrate channel and DSP settings depend on OS device and runtime support
   - sharing silence-skip media-session input-device and screen-wake capabilities differ by platform backend
   - A-B loop is application-managed and requires real-device timing validation
   - generated platform hosts require the Flutter SDK and repository bootstrap tooling
+  - batch conversion is sequential and non-destructive; very large batches require performance validation
   - automated compilation cannot substitute for microphone hardware interruption background lock-screen routing media-button accessibility storage-failure and long-duration QA
   - signed distributable packages require maintainer-owned signing material that must not be committed
 branch: main
@@ -127,10 +130,11 @@ next_exact_tasks:
   - execute docs/QA_CHECKLIST.md on representative Android iOS macOS Windows and Linux hardware
   - verify countdown screen-wake microphone routing interruption and media-session behavior on physical devices
   - listen-test and tune advanced processing presets against representative recordings
+  - test large batch conversion sets and desktop secondary-click ergonomics on physical desktop systems
   - finish presentation-string localization migration before adding additional languages
   - evaluate dedicated Windows and Linux system media-session integration only where maintained platform support is suitable
-  - evaluate richer desktop context menus after usability testing
-  - evaluate true multi-file batch conversion/export after large-library testing
+  - evaluate cursor-anchored platform-native desktop context menus only if they materially improve usability over the implemented action surface
+  - evaluate direct multi-file export to a user-selected external destination after real-world batch-conversion testing
   - profile multi-hour recordings and large libraries
   - resolve any reproducible device-only issues discovered by manual QA
   - capture real screenshots and review native icon launch assets from tested release candidates
