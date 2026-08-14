@@ -5,6 +5,26 @@ import 'package:path_provider/path_provider.dart';
 
 import '../core/file_name.dart';
 
+class StorageStats {
+  const StorageStats({
+    required this.recordingsBytes,
+    required this.trashBytes,
+    required this.temporaryBytes,
+    required this.recordingCount,
+    required this.trashCount,
+    required this.temporaryFileCount,
+  });
+
+  final int recordingsBytes;
+  final int trashBytes;
+  final int temporaryBytes;
+  final int recordingCount;
+  final int trashCount;
+  final int temporaryFileCount;
+
+  int get totalManagedBytes => recordingsBytes + trashBytes + temporaryBytes;
+}
+
 class StorageService {
   Directory? _root;
 
@@ -72,6 +92,61 @@ class StorageService {
       suffix++;
     }
     return candidate;
+  }
+
+  Future<int> nextRecordingSequence() async {
+    final recordings = await _countFiles(await recordingsDirectory);
+    final trash = await _countFiles(await trashDirectory);
+    return recordings + trash + 1;
+  }
+
+  Future<StorageStats> stats() async {
+    final recordingMetrics = await _directoryMetrics(await recordingsDirectory);
+    final trashMetrics = await _directoryMetrics(await trashDirectory);
+    final tempMetrics = await _directoryMetrics(await tempDirectory);
+    return StorageStats(
+      recordingsBytes: recordingMetrics.bytes,
+      trashBytes: trashMetrics.bytes,
+      temporaryBytes: tempMetrics.bytes,
+      recordingCount: recordingMetrics.files,
+      trashCount: trashMetrics.files,
+      temporaryFileCount: tempMetrics.files,
+    );
+  }
+
+  Future<void> clearTemporaryFiles() async {
+    final directory = await tempDirectory;
+    await for (final entity in directory.list(followLinks: false)) {
+      try {
+        await entity.delete(recursive: true);
+      } on FileSystemException {
+        // A file may still be in use by an active platform codec. Leave it alone.
+      }
+    }
+  }
+
+  Future<({int bytes, int files})> _directoryMetrics(Directory directory) async {
+    var bytes = 0;
+    var files = 0;
+    if (!await directory.exists()) {
+      return (bytes: 0, files: 0);
+    }
+    await for (final entity in directory.list(recursive: true, followLinks: false)) {
+      if (entity is File) {
+        try {
+          bytes += await entity.length();
+          files++;
+        } on FileSystemException {
+          // Ignore files that disappear while the statistics pass is running.
+        }
+      }
+    }
+    return (bytes: bytes, files: files);
+  }
+
+  Future<int> _countFiles(Directory directory) async {
+    final metrics = await _directoryMetrics(directory);
+    return metrics.files;
   }
 
   Future<int> fileSize(String path) async {
