@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../controllers/app_controller.dart';
 import '../core/formatters.dart';
+import '../l10n/app_localizations.dart';
 import '../widgets/recording_tile.dart';
 import 'batch_convert_screen.dart';
 
@@ -12,6 +13,7 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final active = controller.recordings.where((e) => !e.isTrashed).toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
     final recent = active.take(4).toList();
@@ -25,7 +27,7 @@ class HomeScreen extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       children: [
         Text(
-          'Welcome to SonicNest',
+          l10n.welcomeToSonicNest,
           style: Theme.of(context)
               .textTheme
               .headlineMedium
@@ -33,7 +35,7 @@ class HomeScreen extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Text(
-          'Capture voice and sound privately, then organize and edit it locally.',
+          l10n.homeDescription,
           style: Theme.of(context).textTheme.bodyLarge,
         ),
         const SizedBox(height: 24),
@@ -44,17 +46,17 @@ class HomeScreen extends StatelessWidget {
               _SummaryCard(
                 icon: Icons.library_music,
                 title: '${active.length}',
-                subtitle: 'Recordings',
+                subtitle: l10n.recordings,
               ),
               _SummaryCard(
                 icon: Icons.schedule,
                 title: formatDuration(totalDuration),
-                subtitle: 'Recorded audio',
+                subtitle: l10n.recordedAudio,
               ),
               _SummaryCard(
                 icon: Icons.storage,
                 title: formatBytes(totalBytes),
-                subtitle: 'Local storage',
+                subtitle: l10n.localStorage,
               ),
             ];
             return wide
@@ -100,27 +102,27 @@ class HomeScreen extends StatelessWidget {
                   ),
                   child: const Icon(Icons.mic, size: 30),
                 ),
-                const SizedBox(
+                SizedBox(
                   width: 330,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Quick Record',
-                        style: TextStyle(
+                        l10n.quickRecord,
+                        style: const TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 18,
                         ),
                       ),
-                      SizedBox(height: 4),
-                      Text('Open the recorder with your current quality preset.'),
+                      const SizedBox(height: 4),
+                      Text(l10n.quickRecordHint),
                     ],
                   ),
                 ),
                 FilledButton.icon(
                   onPressed: () => controller.setNavigationIndex(1),
                   icon: const Icon(Icons.fiber_manual_record),
-                  label: const Text('Record'),
+                  label: Text(l10n.record),
                 ),
               ],
             ),
@@ -134,21 +136,19 @@ class HomeScreen extends StatelessWidget {
               children: [
                 const Icon(Icons.multiple_stop_outlined, size: 34),
                 const SizedBox(width: 16),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Batch Convert',
-                        style: TextStyle(
+                        l10n.batchConvert,
+                        style: const TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 18,
                         ),
                       ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Create converted copies of several saved recordings in one operation.',
-                      ),
+                      const SizedBox(height: 4),
+                      Text(l10n.batchConvertHomeHint),
                     ],
                   ),
                 ),
@@ -164,7 +164,7 @@ class HomeScreen extends StatelessWidget {
                             ),
                           ),
                   icon: const Icon(Icons.transform_outlined),
-                  label: const Text('Open'),
+                  label: Text(l10n.open),
                 ),
               ],
             ),
@@ -175,7 +175,7 @@ class HomeScreen extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                'Recent recordings',
+                l10n.recentRecordings,
                 style: Theme.of(context)
                     .textTheme
                     .titleLarge
@@ -184,7 +184,7 @@ class HomeScreen extends StatelessWidget {
             ),
             TextButton(
               onPressed: () => controller.setNavigationIndex(2),
-              child: const Text('View all'),
+              child: Text(l10n.viewAll),
             ),
           ],
         ),
@@ -259,24 +259,27 @@ class _EmptyHome extends StatelessWidget {
   const _EmptyHome();
 
   @override
-  Widget build(BuildContext context) => Card(
-        child: Padding(
-          padding: const EdgeInsets.all(30),
-          child: Column(
-            children: [
-              Icon(
-                Icons.graphic_eq,
-                size: 48,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              const SizedBox(height: 12),
-              const Text('Your recordings will appear here.'),
-              const SizedBox(height: 4),
-              const Text('Use Quick Record or import audio from the Library.'),
-            ],
-          ),
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(30),
+        child: Column(
+          children: [
+            Icon(
+              Icons.graphic_eq,
+              size: 48,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(height: 12),
+            Text(l10n.recordingsWillAppearHere),
+            const SizedBox(height: 4),
+            Text(l10n.useQuickRecordOrImport),
+          ],
         ),
-      );
+      ),
+    );
+  }
 }
 
 class _MiniPlayer extends StatelessWidget {
@@ -286,6 +289,7 @@ class _MiniPlayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final entry = controller.selectedRecording;
     if (entry == null) {
       return const SizedBox.shrink();
@@ -331,7 +335,7 @@ class _MiniPlayer extends StatelessWidget {
                         : Icons.play_arrow,
                   ),
                   label: Text(
-                    controller.player.isPlaying ? 'Pause' : 'Play',
+                    controller.player.isPlaying ? l10n.pause : l10n.play,
                   ),
                 ),
                 IconButton(
