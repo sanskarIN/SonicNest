@@ -17,6 +17,10 @@ if [[ ! -d android || ! -d ios || ! -d macos || ! -d linux || ! -d windows ]]; t
     --no-pub
 fi
 
+# Flutter creates a starter widget test for new hosts; SonicNest ships its own
+# test suite and removes the template so it cannot reference the generated demo app.
+rm -f test/widget_test.dart
+
 cp tool/platform_overrides/android/app/src/main/AndroidManifest.xml android/app/src/main/AndroidManifest.xml
 mkdir -p android/app/src/main/kotlin/in/sanskar/sonic_nest
 cp tool/platform_overrides/android/app/src/main/kotlin/in/sanskar/sonic_nest/MainActivity.kt \
