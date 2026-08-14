@@ -1,0 +1,212 @@
+name: One-shot full continuation validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/continuation-full-validation.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    name: Analyze and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install Linux audio prerequisites
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg pulseaudio-utils libjson-glib-dev
+      - name: Generate platform hosts
+        run: bash tool/bootstrap_platforms.sh
+      - name: Resolve dependencies
+        run: flutter pub get
+      - name: Format Dart sources
+        run: dart format lib test
+      - name: Static analysis
+        run: flutter analyze --no-fatal-infos
+      - name: Unit tests
+        run: flutter test
+
+  android:
+    name: Android debug build
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Generate platform hosts
+        run: bash tool/bootstrap_platforms.sh
+      - run: flutter pub get
+      - run: flutter build apk --debug
+
+  linux:
+    name: Linux debug build
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install Linux dependencies
+        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev ffmpeg pulseaudio-utils libjson-glib-dev
+      - name: Enable Linux desktop
+        run: flutter config --enable-linux-desktop
+      - name: Generate platform hosts
+        run: bash tool/bootstrap_platforms.sh
+      - run: flutter pub get
+      - run: flutter build linux --debug
+
+  windows:
+    name: Windows debug build
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+      - name: Generate platform hosts
+        shell: pwsh
+        run: ./tool/bootstrap_platforms.ps1
+      - run: flutter pub get
+      - run: flutter build windows --debug
+
+  macos:
+    name: macOS debug build
+    runs-on: macos-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Enable macOS desktop
+        run: flutter config --enable-macos-desktop
+      - name: Generate platform hosts
+        run: bash tool/bootstrap_platforms.sh
+      - run: flutter pub get
+      - run: flutter build macos --debug
+
+  ios:
+    name: iOS no-codesign debug build
+    runs-on: macos-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Generate platform hosts
+        run: bash tool/bootstrap_platforms.sh
+      - run: flutter pub get
+      - run: flutter build ios --debug --no-codesign
+
+  record:
+    name: Record successful validation
+    needs: [validate, android, linux, windows, macos, ios]
+    if: success()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Synchronize validated continuation docs
+        env:
+          VALIDATED_SHA: ${{ github.sha }}
+          VALIDATION_RUN_ID: ${{ github.run_id }}
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          sha = os.environ['VALIDATED_SHA']
+          run_id = os.environ['VALIDATION_RUN_ID']
+
+          what = Path('what_changed.md')
+          text = what.read_text(encoding='utf-8')
+          marker = '# Final validation for external batch export and safe cancellation'
+          if marker not in text:
+              text += f'''\n\n---\n\n# Final validation for external batch export and safe cancellation\n\nThe newest batch workflow adds optional copies to a user-selected external folder and a safe **Stop after current file** cancellation boundary.\n\nExact validation evidence:\n\n- Validated revision: `{sha}`\n- One-shot validation run: `{run_id}`\n- Flutter static analysis: SUCCESS\n- Unit tests: SUCCESS\n- Android debug APK: SUCCESS\n- Linux debug build: SUCCESS\n- Windows debug build: SUCCESS\n- macOS debug build: SUCCESS\n- unsigned iOS debug build: SUCCESS\n\nThe external copy is intentionally performed only after the managed SonicNest conversion/library registration succeeds. Destination-copy failure therefore does not roll back a valid managed-library output. Existing destination names are protected with collision-safe numbered filenames. Cancellation is observed between files so a running FFmpeg write is not intentionally terminated mid-file.\n\nManual validation still required: directory-picker behavior and access persistence on real platforms, destination removal/revocation, low-storage external-copy behavior, very large batches, closing/navigating away during processing, and long-running stop-after-current behavior.\n'''
+              what.write_text(text, encoding='utf-8')
+
+          state = Path('PROJECT_STATE.md')
+          state_text = state.read_text(encoding='utf-8')
+          state_marker = '## Latest exact validation — external batch export'
+          if state_marker not in state_text:
+              state_text += f'''\n\n## Latest exact validation — external batch export\n\n- Validated revision: `{sha}`\n- Validation run: `{run_id}`\n- Analyzer/unit tests: **SUCCESS**\n- Android/Linux/Windows/macOS/unsigned-iOS debug builds: **SUCCESS**\n- Repository classification remains **development preview** because physical-device, accessibility, long-duration, low-storage, signing, packaging, and store-release gates remain evidence-dependent.\n'''
+              state.write_text(state_text, encoding='utf-8')
+
+          changelog = Path('CHANGELOG.md')
+          ctext = changelog.read_text(encoding='utf-8')
+          cm = '### External batch export continuation'
+          if cm not in ctext:
+              ctext += f'''\n\n{cm}\n- Added optional user-selected external-folder copies after successful managed batch conversions.\n- Added collision-safe destination naming without overwriting existing files.\n- Added safe stop-after-current cancellation between batch items.\n- Kept conversion and external-copy failures independently reported so a destination-copy failure does not invalidate a successful managed conversion.\n- Validated revision `{sha}` with analyzer/tests and Android, Linux, Windows, macOS, and unsigned iOS debug builds in run `{run_id}`.\n'''
+              changelog.write_text(ctext, encoding='utf-8')
+
+          readme = Path('README.md')
+          rtext = readme.read_text(encoding='utf-8')
+          rm = '### External folder copies and safe stopping'
+          if rm not in rtext:
+              rtext += f'''\n\n{rm}\n\nBatch Convert can optionally copy each successful converted output to a user-selected folder. SonicNest avoids destination overwrites with numbered names and keeps the managed library result even if the external copy fails. During a long batch, **Stop after current file** prevents new items from starting after the current conversion finishes. The source revision implementing this behavior passed analyzer/tests and all five platform debug-build targets in validation run `{run_id}`.\n'''
+              readme.write_text(rtext, encoding='utf-8')
+
+          roadmap = Path('ROADMAP.md')
+          rdtext = roadmap.read_text(encoding='utf-8')
+          rdm = '## External batch export status'
+          if rdm not in rdtext:
+              rdtext += '''\n\n## External batch export status\n\nImplemented: optional user-selected destination-folder copies, collision-safe destination names, independent external-copy failure reporting, and stop-after-current cancellation between files. Remaining work is physical/per-platform validation, low-storage/large-batch testing, and deciding whether any richer destination/export workflow is justified by real use.\n'''
+              roadmap.write_text(rdtext, encoding='utf-8')
+
+          todo = Path('TODO.md')
+          ttext = todo.read_text(encoding='utf-8')
+          tm = '## External batch export validation'
+          if tm not in ttext:
+              ttext += '''\n\n## External batch export validation\n\n- [ ] Verify directory-picker availability/behavior on Android, iOS, macOS, Windows, and Linux.\n- [ ] Verify collision-safe numbering in real user folders.\n- [ ] Verify destination disappearance or permission revocation after selection.\n- [ ] Verify low-storage behavior during external copies.\n- [ ] Verify Stop after current file during long conversions.\n- [ ] Verify closing/navigating away from Batch Convert during processing.\n- [ ] Profile very large batches and mixed-format batches.\n'''
+              todo.write_text(ttext, encoding='utf-8')
+
+          notes = Path('RELEASE_NOTES.md')
+          ntext = notes.read_text(encoding='utf-8')
+          nm = '### Batch export destination update'
+          if nm not in ntext:
+              ntext += '''\n\n### Batch export destination update\n\n- Batch Convert can optionally copy successful converted files into a user-selected folder.\n- Existing destination files are protected with collision-safe numbered names.\n- External-copy failures are reported independently from managed conversion failures.\n- Long batches can stop safely after the current file instead of intentionally interrupting an in-progress output write.\n'''
+              notes.write_text(ntext, encoding='utf-8')
+
+          qa = Path('docs/QA_CHECKLIST.md')
+          qtext = qa.read_text(encoding='utf-8')
+          qm = '## External-folder batch export'
+          if qm not in qtext:
+              qtext += '''\n\n## External-folder batch export\n\n- [ ] Choose an external destination folder on every supported platform where the picker exposes this capability.\n- [ ] Export several converted copies and verify destination filenames/extensions.\n- [ ] Pre-create a destination filename and verify `(2)`, `(3)`, etc. collision-safe naming.\n- [ ] Remove/revoke the selected destination before copy and verify the managed library output remains valid.\n- [ ] Trigger an external-copy failure and verify conversion success/failure counts remain correct.\n- [ ] Request Stop after current file during a long conversion and verify the current output completes before the next item is skipped.\n- [ ] Verify already completed outputs are not rolled back after a stop request.\n'''
+              qa.write_text(qtext, encoding='utf-8')
+
+          arch = Path('docs/ARCHITECTURE.md')
+          atext = arch.read_text(encoding='utf-8')
+          am = '## External batch export ordering'
+          if am not in atext:
+              atext += '''\n\n## External batch export ordering\n\nBatch conversion treats the managed SonicNest output as the primary transaction. The output is transcoded, registered, probed, waveform-indexed, and persisted before an optional external-folder copy is attempted. This prevents a removable/inaccessible destination from invalidating a successful managed recording. Destination copies are collision-safe. Stop requests are consumed between items rather than forcibly terminating the active FFmpeg write.\n'''
+              arch.write_text(atext, encoding='utf-8')
+          PY
+      - name: Remove one-shot validation workflow
+        run: git rm .github/workflows/continuation-full-validation.yml
+      - name: Commit successful validation record
+        run: |
+          git config user.name 'Sanskar'
+          git config user.email 'sanskarin@outlook.in'
+          git add what_changed.md PROJECT_STATE.md CHANGELOG.md README.md ROADMAP.md TODO.md RELEASE_NOTES.md docs/QA_CHECKLIST.md docs/ARCHITECTURE.md
+          git commit -m 'docs: record validated external batch export continuation'
+          git push origin HEAD:main
