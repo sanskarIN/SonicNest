@@ -1,6 +1,6 @@
 # Releasing SonicNest
 
-SonicNest uses semantic versioning. A release must not be declared stable only because CI compiles the application. Recorder releases also require the hardware, accessibility, branding, lifecycle, storage, and distribution checks in `docs/QA_CHECKLIST.md`.
+SonicNest uses semantic versioning. A release must not be declared stable only because CI compiles the application. Recorder releases also require the hardware, accessibility, branding, lifecycle, storage, packaging, and distribution checks in `docs/QA_CHECKLIST.md`.
 
 ## 1. Prepare the source tree
 
@@ -11,6 +11,7 @@ SonicNest uses semantic versioning. A release must not be declared stable only b
 5. Regenerate deterministic SonicNest native-brand source images and native icon/splash resources using `tool/apply_branding.sh` or `tool/apply_branding.ps1`.
 6. Confirm that no secrets, signing files, local paths, certificates, provisioning profiles, or build outputs are staged.
 7. Confirm generated branding PNG source outputs remain reproducible and are not accidentally committed as authoritative source files.
+8. For Linux, confirm the Debian package metadata under `packaging/linux/debian/` matches the release identity, launcher behavior, and AppStream information.
 
 ## 2. Required automated checks
 
@@ -40,7 +41,7 @@ flutter pub get
 ./tool/apply_branding.ps1
 ```
 
-Require the GitHub workflows for Android, Linux, Windows, macOS, and unsigned iOS build validation to pass for the release source revision. Android, Windows, macOS, and iOS builds must include the generated native SonicNest branding resources. Linux must at least generate the deterministic source artwork until a final distribution/package target supplies the desktop/package icon integration.
+Require the GitHub workflows for Android, Linux, Linux Debian packaging, Windows, macOS, and unsigned iOS validation to pass for the release source revision. Android, Windows, macOS, and iOS builds must include the generated native SonicNest branding resources. The Linux package workflow must produce and structurally verify the `.deb`, its desktop entry, AppStream metadata, executable payload, deterministic icon, and checksum.
 
 ## 3. Required manual recorder checks
 
@@ -86,9 +87,10 @@ Windows:
 - shortcut and final installer/package surfaces once packaging is chosen.
 
 Linux:
-- choose a distribution/package target;
-- integrate the generated SonicNest icon with its desktop entry/package metadata;
-- inspect launcher/menu/task-switcher surfaces on the selected desktop environments.
+- install the repository-generated Debian `.deb` on representative Debian/Ubuntu-family systems;
+- verify the generated SonicNest icon appears through the installed desktop entry and AppStream metadata;
+- inspect launcher/menu/task-switcher surfaces on the tested desktop environments;
+- verify package install, upgrade, launch, and uninstall behavior before publishing the package.
 
 Capture real screenshots from tested builds rather than fabricated or mock release screenshots.
 
@@ -99,13 +101,13 @@ Signing material is maintainer-owned and must never be committed.
 - Android: use a private upload/release keystore outside the repository.
 - iOS/macOS: use the maintainer's Apple certificates, provisioning profiles, and notarization credentials.
 - Windows: code signing is optional for development builds but recommended for public distribution.
-- Linux: package/sign according to the selected distribution channel.
+- Linux: Debian `.deb` is the initial package format; package/repository signing policy must match the eventual public distribution channel and remain outside committed source.
 
-CI intentionally validates unsigned/debug builds unless a secure release environment is explicitly configured.
+CI intentionally validates unsigned/debug or unsigned release-candidate builds unless a secure release environment is explicitly configured.
 
 ## 6. Build release candidates
 
-After platform bootstrap, dependency resolution, and `apply_branding`, typical Flutter commands are:
+After platform bootstrap, dependency resolution, and branding generation, typical Flutter commands are:
 
 ```bash
 flutter build apk --release
@@ -116,7 +118,16 @@ flutter build macos --release
 flutter build ios --release
 ```
 
-Platform availability depends on the build host. iOS and macOS require macOS/Xcode. Windows builds require Windows. Signing identities/credentials must be injected only from the maintainer's secure release environment.
+For the selected Linux package target, continue with:
+
+```bash
+bash tool/build_linux_deb.sh release
+bash tool/verify_linux_deb.sh
+```
+
+Platform availability depends on the build host. iOS and macOS require macOS/Xcode. Windows builds require Windows. Debian package construction requires a compatible Linux host with `dpkg-deb`. Signing identities/credentials must be injected only from the maintainer's secure release environment.
+
+The manual `.github/workflows/release-candidate.yml` workflow creates release-mode validation artifacts and now includes a structurally verified Debian package. Those artifacts remain non-public release candidates until all manual gates are complete.
 
 ## 7. Final release review
 
@@ -125,6 +136,7 @@ Before tagging:
 - verify Privacy, Security, Support, license, and third-party notices;
 - verify the Buy Me a Coffee and project/contact links;
 - verify generated native icon/splash resources visually on real release candidates;
+- verify the Linux `.deb` installs, launches, displays the correct desktop icon, and uninstalls on tested systems;
 - capture real screenshots from the tested release candidate;
 - verify store/listing assets match the exact tested build;
 - confirm no known critical/high-priority reproducible defects remain;
