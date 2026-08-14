@@ -65,7 +65,7 @@ class PlayerService extends ChangeNotifier {
 
   Future<Duration> probeDuration(String path) async {
     final session = await FFprobeKit.getMediaInformation(path);
-    final information = await session.getMediaInformation();
+    final information = session.getMediaInformation();
     final seconds = double.tryParse(information?.getDuration() ?? '');
     if (seconds == null || !seconds.isFinite || seconds < 0) {
       return Duration.zero;
