@@ -42,6 +42,58 @@ void main() {
     expect(restored.pinned, isTrue);
   });
 
+  test('malformed optional metadata falls back without throwing', () {
+    final entry = RecordingEntry.fromJson({
+      'id': 'safe-id',
+      'title': 42,
+      'filePath': '/audio/safe.wav',
+      'durationMs': 'bad-duration',
+      'sizeBytes': <String, Object>{},
+      'format': 7,
+      'bitRate': false,
+      'sampleRate': '48000',
+      'channels': null,
+      'createdAt': 123,
+      'modifiedAt': <String>[],
+      'favorite': 'yes',
+      'pinned': 1,
+      'tags': ['valid', 3, null],
+      'folder': false,
+      'notes': 99,
+      'markers': [
+        {
+          'positionMs': 'bad',
+          'label': 5,
+          'note': false,
+        },
+        'not-a-marker',
+        {1: 'non-string-key'},
+      ],
+      'waveform': [0.25, 'bad', 1],
+      'trashedAt': 1234,
+    });
+
+    expect(entry.id, 'safe-id');
+    expect(entry.title, 'Recording');
+    expect(entry.filePath, '/audio/safe.wav');
+    expect(entry.durationMs, 0);
+    expect(entry.sizeBytes, 0);
+    expect(entry.format, RecordingFormat.m4a);
+    expect(entry.bitRate, 0);
+    expect(entry.sampleRate, 0);
+    expect(entry.channels, 1);
+    expect(entry.favorite, isFalse);
+    expect(entry.pinned, isFalse);
+    expect(entry.tags, ['valid']);
+    expect(entry.folder, isEmpty);
+    expect(entry.notes, isEmpty);
+    expect(entry.markers, hasLength(1));
+    expect(entry.markers.single.positionMs, 0);
+    expect(entry.markers.single.label, 'Marker');
+    expect(entry.waveform, [0.25, 1.0]);
+    expect(entry.trashedAt, isNull);
+  });
+
   test('copyWith can clear trash state', () {
     final entry = RecordingEntry(
       id: 'abc',
