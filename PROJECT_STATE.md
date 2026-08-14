@@ -29,6 +29,7 @@ linux_distribution:
   icon_target: /usr/share/icons/hicolor/512x512/apps/sonicnest.png
   build_script: tool/build_linux_deb.sh
   verify_script: tool/verify_linux_deb.sh
+  installed_smoke_script: tool/smoke_test_installed_linux_deb.sh
 completed_features:
   - project architecture and Material 3 design system
   - branded Flutter startup screen with recoverable startup failure state
@@ -79,6 +80,7 @@ completed_features:
   - Android foreground recording service overrides
   - Bash and PowerShell reproducible platform bootstrap tooling
   - Debian Linux package builder verifier desktop entry AppStream metadata generated icon integration and package checksums
+  - hosted-runner Debian package install installed-payload GUI startup smoke and uninstall cleanup validation
   - dedicated Linux Debian package CI and Debian release-candidate artifact integration
   - unit tests open-source docs GitHub project templates and release documentation
   - analyzer unit-test Android Linux Windows macOS and unsigned iOS build workflows
@@ -89,7 +91,7 @@ partial_features:
   - Windows and Linux do not yet expose a dedicated SonicNest system-wide media-session integration beyond the selected desktop playback backend
   - desktop secondary-click opens the complete action surface but a cursor-anchored platform-native context menu can still be evaluated after usability testing
   - advanced filter and audio-processing defaults require listening tests before claiming mastering-grade behavior
-  - Debian package structure is automated but real installation upgrade uninstall microphone routing icon rendering accessibility and signing/distribution policy remain manual release gates
+  - Debian package structure and hosted-runner install/startup/uninstall smoke are automated but representative-system microphone routing desktop rendering accessibility upgrade and signing/distribution policy remain manual release gates
 pending_manual_validation:
   - microphone permission accepted denied revoked and permanently denied behavior on devices
   - Android and Apple background lock-screen media-session and interruption behavior on physical devices
@@ -105,7 +107,7 @@ pending_manual_validation:
   - 30-minute and multi-hour recording soak tests
   - screen-reader audits with TalkBack VoiceOver Narrator and desktop tooling
   - large-library performance with thousands of recordings
-  - Debian package install launch upgrade uninstall and desktop icon visual behavior on representative Debian Ubuntu family systems
+  - Debian package install launch upgrade uninstall microphone routing and desktop icon visual behavior on representative Debian Ubuntu family systems
   - real screenshots final native icon launch asset review and store metadata
   - store packaging signing certificates provisioning notarization and release credentials
 latest_automated_validation:
@@ -127,18 +129,28 @@ latest_automated_validation:
     macos_debug_build: success
     ios_debug_no_codesign: success
   linux_package_ci:
-    validated_source_commit: f2c773e59b27a2aaac77e0590e20441ed7eba03f
-    run_id: 31783749267
+    validated_source_commit: a07468b4b7c14a76b9bce537bbe0455e4539e6bf
+    run_id: 31785105648
     linux_release_build: success
     debian_package_build: success
     desktop_entry_validation: success
     appstream_validation: success
     package_payload_verification: success
     checksum_verification: success
+    apt_package_install: success
+    installed_payload_verification: success
+    virtual_display_startup_smoke: success
+    apt_package_remove: success
+    uninstall_cleanup_verification: success
     artifact_upload: success
+  repository_integrity_audit:
+    validated_source_commit: e0b9658a4cb18a61ac42046a6914ca080df7eb51
+    run_id: 31785152042
+    result: success
   validation_relationship:
     - core Windows and Apple workflows validate deterministic native branding source revision 40c4a758debef136c2d8c977c321446cca2697cd
-    - Linux package workflow validates package implementation through revision f2c773e59b27a2aaac77e0590e20441ed7eba03f including the checksum-verifier fix c0381eb59c34b0dc965784d74730615eb95bfcbb and corrected lowercase AppStream developer identifier
+    - Linux package workflow validates package construction plus hosted-runner install startup smoke and uninstall behavior through revision a07468b4b7c14a76b9bce537bbe0455e4539e6bf
+    - repository audit revision e0b9658a4cb18a61ac42046a6914ca080df7eb51 locks the installed-package smoke script and CI install/remove markers as required repository invariants
     - documentation-only synchronization commits after validated source revisions do not trigger all application build workflows by design
 known_limitations:
   - codec availability and effective sample bitrate channel and DSP settings depend on OS device and runtime support
@@ -146,7 +158,7 @@ known_limitations:
   - A-B loop is application-managed and requires real-device timing validation
   - generated platform hosts require the Flutter SDK and repository bootstrap tooling
   - batch conversion and direct export are sequential and non-destructive; very large batches require performance validation
-  - automated Linux package verification proves package structure rather than real-system audio routing installation UX or desktop icon quality
+  - hosted-runner Linux package smoke proves install installed-payload startup-window and uninstall behavior only on the CI runner and does not prove representative real-system audio routing desktop integration accessibility upgrade or long-duration quality
   - automated compilation cannot substitute for microphone hardware interruption background lock-screen routing media-button accessibility storage-failure and long-duration QA
   - signed distributable packages require maintainer-owned signing material that must not be committed
 branch: main
@@ -156,7 +168,7 @@ commit_identity:
 next_exact_tasks:
   - execute docs/QA_CHECKLIST.md on representative Android iOS macOS Windows and Linux hardware
   - verify countdown screen-wake microphone routing interruption and media-session behavior on physical devices
-  - install the Debian package on representative Debian Ubuntu family systems and verify launch icon microphone routing upgrade and uninstall behavior
+  - install the Debian package on representative Debian Ubuntu family systems and verify launcher icon microphone routing upgrade and uninstall behavior with release evidence
   - decide the public Linux distribution channel and any Debian repository/package signing policy
   - listen-test and tune advanced processing presets against representative recordings
   - test large batch conversion and direct-export sets plus desktop secondary-click ergonomics on physical desktop systems
@@ -209,15 +221,21 @@ next_exact_tasks:
 ## Latest exact validation — Linux Debian packaging
 
 - Debian `.deb` is the initial repository-supported Linux installation format.
-- Package workflow validated source revision: `f2c773e59b27a2aaac77e0590e20441ed7eba03f`.
-- Validation run: `31783749267`.
+- Package workflow validated source revision: `a07468b4b7c14a76b9bce537bbe0455e4539e6bf`.
+- Validation run: `31785105648`.
 - Flutter Linux release build: **SUCCESS**.
 - Debian package construction: **SUCCESS**.
 - Desktop entry validation: **SUCCESS**.
 - AppStream metadata validation: **SUCCESS**.
 - Executable, icon, control metadata, package payload, and checksum verification: **SUCCESS**.
+- Package-manager installation: **SUCCESS**.
+- Installed package payload and metadata verification: **SUCCESS**.
+- Virtual-display packaged-app startup smoke: **SUCCESS**.
+- Package-manager removal: **SUCCESS**.
+- Package-owned application/desktop/icon/AppStream cleanup after uninstall: **SUCCESS**.
 - Package artifact upload: **SUCCESS**.
-- The successful source includes checksum-verifier fix `c0381eb59c34b0dc965784d74730615eb95bfcbb` and the corrected lowercase AppStream developer identifier.
-- Earlier validation run `31783467780` rejected the mixed-case AppStream developer identifier; the failure was fixed before this latest green package run.
-- Real package installation/upgrade/uninstall behavior, microphone routing, accessibility, desktop icon visual inspection, public distribution policy, and signing remain manual release gates.
+- The validated source includes installed-package smoke script commit `45c94018c9c9c8074421e419125e38fe2b29c4d3` and CI install/smoke/uninstall commit `a07468b4b7c14a76b9bce537bbe0455e4539e6bf`.
+- Repository audit run `31785152042` on revision `e0b9658a4cb18a61ac42046a6914ca080df7eb51` also passed after making installed-smoke invariants mandatory.
+- Earlier structural-only package run `31783749267` remains historical evidence; the newer run supersedes it for automated Linux package validation.
+- Representative real-system package installation/upgrade/uninstall behavior, microphone routing, accessibility, desktop icon visual inspection, public distribution policy, and signing remain manual release gates.
 - Release classification remains **development preview**.
