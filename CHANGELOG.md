@@ -26,6 +26,8 @@ All notable project changes are documented here.
 - Branded Flutter startup screen with recoverable startup-error UI.
 - English localization-ready presentation layer and delegates for future translation work.
 - Additional desktop recorder/player shortcuts: F9, F10, Ctrl+Alt+P, and Ctrl+Alt+Arrow jump controls.
+- Multi-recording batch format conversion with target-format selection, progress reporting, per-file failure isolation, preserved originals, marker retention, and library registration of successful outputs.
+- Desktop secondary/right-click access to the existing complete recording action surface.
 - `docs/RELEASING.md`, `RELEASE_NOTES.md`, and `TODO.md` for evidence-based release management.
 - Expanded manual QA matrix covering recorder lifecycle, codec fallback, smart naming, A-B looping, storage, editor processing, accessibility, localization readiness, stress testing, and signing/release boundaries.
 
@@ -40,6 +42,8 @@ All notable project changes are documented here.
 - Player loop handling now keeps repeat-one and A-B selection modes mutually consistent.
 - Settings storage cleanup now routes through a public controller operation rather than presentation-layer notifier access.
 - FFprobe media-information access was aligned with the current package API to remove redundant `await` calls.
+- The previously planned multi-file conversion capability is now implemented as a sequential non-destructive batch workflow; direct batch export to a user-selected external destination remains optional future work.
+- Recording tiles now expose the same action surface through secondary/right-click without removing touch/long-press behavior.
 
 ### Fixed
 - Android namespace generation that previously used the reserved/invalid `in` prefix.
@@ -53,9 +57,10 @@ All notable project changes are documented here.
 - Screen-wake cleanup after stop, cancel, recorder failure, and service disposal.
 
 ### Validation
-- Flutter analyzer/unit tests and platform debug-build workflows remain the automated validation gates.
-- The continuation intentionally does not convert physical-device microphone/background/interruption/routing/screen-wake/media-button checks into false automated claims.
-- Exact newest workflow/run results are recorded in `what_changed.md` and `PROJECT_STATE.md` after the final continuation commit is observed.
+- Source revision `985f2dd1500a03b0b65ee58b142cf31f545b0cc5` is green in core Flutter CI run `31772136038`: formatting, analyzer, unit tests, Android debug APK, and Linux debug build all succeeded.
+- The same source revision is green in Windows run `31772135970` and Apple run `31772136081` for Windows debug, macOS debug, and unsigned iOS debug builds.
+- The continuation intentionally does not convert physical-device microphone/background/interruption/routing/screen-wake/media-button/batch-performance checks into false automated claims.
+- Exact newest workflow/run results are also recorded in `what_changed.md` and `PROJECT_STATE.md`.
 
 ## [0.1.0] - 2026-08-14
 
