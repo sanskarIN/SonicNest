@@ -1,0 +1,68 @@
+name: One-shot continuation records gate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/continuation-records-gate.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Wait for validation record commits
+        run: |
+          set -euo pipefail
+          found=0
+          for _ in $(seq 1 60); do
+            git fetch origin main
+            git reset --hard origin/main
+            if grep -q '^# Unsigned release-candidate automation continuation$' what_changed.md \
+              && grep -q '^# Repository integrity audit continuation$' what_changed.md; then
+              found=1
+              break
+            fi
+            sleep 15
+          done
+          if [[ "$found" -ne 1 ]]; then
+            echo 'Required validation records did not land.' >&2
+            exit 1
+          fi
+      - name: Verify major continuation records
+        run: |
+          set -euo pipefail
+          grep -q '^# Localization, library interaction, and batch reliability continuation$' what_changed.md
+          grep -q '^# Direct multi-file original export continuation$' what_changed.md
+          grep -q '^# Native launcher and splash branding continuation$' what_changed.md
+          grep -q '^# Unsigned release-candidate automation continuation$' what_changed.md
+          grep -q '^# Repository integrity audit continuation$' what_changed.md
+          grep -q '^## Latest exact validation — deterministic native branding$' PROJECT_STATE.md
+          grep -q '^## Latest exact validation — unsigned release-candidate automation$' PROJECT_STATE.md
+      - name: Append consolidated repository-only hardening checkpoint
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('what_changed.md')
+          text = path.read_text(encoding='utf-8')
+          marker = '# Repository-only hardening checkpoint'
+          if marker not in text:
+              text += '''\n\n---\n\n# Repository-only hardening checkpoint\n\nThe current repository has completed the major implementation work that can be truthfully validated without maintainer production credentials or real target-device evidence:\n\n- cross-platform recorder/library/player/editor/settings application implementation;\n- safe recording lifecycle, codec fallback, smart naming, countdown, screen-wake, waveform, bookmarks, and storage management;\n- search/sort/filter/favorites/pins/tags/folders/Trash/import/export/share and bulk operations;\n- batch conversion plus direct multi-file original export with collision-safe destination copies and per-file failure isolation;\n- non-destructive editing and advanced processing paths;\n- localization-ready primary Flutter presentation;\n- desktop shortcuts and secondary-click recording actions;\n- deterministic native launcher/splash branding generation and branded platform compilation;\n- analyzer/unit tests and representative Android/Linux/Windows/macOS/unsigned-iOS debug validation;\n- unsigned release-mode candidate packaging with checksums and explicit non-publication warnings;\n- repository integrity auditing for required files, secret/signing boundaries, generated-host rules, generated-brand rules, and release-workflow safety markers;\n- complete build, branding, QA, release, evidence, unsigned-artifact, user-guide, and troubleshooting documentation.\n\nRemaining items are intentionally evidence-dependent: physical microphone/routing/interruption/background behavior, low-storage/revocation tests, long-duration and large-library/batch stress tests, real accessibility audits, advanced audio listening tests, OS-level native-brand visual approval, Linux distribution-package selection, real screenshots, production signing/notarization, store metadata/privacy declarations, signed release candidates, and final stable-release approval.\n\nDo not convert those remaining gates into completed claims without actual evidence from the exact release source/artifacts.\n'''
+              path.write_text(text, encoding='utf-8')
+          PY
+      - name: Remove one-shot records gate
+        run: git rm .github/workflows/continuation-records-gate.yml
+      - name: Commit consolidated checkpoint
+        run: |
+          git config user.name 'Sanskar'
+          git config user.email 'sanskarin@outlook.in'
+          git add what_changed.md
+          git commit -m 'docs: record repository-only hardening checkpoint'
+          git push origin HEAD:main
