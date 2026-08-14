@@ -49,6 +49,7 @@ class AppLocalizations {
       'Use Quick Record or import audio from the Library.';
   String get play => 'Play';
   String get pause => 'Pause';
+  String get resume => 'Resume';
 
   String get aboutTagline => 'Modern, privacy-first sound and voice recording.';
   String get supportSonicNest => '☕ Support SonicNest';
@@ -71,6 +72,39 @@ class AppLocalizations {
   String get businessInquirySubject => 'SonicNest business inquiry';
   String get supportEmailSubject => 'SonicNest support';
   String versionLabel(String version) => 'Version $version';
+
+  String get recorder => 'Recorder';
+  String get mono => 'Mono';
+  String get stereo => 'Stereo';
+  String recordingStartsIn(int seconds) =>
+      'Recording starts in $seconds seconds';
+  String get inputIsClipping => 'Input is clipping';
+  String addMarker(int count) => 'Add marker ($count)';
+  String get noiseSuppression => 'Noise suppression';
+  String get echoCancellation => 'Echo cancellation';
+  String get recorderError => 'Recorder error';
+  String get dismiss => 'Dismiss';
+  String get ready => 'Ready';
+  String startingIn(int seconds) => 'Starting in $seconds…';
+  String get recordingStatus => 'Recording';
+  String get pausedStatus => 'Paused';
+  String get processingAudio => 'Processing audio';
+  String get needsAttention => 'Needs attention';
+  String get cancelCountdown => 'Cancel countdown';
+  String get startRecording => 'Start recording';
+  String get stopAndSave => 'Stop & save';
+  String get discard => 'Discard';
+  String get qualityPreset => 'Quality preset';
+  String get speech => 'Speech';
+  String get meeting => 'Meeting';
+  String get lecture => 'Lecture';
+  String get interview => 'Interview';
+  String get podcast => 'Podcast';
+  String get music => 'Music';
+  String get highQuality => 'High Quality';
+  String get lossless => 'Lossless';
+  String get smallFile => 'Small File';
+  String get custom => 'Custom';
 
   String get batchConvert => 'Batch Convert';
   String get selectAll => 'Select all';
