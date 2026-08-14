@@ -119,3 +119,8 @@ Please read `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, and `SECURITY.md` before co
 ## License
 
 Apache License 2.0. See `LICENSE` and `NOTICE`. Dependency licenses remain their own.
+
+
+### External folder copies and safe stopping
+
+Batch Convert can optionally copy each successful converted output to a user-selected folder. SonicNest avoids destination overwrites with numbered names and keeps the managed library result even if the external copy fails. During a long batch, **Stop after current file** prevents new items from starting after the current conversion finishes. The source revision implementing this behavior passed analyzer/tests and all five platform debug-build targets in validation run `31773250023`.

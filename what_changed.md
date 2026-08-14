@@ -863,3 +863,26 @@ Repository automation is green, but the following remain intentionally unclaimed
 - all previously listed microphone, routing, interruption, background, screen-wake, media-session, accessibility, localization, soak, signing, packaging, screenshot, and store-release gates
 
 The exact continuation point is now: repository-implementable smart naming, countdown, screen wake, advanced filtering, A-B playback, expanded non-destructive editor processing, localization scaffolding, media-session source integration, managed storage, desktop shortcuts, secondary-click recording actions, and multi-recording batch format conversion are implemented. Future work should be driven primarily by real device/desktop QA, large-batch/large-library performance, listening tests, localization completion, release assets, signing, packaging, and defects discovered from those evidence-producing checks.
+
+
+---
+
+# Final validation for external batch export and safe cancellation
+
+The newest batch workflow adds optional copies to a user-selected external folder and a safe **Stop after current file** cancellation boundary.
+
+Exact validation evidence:
+
+- Validated revision: `54b727db6dd887fb0b2df2d36cabb2cd78671d7a`
+- One-shot validation run: `31773250023`
+- Flutter static analysis: SUCCESS
+- Unit tests: SUCCESS
+- Android debug APK: SUCCESS
+- Linux debug build: SUCCESS
+- Windows debug build: SUCCESS
+- macOS debug build: SUCCESS
+- unsigned iOS debug build: SUCCESS
+
+The external copy is intentionally performed only after the managed SonicNest conversion/library registration succeeds. Destination-copy failure therefore does not roll back a valid managed-library output. Existing destination names are protected with collision-safe numbered filenames. Cancellation is observed between files so a running FFmpeg write is not intentionally terminated mid-file.
+
+Manual validation still required: directory-picker behavior and access persistence on real platforms, destination removal/revocation, low-storage external-copy behavior, very large batches, closing/navigating away during processing, and long-running stop-after-current behavior.

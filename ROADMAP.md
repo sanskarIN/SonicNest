@@ -93,3 +93,8 @@ Remaining:
 - Final store/release assets and signed packages prepared by the maintainer.
 - Release notes and checksums published for distributable artifacts where applicable.
 - Stable tag created only from the exact tested and signed source revision.
+
+
+## External batch export status
+
+Implemented: optional user-selected destination-folder copies, collision-safe destination names, independent external-copy failure reporting, and stop-after-current cancellation between files. Remaining work is physical/per-platform validation, low-storage/large-batch testing, and deciding whether any richer destination/export workflow is justified by real use.

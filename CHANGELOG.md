@@ -66,3 +66,11 @@ All notable project changes are documented here.
 
 ### Added
 - Initial SonicNest repository license and project foundation.
+
+
+### External batch export continuation
+- Added optional user-selected external-folder copies after successful managed batch conversions.
+- Added collision-safe destination naming without overwriting existing files.
+- Added safe stop-after-current cancellation between batch items.
+- Kept conversion and external-copy failures independently reported so a destination-copy failure does not invalidate a successful managed conversion.
+- Validated revision `54b727db6dd887fb0b2df2d36cabb2cd78671d7a` with analyzer/tests and Android, Linux, Windows, macOS, and unsigned iOS debug builds in run `31773250023`.

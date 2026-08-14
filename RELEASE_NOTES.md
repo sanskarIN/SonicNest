@@ -69,3 +69,11 @@ SonicNest is an offline-first cross-platform sound and voice recorder built with
 ## Before v1.0.0
 
 This preview must not be treated as a stable public recorder release until the physical-device, interruption, background, low-storage, long-recording, batch-performance, accessibility, signed-packaging, and store-release gates in `docs/QA_CHECKLIST.md` and `docs/RELEASING.md` have been completed with real evidence.
+
+
+### Batch export destination update
+
+- Batch Convert can optionally copy successful converted files into a user-selected folder.
+- Existing destination files are protected with collision-safe numbered names.
+- External-copy failures are reported independently from managed conversion failures.
+- Long batches can stop safely after the current file instead of intentionally interrupting an in-progress output write.

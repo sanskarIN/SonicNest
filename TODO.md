@@ -74,3 +74,14 @@ This file intentionally contains only work that is still incomplete, requires ph
 - [ ] Produce signed release candidates.
 - [ ] Complete the release checklist in `docs/RELEASING.md`.
 - [ ] Tag `v1.0.0` only after all required stable-release gates are complete.
+
+
+## External batch export validation
+
+- [ ] Verify directory-picker availability/behavior on Android, iOS, macOS, Windows, and Linux.
+- [ ] Verify collision-safe numbering in real user folders.
+- [ ] Verify destination disappearance or permission revocation after selection.
+- [ ] Verify low-storage behavior during external copies.
+- [ ] Verify Stop after current file during long conversions.
+- [ ] Verify closing/navigating away from Batch Convert during processing.
+- [ ] Profile very large batches and mixed-format batches.

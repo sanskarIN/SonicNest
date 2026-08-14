@@ -295,3 +295,14 @@ Verify on each target platform which settings are honored by the native recorder
 ## Release rule
 
 A checkbox is evidence, not decoration. If a test requires physical hardware, a platform account, signing identity, store dashboard, external device, screen reader, or long-running test, leave it unchecked until that test has actually been performed and recorded.
+
+
+## External-folder batch export
+
+- [ ] Choose an external destination folder on every supported platform where the picker exposes this capability.
+- [ ] Export several converted copies and verify destination filenames/extensions.
+- [ ] Pre-create a destination filename and verify `(2)`, `(3)`, etc. collision-safe naming.
+- [ ] Remove/revoke the selected destination before copy and verify the managed library output remains valid.
+- [ ] Trigger an external-copy failure and verify conversion success/failure counts remain correct.
+- [ ] Request Stop after current file during a long conversion and verify the current output completes before the next item is skipped.
+- [ ] Verify already completed outputs are not rolled back after a stop request.

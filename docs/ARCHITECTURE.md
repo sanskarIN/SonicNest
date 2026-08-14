@@ -34,3 +34,8 @@ All editor operations create a new file. The original remains unchanged. FFmpeg 
 ## Platform strategy
 
 Flutter host scaffolding changes with Flutter/Gradle/Xcode versions. `tool/bootstrap_platforms.sh` generates host projects from the installed Flutter SDK, then applies SonicNest-specific platform permissions and capabilities from `tool/platform_overrides/`.
+
+
+## External batch export ordering
+
+Batch conversion treats the managed SonicNest output as the primary transaction. The output is transcoded, registered, probed, waveform-indexed, and persisted before an optional external-folder copy is attempted. This prevents a removable/inaccessible destination from invalidating a successful managed recording. Destination copies are collision-safe. Stop requests are consumed between items rather than forcibly terminating the active FFmpeg write.

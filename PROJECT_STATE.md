@@ -140,3 +140,12 @@ next_exact_tasks:
   - capture real screenshots and review native icon launch assets from tested release candidates
   - prepare signing and store metadata only after manual release gates are satisfied
 ```
+
+
+## Latest exact validation — external batch export
+
+- Validated revision: `54b727db6dd887fb0b2df2d36cabb2cd78671d7a`
+- Validation run: `31773250023`
+- Analyzer/unit tests: **SUCCESS**
+- Android/Linux/Windows/macOS/unsigned-iOS debug builds: **SUCCESS**
+- Repository classification remains **development preview** because physical-device, accessibility, long-duration, low-storage, signing, packaging, and store-release gates remain evidence-dependent.
