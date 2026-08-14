@@ -66,7 +66,8 @@ class RecordingSettings {
     required this.keepScreenAwake,
   });
 
-  factory RecordingSettings.defaults() => RecordingSettings.forPreset(QualityPreset.speech);
+  factory RecordingSettings.defaults() =>
+      RecordingSettings.forPreset(QualityPreset.speech);
 
   factory RecordingSettings.forPreset(QualityPreset preset) {
     return switch (preset) {
@@ -165,6 +166,35 @@ class RecordingSettings {
     };
   }
 
+  factory RecordingSettings.fromJson(Map<String, dynamic> json) {
+    T enumValue<T extends Enum>(List<T> values, String? name, T fallback) {
+      return values.where((value) => value.name == name).firstOrNull ?? fallback;
+    }
+
+    return RecordingSettings(
+      format: enumValue(
+        RecordingFormat.values,
+        json['format'] as String?,
+        RecordingFormat.m4a,
+      ),
+      preset: enumValue(
+        QualityPreset.values,
+        json['preset'] as String?,
+        QualityPreset.custom,
+      ),
+      bitRate: (json['bitRate'] as num?)?.toInt() ?? 128000,
+      sampleRate: (json['sampleRate'] as num?)?.toInt() ?? 44100,
+      channels: ((json['channels'] as num?)?.toInt() ?? 1).clamp(1, 2).toInt(),
+      autoGain: json['autoGain'] as bool? ?? false,
+      echoCancel: json['echoCancel'] as bool? ?? false,
+      noiseSuppress: json['noiseSuppress'] as bool? ?? false,
+      namingPrefix: json['namingPrefix'] as String? ?? 'Recording',
+      countdownSeconds:
+          ((json['countdownSeconds'] as num?)?.toInt() ?? 0).clamp(0, 10).toInt(),
+      keepScreenAwake: json['keepScreenAwake'] as bool? ?? false,
+    );
+  }
+
   final RecordingFormat format;
   final QualityPreset preset;
   final int bitRate;
@@ -218,26 +248,6 @@ class RecordingSettings {
         'countdownSeconds': countdownSeconds,
         'keepScreenAwake': keepScreenAwake,
       };
-
-  factory RecordingSettings.fromJson(Map<String, dynamic> json) {
-    T enumValue<T extends Enum>(List<T> values, String? name, T fallback) {
-      return values.where((v) => v.name == name).firstOrNull ?? fallback;
-    }
-
-    return RecordingSettings(
-      format: enumValue(RecordingFormat.values, json['format'] as String?, RecordingFormat.m4a),
-      preset: enumValue(QualityPreset.values, json['preset'] as String?, QualityPreset.custom),
-      bitRate: (json['bitRate'] as num?)?.toInt() ?? 128000,
-      sampleRate: (json['sampleRate'] as num?)?.toInt() ?? 44100,
-      channels: ((json['channels'] as num?)?.toInt() ?? 1).clamp(1, 2).toInt(),
-      autoGain: json['autoGain'] as bool? ?? false,
-      echoCancel: json['echoCancel'] as bool? ?? false,
-      noiseSuppress: json['noiseSuppress'] as bool? ?? false,
-      namingPrefix: json['namingPrefix'] as String? ?? 'Recording',
-      countdownSeconds: ((json['countdownSeconds'] as num?)?.toInt() ?? 0).clamp(0, 10).toInt(),
-      keepScreenAwake: json['keepScreenAwake'] as bool? ?? false,
-    );
-  }
 }
 
 extension _IterableFirstOrNull<T> on Iterable<T> {
