@@ -36,6 +36,9 @@ All notable project changes are documented here.
 - Linux desktop entry, AppStream metadata, deterministic hicolor icon installation, Debian package builder, package verifier, package checksum output, dedicated Linux package CI, and release-candidate `.deb` integration.
 - Hosted-runner Debian package install, installed-payload validation, virtual-display startup smoke, package-manager removal, and uninstall cleanup checks.
 - `docs/LINUX_PACKAGING.md` with deterministic build, structural verification, hosted-runner smoke, installation-test, and release-boundary guidance.
+- `docs/METADATA_INTEGRITY.md` with local-library corruption isolation, interrupted-replacement recovery, diagnostic-copy, and large-library regression guidance.
+- Dedicated audio-import validation service plus deterministic copy/probe/waveform failure cleanup tests.
+- Metadata regression tests for malformed field decoding, invalid document structure, per-record isolation, interrupted `.bak` recovery, corrupt-primary fallback, and a 3,000-entry filesystem round-trip.
 - `docs/RELEASING.md`, `RELEASE_NOTES.md`, and `TODO.md` for evidence-based release management.
 - Expanded manual QA matrix covering recorder lifecycle, codec fallback, smart naming, A-B looping, storage, editor processing, accessibility, localization readiness, stress testing, packaging, and signing/release boundaries.
 
@@ -51,9 +54,11 @@ All notable project changes are documented here.
 - Settings storage cleanup now routes through a public controller operation rather than presentation-layer notifier access.
 - FFprobe media-information access was aligned with the current package API to remove redundant `await` calls.
 - Multi-file conversion and direct original-file export are implemented as sequential, non-destructive workflows; remaining work is real-platform picker, low-storage, large-batch, and failure-recovery validation.
+- Multi-file audio import now processes selections independently so one missing/corrupt/unprobeable file does not block later valid selections; metadata-persistence failures remain fail-fast.
 - Recording tiles now expose the same action surface through secondary/right-click without removing touch/long-press behavior.
 - Permanent Android/Windows/Apple workflows now regenerate native SonicNest brand resources before compiling representative debug builds.
 - Release hardening now treats Debian package construction, structural verification, package-manager installation, installed GUI startup smoke, and uninstall cleanup as automated Linux gates while retaining representative-system microphone, accessibility, visual, upgrade, signing, and distribution evidence as manual gates.
+- Repository integrity policy now allowlists maintained permanent workflows and rejects leftover temporary/one-shot workflow files or permanent workflows requesting `contents: write`.
 
 ### Fixed
 - Android namespace generation that previously used the reserved/invalid `in` prefix.
@@ -70,6 +75,13 @@ All notable project changes are documented here.
 - Linux desktop entry no longer declares duplicate main menu categories.
 - Repository credential-material audit no longer false-positives on its own detector signature source while continuing to scan all other tracked text files.
 - AppStream developer metadata now uses the valid lowercase reverse-domain developer identifier required by current validation tooling.
+- Malformed optional recording metadata no longer throws through unchecked casts during Library startup.
+- A malformed individual metadata record no longer prevents valid neighboring records from loading.
+- Structurally corrupt metadata is preserved to collision-safe timestamped diagnostic copies instead of being silently discarded.
+- An interrupted metadata replacement that leaves only `recordings.json.bak` can now restore that backup automatically.
+- A corrupt primary metadata document can now fall back to a valid backup after preserving the corrupt primary for diagnosis.
+- Failed audio imports clean copied managed files after probe/waveform failures and no longer abort later selected files solely because one selected audio item is malformed.
+- Obsolete temporary/one-shot write-enabled continuation workflows were removed from `main`.
 
 ### Validation
 - Source revision `985f2dd1500a03b0b65ee58b142cf31f545b0cc5` is green in core Flutter CI run `31772136038`: formatting, analyzer, unit tests, Android debug APK, and Linux debug build all succeeded.
@@ -78,7 +90,9 @@ All notable project changes are documented here.
 - Historical Linux package source revision `f2c773e59b27a2aaac77e0590e20441ed7eba03f` is green in structural-only Linux Package CI run `31783749267`.
 - Current Linux package source revision `a07468b4b7c14a76b9bce537bbe0455e4539e6bf` is green in Linux Package CI run `31785105648`: release Linux build, `.deb` construction, structural verification, desktop/AppStream validation, checksum verification, package inspection, package-manager installation, installed-payload validation, virtual-display application startup smoke, package-manager removal, uninstall cleanup verification, and artifact upload all succeeded.
 - Repository audit run `31785152042` is green on revision `e0b9658a4cb18a61ac42046a6914ca080df7eb51` after making the installed-package smoke script and install/remove CI markers mandatory repository invariants.
-- The continuation intentionally does not convert representative-system microphone/background/interruption/routing/screen-wake/media-button/batch-performance/native-brand visual inspection/accessibility/upgrade/signing checks into false automated claims.
+- Windows run `31807141053` and Apple run `31807141166` are green on import-controller source revision `3bf63e69186a7a538f7d0587f3d361e00c2e29e9` for Windows debug, macOS debug, and unsigned iOS debug builds.
+- Core Flutter CI run `31807193932` has analyzer/unit tests and Linux debug build green on later import-test revision `a88aeadadda017b0aced4dbc25c8426a27364b77`; the exact full core result is recorded only after every job completes.
+- The continuation intentionally does not convert representative-system microphone/background/interruption/routing/screen-wake/media-button/batch-performance/native-brand visual inspection/accessibility/upgrade/signing or malformed-real-media corpus checks into false automated claims.
 - Exact newest workflow/run results are also recorded in `what_changed.md` and `PROJECT_STATE.md`.
 
 ## [0.1.0] - 2026-08-14
@@ -125,3 +139,13 @@ All notable project changes are documented here.
 - Hardened AppStream metadata after validation correctly rejected an invalid mixed-case developer identifier.
 - Structural-only package validation succeeded for source `f2c773e59b27a2aaac77e0590e20441ed7eba03f` in run `31783749267`.
 - The stronger install/start/uninstall package validation succeeded for source `a07468b4b7c14a76b9bce537bbe0455e4539e6bf` in run `31785105648`.
+
+### Metadata integrity and resilient import continuation
+- Added tolerant recording metadata decoding so malformed optional fields and nested markers cannot crash the entire Library load.
+- Added structural metadata validation, per-record isolation, timestamped corrupt-document preservation, interrupted `.bak` recovery, and valid-backup fallback after a corrupt primary.
+- Added deterministic metadata tests including a 3,000-entry filesystem save/load round-trip.
+- Added `AudioImportService` to isolate managed-copy, media-probe, waveform-extraction, and cleanup behavior for selected files.
+- Changed multi-file import so isolated malformed/missing audio selections are reported and skipped while later valid selections continue; genuine metadata persistence failures still stop safely and clean the just-created unregistered file.
+- Added direct import service tests for valid imports plus copy/probe/waveform failures.
+- Removed obsolete write-enabled continuation workflows and hardened the repository audit with a permanent workflow allowlist and read-only permission invariant.
+- Added metadata-integrity, contributor, build, user-guide, and troubleshooting documentation for the new reliability behavior and its manual-QA boundaries.
