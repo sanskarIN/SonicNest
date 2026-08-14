@@ -32,8 +32,11 @@ All notable project changes are documented here.
 - Deterministic SonicNest native brand raster generation from repository-controlled mark geometry.
 - Reproducible Android/iOS native splash generation and Android/iOS/macOS/Windows launcher-icon generation.
 - Bash and PowerShell native-brand application commands plus dedicated branding documentation.
+- Debian `.deb` selected as the initial repository-supported Linux package target.
+- Linux desktop entry, AppStream metadata, deterministic hicolor icon installation, Debian package builder, package verifier, package checksum output, dedicated Linux package CI, and release-candidate `.deb` integration.
+- `docs/LINUX_PACKAGING.md` with deterministic build, validation, installation-test, and release-boundary guidance.
 - `docs/RELEASING.md`, `RELEASE_NOTES.md`, and `TODO.md` for evidence-based release management.
-- Expanded manual QA matrix covering recorder lifecycle, codec fallback, smart naming, A-B looping, storage, editor processing, accessibility, localization readiness, stress testing, and signing/release boundaries.
+- Expanded manual QA matrix covering recorder lifecycle, codec fallback, smart naming, A-B looping, storage, editor processing, accessibility, localization readiness, stress testing, packaging, and signing/release boundaries.
 
 ### Changed
 - Platform organization/namespace standardized on `io.github.sanskarin`.
@@ -49,6 +52,7 @@ All notable project changes are documented here.
 - Multi-file conversion and direct original-file export are implemented as sequential, non-destructive workflows; remaining work is real-platform picker, low-storage, large-batch, and failure-recovery validation.
 - Recording tiles now expose the same action surface through secondary/right-click without removing touch/long-press behavior.
 - Permanent Android/Windows/Apple workflows now regenerate native SonicNest brand resources before compiling representative debug builds.
+- Release hardening now treats Debian package construction/structural verification as an automated Linux gate while retaining real installation, microphone, accessibility, visual, and signing evidence as manual gates.
 
 ### Fixed
 - Android namespace generation that previously used the reserved/invalid `in` prefix.
@@ -61,12 +65,16 @@ All notable project changes are documented here.
 - Record keyboard shortcut behavior during an active countdown.
 - Screen-wake cleanup after stop, cancel, recorder failure, and service disposal.
 - Superseded first-pass native raster generator removed so one type-safe deterministic implementation remains canonical.
+- Linux Debian verifier checksum validation no longer depends on the current working directory.
+- Linux desktop entry no longer declares duplicate main menu categories.
+- Repository credential-material audit no longer false-positives on its own detector signature source while continuing to scan all other tracked text files.
 
 ### Validation
 - Source revision `985f2dd1500a03b0b65ee58b142cf31f545b0cc5` is green in core Flutter CI run `31772136038`: formatting, analyzer, unit tests, Android debug APK, and Linux debug build all succeeded.
 - The same source revision is green in Windows run `31772135970` and Apple run `31772136081` for Windows debug, macOS debug, and unsigned iOS debug builds.
 - Native branding source revision `40c4a758debef136c2d8c977c321446cca2697cd` is green in core run `31776174696`, Windows run `31776174725`, and Apple run `31776174715`; deterministic branding generation, analyzer/tests, Android/Linux/Windows/macOS debug builds, and unsigned iOS debug build all succeeded.
-- The continuation intentionally does not convert physical-device microphone/background/interruption/routing/screen-wake/media-button/batch-performance/native-brand visual inspection checks into false automated claims.
+- Linux package source revision `dd31bf7800becd09424309cc99e42d324f4f8f8e` is green in Linux Package CI run `31783018282`: release Linux build, `.deb` construction, package verification, desktop/AppStream validation, package inspection, checksum verification, and artifact upload all succeeded.
+- The continuation intentionally does not convert physical-device microphone/background/interruption/routing/screen-wake/media-button/batch-performance/native-brand visual inspection/package-installation checks into false automated claims.
 - Exact newest workflow/run results are also recorded in `what_changed.md` and `PROJECT_STATE.md`.
 
 ## [0.1.0] - 2026-08-14
@@ -101,3 +109,12 @@ All notable project changes are documented here.
 - Integrated brand generation into permanent core, Windows, and Apple build workflows.
 - Added `docs/BRANDING.md` and updated build/quick-start guidance.
 - Validated native branding source revision `40c4a758debef136c2d8c977c321446cca2697cd` in core run `31776174696`, Windows run `31776174725`, and Apple run `31776174715`.
+
+### Linux Debian packaging continuation
+- Selected Debian `.deb` as the initial repository-supported Linux installation package.
+- Added deterministic desktop launcher, AppStream metadata, SonicNest hicolor icon installation, licensing notices, package control metadata, and SHA-256 output.
+- Added package construction and structural verification scripts plus a dedicated GitHub Actions package workflow.
+- Added `.deb` output to the manual release-candidate workflow while preserving non-public release warnings.
+- Added Linux packaging documentation and synchronized branding/build/release/roadmap/TODO/project-state documentation.
+- Fixed an initial verifier checksum-path failure and a desktop category validation warning in focused follow-up commits.
+- Validated source revision `dd31bf7800becd09424309cc99e42d324f4f8f8e` in Linux Package CI run `31783018282` with the complete release-build/package/verify/inspect/upload job succeeding.
