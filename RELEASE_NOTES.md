@@ -2,7 +2,7 @@
 
 ## v0.1.0 — Development Preview
 
-SonicNest is an offline-first cross-platform sound and voice recorder built with Flutter. This development preview establishes the recorder, recording library, playback, editing, platform bootstrap, CI, privacy, and open-source foundations required for later stable releases.
+SonicNest is an offline-first cross-platform sound and voice recorder built with Flutter. This development preview establishes the recorder, recording library, playback, editing, native branding, platform bootstrap, CI, privacy, and open-source foundations required for later stable releases.
 
 ### Recorder
 
@@ -26,6 +26,7 @@ SonicNest is an offline-first cross-platform sound and voice recorder built with
 - Trash, restore, permanent deletion, and empty-Trash workflow.
 - Import, duplicate, export copy, and system sharing.
 - Multi-recording batch format conversion with target-format selection, progress, per-file failure isolation, retained source recordings, and successful-output registration in the managed library.
+- Direct multi-file original export to a user-selected folder without transcoding, with collision-safe destination naming and per-file failure isolation.
 - Desktop secondary/right-click access to recording actions while preserving touch and explicit menu interactions.
 - Managed storage accounting for recordings, Trash, and temporary processing files.
 
@@ -56,24 +57,34 @@ SonicNest is an offline-first cross-platform sound and voice recorder built with
 - Reduced-motion preference and semantic labels.
 - Keyboard navigation and recorder/player desktop shortcuts.
 - Branded Flutter startup screen with error recovery.
-- English localization-ready presentation layer for future translation expansion.
+- Primary Flutter presentation centralized in the localization catalog; English is currently shipped.
+- Deterministic native launcher/application branding for Android, iOS, macOS, and Windows from repository-controlled SonicNest mark geometry.
+- Reproducible native Android/iOS splash resources, including Android 12+ launch configuration and light/dark launch colors.
 - About, privacy, support, GitHub, and Buy Me a Coffee integration.
 
 ### Project quality
 
 - Reproducible host-project bootstrap for Android, iOS, macOS, Windows, and Linux.
-- GitHub Actions for analyzer/unit tests plus representative platform debug builds.
-- Source revision `985f2dd1500a03b0b65ee58b142cf31f545b0cc5` passed analyzer/unit tests and Android, Linux, Windows, macOS, and unsigned iOS debug builds.
-- Apache-2.0 license, contribution/security/privacy/support documentation, architecture/build/codec/QA documentation, and release procedure.
+- Reproducible native-brand generation via Bash and PowerShell helpers.
+- GitHub Actions for analyzer/unit tests plus representative platform debug builds that apply native branding before Android, Windows, macOS, and iOS compilation.
+- Native-branding source revision `40c4a758debef136c2d8c977c321446cca2697cd` passed deterministic branding generation, analyzer/unit tests, Android and Linux core builds in run `31776174696`, Windows debug build in run `31776174725`, and macOS/unsigned-iOS debug builds in run `31776174715`.
+- Apache-2.0 license, contribution/security/privacy/support documentation, architecture/build/branding/codec/QA documentation, and release procedure.
 
 ## Before v1.0.0
 
-This preview must not be treated as a stable public recorder release until the physical-device, interruption, background, low-storage, long-recording, batch-performance, accessibility, signed-packaging, and store-release gates in `docs/QA_CHECKLIST.md` and `docs/RELEASING.md` have been completed with real evidence.
-
+This preview must not be treated as a stable public recorder release until the physical-device, interruption, background, low-storage, long-recording, batch-performance, accessibility, native-brand visual-inspection, signed-packaging, and store-release gates in `docs/QA_CHECKLIST.md` and `docs/RELEASING.md` have been completed with real evidence.
 
 ### Batch export destination update
 
 - Batch Convert can optionally copy successful converted files into a user-selected folder.
+- Selected original recordings can also be copied directly to a user-selected folder without transcoding.
 - Existing destination files are protected with collision-safe numbered names.
 - External-copy failures are reported independently from managed conversion failures.
-- Long batches can stop safely after the current file instead of intentionally interrupting an in-progress output write.
+- Long conversion batches can stop safely after the current file instead of intentionally interrupting an in-progress output write.
+
+### Native branding update
+
+- SonicNest native launcher/splash raster sources are generated deterministically from project-controlled mark geometry rather than maintained as drifting binary source files.
+- Android adaptive/full/monochrome launcher inputs, iOS icons, macOS icons, Windows icons, and Android/iOS native splash resources are generated reproducibly.
+- Generated branding compiled successfully in representative Android, Windows, macOS, and unsigned-iOS debug builds.
+- Final visual approval remains a real release-candidate QA task, especially for launcher masks/crops, Windows shell surfaces, Apple small icon sizes, dark-mode launch screens, and final signed packages.
