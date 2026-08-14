@@ -34,18 +34,24 @@ REQUIRED_FILES = (
     "docs/BUILDING.md",
     "docs/BRANDING.md",
     "docs/CODECS.md",
+    "docs/LINUX_PACKAGING.md",
     "docs/QA_CHECKLIST.md",
     "docs/RELEASING.md",
     "docs/RELEASE_EVIDENCE_TEMPLATE.md",
     "docs/UNSIGNED_ARTIFACTS.md",
     "docs/USER_GUIDE.md",
     "docs/TROUBLESHOOTING.md",
+    "packaging/linux/debian/sonicnest.desktop",
+    "packaging/linux/debian/io.github.sanskarIN.SonicNest.metainfo.xml",
     "tool/bootstrap_platforms.sh",
     "tool/bootstrap_platforms.ps1",
     "tool/apply_branding.sh",
     "tool/apply_branding.ps1",
     "tool/generate_brand_assets_v2.dart",
+    "tool/build_linux_deb.sh",
+    "tool/verify_linux_deb.sh",
     ".github/workflows/ci.yml",
+    ".github/workflows/linux-package.yml",
     ".github/workflows/windows.yml",
     ".github/workflows/macos.yml",
     ".github/workflows/release-candidate.yml",
@@ -166,11 +172,19 @@ def audit() -> list[str]:
                 errors.append(f"Possible private credential material detected in: {relative}")
                 break
 
-    license_text = (ROOT / "LICENSE").read_text(encoding="utf-8", errors="ignore") if (ROOT / "LICENSE").exists() else ""
+    license_text = (
+        (ROOT / "LICENSE").read_text(encoding="utf-8", errors="ignore")
+        if (ROOT / "LICENSE").exists()
+        else ""
+    )
     if "Apache License" not in license_text or "Version 2.0" not in license_text:
         errors.append("LICENSE does not look like the expected Apache License 2.0 text.")
 
-    pubspec = (ROOT / "pubspec.yaml").read_text(encoding="utf-8", errors="ignore") if (ROOT / "pubspec.yaml").exists() else ""
+    pubspec = (
+        (ROOT / "pubspec.yaml").read_text(encoding="utf-8", errors="ignore")
+        if (ROOT / "pubspec.yaml").exists()
+        else ""
+    )
     required_pubspec_fragments = (
         "name: sonic_nest",
         "publish_to: 'none'",
@@ -182,6 +196,53 @@ def audit() -> list[str]:
         if fragment not in pubspec:
             errors.append(f"pubspec.yaml is missing required project invariant: {fragment}")
 
+    desktop_file = ROOT / "packaging/linux/debian/sonicnest.desktop"
+    if desktop_file.exists():
+        desktop_text = desktop_file.read_text(encoding="utf-8", errors="ignore")
+        for fragment in (
+            "Type=Application",
+            "Name=SonicNest",
+            "Exec=/opt/sonicnest/sonic_nest",
+            "Icon=sonicnest",
+            "Terminal=false",
+        ):
+            if fragment not in desktop_text:
+                errors.append(
+                    f"sonicnest.desktop is missing required package invariant: {fragment}"
+                )
+
+    metainfo_file = (
+        ROOT / "packaging/linux/debian/io.github.sanskarIN.SonicNest.metainfo.xml"
+    )
+    if metainfo_file.exists():
+        metainfo_text = metainfo_file.read_text(encoding="utf-8", errors="ignore")
+        for fragment in (
+            "<id>io.github.sanskarIN.SonicNest</id>",
+            '<launchable type="desktop-id">sonicnest.desktop</launchable>',
+            "<binary>sonic_nest</binary>",
+            "<project_license>Apache-2.0</project_license>",
+        ):
+            if fragment not in metainfo_text:
+                errors.append(
+                    "Linux AppStream metadata is missing required package invariant: "
+                    f"{fragment}"
+                )
+
+    linux_builder = ROOT / "tool/build_linux_deb.sh"
+    if linux_builder.exists():
+        builder_text = linux_builder.read_text(encoding="utf-8", errors="ignore")
+        for fragment in (
+            "dpkg-deb --root-owner-group --build",
+            "/usr/share/applications",
+            "/usr/share/icons/hicolor/512x512/apps",
+            "/usr/share/metainfo",
+            "sha256sum",
+        ):
+            if fragment not in builder_text:
+                errors.append(
+                    f"build_linux_deb.sh is missing required packaging invariant: {fragment}"
+                )
+
     release_workflow = ROOT / ".github/workflows/release-candidate.yml"
     if release_workflow.exists():
         workflow_text = release_workflow.read_text(encoding="utf-8", errors="ignore")
@@ -191,6 +252,8 @@ def audit() -> list[str]:
             "SHA256SUMS.txt",
             "actions/upload-artifact@v4",
             "contents: read",
+            "tool/build_linux_deb.sh release",
+            "tool/verify_linux_deb.sh",
         ):
             if fragment not in workflow_text:
                 errors.append(
@@ -201,7 +264,28 @@ def audit() -> list[str]:
                 "Permanent release-candidate workflow must not request contents: write."
             )
 
-    gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8", errors="ignore") if (ROOT / ".gitignore").exists() else ""
+    linux_package_workflow = ROOT / ".github/workflows/linux-package.yml"
+    if linux_package_workflow.exists():
+        workflow_text = linux_package_workflow.read_text(
+            encoding="utf-8", errors="ignore"
+        )
+        for fragment in (
+            "flutter build linux --release",
+            "tool/build_linux_deb.sh release",
+            "tool/verify_linux_deb.sh",
+            "actions/upload-artifact@v4",
+            "contents: read",
+        ):
+            if fragment not in workflow_text:
+                errors.append(
+                    f"linux-package.yml is missing required validation marker: {fragment}"
+                )
+
+    gitignore = (
+        (ROOT / ".gitignore").read_text(encoding="utf-8", errors="ignore")
+        if (ROOT / ".gitignore").exists()
+        else ""
+    )
     for fragment in (
         "*.jks",
         "*.keystore",
@@ -217,7 +301,9 @@ def audit() -> list[str]:
         errors.append("Superseded brand generator is still tracked.")
 
     if (ROOT / "what_changed.md").exists():
-        line_count = len((ROOT / "what_changed.md").read_text(encoding="utf-8").splitlines())
+        line_count = len(
+            (ROOT / "what_changed.md").read_text(encoding="utf-8").splitlines()
+        )
         if line_count < 100:
             errors.append(
                 "what_changed.md is unexpectedly short; continuation history may have been truncated."
