@@ -1,0 +1,8 @@
+SonicNest
+Copyright 2026 Sanskar
+
+Licensed under the Apache License, Version 2.0.
+
+SonicNest uses third-party open-source packages. Runtime codec capabilities can
+include FFmpeg and external codec libraries through ffmpeg_kit_flutter_new_audio.
+See docs/CODECS.md and the dependency licenses resolved by `flutter pub deps`.

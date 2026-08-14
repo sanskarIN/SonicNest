@@ -1,0 +1,21 @@
+# Manual QA Checklist
+
+- [ ] First launch and microphone permission accepted.
+- [ ] Permission denied and permanently denied paths remain understandable.
+- [ ] Start, pause, resume, stop, cancel, and rapid repeated taps.
+- [ ] M4A, WAV, FLAC, Opus, MP3, OGG, AAC output paths on supported platforms.
+- [ ] Bitrate/sample-rate/channel presets and custom validation.
+- [ ] Built-in, wired, USB, and Bluetooth input changes where available.
+- [ ] 30-minute and multi-hour recording soak tests.
+- [ ] Screen lock/background/interruption behavior.
+- [ ] Storage-full behavior and safe recovery.
+- [ ] Unicode/long/duplicate filenames.
+- [ ] Playback seek/speed/volume/repeat/silence skip.
+- [ ] Import valid and malformed audio.
+- [ ] Trim, split, merge, normalize, fade, silence removal, format conversion.
+- [ ] Rename, duplicate, favorite, pin, tag, folder, trash, restore, permanent delete.
+- [ ] Search, sort, and filter behavior at large library sizes.
+- [ ] Light/dark/system themes and text scaling.
+- [ ] Screen-reader labels and keyboard navigation.
+- [ ] External GitHub/BMC/email links.
+- [ ] Upgrade/reinstall behavior and metadata migration.
