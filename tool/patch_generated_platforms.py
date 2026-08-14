@@ -26,9 +26,10 @@ def patch_entitlements(path: Path) -> None:
         return
     with path.open("rb") as handle:
         data = plistlib.load(handle)
-    data["com.apple.security.device.audio-input"] = True
-    with path.open("wb") as handle:
-        plistlib.dump(data, handle, sort_keys=False)
+    if data.get("com.apple.security.device.audio-input") is not True:
+        data["com.apple.security.device.audio-input"] = True
+        with path.open("wb") as handle:
+            plistlib.dump(data, handle, sort_keys=False)
 
 
 patch_plist(
@@ -50,7 +51,7 @@ patch_entitlements(ROOT / "macos" / "Runner" / "Release.entitlements")
 
 for path in [
     ROOT / "windows" / "runner" / "main.cpp",
-    ROOT / "linux" / "my_application.cc",
+    ROOT / "linux" / "runner" / "my_application.cc",
 ]:
     if not path.exists():
         continue
