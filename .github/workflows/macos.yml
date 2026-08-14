@@ -7,6 +7,7 @@ on:
       - 'lib/**'
       - 'macos/**'
       - 'ios/**'
+      - 'assets/**'
       - 'pubspec.yaml'
       - 'tool/**'
       - '.github/workflows/macos.yml'
@@ -16,6 +17,7 @@ on:
       - 'lib/**'
       - 'macos/**'
       - 'ios/**'
+      - 'assets/**'
       - 'pubspec.yaml'
       - 'tool/**'
       - '.github/workflows/macos.yml'
@@ -45,6 +47,8 @@ jobs:
         run: bash tool/bootstrap_platforms.sh
       - name: Resolve dependencies
         run: flutter pub get
+      - name: Apply SonicNest native branding
+        run: bash tool/apply_branding.sh
       - name: Build macOS debug application
         run: flutter build macos --debug
 
@@ -62,5 +66,7 @@ jobs:
         run: bash tool/bootstrap_platforms.sh
       - name: Resolve dependencies
         run: flutter pub get
+      - name: Apply SonicNest native branding
+        run: bash tool/apply_branding.sh
       - name: Build iOS debug application without signing
         run: flutter build ios --debug --no-codesign
