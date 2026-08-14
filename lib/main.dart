@@ -42,6 +42,6 @@ Future<void> main() async {
     processor: processor,
     external: ExternalActions(),
   );
-  await controller.initialize();
-  runApp(SonicNestApp(controller: controller));
+
+  runApp(SonicNestBootstrap(controller: controller));
 }
