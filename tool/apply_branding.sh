@@ -14,7 +14,7 @@ if [[ ! -d android || ! -d ios || ! -d macos || ! -d windows ]]; then
   exit 2
 fi
 
-dart tool/generate_brand_assets.dart
+dart tool/generate_brand_assets_v2.dart
 
 dart run flutter_launcher_icons
 dart run flutter_native_splash:create
