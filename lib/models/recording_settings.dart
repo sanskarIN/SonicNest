@@ -1,5 +1,7 @@
 import 'package:record/record.dart';
 
+import '../core/naming_template.dart';
+
 enum RecordingFormat { m4a, wav, flac, opus, mp3, ogg, aac }
 
 enum QualityPreset {
@@ -62,6 +64,9 @@ class RecordingSettings {
     required this.echoCancel,
     required this.noiseSuppress,
     required this.namingPrefix,
+    required this.namingTemplate,
+    required this.namingSuffix,
+    required this.namingCategory,
     required this.countdownSeconds,
     required this.keepScreenAwake,
   });
@@ -81,6 +86,9 @@ class RecordingSettings {
           echoCancel: true,
           noiseSuppress: true,
           namingPrefix: 'Recording',
+          namingTemplate: defaultRecordingNameTemplate,
+          namingSuffix: '',
+          namingCategory: 'Speech',
           countdownSeconds: 0,
           keepScreenAwake: false,
         ),
@@ -95,6 +103,14 @@ class RecordingSettings {
           echoCancel: true,
           noiseSuppress: true,
           namingPrefix: 'Recording',
+          namingTemplate: defaultRecordingNameTemplate,
+          namingSuffix: '',
+          namingCategory: switch (preset) {
+            QualityPreset.meeting => 'Meeting',
+            QualityPreset.lecture => 'Lecture',
+            QualityPreset.interview => 'Interview',
+            _ => 'Recording',
+          },
           countdownSeconds: 0,
           keepScreenAwake: false,
         ),
@@ -108,6 +124,9 @@ class RecordingSettings {
           echoCancel: false,
           noiseSuppress: true,
           namingPrefix: 'Podcast',
+          namingTemplate: defaultRecordingNameTemplate,
+          namingSuffix: '',
+          namingCategory: 'Podcast',
           countdownSeconds: 3,
           keepScreenAwake: true,
         ),
@@ -121,6 +140,9 @@ class RecordingSettings {
           echoCancel: false,
           noiseSuppress: false,
           namingPrefix: 'Audio',
+          namingTemplate: defaultRecordingNameTemplate,
+          namingSuffix: '',
+          namingCategory: preset == QualityPreset.music ? 'Music' : 'High Quality',
           countdownSeconds: 0,
           keepScreenAwake: true,
         ),
@@ -134,6 +156,9 @@ class RecordingSettings {
           echoCancel: false,
           noiseSuppress: false,
           namingPrefix: 'Lossless',
+          namingTemplate: defaultRecordingNameTemplate,
+          namingSuffix: '',
+          namingCategory: 'Lossless',
           countdownSeconds: 0,
           keepScreenAwake: true,
         ),
@@ -147,6 +172,9 @@ class RecordingSettings {
           echoCancel: true,
           noiseSuppress: true,
           namingPrefix: 'Recording',
+          namingTemplate: defaultRecordingNameTemplate,
+          namingSuffix: '',
+          namingCategory: 'Small File',
           countdownSeconds: 0,
           keepScreenAwake: false,
         ),
@@ -160,6 +188,9 @@ class RecordingSettings {
           echoCancel: false,
           noiseSuppress: false,
           namingPrefix: 'Recording',
+          namingTemplate: defaultRecordingNameTemplate,
+          namingSuffix: '',
+          namingCategory: '',
           countdownSeconds: 0,
           keepScreenAwake: false,
         ),
@@ -189,6 +220,10 @@ class RecordingSettings {
       echoCancel: json['echoCancel'] as bool? ?? false,
       noiseSuppress: json['noiseSuppress'] as bool? ?? false,
       namingPrefix: json['namingPrefix'] as String? ?? 'Recording',
+      namingTemplate:
+          json['namingTemplate'] as String? ?? defaultRecordingNameTemplate,
+      namingSuffix: json['namingSuffix'] as String? ?? '',
+      namingCategory: json['namingCategory'] as String? ?? '',
       countdownSeconds:
           ((json['countdownSeconds'] as num?)?.toInt() ?? 0).clamp(0, 10).toInt(),
       keepScreenAwake: json['keepScreenAwake'] as bool? ?? false,
@@ -204,6 +239,9 @@ class RecordingSettings {
   final bool echoCancel;
   final bool noiseSuppress;
   final String namingPrefix;
+  final String namingTemplate;
+  final String namingSuffix;
+  final String namingCategory;
   final int countdownSeconds;
   final bool keepScreenAwake;
 
@@ -217,6 +255,9 @@ class RecordingSettings {
     bool? echoCancel,
     bool? noiseSuppress,
     String? namingPrefix,
+    String? namingTemplate,
+    String? namingSuffix,
+    String? namingCategory,
     int? countdownSeconds,
     bool? keepScreenAwake,
   }) {
@@ -230,6 +271,9 @@ class RecordingSettings {
       echoCancel: echoCancel ?? this.echoCancel,
       noiseSuppress: noiseSuppress ?? this.noiseSuppress,
       namingPrefix: namingPrefix ?? this.namingPrefix,
+      namingTemplate: namingTemplate ?? this.namingTemplate,
+      namingSuffix: namingSuffix ?? this.namingSuffix,
+      namingCategory: namingCategory ?? this.namingCategory,
       countdownSeconds: countdownSeconds ?? this.countdownSeconds,
       keepScreenAwake: keepScreenAwake ?? this.keepScreenAwake,
     );
@@ -245,6 +289,9 @@ class RecordingSettings {
         'echoCancel': echoCancel,
         'noiseSuppress': noiseSuppress,
         'namingPrefix': namingPrefix,
+        'namingTemplate': namingTemplate,
+        'namingSuffix': namingSuffix,
+        'namingCategory': namingCategory,
         'countdownSeconds': countdownSeconds,
         'keepScreenAwake': keepScreenAwake,
       };
