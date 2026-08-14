@@ -67,8 +67,15 @@ if command -v appstreamcli >/dev/null 2>&1; then
   appstreamcli validate --no-net "$METAINFO"
 fi
 
-if [[ -f "$PACKAGE_PATH.sha256" ]]; then
-  (cd "$(dirname "$PACKAGE_PATH")" && sha256sum -c "$(basename "$PACKAGE_PATH.sha256")")
+CHECKSUM_PATH="$PACKAGE_PATH.sha256"
+if [[ -f "$CHECKSUM_PATH" ]]; then
+  EXPECTED_CHECKSUM="$(awk 'NR == 1 { print $1 }' "$CHECKSUM_PATH")"
+  ACTUAL_CHECKSUM="$(sha256sum "$PACKAGE_PATH" | awk '{ print $1 }')"
+  if [[ -z "$EXPECTED_CHECKSUM" || "$EXPECTED_CHECKSUM" != "$ACTUAL_CHECKSUM" ]]; then
+    echo "Debian package checksum verification failed for: $PACKAGE_PATH" >&2
+    exit 3
+  fi
+  echo "$ACTUAL_CHECKSUM  $PACKAGE_PATH"
 fi
 
 echo "Verified Debian package: $PACKAGE_PATH"
