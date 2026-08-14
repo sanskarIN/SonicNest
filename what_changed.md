@@ -218,9 +218,9 @@ Apple CI:
 - macOS debug build: SUCCESS
 - iOS debug no-codesign build: SUCCESS
 
-### Latest code-validation cycle
+### Latest code-validation cycle recorded before the advanced continuation
 
-Source code commit under validation: `59fe40b761ad52920d8640a4edb23b680db234c8`.
+Source code commit under validation at that point: `59fe40b761ad52920d8640a4edb23b680db234c8`.
 
 Core Flutter CI run `31769582811` reached:
 - Platform host generation: SUCCESS
@@ -228,14 +228,18 @@ Core Flutter CI run `31769582811` reached:
 - Dart formatting: SUCCESS
 - Flutter static analysis: SUCCESS
 - Unit tests: SUCCESS
-- Android debug APK: still running when this documentation commit was created
-- Linux debug build: still running when this documentation commit was created
+- Linux debug build subsequently completed successfully.
+- The Android build from that specific run was cancelled by a newer commit while compiling, not recorded as a source failure.
 
-Windows run `31769582816` and Apple run `31769582823` were also active when the documentation synchronization commits began. New documentation-only commits trigger replacement workflow runs because the repository uses concurrency cancellation.
+Windows run `31769582816` subsequently completed successfully.
+
+Apple run `31769582823` subsequently completed successfully for macOS and unsigned iOS.
+
+New commits trigger replacement workflow runs because the repository uses concurrency cancellation.
 
 Automated compilation does not substitute for microphone hardware testing, interruption/background testing, long-duration recording tests, low-storage behavior, audio routing, accessibility testing with real assistive technologies, or signed store/release packaging.
 
-## Tests present
+## Tests present before the advanced continuation
 
 - Safe filename sanitization and extension replacement.
 - Windows reserved filename handling.
@@ -264,7 +268,7 @@ Present and maintained:
 - CI workflows
 - architecture/build/codec/QA documentation
 
-## Important commits from this continuation/hardening pass
+## Important commits from the earlier continuation/hardening pass
 
 The work was intentionally divided into many focused commits. Notable commit messages include:
 
@@ -314,9 +318,366 @@ The work was intentionally divided into many focused commits. Notable commit mes
 - `docs: synchronize project state with media session integration`
 - `docs: sync playback roadmap`
 - `docs: document media session playback support`
-- this continuation-log synchronization commit
+- continuation-log synchronization commits
 
 Earlier foundation commits are preserved in the repository history and remain part of the same project.
+
+---
+
+# Advanced continuation pass — current work
+
+This section records the next development pass requested after the earlier hardening cycle. It is intentionally additive; the prior implementation history above has not been shortened or discarded.
+
+## Smart recording names
+
+Added `lib/core/naming_template.dart` and extended recording settings so automatic names are no longer limited to a fixed prefix/timestamp pattern.
+
+Supported template tokens now include:
+
+- `{prefix}`
+- `{suffix}`
+- `{category}`
+- `{date}`
+- `{time}`
+- `{year}`
+- `{month}`
+- `{day}`
+- `{hour}`
+- `{minute}`
+- `{second}`
+- `{sequence}`
+
+Rendered names continue through SonicNest's filesystem-safe filename sanitizer. Empty optional tokens collapse repeated separators. Sequence allocation accounts for saved recordings and Trash files to reduce accidental collisions, while the existing unique-path allocator remains the final collision guard.
+
+Settings persistence now includes:
+
+- `namingTemplate`
+- `namingSuffix`
+- `namingCategory`
+- existing `namingPrefix`
+
+Older JSON settings without the new fields load safe defaults.
+
+New test coverage was added for token rendering, empty-token cleanup, date/time/sequence formatting, naming persistence, and legacy setting fallback.
+
+Focused commits:
+
+- `feat: add configurable recording name templates`
+- `feat: persist smart recording naming options`
+- `feat: use smart naming templates for recordings`
+- `test: cover smart recording name templates`
+- `test: cover recording naming settings persistence`
+
+## Managed storage
+
+`StorageService` now exposes managed storage statistics for:
+
+- recordings bytes/count
+- Trash bytes/count
+- temporary processing bytes/count
+- total managed bytes
+
+It also exposes guarded temporary-file cleanup. Files that disappear during a statistics scan are tolerated, and cleanup does not forcibly fail the application when a platform codec still owns a temporary file.
+
+The controller blocks temporary cleanup while recording is active. Settings surfaces the managed-storage totals and a temporary cleanup action.
+
+Focused commits:
+
+- `feat: add managed storage statistics and cleanup`
+- `feat: expose smart naming and storage management settings`
+- `fix: refresh storage safely after temporary cleanup`
+
+## Branded startup flow
+
+Added a Flutter startup presentation with:
+
+- SonicNest brand mark
+- app name/tagline
+- startup progress state
+- startup error message
+- retry action
+- developer credit
+
+Controller initialization now happens after `runApp`, allowing Flutter to render a branded state while metadata/settings initialize. This does not falsely claim that every platform's native pre-Flutter launch-screen artwork has already been manually verified.
+
+Focused commits:
+
+- `feat: add fast branded startup splash screen`
+- `feat: bootstrap app through branded splash`
+- `feat: show startup UI while project state initializes`
+
+## Recording countdown
+
+The stored countdown preference is now functional rather than presentation-only.
+
+Recorder lifecycle now distinguishes:
+
+- idle
+- countdown
+- recording
+- paused
+- processing
+- error
+
+Countdown behavior:
+
+- supports configured 0/3/5/10 second choices
+- displays remaining seconds
+- can be cancelled without creating a recording
+- delays foreground recording startup until countdown finishes
+- keeps pause/resume and marker operations unavailable until microphone capture has actually begun
+- uses a generation token so cancellation prevents a delayed countdown from starting capture later
+
+F9 desktop behavior is countdown-aware: it starts from idle, cancels countdown, and stops active capture as appropriate.
+
+Focused commits:
+
+- `feat: implement cancellable recording countdown`
+- `feat: present and cancel recording countdown`
+- `fix: make record shortcut countdown aware`
+
+## Keep-screen-awake behavior
+
+The previously stored `keepScreenAwake` recording preference now controls an actual screen wake lock during active capture through the project's pinned cross-platform wake-lock dependency.
+
+Lifecycle cleanup releases the screen wake state after:
+
+- normal Stop
+- Discard/cancel
+- recorder startup/runtime error
+- recorder service disposal
+
+The wake lock begins after countdown finishes, not while the user is merely waiting for the countdown. This is a display wake preference; it is not presented as a substitute for each platform's background-execution rules.
+
+Focused commits:
+
+- `feat: add cross-platform screen wake support`
+- `feat: honor keep-screen-awake recording preference`
+- `fix: keep wakelock dependency compatible with platform graph`
+
+## Library filtering expansion
+
+The controller now supports:
+
+- exact case-insensitive tag filtering
+- from-date filtering
+- inclusive through-date filtering
+- combined tag/date filtering
+- a derived set of available tags
+- clear-all advanced filters
+
+A dedicated responsive advanced-filter control opens a bottom sheet with tag and date selectors. Existing search/scope/format/folder behavior remains in place.
+
+Focused commits:
+
+- `feat: add tag and date library filters`
+- `feat: add advanced tag and date filter controls`
+- `feat: surface advanced library filters across layouts`
+
+## Playback expansion
+
+Player service now includes application-managed A-B selection looping:
+
+- set loop start/end
+- clamp selection to loaded duration
+- seek to A when playback reaches B
+- clear selection loop
+- avoid simultaneous repeat-one and A-B loop modes
+
+Player UI now adds:
+
+- A-B loop range dialog
+- loop selection visualization on the waveform
+- loop clear action
+- previous recording
+- next recording
+- previous/next traversal excludes Trash entries
+
+Focused commits:
+
+- `feat: add selection loop playback support`
+- `feat: add previous next and A-B loop playback controls`
+
+A-B timing and OS-level media-session behavior remain physical-device QA items.
+
+## Editor expansion
+
+Added `AdvancedAudioProcessor` for additional FFmpeg-backed, non-destructive operations. All operations create new files; they do not overwrite the original recording.
+
+New processing capabilities:
+
+- cut a selected middle range from a copy by concatenating audio before/after the selection
+- insert generated silence at the current playhead
+- apply bounded gain in dB
+- high-pass filtering
+- low-pass filtering
+- compressor processing
+- limiter processing
+- basic FFT-domain noise cleanup
+
+The editor UI exposes:
+
+- Keep selection as copy
+- Cut selection from copy
+- Normalize
+- Remove silence
+- Fade in/out
+- Split at playhead
+- Merge another file
+- Basic noise cleanup
+- Compressor
+- Limiter
+- High-pass voice filter
+- Low-pass filter
+- gain slider and gain-adjusted export
+- silence duration picker and insertion at playhead
+- existing format export presets
+
+Bookmark positions are adjusted when a cut removes time or silence insertion adds time. Markers within a removed cut range are omitted from the resulting copy.
+
+Focused commits:
+
+- `feat: add advanced non-destructive audio processing`
+- `feat: expand editor with cut silence gain and cleanup tools`
+
+These DSP presets are functional processing paths, but they are not labeled as mastering-grade or perfect noise removal. Listening tests remain required before changing/tuning defaults.
+
+## Desktop shortcut expansion
+
+In addition to Ctrl+1 through Ctrl+5 navigation:
+
+- F9: start/stop recording or cancel countdown
+- F10: pause/resume recording
+- Ctrl+Alt+P: play/pause loaded audio
+- Ctrl+Alt+Left: configured backward jump
+- Ctrl+Alt+Right: configured forward jump
+
+Focused commits:
+
+- `feat: add recorder and player desktop shortcuts`
+- `fix: make record shortcut countdown aware`
+
+## Localization-ready layer
+
+Added `lib/l10n/app_localizations.dart` and connected localization delegates/supported locales to both startup and main MaterialApps.
+
+Current supported locale:
+
+- English
+
+Primary navigation labels and startup presentation strings now use the localization layer. Remaining hard-coded presentation strings are explicitly tracked for migration before additional language translations are added.
+
+A CI analyzer error exposed a missing explicit Cupertino localization import; that was corrected immediately.
+
+Focused commits:
+
+- `feat: add localization-ready presentation layer`
+- `feat: configure application localization delegates`
+- `refactor: localize startup presentation strings`
+- `refactor: localize primary navigation labels`
+- `fix: import Cupertino localization delegate explicitly`
+
+## FFprobe API cleanup
+
+After source analysis reached the new code, two informational analyzer findings identified redundant `await` calls around synchronous media-information access. They were removed independently in the processor and player services.
+
+Focused commits:
+
+- `style: remove redundant await from FFprobe metadata`
+- `style: remove redundant await from player FFprobe metadata`
+
+## Release documentation expansion
+
+Added:
+
+- `docs/RELEASING.md`
+- `RELEASE_NOTES.md`
+- `TODO.md`
+
+`docs/RELEASING.md` documents source preparation, automated checks, physical-device requirements, signing boundaries, release candidate commands, final review, tagging, artifact/checksum expectations, and the rule that builds must match the tagged source.
+
+`RELEASE_NOTES.md` describes v0.1.0 as a development preview and explicitly prevents it from being treated as stable until manual release gates are complete.
+
+`TODO.md` contains only incomplete/evidence-dependent work: physical-device lifecycle testing, stress tests, accessibility, localization completion, real screenshots/assets, signing, packaging, and stable release gates.
+
+The QA checklist was expanded in depth to cover:
+
+- startup/migration
+- recording basics
+- countdown
+- screen wake
+- permissions/interruption
+- input routing
+- codec matrix
+- smart filename templates
+- library filters/actions
+- Trash/deletion
+- managed storage
+- playback/A-B/media-session behavior
+- advanced editor tools
+- desktop shortcuts
+- accessibility/responsiveness
+- localization readiness
+- low-storage/filesystem failures
+- soak/performance
+- privacy/release evidence
+
+Focused commits:
+
+- `docs: add reproducible release procedure`
+- `docs: prepare SonicNest preview release notes`
+- `docs: add evidence-based remaining release gates`
+- `docs: expand QA for new recorder playback and editor features`
+- `docs: document current SonicNest feature surface`
+- `docs: record advanced recorder and editor continuation`
+- `docs: advance roadmap after feature completion`
+- `docs: synchronize current SonicNest project state`
+- this continuation-log commit
+
+## Current dependency lines relevant to the continuation
+
+The project currently keeps the established compatibility choices and adds screen-wake support:
+
+- `file_picker: 10.3.10`
+- `share_plus: ^12.0.2`
+- `record: ^7.1.1`
+- `just_audio: ^0.10.6`
+- `just_audio_background: 0.0.1-beta.17`
+- `just_audio_media_kit: ^2.1.0`
+- `ffmpeg_kit_flutter_new_audio: ^2.5.0`
+- `wakelock_plus: 1.4.0`
+
+The screen-wake dependency was deliberately pinned rather than allowing an unnecessary platform dependency upgrade to destabilize the already validated Windows/file-picker graph.
+
+## Current test additions from this continuation
+
+New/expanded automated tests include:
+
+- smart filename template rendering
+- date/time/sequence token rendering
+- optional token separator cleanup
+- empty rendered-template fallback
+- smart naming setting JSON roundtrip
+- legacy smart naming setting defaults
+- existing channel/countdown bounds
+- existing transcode-format behavior
+
+Existing filename, metadata, recording-settings, and PCM waveform tests remain in place.
+
+## CI state during this advanced continuation
+
+The continuation generated many intentionally focused commits, and the workflows are configured so newer commits cancel older in-progress runs. Therefore a cancellation after a newer commit is not treated as a source-code failure.
+
+During this pass:
+
+- dependency resolution reached success with the new code and the pinned screen-wake dependency
+- platform bootstrap reached success on the new dependency graph before source analysis
+- source analysis initially identified a single actual localization delegate import error plus two non-fatal redundant-await informational findings
+- the localization import error was fixed in `fix: import Cupertino localization delegate explicitly`
+- the redundant-await findings were fixed in separate processor/player commits
+- subsequent documentation synchronization commits intentionally caused replacement CI runs
+
+At the time this `what_changed.md` update is committed, the final documentation-synchronized HEAD still requires the newest replacement Flutter/Windows/Apple runs to finish. Do not convert an in-progress workflow into a success claim. The previous fully green cross-platform baseline remains recorded above and in `PROJECT_STATE.md`.
 
 ## Hardware/manual release gates that remain
 
@@ -324,22 +685,37 @@ The following cannot be truthfully completed by repository-only automation and m
 
 - First-launch microphone permission acceptance/denial/permanent denial UX.
 - Actual microphone capture quality on Android, iOS, macOS, Windows, and Linux.
+- Configured countdown behavior on physical-device lifecycle edges.
+- Keep-screen-awake behavior on physical devices and release builds.
 - Wired/USB/Bluetooth/built-in microphone switching.
 - Calls/alarms/audio-focus interruptions.
 - Screen-lock/background recording behavior.
 - Android foreground-service behavior across OEM/device variants.
 - iOS background recording behavior under current OS policies.
 - Android/iOS/macOS media-session and lock-screen playback behavior on physical hardware.
+- Headphone/Bluetooth media-button and reconnect behavior.
+- A-B loop timing on physical devices/backends.
 - Low-storage and filesystem failure recovery.
+- Advanced editor output quality against representative real voice/music recordings.
 - 30-minute and multi-hour recording soak tests.
 - Very large recording-library performance.
 - TalkBack, VoiceOver, Narrator, and other assistive-technology audits.
-- Store signing, keystore/certificate/provisioning, notarization, and release credentials.
+- Complete presentation-string localization migration before non-English releases.
+- Real screenshots captured from tested builds.
+- Final native app-icon/launch asset review on each platform.
+- Store signing, keystore/certificate/provisioning, notarization, store metadata, and release credentials.
 
 Do not mark those items complete without real evidence.
 
 ## Exact continuation point
 
-The source tree is in cross-platform release-hardening state. On the latest code-validation cycle, analyzer and unit tests are green; platform build workflows are being re-run after focused code and documentation synchronization commits.
+The repository is in cross-platform release-hardening state, not initial implementation state. The recorder/library/player/editor/settings/startup/release-documentation source has been materially expanded in this continuation. `PROJECT_STATE.md`, `ROADMAP.md`, `CHANGELOG.md`, `README.md`, `docs/QA_CHECKLIST.md`, `docs/RELEASING.md`, `RELEASE_NOTES.md`, `TODO.md`, and this file now describe the expanded state.
 
-For the next continuation, start with `PROJECT_STATE.md`, this `what_changed.md`, `ROADMAP.md`, and the newest GitHub Actions runs. Do not reimplement completed recorder/library/editor/media-session source work. Prioritize any remaining CI regression first, then physical-device QA, dedicated Windows/Linux system media-session evaluation, richer desktop context menus, batch conversion/export evaluation, performance profiling, accessibility verification, and release packaging gates.
+For the next continuation:
+
+1. Read this file and `PROJECT_STATE.md` first.
+2. Check the newest GitHub Actions runs before changing code.
+3. If the newest run exposes a real compile/analyzer/test regression, fix it in a focused commit before adding more features.
+4. Do not reimplement completed smart naming, countdown, screen-wake, A-B loop, tag/date filters, storage accounting, advanced editor, localization scaffold, media-session source work, or release docs.
+5. Prioritize physical-device QA, listening tests, accessibility, localization completion, large-library/long-recording performance, real release assets, signing, packaging, and any reproducible issues found from those tests.
+6. Keep evidence-dependent release gates unchecked until actual evidence exists.
