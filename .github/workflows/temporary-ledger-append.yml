@@ -1,0 +1,164 @@
+name: Temporary Reliability Ledger Append
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/temporary-ledger-append.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  append-ledger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Append continuation and self-remove
+        shell: bash
+        run: |
+          set -euo pipefail
+          MARKER='# Metadata integrity and resilient import continuation — 2026-08-14'
+          if ! grep -Fq "$MARKER" what_changed.md; then
+            cat >> what_changed.md <<'EOF'
+
+---
+
+# Metadata integrity and resilient import continuation — 2026-08-14
+
+This continuation hardened SonicNest local-library persistence, multi-file audio import failure isolation, and repository workflow hygiene while preserving all earlier continuation history.
+
+## Removed obsolete write-enabled continuation workflows
+
+The repository still contained six temporary/one-shot workflows from earlier continuation operations. They were removed from `main` in focused commits instead of being treated as permanent automation:
+
+- `9a4680226652f384462a8c001cc4b73d0c7435de` — removed `temporary-final-evidence-and-audit.yml`.
+- `26d543d8ed3d3182ac5e8db091fa28da790665fb` — removed `temporary-smoke-evidence-finalization-v2.yml`.
+- `ee159138bd4094c5d5089a3ec286d139312f09bc` — removed `temporary-smoke-evidence-finalization-v3.yml`.
+- `41e7898e4f6f4ce34b5865bf666e0bb5549cd639` — removed `continuation-records-gate.yml`.
+- `c79c29f73b191a2105e21ed90936be77a499e4fc` — removed `continuation-release-artifacts-validation.yml`.
+- `350d02eab727e57a70602df7a1792e9b2e718328` — removed `continuation-repository-audit-validation.yml`.
+
+Commit `9ce23f8a90ee3d7f83c9130e8141bf21ab2883c2` permanently hardened `tool/repository_audit.py` so only the maintained workflow set is allowed on `main` and maintained workflows cannot request `contents: write`. Temporary/one-shot write-enabled workflows are therefore repository-integrity failures if they remain tracked.
+
+## Defensive recording metadata decoding
+
+Commit `e3c4574c54318c64dc2d5350963914f18b39a0c5` hardened `RecordingEntry` and nested marker decoding. Optional fields are now type-checked instead of relying on unchecked casts. Malformed tag/waveform members are filtered, malformed marker objects are isolated, invalid dates/formats receive safe fallbacks, and one bad optional value cannot abort the entire Library startup path.
+
+Commit `948d2f3955758dd911920f430e701623a2fd02ab` added regression coverage for malformed optional recording metadata and nested values while preserving the existing round-trip and Trash-state tests.
+
+## Metadata document corruption isolation
+
+Commit `5aff26c2d6bc32614eb5142fd7e0eaa2783c2096` hardened `MetadataStore` with injectable support-directory/clock dependencies, structural JSON validation, timestamped collision-safe corrupt-document copies, per-record isolation, and required non-empty recording ID/file-path checks.
+
+Commit `2c5741bd11b24c6acdf976bc788d3a1993e3ea45` added filesystem regression tests for invalid JSON, invalid `recordings` document structure, malformed-record isolation, and a deterministic 3,000-entry save/load round-trip through the real metadata JSON persistence path.
+
+## Interrupted metadata replacement recovery
+
+Commit `91957963b97188894a069e2c4f3b0ce962ad9899` closed the replacement crash window around `recordings.json`, `.tmp`, and `.bak` files.
+
+Startup recovery now:
+
+1. prefers a valid primary metadata document and removes a stale completed backup;
+2. restores a valid `.bak` when the primary is missing after an interrupted replacement;
+3. preserves a structurally corrupt primary to a timestamped diagnostic copy;
+4. restores a valid backup after primary corruption;
+5. preserves a corrupt backup for diagnosis rather than silently accepting it;
+6. continues isolating malformed individual entries inside otherwise valid metadata.
+
+Commit `657959433cff0305c78ffd84873d6b7b71b13746` added direct tests for missing-primary backup recovery and corrupt-primary valid-backup fallback. Commit `e4ce01100b0c095efbf25f667e709f70820364ef` corrected typed empty-result inference discovered by static analysis before the final green validation.
+
+`docs/METADATA_INTEGRITY.md` was added in commit `05371b4204f12420b6a43a535f9fb19189ee4a59` to document the save/recovery sequence, diagnostic-copy rules, per-record isolation, large-library deterministic regression gate, and manual evidence boundary.
+
+## Per-file resilient audio import
+
+Commit `995afc80dfa5c4f92dab63b8b57d333ff2b8e2b7` added `AudioImportService` as the testable per-file managed-import boundary.
+
+For each source, the service:
+
+- copies the selected source into managed SonicNest storage;
+- derives the managed target format from the copied extension;
+- probes audio duration;
+- generates the persisted waveform envelope;
+- reads managed file size;
+- returns validated import data only after those steps succeed;
+- deletes the copied managed file if validation fails after the copy was created;
+- reports an `AudioImportException` with the failing source path instead of leaking an orphaned managed copy.
+
+Import-service regression tests were added in commit `4b1b7d38df9bfe4055b45138dca2719e1a5dc10f`, with focused test-source corrections in `9666773d552709d51737155975bd7e82d98d9325` and `a88aeadadda017b0aced4dbc25c8426a27364b77`.
+
+Commit `3bf63e69186a7a538f7d0587f3d361e00c2e29e9` wired the service into `AppController.importAudio()`.
+
+The controller now processes selected files sequentially and independently. A missing/corrupt/unprobeable/waveform-invalid source records an isolated failure and later selected files continue. Each successful file is persisted immediately. If metadata persistence itself fails, SonicNest removes the just-added in-memory entry, deletes the just-created managed file, and rethrows instead of pretending the Library mutation succeeded.
+
+Partial import failures produce a bounded summary with the number of successful selections and a limited list of failed filenames.
+
+## Exact automated validation
+
+Core Flutter CI run `31807193932` validated revision `a88aeadadda017b0aced4dbc25c8426a27364b77` with the complete core path green:
+
+- deterministic branding source generation: SUCCESS;
+- Dart formatting gate: SUCCESS;
+- Flutter static analysis: SUCCESS;
+- full unit-test suite including metadata/import regressions: SUCCESS;
+- Android debug APK build: SUCCESS;
+- Linux debug build: SUCCESS.
+
+The cross-platform controller source revision `3bf63e69186a7a538f7d0587f3d361e00c2e29e9` also passed:
+
+- Windows build run `31807141053`: SUCCESS;
+- Apple build run `31807141166`: macOS debug SUCCESS and unsigned-iOS debug SUCCESS.
+
+Repository Integrity Audit run `31808325649` passed on revision `44adfb292b1b26074ad7659a2b3843b62069db9f` after the cleaned permanent workflow set, workflow allowlist/read-only invariant, QA evidence, architecture, and roadmap synchronization were in place.
+
+## Documentation synchronized
+
+This continuation synchronized the implemented behavior and evidence boundary across focused documentation commits including:
+
+- `af55271a62be1d79be2874a1974fd228d11e90bc` — README reliability behavior;
+- `1bebfecd5e99bfab8bc7655f4d30e945218d9715` — contributor reliability requirements;
+- `79cbe2b0821219f5fbf943668c7fbb1b4c756008` — focused build/test commands;
+- `7a9dc7e7397b3bf9487e74a9162e850f9aaa6cf0` — user-guide recovery/import behavior;
+- `32b4a270a49e318857a009a188970f349fa0980c` — troubleshooting recovery/import behavior;
+- `c7b9c41a8afcf83ff03ae5a014c9968f2f09c5e4` and `d1c01a987dea994734c012c46507d4918e8d0fbc` — changelog implementation and final validation evidence;
+- `a44d0c1008a82b63ac83ffff1fb8f367077c8d86` — TODO distinction between deterministic baselines and manual gates;
+- `3e85956b5f479888d2aaf6b4d1abc8387b154f84` — project-state synchronization;
+- `3b4462c22ee0daf954f574e75755173018f39e09` — release-note reliability update;
+- `448578dcc252929b5f6acb4332eaa5e4731f7756` — exact README validation evidence;
+- `a50967f38bcb6c576577d6f77dc59cfff428e6a3` — QA automation evidence plus explicit unchecked real-system gates;
+- `a6e71a851c249775b131e68cc10ea1e2b5900c76` — architecture transaction/recovery boundaries;
+- `44adfb292b1b26074ad7659a2b3843b62069db9f` — roadmap reliability status.
+
+## Evidence-dependent work intentionally left open
+
+The deterministic repository gates do not substitute for the remaining real-world checks. SonicNest still requires evidence for:
+
+- malformed/corrupt real-media corpus imports on each maintained platform;
+- low-storage recording/import/export/editor behavior;
+- filesystem permission loss and recovery;
+- abrupt process/power interruption behavior on representative systems;
+- real Library UI startup/search/filter/scroll/memory performance with thousands of entries;
+- long-duration recording and playback/editor stress;
+- microphone permission/routing and interruption behavior;
+- Bluetooth/wired/USB input and media-button behavior;
+- accessibility audits;
+- physical native-brand visual review;
+- representative Debian/Ubuntu package installation, upgrade, microphone routing, visual integration, and uninstall evidence;
+- signing, notarization, store metadata, screenshots, and final distribution approval.
+
+The 3,000-entry regression test proves metadata persistence integrity only; it does not prove real UI performance. Controlled import test doubles prove failure-isolation logic only; they do not prove every malformed real-world codec/container case.
+
+SonicNest therefore remains a **development preview** until the evidence-dependent release gates in `TODO.md`, `docs/QA_CHECKLIST.md`, and `docs/RELEASING.md` are complete.
+EOF
+          fi
+          grep -Fq "$MARKER" what_changed.md
+          git diff --check
+          git rm .github/workflows/temporary-ledger-append.yml
+          git config user.name 'Sanskar'
+          git config user.email 'sanskarin@outlook.in'
+          git add what_changed.md
+          git commit -m 'docs: append metadata and import continuation'
+          git push origin HEAD:main
