@@ -5,6 +5,20 @@ import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+class ExternalCopyBatchResult {
+  const ExternalCopyBatchResult({
+    required this.copiedPaths,
+    required this.failures,
+  });
+
+  final List<String> copiedPaths;
+  final Map<String, String> failures;
+
+  int get copiedCount => copiedPaths.length;
+  int get failedCount => failures.length;
+  bool get hasFailures => failures.isNotEmpty;
+}
+
 class ExternalActions {
   Future<List<String>> pickAudioFiles() async {
     final result = await FilePicker.platform.pickFiles(
@@ -78,6 +92,31 @@ class ExternalActions {
 
     final copied = await source.copy(candidate);
     return copied.path;
+  }
+
+  Future<ExternalCopyBatchResult> copyFilesToDirectoryCollisionSafe({
+    required Iterable<String> sourcePaths,
+    required String directoryPath,
+  }) async {
+    final copiedPaths = <String>[];
+    final failures = <String, String>{};
+
+    for (final sourcePath in sourcePaths) {
+      try {
+        final copied = await copyFileToDirectoryCollisionSafe(
+          sourcePath: sourcePath,
+          directoryPath: directoryPath,
+        );
+        copiedPaths.add(copied);
+      } catch (error) {
+        failures[sourcePath] = error.toString();
+      }
+    }
+
+    return ExternalCopyBatchResult(
+      copiedPaths: List.unmodifiable(copiedPaths),
+      failures: Map.unmodifiable(failures),
+    );
   }
 
   Future<void> shareFile(String path, {String? text}) =>
