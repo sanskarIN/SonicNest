@@ -85,7 +85,7 @@ class RecordingTile extends StatelessWidget {
                 children: [
                   Text(formatDuration(entry.duration)),
                   Text(formatBytes(entry.sizeBytes)),
-                  Text(entry.format.label),
+                  Text(_formatLabel(entry.format)),
                   if (entry.folder.isNotEmpty)
                     Row(
                       mainAxisSize: MainAxisSize.min,
@@ -109,3 +109,13 @@ class RecordingTile extends StatelessWidget {
     );
   }
 }
+
+String _formatLabel(RecordingFormat format) => switch (format) {
+      RecordingFormat.m4a => 'M4A / AAC',
+      RecordingFormat.wav => 'WAV',
+      RecordingFormat.flac => 'FLAC',
+      RecordingFormat.opus => 'Opus',
+      RecordingFormat.mp3 => 'MP3',
+      RecordingFormat.ogg => 'OGG / Vorbis',
+      RecordingFormat.aac => 'AAC',
+    };
