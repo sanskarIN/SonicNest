@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../controllers/app_controller.dart';
+import '../l10n/app_localizations.dart';
 import '../models/recording_entry.dart';
 import '../models/recording_settings.dart';
 import '../widgets/recording_tile.dart';
@@ -27,12 +28,16 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   void _toggleSelection(RecordingEntry entry) {
     setState(() {
-      if (!_selectedIds.add(entry.id)) _selectedIds.remove(entry.id);
+      if (!_selectedIds.add(entry.id)) {
+        _selectedIds.remove(entry.id);
+      }
     });
   }
 
   void _clearSelection() {
-    if (_selectedIds.isEmpty) return;
+    if (_selectedIds.isEmpty) {
+      return;
+    }
     setState(_selectedIds.clear);
   }
 
@@ -46,7 +51,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final entries = controller.visibleRecordings;
+    final savedCount =
+        controller.recordings.where((entry) => !entry.isTrashed).length;
     return CustomScrollView(
       slivers: [
         SliverPadding(
@@ -65,16 +73,28 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         onClose: _clearSelection,
                         onSelectAll: _selectAllVisible,
                         onFavorite: () => _runBulk(
-                          () => controller.setFavoriteForEntries(selectedEntries, true),
+                          () => controller.setFavoriteForEntries(
+                            selectedEntries,
+                            true,
+                          ),
                         ),
                         onUnfavorite: () => _runBulk(
-                          () => controller.setFavoriteForEntries(selectedEntries, false),
+                          () => controller.setFavoriteForEntries(
+                            selectedEntries,
+                            false,
+                          ),
                         ),
                         onPin: () => _runBulk(
-                          () => controller.setPinnedForEntries(selectedEntries, true),
+                          () => controller.setPinnedForEntries(
+                            selectedEntries,
+                            true,
+                          ),
                         ),
                         onUnpin: () => _runBulk(
-                          () => controller.setPinnedForEntries(selectedEntries, false),
+                          () => controller.setPinnedForEntries(
+                            selectedEntries,
+                            false,
+                          ),
                         ),
                         onShare: () => _runBulk(
                           () => controller.shareRecordings(selectedEntries),
@@ -95,36 +115,34 @@ class _LibraryScreenState extends State<LibraryScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Recordings',
+                                  l10n.recordings,
                                   style: Theme.of(context)
                                       .textTheme
                                       .headlineMedium
                                       ?.copyWith(fontWeight: FontWeight.w800),
                                 ),
-                                Text(
-                                  '${entries.length} shown • '
-                                  '${controller.recordings.where((e) => !e.isTrashed).length} saved',
-                                ),
+                                Text(l10n.libraryCounts(entries.length, savedCount)),
                               ],
                             ),
                           ),
                           FilledButton.tonalIcon(
-                            onPressed: controller.busy ? null : controller.importAudio,
+                            onPressed:
+                                controller.busy ? null : controller.importAudio,
                             icon: const Icon(Icons.file_download_outlined),
-                            label: const Text('Import'),
+                            label: Text(l10n.importAudio),
                           ),
                         ],
                       ),
                     const SizedBox(height: 18),
                     SearchBar(
-                      hintText: 'Search title, tags, notes, folders, bookmarks',
+                      hintText: l10n.searchRecordingsHint,
                       leading: const Icon(Icons.search),
                       onChanged: controller.setSearch,
                       trailing: controller.searchQuery.isEmpty
                           ? null
                           : [
                               IconButton(
-                                tooltip: 'Clear search',
+                                tooltip: l10n.clearSearch,
                                 onPressed: () => controller.setSearch(''),
                                 icon: const Icon(Icons.close),
                               ),
@@ -142,7 +160,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         child: TextButton.icon(
                           onPressed: _selectAllVisible,
                           icon: const Icon(Icons.checklist),
-                          label: const Text('Select'),
+                          label: Text(l10n.select),
                         ),
                       ),
                     ],
@@ -155,7 +173,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         child: OutlinedButton.icon(
                           onPressed: () => _confirmEmptyTrash(context),
                           icon: const Icon(Icons.delete_forever_outlined),
-                          label: const Text('Empty Trash'),
+                          label: Text(l10n.emptyTrash),
                         ),
                       ),
                     ],
@@ -191,6 +209,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           ? () => _toggleSelection(entry)
                           : () => _openPlayer(context, entry),
                       onLongPress: () => _toggleSelection(entry),
+                      onSecondaryTapDown: (_) {
+                        if (!selecting) {
+                          _showActions(context, entry);
+                        }
+                      },
                       onFavorite: () => controller.toggleFavorite(entry),
                       onMore: () => _showActions(context, entry),
                     ),
@@ -204,49 +227,60 @@ class _LibraryScreenState extends State<LibraryScreen> {
   }
 
   Future<void> _runBulk(Future<void> Function() action) async {
+    final l10n = AppLocalizations.of(context);
     try {
       await action();
-      if (mounted) _clearSelection();
+      if (mounted) {
+        _clearSelection();
+      }
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Bulk action failed: $error')),
+        SnackBar(content: Text(l10n.bulkActionFailed(error))),
       );
     }
   }
 
   Future<void> _confirmBulkDelete(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
     final entries = selectedEntries;
-    if (entries.isEmpty) return;
+    if (entries.isEmpty) {
+      return;
+    }
     final approved = !controller.settings.confirmDelete ||
         await showDialog<bool>(
               context: context,
               builder: (dialogContext) => AlertDialog(
-                title: Text('Delete ${entries.length} recording${entries.length == 1 ? '' : 's'} permanently?'),
-                content: const Text(
-                  'The selected recordings will be permanently deleted. This cannot be undone.',
-                ),
+                title: Text(l10n.deleteSelectedPermanently(entries.length)),
+                content: Text(l10n.selectedPermanentDeleteWarning),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(dialogContext, false),
-                    child: const Text('Cancel'),
+                    child: Text(l10n.cancel),
                   ),
                   FilledButton(
                     onPressed: () => Navigator.pop(dialogContext, true),
-                    child: const Text('Delete'),
+                    child: Text(l10n.delete),
                   ),
                 ],
               ),
             ) ==
             true;
-    if (!approved) return;
+    if (!approved) {
+      return;
+    }
     await _runBulk(() => controller.permanentlyDeleteEntries(entries));
   }
 
   Future<void> _openPlayer(BuildContext context, RecordingEntry entry) async {
+    final l10n = AppLocalizations.of(context);
     try {
       await controller.openRecording(entry);
-      if (!context.mounted) return;
+      if (!context.mounted) {
+        return;
+      }
       await Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => ListenableBuilder(
@@ -259,14 +293,17 @@ class _LibraryScreenState extends State<LibraryScreen> {
         ),
       );
     } catch (error) {
-      if (!context.mounted) return;
+      if (!context.mounted) {
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not open recording: $error')),
+        SnackBar(content: Text(l10n.couldNotOpenRecording(error))),
       );
     }
   }
 
   Future<void> _showActions(BuildContext context, RecordingEntry entry) async {
+    final l10n = AppLocalizations.of(context);
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -279,12 +316,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
             children: [
               ListTile(
                 title: Text(entry.title),
-                subtitle: Text(entry.isTrashed ? 'In Trash' : entry.format.label),
+                subtitle: Text(
+                  entry.isTrashed ? l10n.inTrash : entry.format.label,
+                ),
               ),
               if (!entry.isTrashed) ...[
                 ListTile(
                   leading: const Icon(Icons.play_arrow),
-                  title: const Text('Play'),
+                  title: Text(l10n.play),
                   onTap: () {
                     Navigator.pop(sheetContext);
                     _openPlayer(context, entry);
@@ -292,7 +331,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 ),
                 ListTile(
                   leading: const Icon(Icons.edit_outlined),
-                  title: const Text('Edit audio'),
+                  title: Text(l10n.editAudio),
                   onTap: () {
                     Navigator.pop(sheetContext);
                     _openEditor(context, entry);
@@ -300,7 +339,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 ),
                 ListTile(
                   leading: const Icon(Icons.drive_file_rename_outline),
-                  title: const Text('Rename'),
+                  title: Text(l10n.rename),
                   onTap: () {
                     Navigator.pop(sheetContext);
                     _rename(context, entry);
@@ -308,7 +347,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 ),
                 ListTile(
                   leading: const Icon(Icons.label_outline),
-                  title: const Text('Tags, folder & notes'),
+                  title: Text(l10n.tagsFolderNotes),
                   onTap: () {
                     Navigator.pop(sheetContext);
                     _metadata(context, entry);
@@ -318,7 +357,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   leading: Icon(
                     entry.pinned ? Icons.push_pin : Icons.push_pin_outlined,
                   ),
-                  title: Text(entry.pinned ? 'Unpin' : 'Pin'),
+                  title: Text(entry.pinned ? l10n.unpin : l10n.pin),
                   onTap: () {
                     Navigator.pop(sheetContext);
                     controller.togglePinned(entry);
@@ -326,7 +365,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 ),
                 ListTile(
                   leading: const Icon(Icons.copy_outlined),
-                  title: const Text('Duplicate'),
+                  title: Text(l10n.duplicate),
                   onTap: () {
                     Navigator.pop(sheetContext);
                     controller.duplicateRecording(entry);
@@ -334,7 +373,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 ),
                 ListTile(
                   leading: const Icon(Icons.ios_share_outlined),
-                  title: const Text('Share'),
+                  title: Text(l10n.share),
                   onTap: () {
                     Navigator.pop(sheetContext);
                     controller.shareRecording(entry);
@@ -342,7 +381,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 ),
                 ListTile(
                   leading: const Icon(Icons.save_alt),
-                  title: const Text('Export copy'),
+                  title: Text(l10n.exportCopy),
                   onTap: () {
                     Navigator.pop(sheetContext);
                     controller.exportRecording(entry);
@@ -350,7 +389,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 ),
                 ListTile(
                   leading: const Icon(Icons.delete_outline),
-                  title: const Text('Move to Trash'),
+                  title: Text(l10n.moveToTrash),
                   onTap: () {
                     Navigator.pop(sheetContext);
                     controller.moveToTrash(entry);
@@ -359,7 +398,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
               ] else ...[
                 ListTile(
                   leading: const Icon(Icons.restore),
-                  title: const Text('Restore'),
+                  title: Text(l10n.restore),
                   onTap: () {
                     Navigator.pop(sheetContext);
                     controller.restore(entry);
@@ -367,7 +406,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 ),
                 ListTile(
                   leading: const Icon(Icons.delete_forever),
-                  title: const Text('Delete permanently'),
+                  title: Text(l10n.deletePermanently),
                   onTap: () {
                     Navigator.pop(sheetContext);
                     _permanentlyDelete(context, entry);
@@ -383,7 +422,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   Future<void> _openEditor(BuildContext context, RecordingEntry entry) async {
     await controller.openRecording(entry);
-    if (!context.mounted) return;
+    if (!context.mounted) {
+      return;
+    }
     await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => ListenableBuilder(
@@ -398,42 +439,46 @@ class _LibraryScreenState extends State<LibraryScreen> {
   }
 
   Future<void> _rename(BuildContext context, RecordingEntry entry) async {
+    final l10n = AppLocalizations.of(context);
     final text = TextEditingController(text: entry.title);
     final result = await showDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Rename recording'),
+        title: Text(l10n.renameRecording),
         content: TextField(
           controller: text,
           autofocus: true,
           maxLength: 120,
-          decoration: const InputDecoration(labelText: 'Name'),
+          decoration: InputDecoration(labelText: l10n.name),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, text.text.trim()),
-            child: const Text('Rename'),
+            child: Text(l10n.rename),
           ),
         ],
       ),
     );
     text.dispose();
-    if (result == null || result.isEmpty) return;
+    if (result == null || result.isEmpty) {
+      return;
+    }
     await controller.renameRecording(entry, result);
   }
 
   Future<void> _metadata(BuildContext context, RecordingEntry entry) async {
+    final l10n = AppLocalizations.of(context);
     final folder = TextEditingController(text: entry.folder);
     final tags = TextEditingController(text: entry.tags.join(', '));
     final notes = TextEditingController(text: entry.notes);
-    final save = await showDialog<bool>(
+    final shouldSave = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Recording details'),
+        title: Text(l10n.recordingDetails),
         content: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),
           child: Column(
@@ -441,14 +486,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
             children: [
               TextField(
                 controller: folder,
-                decoration: const InputDecoration(labelText: 'Folder'),
+                decoration: InputDecoration(labelText: l10n.folder),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: tags,
-                decoration: const InputDecoration(
-                  labelText: 'Tags',
-                  hintText: 'lecture, study, important',
+                decoration: InputDecoration(
+                  labelText: l10n.tags,
+                  hintText: l10n.tagsHint,
                 ),
               ),
               const SizedBox(height: 10),
@@ -456,7 +501,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 controller: notes,
                 minLines: 3,
                 maxLines: 6,
-                decoration: const InputDecoration(labelText: 'Notes'),
+                decoration: InputDecoration(labelText: l10n.notes),
               ),
             ],
           ),
@@ -464,16 +509,16 @@ class _LibraryScreenState extends State<LibraryScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Save'),
+            child: Text(l10n.save),
           ),
         ],
       ),
     );
-    if (save == true) {
+    if (shouldSave == true) {
       await controller.updateMetadata(
         entry,
         folder: folder.text.trim(),
@@ -495,52 +540,56 @@ class _LibraryScreenState extends State<LibraryScreen> {
     BuildContext context,
     RecordingEntry entry,
   ) async {
+    final l10n = AppLocalizations.of(context);
     final approved = !controller.settings.confirmDelete ||
         await showDialog<bool>(
               context: context,
               builder: (dialogContext) => AlertDialog(
-                title: const Text('Delete permanently?'),
+                title: Text(l10n.deletePermanentlyQuestion),
                 content: Text(
-                  '“${entry.title}” will be permanently deleted. This cannot be undone.',
+                  l10n.recordingPermanentDeleteWarning(entry.title),
                 ),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(dialogContext, false),
-                    child: const Text('Cancel'),
+                    child: Text(l10n.cancel),
                   ),
                   FilledButton(
                     onPressed: () => Navigator.pop(dialogContext, true),
-                    child: const Text('Delete'),
+                    child: Text(l10n.delete),
                   ),
                 ],
               ),
             ) ==
             true;
-    if (approved) await controller.permanentlyDelete(entry);
+    if (approved) {
+      await controller.permanentlyDelete(entry);
+    }
   }
 
   Future<void> _confirmEmptyTrash(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
     final approved = await showDialog<bool>(
           context: context,
           builder: (dialogContext) => AlertDialog(
-            title: const Text('Empty Trash?'),
-            content: const Text(
-              'Every recording currently in Trash will be permanently deleted.',
-            ),
+            title: Text(l10n.emptyTrashQuestion),
+            content: Text(l10n.emptyTrashWarning),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(dialogContext, false),
-                child: const Text('Cancel'),
+                child: Text(l10n.cancel),
               ),
               FilledButton(
                 onPressed: () => Navigator.pop(dialogContext, true),
-                child: const Text('Empty Trash'),
+                child: Text(l10n.emptyTrash),
               ),
             ],
           ),
         ) ==
         true;
-    if (approved) await controller.emptyTrash();
+    if (approved) {
+      await controller.emptyTrash();
+    }
   }
 }
 
@@ -575,28 +624,29 @@ class _SelectionToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Card(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         child: Row(
           children: [
             IconButton(
-              tooltip: 'Cancel selection',
+              tooltip: l10n.cancelSelection,
               onPressed: onClose,
               icon: const Icon(Icons.close),
             ),
             Expanded(
               child: Text(
-                '$count selected',
+                l10n.selectedCount(count),
                 style: Theme.of(context)
                     .textTheme
                     .titleMedium
                     ?.copyWith(fontWeight: FontWeight.w700),
               ),
             ),
-            TextButton(onPressed: onSelectAll, child: const Text('Select all')),
+            TextButton(onPressed: onSelectAll, child: Text(l10n.selectAll)),
             PopupMenuButton<String>(
-              tooltip: 'Bulk actions',
+              tooltip: l10n.bulkActions,
               onSelected: (value) {
                 switch (value) {
                   case 'favorite':
@@ -618,70 +668,70 @@ class _SelectionToolbar extends StatelessWidget {
                 }
               },
               itemBuilder: (context) => trashMode
-                  ? const [
+                  ? [
                       PopupMenuItem(
                         value: 'restore',
                         child: ListTile(
-                          leading: Icon(Icons.restore),
-                          title: Text('Restore selected'),
+                          leading: const Icon(Icons.restore),
+                          title: Text(l10n.restoreSelected),
                           contentPadding: EdgeInsets.zero,
                         ),
                       ),
                       PopupMenuItem(
                         value: 'delete',
                         child: ListTile(
-                          leading: Icon(Icons.delete_forever),
-                          title: Text('Delete permanently'),
+                          leading: const Icon(Icons.delete_forever),
+                          title: Text(l10n.deletePermanently),
                           contentPadding: EdgeInsets.zero,
                         ),
                       ),
                     ]
-                  : const [
+                  : [
                       PopupMenuItem(
                         value: 'favorite',
                         child: ListTile(
-                          leading: Icon(Icons.favorite),
-                          title: Text('Add to favorites'),
+                          leading: const Icon(Icons.favorite),
+                          title: Text(l10n.addToFavorites),
                           contentPadding: EdgeInsets.zero,
                         ),
                       ),
                       PopupMenuItem(
                         value: 'unfavorite',
                         child: ListTile(
-                          leading: Icon(Icons.heart_broken_outlined),
-                          title: Text('Remove favorites'),
+                          leading: const Icon(Icons.heart_broken_outlined),
+                          title: Text(l10n.removeFavorites),
                           contentPadding: EdgeInsets.zero,
                         ),
                       ),
                       PopupMenuItem(
                         value: 'pin',
                         child: ListTile(
-                          leading: Icon(Icons.push_pin),
-                          title: Text('Pin selected'),
+                          leading: const Icon(Icons.push_pin),
+                          title: Text(l10n.pinSelected),
                           contentPadding: EdgeInsets.zero,
                         ),
                       ),
                       PopupMenuItem(
                         value: 'unpin',
                         child: ListTile(
-                          leading: Icon(Icons.push_pin_outlined),
-                          title: Text('Unpin selected'),
+                          leading: const Icon(Icons.push_pin_outlined),
+                          title: Text(l10n.unpinSelected),
                           contentPadding: EdgeInsets.zero,
                         ),
                       ),
                       PopupMenuItem(
                         value: 'share',
                         child: ListTile(
-                          leading: Icon(Icons.ios_share_outlined),
-                          title: Text('Share selected'),
+                          leading: const Icon(Icons.ios_share_outlined),
+                          title: Text(l10n.shareSelected),
                           contentPadding: EdgeInsets.zero,
                         ),
                       ),
                       PopupMenuItem(
                         value: 'trash',
                         child: ListTile(
-                          leading: Icon(Icons.delete_outline),
-                          title: Text('Move to Trash'),
+                          leading: const Icon(Icons.delete_outline),
+                          title: Text(l10n.moveToTrash),
                           contentPadding: EdgeInsets.zero,
                         ),
                       ),
@@ -702,31 +752,32 @@ class _FilterBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       children: [
         SegmentedButton<LibraryScope>(
-          segments: const [
+          segments: [
             ButtonSegment(
               value: LibraryScope.all,
-              icon: Icon(Icons.library_music_outlined),
-              label: Text('All'),
+              icon: const Icon(Icons.library_music_outlined),
+              label: Text(l10n.all),
             ),
             ButtonSegment(
               value: LibraryScope.favorites,
-              icon: Icon(Icons.favorite_outline),
-              label: Text('Favorites'),
+              icon: const Icon(Icons.favorite_outline),
+              label: Text(l10n.favorites),
             ),
             ButtonSegment(
               value: LibraryScope.pinned,
-              icon: Icon(Icons.push_pin_outlined),
-              label: Text('Pinned'),
+              icon: const Icon(Icons.push_pin_outlined),
+              label: Text(l10n.pinned),
             ),
             ButtonSegment(
               value: LibraryScope.trash,
-              icon: Icon(Icons.delete_outline),
-              label: Text('Trash'),
+              icon: const Icon(Icons.delete_outline),
+              label: Text(l10n.trash),
             ),
           ],
           selected: {controller.scope},
@@ -738,30 +789,32 @@ class _FilterBar extends StatelessWidget {
         ),
         DropdownMenu<RecordingSort>(
           initialSelection: controller.sort,
-          label: const Text('Sort'),
+          label: Text(l10n.sort),
           onSelected: (value) {
-            if (value != null) controller.setSort(value);
+            if (value != null) {
+              controller.setSort(value);
+            }
           },
           dropdownMenuEntries: RecordingSort.values
               .map(
                 (sort) => DropdownMenuEntry(
                   value: sort,
-                  label: _sortLabel(sort),
+                  label: _sortLabel(sort, l10n),
                 ),
               )
               .toList(),
         ),
         DropdownMenu<String?>(
           initialSelection: controller.formatFilter,
-          label: const Text('Format'),
+          label: Text(l10n.format),
           onSelected: (value) {
             onFilterChanged();
             controller.setFormatFilter(value);
           },
           dropdownMenuEntries: [
-            const DropdownMenuEntry<String?>(
+            DropdownMenuEntry<String?>(
               value: null,
-              label: 'Any format',
+              label: l10n.anyFormat,
             ),
             ...RecordingFormat.values.map(
               (format) => DropdownMenuEntry<String?>(
@@ -774,15 +827,15 @@ class _FilterBar extends StatelessWidget {
         if (controller.folders.isNotEmpty)
           DropdownMenu<String?>(
             initialSelection: controller.folderFilter,
-            label: const Text('Folder'),
+            label: Text(l10n.folder),
             onSelected: (value) {
               onFilterChanged();
               controller.setFolderFilter(value);
             },
             dropdownMenuEntries: [
-              const DropdownMenuEntry<String?>(
+              DropdownMenuEntry<String?>(
                 value: null,
-                label: 'Any folder',
+                label: l10n.anyFolder,
               ),
               ...controller.folders.map(
                 (folder) => DropdownMenuEntry<String?>(
@@ -792,19 +845,170 @@ class _FilterBar extends StatelessWidget {
               ),
             ],
           ),
+        ActionChip(
+          avatar: Icon(
+            controller.hasAdvancedLibraryFilters
+                ? Icons.filter_alt
+                : Icons.filter_alt_outlined,
+            size: 18,
+          ),
+          label: Text(
+            controller.hasAdvancedLibraryFilters
+                ? l10n.filtersActive
+                : l10n.advancedFilters,
+          ),
+          onPressed: () => _showAdvancedFilters(context),
+        ),
       ],
     );
   }
 
-  static String _sortLabel(RecordingSort sort) => switch (sort) {
-        RecordingSort.newest => 'Newest first',
-        RecordingSort.oldest => 'Oldest first',
-        RecordingSort.nameAsc => 'Name A–Z',
-        RecordingSort.nameDesc => 'Name Z–A',
-        RecordingSort.longest => 'Longest',
-        RecordingSort.shortest => 'Shortest',
-        RecordingSort.largest => 'Largest file',
-        RecordingSort.smallest => 'Smallest file',
+  Future<void> _showAdvancedFilters(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
+    String? selectedTag = controller.tagFilter;
+    DateTime? from = controller.dateFromFilter;
+    DateTime? through = controller.dateToFilter;
+    final tags = controller.tags.toList()..sort();
+
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (sheetContext, setSheetState) {
+          final material = MaterialLocalizations.of(sheetContext);
+          return SafeArea(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                20,
+                8,
+                20,
+                20 + MediaQuery.viewInsetsOf(sheetContext).bottom,
+              ),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 620),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      l10n.advancedFilters,
+                      style: Theme.of(sheetContext)
+                          .textTheme
+                          .titleLarge
+                          ?.copyWith(fontWeight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String?>(
+                      initialValue: selectedTag,
+                      decoration: InputDecoration(labelText: l10n.exactTag),
+                      items: [
+                        DropdownMenuItem<String?>(
+                          value: null,
+                          child: Text(l10n.anyTag),
+                        ),
+                        ...tags.map(
+                          (tag) => DropdownMenuItem<String?>(
+                            value: tag,
+                            child: Text(tag),
+                          ),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        setSheetState(() => selectedTag = value);
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.calendar_today_outlined),
+                      title: Text(l10n.fromDate),
+                      subtitle: Text(
+                        from == null
+                            ? l10n.notSet
+                            : material.formatCompactDate(from!),
+                      ),
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: sheetContext,
+                          initialDate: from ?? DateTime.now(),
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime.now(),
+                        );
+                        if (picked != null) {
+                          setSheetState(() => from = picked);
+                        }
+                      },
+                    ),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.event_available_outlined),
+                      title: Text(l10n.throughDate),
+                      subtitle: Text(
+                        through == null
+                            ? l10n.notSet
+                            : material.formatCompactDate(through!),
+                      ),
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: sheetContext,
+                          initialDate: through ?? from ?? DateTime.now(),
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime.now(),
+                        );
+                        if (picked != null) {
+                          setSheetState(() => through = picked);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      alignment: WrapAlignment.end,
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            controller.clearAdvancedLibraryFilters();
+                            onFilterChanged();
+                            Navigator.pop(sheetContext);
+                          },
+                          child: Text(l10n.clearFilters),
+                        ),
+                        FilledButton(
+                          onPressed: () {
+                            controller.setTagFilter(selectedTag);
+                            controller.setDateRangeFilter(from, through);
+                            onFilterChanged();
+                            Navigator.pop(sheetContext);
+                          },
+                          child: Text(l10n.applyFilters),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  static String _sortLabel(
+    RecordingSort sort,
+    AppLocalizations l10n,
+  ) =>
+      switch (sort) {
+        RecordingSort.newest => l10n.newestFirst,
+        RecordingSort.oldest => l10n.oldestFirst,
+        RecordingSort.nameAsc => l10n.nameAscending,
+        RecordingSort.nameDesc => l10n.nameDescending,
+        RecordingSort.longest => l10n.longest,
+        RecordingSort.shortest => l10n.shortest,
+        RecordingSort.largest => l10n.largestFile,
+        RecordingSort.smallest => l10n.smallestFile,
       };
 }
 
@@ -816,26 +1020,27 @@ class _EmptyLibrary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final (icon, title, message) = switch (scope) {
       LibraryScope.all => (
           Icons.mic_none,
-          'No recordings yet',
-          'Create a recording or import an audio file to start your library.',
+          l10n.noRecordingsYet,
+          l10n.noRecordingsLibraryHint,
         ),
       LibraryScope.favorites => (
           Icons.favorite_border,
-          'No favorites',
-          'Tap the heart on a recording to keep it here.',
+          l10n.noFavorites,
+          l10n.noFavoritesHint,
         ),
       LibraryScope.pinned => (
           Icons.push_pin_outlined,
-          'Nothing pinned',
-          'Pin important recordings for quick access.',
+          l10n.nothingPinned,
+          l10n.nothingPinnedHint,
         ),
       LibraryScope.trash => (
           Icons.delete_outline,
-          'Trash is empty',
-          'Deleted recordings you can restore will appear here.',
+          l10n.trashIsEmpty,
+          l10n.trashIsEmptyHint,
         ),
     };
     return Center(
@@ -863,7 +1068,7 @@ class _EmptyLibrary extends StatelessWidget {
               FilledButton.icon(
                 onPressed: onRecord,
                 icon: const Icon(Icons.mic),
-                label: const Text('Record now'),
+                label: Text(l10n.recordNow),
               ),
             ],
           ],
