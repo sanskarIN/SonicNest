@@ -56,7 +56,17 @@ REQUIRED_FILES = (
     ".github/workflows/windows.yml",
     ".github/workflows/macos.yml",
     ".github/workflows/release-candidate.yml",
+    ".github/workflows/repository-audit.yml",
 )
+
+ALLOWED_WORKFLOW_FILES = {
+    ".github/workflows/ci.yml",
+    ".github/workflows/linux-package.yml",
+    ".github/workflows/windows.yml",
+    ".github/workflows/macos.yml",
+    ".github/workflows/release-candidate.yml",
+    ".github/workflows/repository-audit.yml",
+}
 
 FORBIDDEN_TRACKED_SUFFIXES = (
     ".jks",
@@ -126,6 +136,29 @@ def audit() -> list[str]:
 
     tracked = tracked_files()
     tracked_set = set(tracked)
+    tracked_workflows = {
+        relative
+        for relative in tracked
+        if relative.startswith(".github/workflows/") and relative.endswith(".yml")
+    }
+
+    for relative in sorted(tracked_workflows - ALLOWED_WORKFLOW_FILES):
+        errors.append(
+            "Unapproved GitHub Actions workflow is tracked; temporary/one-shot workflows "
+            f"must not remain on main: {relative}"
+        )
+
+    for relative in sorted(tracked_workflows & ALLOWED_WORKFLOW_FILES):
+        workflow_path = ROOT / relative
+        try:
+            workflow_text = workflow_path.read_text(encoding="utf-8", errors="ignore")
+        except OSError as exc:
+            errors.append(f"Could not read workflow {relative}: {exc}")
+            continue
+        if "contents: write" in workflow_text:
+            errors.append(
+                f"Permanent workflow must not request contents: write: {relative}"
+            )
 
     for relative in tracked:
         path = ROOT / relative
@@ -285,10 +318,6 @@ def audit() -> list[str]:
                 errors.append(
                     f"release-candidate.yml is missing required safety/output marker: {fragment}"
                 )
-        if "contents: write" in workflow_text:
-            errors.append(
-                "Permanent release-candidate workflow must not request contents: write."
-            )
 
     linux_package_workflow = ROOT / ".github/workflows/linux-package.yml"
     if linux_package_workflow.exists():
