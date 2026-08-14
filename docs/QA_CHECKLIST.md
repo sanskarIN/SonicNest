@@ -368,7 +368,7 @@ Repository implementation/automation evidence:
 - [x] The deterministic SonicNest icon is installed into the hicolor icon hierarchy and referenced by the packaged desktop entry.
 - [x] AppStream metadata is installed by the Debian package builder.
 - [x] Package verification checks control metadata, executable permissions, desktop entry, AppStream metadata, icon presence, and SHA-256 integrity.
-- [x] Linux Package CI run `31783749267` validated source `f2c773e1e03753ec62b9e4229a3f086871a26f29` and built/structurally verified `sonicnest_0.1.0_amd64.deb` successfully.
+- [x] Linux Package CI run `31783749267` validated source `f2c773e59b27a2aaac77e0590e20441ed7eba03f` and built/structurally verified `sonicnest_0.1.0_amd64.deb` successfully.
 
 Real-system/release-candidate review:
 
