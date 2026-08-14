@@ -239,7 +239,8 @@ class SettingsScreen extends StatelessWidget {
                       child: TextFormField(
                         key: ValueKey('category-${recording.namingCategory}'),
                         initialValue: recording.namingCategory,
-                        decoration: const InputDecoration(labelText: 'Category token'),
+                        decoration:
+                            const InputDecoration(labelText: 'Category token'),
                         maxLength: 30,
                         onFieldSubmitted: (value) =>
                             controller.updateRecordingSettings(
@@ -252,7 +253,8 @@ class SettingsScreen extends StatelessWidget {
                       child: TextFormField(
                         key: ValueKey('suffix-${recording.namingSuffix}'),
                         initialValue: recording.namingSuffix,
-                        decoration: const InputDecoration(labelText: 'Suffix token'),
+                        decoration:
+                            const InputDecoration(labelText: 'Suffix token'),
                         maxLength: 30,
                         onFieldSubmitted: (value) =>
                             controller.updateRecordingSettings(
@@ -268,7 +270,8 @@ class SettingsScreen extends StatelessWidget {
                     Expanded(
                       child: DropdownButtonFormField<int>(
                         initialValue: recording.countdownSeconds,
-                        decoration: const InputDecoration(labelText: 'Countdown'),
+                        decoration:
+                            const InputDecoration(labelText: 'Countdown'),
                         items: const [0, 3, 5, 10]
                             .map(
                               (seconds) => DropdownMenuItem(
@@ -334,7 +337,8 @@ class SettingsScreen extends StatelessWidget {
                       _skipIntervals.contains(settings.skipIntervalSeconds)
                           ? settings.skipIntervalSeconds
                           : 10,
-                  decoration: const InputDecoration(labelText: 'Jump interval'),
+                  decoration:
+                      const InputDecoration(labelText: 'Jump interval'),
                   items: _skipIntervals
                       .map(
                         (seconds) => DropdownMenuItem(
@@ -451,7 +455,8 @@ class SettingsScreen extends StatelessWidget {
                         if (stats.temporaryFileCount > 0)
                           ListTile(
                             contentPadding: EdgeInsets.zero,
-                            leading: const Icon(Icons.cleaning_services_outlined),
+                            leading:
+                                const Icon(Icons.cleaning_services_outlined),
                             title: const Text('Temporary audio files'),
                             subtitle: Text(
                               '${stats.temporaryFileCount} files • '
@@ -460,10 +465,7 @@ class SettingsScreen extends StatelessWidget {
                             trailing: TextButton(
                               onPressed: controller.recorder.isActive
                                   ? null
-                                  : () async {
-                                      await controller.storage.clearTemporaryFiles();
-                                      controller.notifyListeners();
-                                    },
+                                  : controller.clearTemporaryStorage,
                               child: const Text('Clean'),
                             ),
                           ),
@@ -487,7 +489,14 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  static const _bitRates = [64000, 96000, 128000, 192000, 256000, 320000];
+  static const _bitRates = [
+    64000,
+    96000,
+    128000,
+    192000,
+    256000,
+    320000,
+  ];
   static const _sampleRates = [8000, 16000, 22050, 44100, 48000, 96000];
   static const _playbackSpeeds = [.5, .75, 1.0, 1.25, 1.5, 1.75, 2.0];
   static const _skipIntervals = [5, 10, 15, 30];
