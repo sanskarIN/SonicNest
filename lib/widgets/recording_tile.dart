@@ -34,7 +34,8 @@ class RecordingTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         onTap: onTap,
         onLongPress: onLongPress,
-        onSecondaryTapDown: onSecondaryTapDown,
+        onSecondaryTapDown:
+            onSecondaryTapDown ?? (details) => onMore(),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
