@@ -5,6 +5,8 @@
 Completed in the current codebase:
 - Cross-platform capture architecture and runtime codec fallback matrix.
 - Recording lifecycle guards, foreground-service bridge, local metadata safety, import/export, and processing pipeline.
+- Defensive recording-metadata decoding with malformed-record isolation.
+- Structural metadata corruption preservation and interrupted `.bak` replacement recovery.
 - Configurable/cancellable recording countdown.
 - Smart recording-name templates with safe date/time/sequence/category/prefix/suffix tokens.
 - Optional active-recording screen-wake handling with lifecycle cleanup.
@@ -14,6 +16,7 @@ Completed in the current codebase:
 Still required before leaving the foundation stage:
 - Exercise permission-denied, interruption, low-storage, device-routing, screen-wake, and repeated pause/resume paths on physical devices.
 - Run 30-minute and multi-hour recording soak tests on representative hardware.
+- Exercise abrupt process/power interruption and filesystem-permission failures on real target systems even though deterministic metadata backup recovery is implemented.
 
 ## v0.2.x — Library and playback polish
 
@@ -22,6 +25,9 @@ Completed:
 - Add multi-selection bulk favorite, pin, share, Trash, restore, and permanent-delete operations.
 - Add format, folder, exact-tag, and date-range filtering.
 - Add managed recording/Trash/temporary storage accounting and guarded temporary cleanup.
+- Add failure-isolated multi-file import so missing/corrupt selections can fail independently without blocking later valid files.
+- Add managed-copy cleanup after import copy/probe/waveform failures.
+- Add deterministic metadata persistence coverage with a 3,000-entry filesystem save/load round-trip.
 - Add desktop keyboard navigation shortcuts.
 - Add desktop secondary/right-click access to each recording's complete action surface while preserving touch and long-press behavior.
 - Add previous/next recording navigation.
@@ -29,6 +35,8 @@ Completed:
 - Integrate Android, iOS, and macOS media-session metadata and notification/lock-screen playback controls through `just_audio_background` and tagged `MediaItem` audio sources.
 
 Remaining:
+- Run a privacy-safe malformed/corrupt audio corpus through import on each maintained OS, including mixed valid/invalid selections.
+- Profile real Library startup/search/filter/scroll/memory behavior with thousands of entries; the 3,000-entry metadata round-trip is persistence evidence, not UI performance approval.
 - Verify Android, iOS, and macOS media-session behavior on physical devices, including pause/resume, lock-screen transport controls, interruptions, and metadata refresh.
 - Evaluate dedicated Windows and Linux system media-session integration where maintained platform support is available and useful.
 - Evaluate a cursor-anchored platform-native desktop context menu only if physical desktop usability testing shows a meaningful advantage over the implemented secondary-click action surface.
@@ -60,12 +68,13 @@ Completed/in progress:
 - Responsive Material 3 layouts, semantics, reduced-motion preference, and keyboard navigation are implemented.
 - Branded Flutter startup experience and recoverable startup state are implemented.
 - Primary Flutter presentation surfaces are centralized in the localization catalog; English is the currently supported locale.
+- Deterministic metadata stress coverage exercises 3,000 entries through the real JSON persistence path.
 
 Remaining:
 - Decide whether backend diagnostic/error details should be translated or intentionally retained as technical text before non-English releases.
 - Add additional locales only with translation review, text-expansion testing, and translation QA.
 - Complete screen-reader audits with VoiceOver, TalkBack, Narrator, and desktop accessibility tooling.
-- Profile multi-hour recordings and libraries with thousands of entries.
+- Profile multi-hour recordings and real Library UI behavior with thousands of entries.
 - Measure memory/CPU/storage behavior on low-resource devices.
 - Profile large batch conversions and exports for throughput, storage pressure, cancellation expectations, and recovery behavior.
 
@@ -81,6 +90,9 @@ Completed/in progress:
 - Native branding source revision `40c4a758debef136c2d8c977c321446cca2697cd` validated by analyzer/tests plus Android, Linux, Windows, macOS, and unsigned iOS debug builds.
 - Debian `.deb` selected as the initial repository-supported Linux installation package.
 - Linux desktop entry, deterministic icon installation, AppStream metadata, package builder, structural verifier, checksum generation, dedicated package CI, and release-candidate `.deb` output implemented.
+- Hosted-runner Debian installation, installed-payload/startup smoke, package removal, and uninstall cleanup validation implemented.
+- Permanent workflow allowlist/read-only integrity checks implemented; obsolete write-enabled one-shot workflows removed from `main`.
+- Metadata/import reliability revision `a88aeadadda017b0aced4dbc25c8426a27364b77` validated by core run `31807193932` for formatting, analyzer, tests, Android, and Linux; controller source `3bf63e69186a7a538f7d0587f3d361e00c2e29e9` validated by Windows run `31807141053` and Apple run `31807141166`.
 
 Remaining:
 - Keep Android/Linux/Windows/macOS/iOS build workflows green for the final source revision.
@@ -88,6 +100,7 @@ Remaining:
 - Validate microphone input switching and codec availability on each supported OS.
 - Verify background/lock-screen/interruption behavior against each platform's current policies.
 - Validate countdown, screen-wake, A-B loop, media buttons, batch conversion/export, desktop secondary-click interaction, and advanced editor outputs on physical target hardware.
+- Complete malformed-real-media corpus testing and real low-storage/filesystem-permission/interruption recovery evidence.
 - Visually inspect generated Android/iOS/macOS/Windows native icons and Android/iOS launch/splash resources on real release candidates.
 - Install and visually inspect the generated Linux `.deb` on representative Debian/Ubuntu-family systems, including launcher/menu/task-switcher icon surfaces and package uninstall behavior.
 - Decide the public Linux distribution channel and any package/repository signing policy.
@@ -112,6 +125,10 @@ Implemented: optional user-selected destination-folder copies, collision-safe de
 
 Primary Flutter presentation surfaces are centralized in the localization catalog and English remains the baseline locale. Remaining localization work is translation introduction, text-expansion testing, translation QA, and deciding how much backend diagnostic text should be localized versus retained as technical detail.
 
+## Metadata integrity and resilient import status
+
+Implemented: defensive model decoding, structurally corrupt metadata preservation, per-record isolation, valid-backup recovery after interrupted/corrupt primary replacement, a deterministic 3,000-entry metadata round-trip, dedicated per-file import validation/cleanup, and controller-level continuation after isolated malformed/missing selections. Remaining work is real malformed-media corpus testing, real large-library UI/memory profiling, low-storage and filesystem-permission recovery, and abrupt process/power interruption evidence on target systems.
+
 ## Native branding and Linux packaging status
 
-Implemented: deterministic brand source generation, Android adaptive/monochrome/full launcher inputs, Android/iOS native splash resources, Android/iOS/macOS/Windows icon generation integrated into build workflows, and Debian `.deb` packaging with a Linux desktop entry, AppStream metadata, hicolor icon installation, checksum generation, structural verification, and CI/release-candidate integration. Remaining work is real OS-level visual inspection, signed/release launch-screen review, real screenshots, representative `.deb` install/uninstall testing, and the final public Linux distribution/signing policy.
+Implemented: deterministic brand source generation, Android adaptive/monochrome/full launcher inputs, Android/iOS native splash resources, Android/iOS/macOS/Windows icon generation integrated into build workflows, and Debian `.deb` packaging with a Linux desktop entry, AppStream metadata, hicolor icon installation, checksum generation, structural verification, hosted-runner install/startup/uninstall smoke, and CI/release-candidate integration. Remaining work is real OS-level visual inspection, signed/release launch-screen review, real screenshots, representative `.deb` install/upgrade/uninstall testing, and the final public Linux distribution/signing policy.
