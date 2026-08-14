@@ -46,7 +46,7 @@ class RecorderScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      _statusText(recorder.status),
+                      _statusText(recorder),
                       style: Theme.of(context)
                           .textTheme
                           .titleMedium
@@ -55,13 +55,27 @@ class RecorderScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 14),
-                Text(
-                  formatDuration(recorder.elapsed),
-                  style: Theme.of(context)
-                      .textTheme
-                      .displaySmall
-                      ?.copyWith(fontFeatures: const []),
-                ),
+                if (recorder.status == RecorderStatus.countdown)
+                  Semantics(
+                    liveRegion: true,
+                    label:
+                        'Recording starts in ${recorder.countdownRemaining} seconds',
+                    child: Text(
+                      '${recorder.countdownRemaining}',
+                      style: Theme.of(context)
+                          .textTheme
+                          .displayLarge
+                          ?.copyWith(fontWeight: FontWeight.w900),
+                    ),
+                  )
+                else
+                  Text(
+                    formatDuration(recorder.elapsed),
+                    style: Theme.of(context)
+                        .textTheme
+                        .displaySmall
+                        ?.copyWith(fontFeatures: const []),
+                  ),
                 const SizedBox(height: 18),
                 WaveformView(samples: recorder.waveform, height: 150),
                 const SizedBox(height: 8),
@@ -83,7 +97,7 @@ class RecorderScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 22),
                 _Controls(controller: controller),
-                if (active) ...[
+                if (recorder.isCapturing) ...[
                   const SizedBox(height: 16),
                   OutlinedButton.icon(
                     onPressed: recorder.addMarker,
@@ -150,8 +164,10 @@ class RecorderScreen extends StatelessWidget {
     );
   }
 
-  String _statusText(RecorderStatus status) => switch (status) {
+  String _statusText(RecorderService recorder) => switch (recorder.status) {
         RecorderStatus.idle => 'Ready',
+        RecorderStatus.countdown =>
+          'Starting in ${recorder.countdownRemaining}…',
         RecorderStatus.recording => 'Recording',
         RecorderStatus.paused => 'Paused',
         RecorderStatus.processing => 'Processing audio',
@@ -187,6 +203,13 @@ class _Controls extends StatelessWidget {
     final recorder = controller.recorder;
     if (recorder.status == RecorderStatus.processing) {
       return const CircularProgressIndicator();
+    }
+    if (recorder.status == RecorderStatus.countdown) {
+      return OutlinedButton.icon(
+        onPressed: controller.cancelRecording,
+        icon: const Icon(Icons.close),
+        label: const Text('Cancel countdown'),
+      );
     }
     if (recorder.status == RecorderStatus.idle ||
         recorder.status == RecorderStatus.error) {
