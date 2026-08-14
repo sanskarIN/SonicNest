@@ -3,14 +3,30 @@ name: Flutter CI
 on:
   push:
     branches: [main]
+    paths:
+      - 'lib/**'
+      - 'test/**'
+      - 'tool/**'
+      - 'assets/**'
+      - 'pubspec.yaml'
+      - 'analysis_options.yaml'
+      - '.github/workflows/ci.yml'
   pull_request:
     branches: [main]
+    paths:
+      - 'lib/**'
+      - 'test/**'
+      - 'tool/**'
+      - 'assets/**'
+      - 'pubspec.yaml'
+      - 'analysis_options.yaml'
+      - '.github/workflows/ci.yml'
 
 permissions:
   contents: read
 
 concurrency:
-  group: sonicnest-ci-${{ github.ref }}
+  group: sonicnest-ci-v2-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
