@@ -54,9 +54,18 @@ bash tool/build_linux_deb.sh release
 bash tool/verify_linux_deb.sh
 ```
 
-Packaging changes must keep the application payload, desktop entry, AppStream metadata, hicolor icon, LICENSE/NOTICE, package control metadata, and SHA-256 verification coherent. Do not weaken structural validation to silence a packaging error; correct the package source or verifier instead.
+For a disposable Debian/Ubuntu-compatible validation host with `xvfb-run` available, also exercise the installed package rather than only its staging contents:
 
-A structurally valid `.deb` is not by itself a stable-release approval. Representative real-system installation, upgrade, uninstall, microphone/routing, accessibility, visual, and distribution/signing evidence remains governed by `docs/QA_CHECKLIST.md`, `docs/RELEASE_EVIDENCE_TEMPLATE.md`, and `docs/RELEASING.md`.
+```bash
+PACKAGE="$(find build/linux-package -maxdepth 1 -type f -name 'sonicnest_*.deb' -print -quit)"
+sudo apt-get install -y "./$PACKAGE"
+bash tool/smoke_test_installed_linux_deb.sh
+sudo apt-get remove -y sonicnest
+```
+
+Packaging changes must keep the application payload, desktop entry, AppStream metadata, hicolor icon, LICENSE/NOTICE, package control metadata, SHA-256 verification, package-manager installation, installed-payload startup smoke, and uninstall cleanup coherent. Do not weaken structural or install-smoke validation to silence a packaging error; correct the package source, verifier, smoke test, or declared runtime dependencies instead.
+
+A green hosted-runner package smoke test is not by itself a stable-release approval. Representative real-system installation, upgrade, uninstall, microphone/routing, accessibility, visual, long-duration, low-storage, and distribution/signing evidence remains governed by `docs/QA_CHECKLIST.md`, `docs/RELEASE_EVIDENCE_TEMPLATE.md`, and `docs/RELEASING.md`.
 
 ## Documentation and continuation state
 
