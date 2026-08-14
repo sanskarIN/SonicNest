@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../controllers/app_controller.dart';
 import '../core/formatters.dart';
+import '../l10n/app_localizations.dart';
 import '../models/recording_settings.dart';
 import '../services/storage_service.dart';
 
@@ -12,6 +13,7 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final settings = controller.settings;
     final recording = settings.recording;
     return Center(
@@ -21,7 +23,7 @@ class SettingsScreen extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           children: [
             Text(
-              'Settings',
+              l10n.settings,
               style: Theme.of(context)
                   .textTheme
                   .headlineMedium
@@ -29,17 +31,17 @@ class SettingsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 18),
             _Section(
-              title: 'Recording',
+              title: l10n.recordingSettingsSection,
               icon: Icons.mic_outlined,
               children: [
                 DropdownButtonFormField<QualityPreset>(
                   initialValue: recording.preset,
-                  decoration: const InputDecoration(labelText: 'Quality preset'),
+                  decoration: InputDecoration(labelText: l10n.qualityPreset),
                   items: QualityPreset.values
                       .map(
                         (preset) => DropdownMenuItem(
                           value: preset,
-                          child: Text(_presetLabel(preset)),
+                          child: Text(_presetLabel(preset, l10n)),
                         ),
                       )
                       .toList(),
@@ -54,7 +56,7 @@ class SettingsScreen extends StatelessWidget {
                 const SizedBox(height: 14),
                 DropdownButtonFormField<RecordingFormat>(
                   initialValue: recording.format,
-                  decoration: const InputDecoration(labelText: 'Default format'),
+                  decoration: InputDecoration(labelText: l10n.defaultFormat),
                   items: RecordingFormat.values
                       .map(
                         (format) => DropdownMenuItem(
@@ -82,7 +84,7 @@ class SettingsScreen extends StatelessWidget {
                         initialValue: _bitRates.contains(recording.bitRate)
                             ? recording.bitRate
                             : 128000,
-                        decoration: const InputDecoration(labelText: 'Bitrate'),
+                        decoration: InputDecoration(labelText: l10n.bitrate),
                         items: _bitRates
                             .map(
                               (rate) => DropdownMenuItem(
@@ -109,7 +111,7 @@ class SettingsScreen extends StatelessWidget {
                         initialValue: _sampleRates.contains(recording.sampleRate)
                             ? recording.sampleRate
                             : 44100,
-                        decoration: const InputDecoration(labelText: 'Sample rate'),
+                        decoration: InputDecoration(labelText: l10n.sampleRate),
                         items: _sampleRates
                             .map(
                               (rate) => DropdownMenuItem(
@@ -134,16 +136,16 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 14),
                 SegmentedButton<int>(
-                  segments: const [
+                  segments: [
                     ButtonSegment(
                       value: 1,
-                      icon: Icon(Icons.spatial_audio_off),
-                      label: Text('Mono'),
+                      icon: const Icon(Icons.spatial_audio_off),
+                      label: Text(l10n.mono),
                     ),
                     ButtonSegment(
                       value: 2,
-                      icon: Icon(Icons.spatial_audio),
-                      label: Text('Stereo'),
+                      icon: const Icon(Icons.spatial_audio),
+                      label: Text(l10n.stereo),
                     ),
                   ],
                   selected: {recording.channels},
@@ -158,10 +160,8 @@ class SettingsScreen extends StatelessWidget {
                 const SizedBox(height: 10),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Automatic gain control'),
-                  subtitle: const Text(
-                    'Ask the recording backend to keep voice levels more consistent when supported.',
-                  ),
+                  title: Text(l10n.automaticGainControl),
+                  subtitle: Text(l10n.automaticGainHint),
                   value: recording.autoGain,
                   onChanged: (value) => controller.updateRecordingSettings(
                     recording.copyWith(
@@ -172,7 +172,7 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Echo cancellation'),
+                  title: Text(l10n.echoCancellation),
                   value: recording.echoCancel,
                   onChanged: (value) => controller.updateRecordingSettings(
                     recording.copyWith(
@@ -183,7 +183,7 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Noise suppression'),
+                  title: Text(l10n.noiseSuppression),
                   value: recording.noiseSuppress,
                   onChanged: (value) => controller.updateRecordingSettings(
                     recording.copyWith(
@@ -194,7 +194,7 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 const Divider(height: 28),
                 Text(
-                  'Smart naming',
+                  l10n.smartNaming,
                   style: Theme.of(context)
                       .textTheme
                       .titleMedium
@@ -204,27 +204,27 @@ class SettingsScreen extends StatelessWidget {
                 TextFormField(
                   key: ValueKey('prefix-${recording.namingPrefix}'),
                   initialValue: recording.namingPrefix,
-                  decoration: const InputDecoration(
-                    labelText: 'Prefix',
-                    hintText: 'Recording',
+                  decoration: InputDecoration(
+                    labelText: l10n.prefix,
+                    hintText: l10n.recordingDefaultPrefix,
                   ),
                   maxLength: 40,
                   onFieldSubmitted: (value) =>
                       controller.updateRecordingSettings(
                     recording.copyWith(
-                      namingPrefix:
-                          value.trim().isEmpty ? 'Recording' : value.trim(),
+                      namingPrefix: value.trim().isEmpty
+                          ? l10n.recordingDefaultPrefix
+                          : value.trim(),
                     ),
                   ),
                 ),
                 TextFormField(
                   key: ValueKey('template-${recording.namingTemplate}'),
                   initialValue: recording.namingTemplate,
-                  decoration: const InputDecoration(
-                    labelText: 'Filename template',
-                    hintText: '{prefix}_{date}_{time}',
-                    helperText:
-                        'Tokens: {prefix} {suffix} {category} {date} {time} {sequence}',
+                  decoration: InputDecoration(
+                    labelText: l10n.filenameTemplate,
+                    hintText: l10n.filenameTemplateHint,
+                    helperText: l10n.filenameTemplateHelper,
                   ),
                   maxLength: 120,
                   onFieldSubmitted: (value) =>
@@ -239,8 +239,7 @@ class SettingsScreen extends StatelessWidget {
                       child: TextFormField(
                         key: ValueKey('category-${recording.namingCategory}'),
                         initialValue: recording.namingCategory,
-                        decoration:
-                            const InputDecoration(labelText: 'Category token'),
+                        decoration: InputDecoration(labelText: l10n.categoryToken),
                         maxLength: 30,
                         onFieldSubmitted: (value) =>
                             controller.updateRecordingSettings(
@@ -253,8 +252,7 @@ class SettingsScreen extends StatelessWidget {
                       child: TextFormField(
                         key: ValueKey('suffix-${recording.namingSuffix}'),
                         initialValue: recording.namingSuffix,
-                        decoration:
-                            const InputDecoration(labelText: 'Suffix token'),
+                        decoration: InputDecoration(labelText: l10n.suffixToken),
                         maxLength: 30,
                         onFieldSubmitted: (value) =>
                             controller.updateRecordingSettings(
@@ -265,37 +263,30 @@ class SettingsScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: DropdownButtonFormField<int>(
-                        initialValue: recording.countdownSeconds,
-                        decoration:
-                            const InputDecoration(labelText: 'Countdown'),
-                        items: const [0, 3, 5, 10]
-                            .map(
-                              (seconds) => DropdownMenuItem(
-                                value: seconds,
-                                child: Text(
-                                  seconds == 0 ? 'Off' : '$seconds seconds',
-                                ),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (seconds) {
-                          if (seconds != null) {
-                            controller.updateRecordingSettings(
-                              recording.copyWith(countdownSeconds: seconds),
-                            );
-                          }
-                        },
-                      ),
-                    ),
-                  ],
+                DropdownButtonFormField<int>(
+                  initialValue: recording.countdownSeconds,
+                  decoration: InputDecoration(labelText: l10n.countdown),
+                  items: const [0, 3, 5, 10]
+                      .map(
+                        (seconds) => DropdownMenuItem(
+                          value: seconds,
+                          child: Text(
+                            seconds == 0 ? l10n.off : l10n.seconds(seconds),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (seconds) {
+                    if (seconds != null) {
+                      controller.updateRecordingSettings(
+                        recording.copyWith(countdownSeconds: seconds),
+                      );
+                    }
+                  },
                 ),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Keep screen awake during recording'),
+                  title: Text(l10n.keepScreenAwakeDuringRecording),
                   value: recording.keepScreenAwake,
                   onChanged: (value) => controller.updateRecordingSettings(
                     recording.copyWith(keepScreenAwake: value),
@@ -304,7 +295,7 @@ class SettingsScreen extends StatelessWidget {
               ],
             ),
             _Section(
-              title: 'Playback',
+              title: l10n.playbackSettingsSection,
               icon: Icons.play_circle_outline,
               children: [
                 DropdownButtonFormField<double>(
@@ -312,8 +303,8 @@ class SettingsScreen extends StatelessWidget {
                       _playbackSpeeds.contains(settings.defaultPlaybackSpeed)
                           ? settings.defaultPlaybackSpeed
                           : 1.0,
-                  decoration: const InputDecoration(
-                    labelText: 'Default playback speed',
+                  decoration: InputDecoration(
+                    labelText: l10n.defaultPlaybackSpeed,
                   ),
                   items: _playbackSpeeds
                       .map(
@@ -337,13 +328,12 @@ class SettingsScreen extends StatelessWidget {
                       _skipIntervals.contains(settings.skipIntervalSeconds)
                           ? settings.skipIntervalSeconds
                           : 10,
-                  decoration:
-                      const InputDecoration(labelText: 'Jump interval'),
+                  decoration: InputDecoration(labelText: l10n.jumpInterval),
                   items: _skipIntervals
                       .map(
                         (seconds) => DropdownMenuItem(
                           value: seconds,
-                          child: Text('$seconds seconds'),
+                          child: Text(l10n.seconds(seconds)),
                         ),
                       )
                       .toList(),
@@ -357,10 +347,8 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Skip silence by default'),
-                  subtitle: const Text(
-                    'Used where the active playback backend supports silence skipping.',
-                  ),
+                  title: Text(l10n.skipSilenceByDefault),
+                  subtitle: Text(l10n.skipSilenceBackendHint),
                   value: settings.skipSilence,
                   onChanged: (value) => controller.updateSettings(
                     settings.copyWith(skipSilence: value),
@@ -369,25 +357,25 @@ class SettingsScreen extends StatelessWidget {
               ],
             ),
             _Section(
-              title: 'Appearance & accessibility',
+              title: l10n.appearanceAccessibility,
               icon: Icons.palette_outlined,
               children: [
                 SegmentedButton<ThemeMode>(
-                  segments: const [
+                  segments: [
                     ButtonSegment(
                       value: ThemeMode.system,
-                      icon: Icon(Icons.brightness_auto),
-                      label: Text('System'),
+                      icon: const Icon(Icons.brightness_auto),
+                      label: Text(l10n.systemTheme),
                     ),
                     ButtonSegment(
                       value: ThemeMode.light,
-                      icon: Icon(Icons.light_mode),
-                      label: Text('Light'),
+                      icon: const Icon(Icons.light_mode),
+                      label: Text(l10n.lightTheme),
                     ),
                     ButtonSegment(
                       value: ThemeMode.dark,
-                      icon: Icon(Icons.dark_mode),
-                      label: Text('Dark'),
+                      icon: const Icon(Icons.dark_mode),
+                      label: Text(l10n.darkTheme),
                     ),
                   ],
                   selected: {settings.themeMode},
@@ -398,10 +386,8 @@ class SettingsScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Reduce motion'),
-                  subtitle: const Text(
-                    'Avoid non-essential animation and movement.',
-                  ),
+                  title: Text(l10n.reduceMotion),
+                  subtitle: Text(l10n.reduceMotionHint),
                   value: settings.reducedMotion,
                   onChanged: (value) => controller.updateSettings(
                     settings.copyWith(reducedMotion: value),
@@ -410,15 +396,13 @@ class SettingsScreen extends StatelessWidget {
               ],
             ),
             _Section(
-              title: 'Safety & storage',
+              title: l10n.safetyStorage,
               icon: Icons.shield_outlined,
               children: [
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Confirm permanent deletion'),
-                  subtitle: const Text(
-                    'Trash remains recoverable until you permanently delete an item.',
-                  ),
+                  title: Text(l10n.confirmPermanentDeletion),
+                  subtitle: Text(l10n.confirmPermanentDeletionHint),
                   value: settings.confirmDelete,
                   onChanged: (value) => controller.updateSettings(
                     settings.copyWith(confirmDelete: value),
@@ -429,11 +413,11 @@ class SettingsScreen extends StatelessWidget {
                   builder: (context, snapshot) {
                     final stats = snapshot.data;
                     if (stats == null) {
-                      return const ListTile(
+                      return ListTile(
                         contentPadding: EdgeInsets.zero,
-                        leading: Icon(Icons.storage_outlined),
-                        title: Text('Managed storage'),
-                        subtitle: LinearProgressIndicator(),
+                        leading: const Icon(Icons.storage_outlined),
+                        title: Text(l10n.managedStorage),
+                        subtitle: const LinearProgressIndicator(),
                       );
                     }
                     return Column(
@@ -441,14 +425,16 @@ class SettingsScreen extends StatelessWidget {
                         ListTile(
                           contentPadding: EdgeInsets.zero,
                           leading: const Icon(Icons.storage_outlined),
-                          title: const Text('Managed storage'),
+                          title: Text(l10n.managedStorage),
                           subtitle: Text(
-                            '${formatBytes(stats.totalManagedBytes)} total • '
-                            '${formatBytes(stats.recordingsBytes)} recordings • '
-                            '${formatBytes(stats.trashBytes)} Trash',
+                            l10n.storageSummary(
+                              formatBytes(stats.totalManagedBytes),
+                              formatBytes(stats.recordingsBytes),
+                              formatBytes(stats.trashBytes),
+                            ),
                           ),
                           trailing: Text(
-                            '${stats.recordingCount} saved',
+                            l10n.savedCount(stats.recordingCount),
                             style: Theme.of(context).textTheme.labelLarge,
                           ),
                         ),
@@ -457,29 +443,29 @@ class SettingsScreen extends StatelessWidget {
                             contentPadding: EdgeInsets.zero,
                             leading:
                                 const Icon(Icons.cleaning_services_outlined),
-                            title: const Text('Temporary audio files'),
+                            title: Text(l10n.temporaryAudioFiles),
                             subtitle: Text(
-                              '${stats.temporaryFileCount} files • '
-                              '${formatBytes(stats.temporaryBytes)}',
+                              l10n.temporaryFilesSummary(
+                                stats.temporaryFileCount,
+                                formatBytes(stats.temporaryBytes),
+                              ),
                             ),
                             trailing: TextButton(
                               onPressed: controller.recorder.isActive
                                   ? null
                                   : controller.clearTemporaryStorage,
-                              child: const Text('Clean'),
+                              child: Text(l10n.clean),
                             ),
                           ),
                       ],
                     );
                   },
                 ),
-                const ListTile(
+                ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: Icon(Icons.lock_outline),
-                  title: Text('Offline-first recordings'),
-                  subtitle: Text(
-                    'SonicNest stores recordings locally and does not upload microphone data by default.',
-                  ),
+                  leading: const Icon(Icons.lock_outline),
+                  title: Text(l10n.offlineFirstRecordings),
+                  subtitle: Text(l10n.offlineFirstRecordingsHint),
                 ),
               ],
             ),
@@ -504,10 +490,21 @@ class SettingsScreen extends StatelessWidget {
   static String _sampleRateLabel(int rate) =>
       rate == 22050 ? '22.05 kHz' : '${rate / 1000} kHz';
 
-  static String _presetLabel(QualityPreset preset) => switch (preset) {
-        QualityPreset.highQuality => 'High Quality',
-        QualityPreset.smallFile => 'Small File',
-        _ => '${preset.name[0].toUpperCase()}${preset.name.substring(1)}',
+  static String _presetLabel(
+    QualityPreset preset,
+    AppLocalizations l10n,
+  ) =>
+      switch (preset) {
+        QualityPreset.speech => l10n.speech,
+        QualityPreset.meeting => l10n.meeting,
+        QualityPreset.lecture => l10n.lecture,
+        QualityPreset.interview => l10n.interview,
+        QualityPreset.podcast => l10n.podcast,
+        QualityPreset.music => l10n.music,
+        QualityPreset.highQuality => l10n.highQuality,
+        QualityPreset.lossless => l10n.lossless,
+        QualityPreset.smallFile => l10n.smallFile,
+        QualityPreset.custom => l10n.custom,
       };
 }
 
