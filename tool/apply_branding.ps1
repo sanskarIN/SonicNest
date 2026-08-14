@@ -14,7 +14,7 @@ foreach ($HostDirectory in $RequiredHosts) {
     }
 }
 
-dart tool/generate_brand_assets.dart
+dart tool/generate_brand_assets_v2.dart
 if ($LASTEXITCODE -ne 0) {
     throw "Brand asset generation failed with exit code $LASTEXITCODE."
 }
