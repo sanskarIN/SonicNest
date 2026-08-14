@@ -29,8 +29,17 @@ class ExternalActions {
     );
   }
 
-  Future<void> shareFile(String path, {String? text}) async {
-    await SharePlus.instance.share(ShareParams(files: [XFile(path)], text: text));
+  Future<void> shareFile(String path, {String? text}) =>
+      shareFiles([path], text: text);
+
+  Future<void> shareFiles(List<String> paths, {String? text}) async {
+    if (paths.isEmpty) return;
+    await SharePlus.instance.share(
+      ShareParams(
+        files: paths.map(XFile.new).toList(growable: false),
+        text: text,
+      ),
+    );
   }
 
   Future<void> launchExternal(String url) async {
