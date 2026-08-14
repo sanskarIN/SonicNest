@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../controllers/app_controller.dart';
+import '../l10n/app_localizations.dart';
 import '../models/recording_entry.dart';
 import '../models/recording_settings.dart';
 
@@ -32,6 +33,7 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final entries = _entries;
     final selected = entries
         .where((entry) => _selectedIds.contains(entry.id))
@@ -40,7 +42,7 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Batch Convert'),
+        title: Text(l10n.batchConvert),
         actions: [
           TextButton(
             onPressed: _processing || entries.isEmpty
@@ -58,8 +60,8 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
                   },
             child: Text(
               _selectedIds.length == entries.length && entries.isNotEmpty
-                  ? 'Clear all'
-                  : 'Select all',
+                  ? l10n.clearAll
+                  : l10n.selectAll,
             ),
           ),
         ],
@@ -79,21 +81,19 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Text(
-                            'Create converted copies',
+                            l10n.createConvertedCopies,
                             style: Theme.of(context)
                                 .textTheme
                                 .titleLarge
                                 ?.copyWith(fontWeight: FontWeight.w800),
                           ),
                           const SizedBox(height: 6),
-                          const Text(
-                            'Select multiple library recordings. SonicNest creates new files and keeps every original untouched.',
-                          ),
+                          Text(l10n.batchConvertDescription),
                           const SizedBox(height: 14),
                           DropdownButtonFormField<RecordingFormat>(
                             initialValue: _targetFormat,
-                            decoration: const InputDecoration(
-                              labelText: 'Target format',
+                            decoration: InputDecoration(
+                              labelText: l10n.targetFormat,
                             ),
                             items: RecordingFormat.values
                                 .map(
@@ -114,10 +114,10 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
                           const SizedBox(height: 10),
                           SwitchListTile.adaptive(
                             contentPadding: EdgeInsets.zero,
-                            title: const Text('Copy to an external folder'),
+                            title: Text(l10n.copyToExternalFolder),
                             subtitle: Text(
                               _exportDirectory ??
-                                  'Keep converted copies only in the SonicNest library.',
+                                  l10n.keepConvertedCopiesInLibraryOnly,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -139,7 +139,7 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
                                 onPressed:
                                     _processing ? null : _chooseExportDirectory,
                                 icon: const Icon(Icons.folder_open_outlined),
-                                label: const Text('Change export folder'),
+                                label: Text(l10n.changeExportFolder),
                               ),
                             ),
                           const SizedBox(height: 10),
@@ -150,15 +150,15 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
                                   : () {
                                       setState(() {
                                         _stopRequested = true;
-                                        _status =
-                                            'Stop requested. The current file will finish safely.';
+                                        _status = l10n
+                                            .stopRequestedCurrentFileFinishes;
                                       });
                                     },
                               icon: const Icon(Icons.stop_circle_outlined),
                               label: Text(
                                 _stopRequested
-                                    ? 'Stopping after current file…'
-                                    : 'Stop after current file',
+                                    ? l10n.stoppingAfterCurrentFile
+                                    : l10n.stopAfterCurrentFile,
                               ),
                             )
                           else
@@ -167,9 +167,7 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
                                   ? null
                                   : () => _convert(selected),
                               icon: const Icon(Icons.multiple_stop_outlined),
-                              label: Text(
-                                'Convert ${selected.length} selected',
-                              ),
+                              label: Text(l10n.convertSelected(selected.length)),
                             ),
                           if (_processing || _status != null) ...[
                             const SizedBox(height: 14),
@@ -178,7 +176,7 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
                             const SizedBox(height: 8),
                             Text(
                               _processing && !_stopRequested
-                                  ? 'Converted $_completed of $_total'
+                                  ? l10n.convertedProgress(_completed, _total)
                                   : _status!,
                             ),
                           ],
@@ -189,11 +187,11 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
                 ),
                 Expanded(
                   child: entries.isEmpty
-                      ? const Center(
+                      ? Center(
                           child: Padding(
-                            padding: EdgeInsets.all(32),
+                            padding: const EdgeInsets.all(32),
                             child: Text(
-                              'There are no saved recordings to batch convert yet.',
+                              l10n.noSavedRecordingsForBatch,
                               textAlign: TextAlign.center,
                             ),
                           ),
@@ -220,7 +218,7 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
                               title: Text(entry.title),
                               subtitle: Text(
                                 '${entry.format.label} • '
-                                '${entry.sampleRate > 0 ? '${entry.sampleRate} Hz' : 'rate unknown'}',
+                                '${entry.sampleRate > 0 ? '${entry.sampleRate} Hz' : l10n.rateUnknown}',
                               ),
                               secondary:
                                   const Icon(Icons.audio_file_outlined),
@@ -249,6 +247,7 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
     if (_processing || entries.isEmpty) {
       return;
     }
+    final l10n = AppLocalizations.of(context);
     final format = _targetFormat;
     final exportDirectory = _exportDirectory;
     setState(() {
@@ -330,26 +329,38 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
 
     final conversionFailureText = failures.isEmpty
         ? ''
-        : ' ${failures.length} conversion failed: '
-            '${failures.take(2).join(' | ')}';
+        : l10n.conversionFailureDetails(
+            failures.length,
+            failures.take(2).join(' | '),
+          );
     final exportText = exportDirectory == null
         ? ''
         : exportFailures.isEmpty
-            ? ' $externalCopies copied to the export folder.'
-            : ' $externalCopies copied externally; '
-                '${exportFailures.length} external copy failed: '
-                '${exportFailures.take(2).join(' | ')}';
+            ? l10n.copiedToExportFolder(externalCopies)
+            : l10n.externalCopyFailureSummary(
+                externalCopies,
+                exportFailures.length,
+                exportFailures.take(2).join(' | '),
+              );
 
     setState(() {
       _processing = false;
       _stopRequested = false;
       _status = stopped
-          ? 'Stopped after $_completed of $_total. '
-              '$successes converted.$conversionFailureText$exportText'
+          ? l10n.batchStoppedSummary(
+              _completed,
+              _total,
+              successes,
+              conversionFailureText,
+              exportText,
+            )
           : failures.isEmpty
-              ? '$successes converted copies created.$exportText'
-              : '$successes converted; ${failures.length} failed. '
-                  '${failures.take(2).join(' | ')}$exportText';
+              ? '${l10n.convertedCopiesCreated(successes)}$exportText'
+              : '${l10n.batchFailureSummary(
+                  successes,
+                  failures.length,
+                  failures.take(2).join(' | '),
+                )}$exportText';
       _selectedIds.clear();
     });
   }
