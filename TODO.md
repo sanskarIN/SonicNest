@@ -27,6 +27,18 @@ This file intentionally contains only work that is still incomplete, requires ph
 - [ ] Large-library profiling with thousands of metadata entries.
 - [ ] Very long audio playback/editor behavior without excessive memory growth.
 - [ ] Malformed/corrupt import corpus testing.
+- [ ] Large batch-conversion profiling with mixed formats and durations.
+- [ ] Batch conversion under low-storage conditions.
+- [ ] Verify per-file batch failure isolation using deliberately malformed or unsupported media.
+
+## Desktop interaction validation
+
+- [ ] Verify secondary/right-click recording actions on Windows.
+- [ ] Verify secondary/right-click recording actions on macOS.
+- [ ] Verify secondary/right-click recording actions on Linux.
+- [ ] Confirm secondary-click does not interfere with primary tap/double-click, keyboard focus, or touch long-press behavior.
+- [ ] Evaluate whether a cursor-anchored platform-native context menu materially improves usability over the implemented action surface before adding more native menu code.
+- [ ] Evaluate direct multi-file export to a user-selected external destination after batch-conversion usability testing.
 
 ## Accessibility and UX validation
 
@@ -38,11 +50,13 @@ This file intentionally contains only work that is still incomplete, requires ph
 - [ ] Large text/scaling review on small phones and desktop windows.
 - [ ] Keyboard-only end-to-end desktop review.
 - [ ] Reduced-motion behavior review.
+- [ ] Batch conversion screen with large text and keyboard-only interaction.
 
 ## Localization
 
 - [ ] Finish migrating remaining hard-coded presentation strings into the localization layer before adding non-English translations.
 - [ ] Add translation QA once additional languages are introduced.
+- [ ] Include batch-conversion and desktop-action strings in the localization migration.
 
 ## Branding and release assets
 
