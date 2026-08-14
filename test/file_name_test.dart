@@ -17,7 +17,8 @@ void main() {
     });
 
     test('caps very long names', () {
-      expect(sanitizeFileStem('a' * 300).length, 120);
+      final longName = List<String>.filled(300, 'a').join();
+      expect(sanitizeFileStem(longName).length, 120);
     });
   });
 
