@@ -13,6 +13,7 @@ class RecordingTile extends StatelessWidget {
     required this.onFavorite,
     required this.onMore,
     this.onLongPress,
+    this.onSecondaryTapDown,
     this.selected = false,
   });
 
@@ -21,6 +22,7 @@ class RecordingTile extends StatelessWidget {
   final VoidCallback onFavorite;
   final VoidCallback onMore;
   final VoidCallback? onLongPress;
+  final GestureTapDownCallback? onSecondaryTapDown;
   final bool selected;
 
   @override
@@ -32,6 +34,7 @@ class RecordingTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         onTap: onTap,
         onLongPress: onLongPress,
+        onSecondaryTapDown: onSecondaryTapDown,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -42,12 +45,20 @@ class RecordingTile extends StatelessWidget {
                   if (selected)
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
-                      child: Icon(Icons.check_circle, size: 20, color: scheme.primary),
+                      child: Icon(
+                        Icons.check_circle,
+                        size: 20,
+                        color: scheme.primary,
+                      ),
                     )
                   else if (entry.pinned)
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
-                      child: Icon(Icons.push_pin, size: 18, color: scheme.primary),
+                      child: Icon(
+                        Icons.push_pin,
+                        size: 18,
+                        color: scheme.primary,
+                      ),
                     ),
                   Expanded(
                     child: Text(
@@ -61,9 +72,13 @@ class RecordingTile extends StatelessWidget {
                   ),
                   if (!selected) ...[
                     IconButton(
-                      tooltip: entry.favorite ? 'Remove from favorites' : 'Add to favorites',
+                      tooltip: entry.favorite
+                          ? 'Remove from favorites'
+                          : 'Add to favorites',
                       onPressed: onFavorite,
-                      icon: Icon(entry.favorite ? Icons.favorite : Icons.favorite_border),
+                      icon: Icon(
+                        entry.favorite ? Icons.favorite : Icons.favorite_border,
+                      ),
                     ),
                     IconButton(
                       tooltip: 'More actions',
@@ -75,7 +90,11 @@ class RecordingTile extends StatelessWidget {
               ),
               if (entry.waveform.isNotEmpty) ...[
                 const SizedBox(height: 6),
-                WaveformView(samples: entry.waveform, height: 44, compact: true),
+                WaveformView(
+                  samples: entry.waveform,
+                  height: 44,
+                  compact: true,
+                ),
               ],
               const SizedBox(height: 8),
               Wrap(
