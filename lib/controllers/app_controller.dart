@@ -19,27 +19,21 @@ enum LibraryScope { all, favorites, pinned, trash }
 
 class AppController extends ChangeNotifier {
   AppController({
-    required StorageService storage,
-    required MetadataStore metadata,
-    required SettingsService settingsService,
-    required RecorderService recorder,
-    required PlayerService player,
-    required AudioProcessor processor,
-    required ExternalActions external,
-  })  : _storage = storage,
-        _metadata = metadata,
-        _settingsService = settingsService,
-        recorder = recorder,
-        player = player,
-        processor = processor,
-        external = external {
+    required this.storage,
+    required this.metadata,
+    required this.settingsService,
+    required this.recorder,
+    required this.player,
+    required this.processor,
+    required this.external,
+  }) {
     recorder.addListener(_relay);
     player.addListener(_relay);
   }
 
-  final StorageService _storage;
-  final MetadataStore _metadata;
-  final SettingsService _settingsService;
+  final StorageService storage;
+  final MetadataStore metadata;
+  final SettingsService settingsService;
   final Uuid _uuid = const Uuid();
 
   final RecorderService recorder;
@@ -93,7 +87,9 @@ class AppController extends ChangeNotifier {
     int compareBool(bool a, bool b) => a == b ? 0 : (a ? -1 : 1);
     list.sort((a, b) {
       final pinned = compareBool(a.pinned, b.pinned);
-      if (scope != LibraryScope.trash && pinned != 0) return pinned;
+      if (scope != LibraryScope.trash && pinned != 0) {
+        return pinned;
+      }
       return switch (sort) {
         RecordingSort.newest => b.createdAt.compareTo(a.createdAt),
         RecordingSort.oldest => a.createdAt.compareTo(b.createdAt),
@@ -115,16 +111,20 @@ class AppController extends ChangeNotifier {
 
   List<RecordingEntry> recordingsByIds(Iterable<String> ids) {
     final wanted = ids.toSet();
-    return _recordings.where((entry) => wanted.contains(entry.id)).toList(growable: false);
+    return _recordings
+        .where((entry) => wanted.contains(entry.id))
+        .toList(growable: false);
   }
 
   Future<void> initialize() async {
-    if (initialized) return;
+    if (initialized) {
+      return;
+    }
     busy = true;
     notifyListeners();
     try {
-      settings = await _settingsService.load();
-      _recordings = await _metadata.load();
+      settings = await settingsService.load();
+      _recordings = await metadata.load();
       await _removeMissingMetadata();
       initialized = true;
       errorMessage = null;
@@ -188,7 +188,7 @@ class AppController extends ChangeNotifier {
       title: result.title,
       filePath: result.path,
       durationMs: result.duration.inMilliseconds,
-      sizeBytes: await _storage.fileSize(result.path),
+      sizeBytes: await storage.fileSize(result.path),
       format: result.settings.format,
       bitRate: result.settings.bitRate,
       sampleRate: result.settings.sampleRate,
@@ -206,41 +206,48 @@ class AppController extends ChangeNotifier {
     required RecordingFormat format,
     List<RecordingMarker> markers = const [],
   }) async {
-    final duration = await player.probeDuration(path);
-    final waveform = await processor.extractWaveformEnvelope(path);
-    final now = DateTime.now();
-    final entry = RecordingEntry(
-      id: _uuid.v7(),
-      title: title,
-      filePath: path,
-      durationMs: duration.inMilliseconds,
-      sizeBytes: await _storage.fileSize(path),
-      format: format,
-      bitRate: settings.recording.bitRate,
-      sampleRate: settings.recording.sampleRate,
-      channels: settings.recording.channels,
-      createdAt: now,
-      modifiedAt: now,
-      waveform: waveform,
-      markers: markers,
-    );
-    _recordings.add(entry);
-    selectedRecording = entry;
-    await _persist();
-    return entry;
+    try {
+      final duration = await player.probeDuration(path);
+      final waveform = await processor.extractWaveformEnvelope(path);
+      final now = DateTime.now();
+      final entry = RecordingEntry(
+        id: _uuid.v7(),
+        title: title,
+        filePath: path,
+        durationMs: duration.inMilliseconds,
+        sizeBytes: await storage.fileSize(path),
+        format: format,
+        bitRate: settings.recording.bitRate,
+        sampleRate: settings.recording.sampleRate,
+        channels: settings.recording.channels,
+        createdAt: now,
+        modifiedAt: now,
+        waveform: waveform,
+        markers: markers,
+      );
+      _recordings.add(entry);
+      selectedRecording = entry;
+      await _persist();
+      return entry;
+    } catch (_) {
+      await storage.deleteIfExists(path);
+      rethrow;
+    }
   }
 
   Future<void> importAudio() async {
     final paths = await external.pickAudioFiles();
-    if (paths.isEmpty) return;
+    if (paths.isEmpty) {
+      return;
+    }
     await _guarded(() async {
       for (final source in paths) {
         String? imported;
         try {
-          imported = await _storage.importFile(source);
+          imported = await storage.importFile(source);
           final ext = p.extension(imported).replaceFirst('.', '').toLowerCase();
           final format = RecordingFormat.values
-                  .where((f) => f.extension == ext)
+                  .where((format) => format.extension == ext)
                   .firstOrNull ??
               RecordingFormat.m4a;
           final duration = await player.probeDuration(imported);
@@ -252,7 +259,7 @@ class AppController extends ChangeNotifier {
               title: p.basenameWithoutExtension(imported),
               filePath: imported,
               durationMs: duration.inMilliseconds,
-              sizeBytes: await _storage.fileSize(imported),
+              sizeBytes: await storage.fileSize(imported),
               format: format,
               bitRate: 0,
               sampleRate: 0,
@@ -262,18 +269,22 @@ class AppController extends ChangeNotifier {
               waveform: waveform,
             ),
           );
+          await _persist();
         } catch (_) {
-          if (imported != null) await _storage.deleteIfExists(imported);
+          if (imported != null) {
+            await storage.deleteIfExists(imported);
+          }
           rethrow;
         }
       }
-      await _persist();
     });
   }
 
   Future<void> exportRecording(RecordingEntry entry) async {
     final destination = await external.chooseExportPath(p.basename(entry.filePath));
-    if (destination != null) await File(entry.filePath).copy(destination);
+    if (destination != null) {
+      await File(entry.filePath).copy(destination);
+    }
   }
 
   Future<void> shareRecording(RecordingEntry entry) =>
@@ -299,11 +310,13 @@ class AppController extends ChangeNotifier {
 
   Future<void> renameRecording(RecordingEntry entry, String title) async {
     final clean = title.trim();
-    if (clean.isEmpty) return;
+    if (clean.isEmpty) {
+      return;
+    }
     await _guarded(() async {
       final newPath = entry.isTrashed
           ? entry.filePath
-          : await _storage.renameAudio(entry.filePath, clean);
+          : await storage.renameAudio(entry.filePath, clean);
       await _replace(
         entry.copyWith(
           title: clean,
@@ -317,7 +330,7 @@ class AppController extends ChangeNotifier {
   Future<void> duplicateRecording(RecordingEntry entry) async {
     await _guarded(() async {
       final title = '${entry.title} Copy';
-      final path = await _storage.duplicateAudio(entry.filePath, title);
+      final path = await storage.duplicateAudio(entry.filePath, title);
       _recordings.add(
         entry.copyWith(
           id: _uuid.v7(),
@@ -330,7 +343,13 @@ class AppController extends ChangeNotifier {
           clearTrashedAt: true,
         ),
       );
-      await _persist();
+      try {
+        await _persist();
+      } catch (_) {
+        _recordings.removeWhere((item) => item.filePath == path);
+        await storage.deleteIfExists(path);
+        rethrow;
+      }
     });
   }
 
@@ -386,13 +405,19 @@ class AppController extends ChangeNotifier {
   Future<void> moveToTrash(RecordingEntry entry) => moveEntriesToTrash([entry]);
 
   Future<void> moveEntriesToTrash(Iterable<RecordingEntry> entries) async {
-    final targets = entries.where((entry) => !entry.isTrashed).toList(growable: false);
-    if (targets.isEmpty) return;
+    final targets = entries
+        .where((entry) => !entry.isTrashed)
+        .toList(growable: false);
+    if (targets.isEmpty) {
+      return;
+    }
     await _guarded(() async {
       final targetIds = targets.map((entry) => entry.id).toSet();
       for (final entry in targets) {
-        if (player.loadedPath == entry.filePath) await player.stop();
-        final path = await _storage.moveToTrash(entry.filePath, entry.title);
+        if (player.loadedPath == entry.filePath) {
+          await player.stop();
+        }
+        final path = await storage.moveToTrash(entry.filePath, entry.title);
         final index = _recordings.indexWhere((item) => item.id == entry.id);
         if (index >= 0) {
           _recordings[index] = entry.copyWith(
@@ -400,12 +425,13 @@ class AppController extends ChangeNotifier {
             trashedAt: DateTime.now(),
             modifiedAt: DateTime.now(),
           );
+          await _persist();
         }
       }
-      if (selectedRecording != null && targetIds.contains(selectedRecording!.id)) {
+      if (selectedRecording != null &&
+          targetIds.contains(selectedRecording!.id)) {
         selectedRecording = null;
       }
-      await _persist();
     });
   }
 
@@ -413,10 +439,12 @@ class AppController extends ChangeNotifier {
 
   Future<void> restoreEntries(Iterable<RecordingEntry> entries) async {
     final targets = entries.where((entry) => entry.isTrashed).toList(growable: false);
-    if (targets.isEmpty) return;
+    if (targets.isEmpty) {
+      return;
+    }
     await _guarded(() async {
       for (final entry in targets) {
-        final path = await _storage.restoreFromTrash(entry.filePath, entry.title);
+        final path = await storage.restoreFromTrash(entry.filePath, entry.title);
         final index = _recordings.indexWhere((item) => item.id == entry.id);
         if (index >= 0) {
           _recordings[index] = entry.copyWith(
@@ -424,45 +452,49 @@ class AppController extends ChangeNotifier {
             clearTrashedAt: true,
             modifiedAt: DateTime.now(),
           );
+          await _persist();
         }
       }
-      await _persist();
     });
   }
 
-  Future<void> permanentlyDelete(RecordingEntry entry) => permanentlyDeleteEntries([entry]);
+  Future<void> permanentlyDelete(RecordingEntry entry) =>
+      permanentlyDeleteEntries([entry]);
 
   Future<void> permanentlyDeleteEntries(Iterable<RecordingEntry> entries) async {
     final targets = entries.toList(growable: false);
-    if (targets.isEmpty) return;
+    if (targets.isEmpty) {
+      return;
+    }
     await _guarded(() async {
-      final ids = targets.map((entry) => entry.id).toSet();
       for (final entry in targets) {
-        if (player.loadedPath == entry.filePath) await player.stop();
-        await _storage.deleteIfExists(entry.filePath);
+        if (player.loadedPath == entry.filePath) {
+          await player.stop();
+        }
+        await storage.deleteIfExists(entry.filePath);
+        _recordings.removeWhere((item) => item.id == entry.id);
+        if (selectedRecording?.id == entry.id) {
+          selectedRecording = null;
+        }
+        await _persist();
       }
-      _recordings.removeWhere((item) => ids.contains(item.id));
-      if (selectedRecording != null && ids.contains(selectedRecording!.id)) {
-        selectedRecording = null;
-      }
-      await _persist();
     });
   }
 
   Future<void> emptyTrash() async {
     await _guarded(() async {
-      final trashed = _recordings.where((e) => e.isTrashed).toList();
+      final trashed = _recordings.where((entry) => entry.isTrashed).toList();
       for (final entry in trashed) {
-        await _storage.deleteIfExists(entry.filePath);
+        await storage.deleteIfExists(entry.filePath);
+        _recordings.removeWhere((item) => item.id == entry.id);
+        await _persist();
       }
-      _recordings.removeWhere((e) => e.isTrashed);
-      await _persist();
     });
   }
 
   Future<void> updateSettings(SettingsSnapshot snapshot) async {
     settings = snapshot;
-    await _settingsService.save(snapshot);
+    await settingsService.save(snapshot);
     notifyListeners();
   }
 
@@ -479,12 +511,16 @@ class AppController extends ChangeNotifier {
     RecordingEntry Function(RecordingEntry entry, DateTime now) update,
   ) async {
     final targets = entries.toList(growable: false);
-    if (targets.isEmpty) return;
+    if (targets.isEmpty) {
+      return;
+    }
     final now = DateTime.now();
     final updates = {for (final entry in targets) entry.id: update(entry, now)};
     for (var index = 0; index < _recordings.length; index++) {
       final updated = updates[_recordings[index].id];
-      if (updated != null) _recordings[index] = updated;
+      if (updated != null) {
+        _recordings[index] = updated;
+      }
     }
     if (selectedRecording != null) {
       selectedRecording = updates[selectedRecording!.id] ?? selectedRecording;
@@ -495,23 +531,31 @@ class AppController extends ChangeNotifier {
 
   Future<void> _replace(RecordingEntry updated) async {
     final index = _recordings.indexWhere((entry) => entry.id == updated.id);
-    if (index < 0) return;
+    if (index < 0) {
+      return;
+    }
     _recordings[index] = updated;
-    if (selectedRecording?.id == updated.id) selectedRecording = updated;
+    if (selectedRecording?.id == updated.id) {
+      selectedRecording = updated;
+    }
     await _persist();
     notifyListeners();
   }
 
-  Future<void> _persist() => _metadata.save(_recordings);
+  Future<void> _persist() => metadata.save(_recordings);
 
   Future<void> _removeMissingMetadata() async {
     final before = _recordings.length;
     final existing = <RecordingEntry>[];
     for (final entry in _recordings) {
-      if (await File(entry.filePath).exists()) existing.add(entry);
+      if (await File(entry.filePath).exists()) {
+        existing.add(entry);
+      }
     }
     _recordings = existing;
-    if (before != _recordings.length) await _persist();
+    if (before != _recordings.length) {
+      await _persist();
+    }
   }
 
   Future<void> _guarded(Future<void> Function() action) async {
