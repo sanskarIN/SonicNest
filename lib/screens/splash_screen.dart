@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../core/constants.dart';
+import '../l10n/app_localizations.dart';
 import '../widgets/sonicnest_mark.dart';
 
 class SplashScreen extends StatelessWidget {
@@ -16,6 +16,7 @@ class SplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final strings = AppLocalizations.of(context);
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -38,7 +39,7 @@ class SplashScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 22),
                   Text(
-                    AppConstants.appName,
+                    strings.appName,
                     style: Theme.of(context)
                         .textTheme
                         .headlineMedium
@@ -46,7 +47,7 @@ class SplashScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Private sound & voice recording',
+                    strings.privateRecorderTagline,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
@@ -70,12 +71,12 @@ class SplashScreen extends StatelessWidget {
                     FilledButton.icon(
                       onPressed: onRetry,
                       icon: const Icon(Icons.refresh),
-                      label: const Text('Try again'),
+                      label: Text(strings.retry),
                     ),
                   ],
                   const SizedBox(height: 22),
                   Text(
-                    'Made by the Sanskar',
+                    strings.madeBy,
                     style: Theme.of(context).textTheme.labelLarge,
                   ),
                 ],
