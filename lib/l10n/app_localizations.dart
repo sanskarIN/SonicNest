@@ -29,6 +29,17 @@ class AppLocalizations {
   String get retry => 'Try again';
   String get moreFilters => 'More filters';
   String get filtersActive => 'Filters active';
+  String get open => 'Open';
+  String get play => 'Play';
+  String get pause => 'Pause';
+  String get resume => 'Resume';
+  String get cancel => 'Cancel';
+  String get save => 'Save';
+  String get delete => 'Delete';
+  String get share => 'Share';
+  String get restore => 'Restore';
+  String get selectAll => 'Select all';
+  String get clearAll => 'Clear all';
 
   String get welcomeToSonicNest => 'Welcome to SonicNest';
   String get homeDescription =>
@@ -41,15 +52,11 @@ class AppLocalizations {
       'Open the recorder with your current quality preset.';
   String get batchConvertHomeHint =>
       'Create converted copies of several saved recordings in one operation.';
-  String get open => 'Open';
   String get recentRecordings => 'Recent recordings';
   String get viewAll => 'View all';
   String get recordingsWillAppearHere => 'Your recordings will appear here.';
   String get useQuickRecordOrImport =>
       'Use Quick Record or import audio from the Library.';
-  String get play => 'Play';
-  String get pause => 'Pause';
-  String get resume => 'Resume';
 
   String get aboutTagline => 'Modern, privacy-first sound and voice recording.';
   String get supportSonicNest => '☕ Support SonicNest';
@@ -109,7 +116,6 @@ class AppLocalizations {
   String get nowPlaying => 'Now Playing';
   String get removeFromFavorites => 'Remove from favorites';
   String get addToFavorites => 'Add to favorites';
-  String get share => 'Share';
   String get previousRecording => 'Previous recording';
   String jumpBackSeconds(int seconds) => 'Jump back $seconds seconds';
   String jumpForwardSeconds(int seconds) => 'Jump forward $seconds seconds';
@@ -119,14 +125,84 @@ class AppLocalizations {
   String get clearLoop => 'Clear loop';
   String get skipSilence => 'Skip silence';
   String get bookmarks => 'Bookmarks';
-  String get cancel => 'Cancel';
   String get loopSelection => 'Loop selection';
   String get audioPlaying => 'Audio playing';
   String get audioRecording => 'Audio recording';
 
+  String get importAudio => 'Import';
+  String libraryCounts(int shown, int saved) => '$shown shown • $saved saved';
+  String get searchRecordingsHint =>
+      'Search title, tags, notes, folders, bookmarks';
+  String get clearSearch => 'Clear search';
+  String get select => 'Select';
+  String get emptyTrash => 'Empty Trash';
+  String bulkActionFailed(Object error) => 'Bulk action failed: $error';
+  String deleteSelectedPermanently(int count) =>
+      'Delete $count recording${count == 1 ? '' : 's'} permanently?';
+  String get selectedPermanentDeleteWarning =>
+      'The selected recordings will be permanently deleted. This cannot be undone.';
+  String couldNotOpenRecording(Object error) =>
+      'Could not open recording: $error';
+  String get inTrash => 'In Trash';
+  String get editAudio => 'Edit audio';
+  String get rename => 'Rename';
+  String get tagsFolderNotes => 'Tags, folder & notes';
+  String get unpin => 'Unpin';
+  String get pin => 'Pin';
+  String get duplicate => 'Duplicate';
+  String get exportCopy => 'Export copy';
+  String get moveToTrash => 'Move to Trash';
+  String get deletePermanently => 'Delete permanently';
+  String get renameRecording => 'Rename recording';
+  String get name => 'Name';
+  String get recordingDetails => 'Recording details';
+  String get folder => 'Folder';
+  String get tags => 'Tags';
+  String get tagsHint => 'lecture, study, important';
+  String get notes => 'Notes';
+  String get deletePermanentlyQuestion => 'Delete permanently?';
+  String recordingPermanentDeleteWarning(String title) =>
+      '“$title” will be permanently deleted. This cannot be undone.';
+  String get emptyTrashQuestion => 'Empty Trash?';
+  String get emptyTrashWarning =>
+      'Every recording currently in Trash will be permanently deleted.';
+  String get cancelSelection => 'Cancel selection';
+  String selectedCount(int count) => '$count selected';
+  String get bulkActions => 'Bulk actions';
+  String get restoreSelected => 'Restore selected';
+  String get removeFavorites => 'Remove favorites';
+  String get pinSelected => 'Pin selected';
+  String get unpinSelected => 'Unpin selected';
+  String get shareSelected => 'Share selected';
+  String get all => 'All';
+  String get favorites => 'Favorites';
+  String get pinned => 'Pinned';
+  String get trash => 'Trash';
+  String get sort => 'Sort';
+  String get format => 'Format';
+  String get anyFormat => 'Any format';
+  String get anyFolder => 'Any folder';
+  String get newestFirst => 'Newest first';
+  String get oldestFirst => 'Oldest first';
+  String get nameAscending => 'Name A–Z';
+  String get nameDescending => 'Name Z–A';
+  String get longest => 'Longest';
+  String get shortest => 'Shortest';
+  String get largestFile => 'Largest file';
+  String get smallestFile => 'Smallest file';
+  String get noRecordingsYet => 'No recordings yet';
+  String get noRecordingsLibraryHint =>
+      'Create a recording or import an audio file to start your library.';
+  String get noFavorites => 'No favorites';
+  String get noFavoritesHint => 'Tap the heart on a recording to keep it here.';
+  String get nothingPinned => 'Nothing pinned';
+  String get nothingPinnedHint => 'Pin important recordings for quick access.';
+  String get trashIsEmpty => 'Trash is empty';
+  String get trashIsEmptyHint =>
+      'Deleted recordings you can restore will appear here.';
+  String get recordNow => 'Record now';
+
   String get batchConvert => 'Batch Convert';
-  String get selectAll => 'Select all';
-  String get clearAll => 'Clear all';
   String get createConvertedCopies => 'Create converted copies';
   String get batchConvertDescription =>
       'Select multiple library recordings. SonicNest creates new files and keeps every original untouched.';
@@ -142,7 +218,6 @@ class AppLocalizations {
   String get noSavedRecordingsForBatch =>
       'There are no saved recordings to batch convert yet.';
   String get rateUnknown => 'rate unknown';
-
   String convertSelected(int count) => 'Convert $count selected';
   String convertedProgress(int completed, int total) =>
       'Converted $completed of $total';
