@@ -3,15 +3,15 @@
 ```yaml
 project: SonicNest
 repository: https://github.com/sanskarIN/SonicNest
-current_phase: Integrated foundation and CI validation
+current_phase: Cross-platform release hardening
 current_version: 0.1.0
 stack:
   ui: Flutter / Dart
   recorder: record 7.1.1
   player: just_audio 0.10.6 + just_audio_media_kit 2.1.0
-  processing: ffmpeg_kit_flutter_new_audio 2.5.0
+  processing: ffmpeg_kit_flutter_new_audio 2.5.x
   persistence: local JSON metadata + shared_preferences
-  import_export: file_picker + share_plus
+  import_export: file_picker 10.3.10 + share_plus 12.0.2
 supported_platform_targets:
   - Android
   - iOS
@@ -20,46 +20,77 @@ supported_platform_targets:
   - Linux
 completed_features:
   - project architecture and Material 3 design system
-  - local-first recording metadata and safe filename allocation
+  - local-first recording metadata and cross-platform-safe filename allocation
   - start pause resume stop cancel recording lifecycle
+  - recorder transition guards and failed-capture cleanup
   - runtime encoder support checks with intermediate capture fallback
   - M4A WAV FLAC Opus native paths when supported
   - MP3 OGG AAC and unsupported-native-format conversion pipeline
   - quality presets and custom settings
-  - waveform/amplitude sampling and clipping indication
+  - live waveform amplitude sampling and clipping indication
+  - persisted waveform envelopes for recorded imported and processed audio
   - bookmarks during recording and bookmark playback seeking
-  - searchable sortable library
+  - searchable sortable filterable recording library
   - favorites pins tags folders trash restore permanent delete
   - rename duplicate import export share
+  - multi-selection bulk favorite pin share trash restore delete actions
   - playback seek speed volume repeat and optional skip-silence
   - non-destructive trim split merge normalize fade silence removal
+  - draggable editor selection handles with undo redo reset
+  - format export presets
   - light dark system themes and responsive navigation
+  - desktop Ctrl+1 through Ctrl+5 navigation shortcuts
   - About privacy support GitHub email and Buy Me a Coffee links
   - original vector branding assets
-  - unit tests open-source docs CI and platform bootstrap
+  - Android foreground recording service overrides
+  - Bash and PowerShell reproducible platform bootstrap tooling
+  - unit tests open-source docs and GitHub project templates
+  - analyzer unit-test Android Linux Windows macOS and unsigned iOS build workflows
 partial_features:
-  - Android foreground-service notification is implemented through generated-host overrides
-  - imported-file waveform extraction is not precomputed
-  - media-session lock-screen controls need a dedicated platform integration pass
-  - desktop keyboard shortcuts and bulk library operations need a dedicated UX pass
-pending_validation:
-  - GitHub Actions analyze test Android and Linux build results
-  - physical-device interruption/background behavior
-  - multi-hour recording soak testing
-  - low-storage and device-switch tests
-  - store packaging signing and provisioning
-latest_build_status: "GitHub Actions workflow started on 2026-08-14; final result not yet recorded when this state file was written. Flutter is not installed in the local ChatGPT execution container."
-latest_test_status: "Unit tests authored; GitHub Actions execution in progress when this state file was written."
+  - media-session and lock-screen playback controls need dedicated per-platform integration
+  - richer native desktop context menus can be added after usability testing
+  - true multi-file batch conversion/export remains a roadmap item
+pending_manual_validation:
+  - microphone permission accepted denied and permanently denied behavior on devices
+  - Android and Apple background lock-screen and interruption behavior
+  - wired USB Bluetooth and built-in microphone routing where available
+  - low-storage failure and recovery
+  - malformed audio imports across supported operating systems
+  - 30-minute and multi-hour recording soak tests
+  - screen-reader audits with TalkBack VoiceOver Narrator and desktop tooling
+  - large-library performance with thousands of recordings
+  - store packaging signing certificates provisioning and release credentials
+latest_automated_validation:
+  core_flutter_ci:
+    run_id: 31766868164
+    source_commit: f2560ef02a1f046197188bd1e5112d43176a2b46
+    analyzer: success
+    unit_tests: success
+    android_debug_apk: success
+    linux_debug_build: success
+  windows_ci:
+    run_id: 31767240173
+    workflow_commit: 92801465e9647a652f006709ea851a0b0dfe0fea
+    windows_debug_build: success
+  apple_ci:
+    run_id: 31767248520
+    workflow_commit: e6ca3d1fa8cd3828644a8c865ab1601a0789262e
+    macos_debug_build: success
+    ios_debug_no_codesign: success
 known_limitations:
-  - codec availability and effective sample/bitrate/channel settings depend on OS device and runtime support
+  - codec availability and effective sample bitrate channel settings depend on OS device and runtime support
   - sharing and silence-skip capabilities differ by platform backend
-  - generated platform hosts require the Flutter SDK via tool/bootstrap_platforms.sh
+  - generated platform hosts require the Flutter SDK and the repository bootstrap tooling
+  - automated compilation cannot substitute for microphone hardware interruption background and long-duration QA
+  - signed distributable packages require maintainer-owned signing material that must not be committed
 branch: main
-latest_verified_pre_state_commit: ee38db47cd0c728e54332b1dbb6cdcfd0bc6ea06
+commit_identity:
+  name: Sanskar
+  email: sanskarin@outlook.in
 next_exact_tasks:
-  - inspect the latest GitHub Actions jobs and logs
-  - fix every reproducible analyzer test or build failure
-  - rerun failed workflow jobs after fixes
-  - perform real-device Android iOS and desktop capture validation
-  - continue release hardening through the roadmap before v1.0.0
+  - execute docs/QA_CHECKLIST.md on representative Android iOS macOS Windows and Linux hardware
+  - add dedicated media-session and lock-screen controls where platform APIs permit them
+  - profile multi-hour recordings and large libraries
+  - resolve any reproducible device-only issues discovered by manual QA
+  - prepare signing and store metadata only after manual release gates are satisfied
 ```
