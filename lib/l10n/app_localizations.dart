@@ -182,6 +182,14 @@ class AppLocalizations {
   String get format => 'Format';
   String get anyFormat => 'Any format';
   String get anyFolder => 'Any folder';
+  String get advancedFilters => 'Advanced filters';
+  String get exactTag => 'Exact tag';
+  String get anyTag => 'Any tag';
+  String get fromDate => 'From date';
+  String get throughDate => 'Through date';
+  String get notSet => 'Not set';
+  String get clearFilters => 'Clear filters';
+  String get applyFilters => 'Apply filters';
   String get newestFirst => 'Newest first';
   String get oldestFirst => 'Oldest first';
   String get nameAscending => 'Name A–Z';
