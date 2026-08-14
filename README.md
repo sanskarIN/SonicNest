@@ -10,7 +10,7 @@
 
 ## Status
 
-Current development version: **0.1.0**. The repository is structured as a production project with automated analysis/tests, Android/Linux/Windows/macOS/iOS build validation workflows, open-source documentation, continuation state, reproducible platform bootstrap and branding tooling, and explicit manual release gates. This is still a development preview until the physical-device and signed-release checklist is complete.
+Current development version: **0.1.0**. The repository is structured as a production project with automated analysis/tests, Android/Linux/Windows/macOS/iOS build validation workflows, Debian Linux package validation, open-source documentation, continuation state, reproducible platform bootstrap and branding tooling, and explicit manual release gates. This is still a development preview until the physical-device and signed-release checklist is complete.
 
 ## Major features
 
@@ -31,6 +31,7 @@ Current development version: **0.1.0**. The repository is structured as a produc
 - Android, iOS, and macOS media-session metadata plus notification/lock-screen playback integration using `just_audio_background` and tagged media sources.
 - Non-destructive FFmpeg-backed editing: keep selection, cut selection, split, merge, normalize, fades, silence removal/insertion, gain changes, basic noise cleanup, compressor, limiter, high-pass/low-pass filters, format conversion, draggable selection handles, selection undo/redo, and export presets.
 - Native launcher/splash branding generated reproducibly from project-controlled SonicNest mark geometry, plus branded Flutter startup UI with startup-error recovery.
+- Debian `.deb` packaging for Linux with desktop entry, AppStream metadata, generated SonicNest icon integration, package checksums, and structural CI verification.
 - Localization-ready presentation layer with primary Flutter surfaces centralized in the localization catalog; English is currently the shipped locale.
 - Light, dark, and system themes; responsive phone/tablet/desktop navigation; reduced-motion preference; keyboard navigation and recorder/player shortcuts.
 - Offline-first local metadata and audio storage. No hidden upload, tracking, or analytics.
@@ -52,6 +53,8 @@ Open **Batch Convert** from Home, select one or more saved non-Trash recordings,
 ## Supported platforms
 
 The application architecture targets Android, iOS, macOS, Windows, and Linux. Platform host projects are generated with the installed Flutter SDK by `tool/bootstrap_platforms.sh` on Bash-capable environments or `tool/bootstrap_platforms.ps1` on Windows, then SonicNest-specific permissions/capabilities are applied. Native brand resources are generated after dependency resolution with `tool/apply_branding.sh` or `tool/apply_branding.ps1`. This keeps host scaffolding and native resources reproducible from repository source.
+
+Debian `.deb` is the initial repository-supported Linux installation package. It is built from the generated Flutter Linux release bundle rather than committed binary output.
 
 ## Quick start
 
@@ -87,9 +90,25 @@ flutter analyze --no-fatal-infos
 flutter test
 ```
 
-GitHub Actions additionally compiles representative debug builds for Android, Linux, Windows, macOS, and unsigned iOS host validation. Hardware-dependent recorder, interruption, background, routing, screen-wake, media-button, batch-performance, native-brand visual inspection, and lock-screen behavior still requires real target devices.
+GitHub Actions additionally compiles representative debug builds for Android, Linux, Windows, macOS, and unsigned iOS host validation. A dedicated Linux package workflow builds a release-mode Linux bundle, creates a Debian package, verifies its payload/metadata/icon/checksum structure, and publishes a short-retention validation artifact. Hardware-dependent recorder, interruption, background, routing, screen-wake, media-button, batch-performance, native-brand visual inspection, Linux installation, and lock-screen behavior still requires real target devices.
 
 The current batch-conversion/right-click source revision `985f2dd1500a03b0b65ee58b142cf31f545b0cc5` passed analyzer and unit tests plus Android, Linux, Windows, macOS, and unsigned iOS debug builds in GitHub Actions. This automated result does not replace the physical-device release checklist.
+
+## Build a Linux Debian package
+
+On a Debian/Ubuntu-compatible Linux build host with the Flutter Linux prerequisites, `dpkg-deb`, `desktop-file-utils`, and AppStream tools installed:
+
+```bash
+flutter config --enable-linux-desktop
+bash tool/bootstrap_platforms.sh
+flutter pub get
+dart tool/generate_brand_assets_v2.dart
+flutter build linux --release
+bash tool/build_linux_deb.sh release
+bash tool/verify_linux_deb.sh
+```
+
+The `.deb` and its SHA-256 checksum are written under `build/linux-package/`. See `docs/LINUX_PACKAGING.md` before installation or release testing.
 
 ## Architecture
 
@@ -103,9 +122,9 @@ Recordings remain on-device by default. SonicNest does not upload microphone dat
 
 Native recording uses platform encoders through `record`. Formats requiring transcoding use an audio-focused FFmpeg package. Capabilities vary by platform/device, so SonicNest checks recorder support and uses fallback/error behavior instead of claiming unsupported combinations. See `docs/CODECS.md`.
 
-## Building, branding, QA, and releases
+## Building, branding, packaging, QA, and releases
 
-See `docs/BUILDING.md` for platform bootstrap/build commands, `docs/BRANDING.md` for deterministic native icon/splash generation, `docs/QA_CHECKLIST.md` for the full hardware/release checklist, `docs/RELEASING.md` for the release procedure, `RELEASE_NOTES.md` for the development-preview notes, and `TODO.md` for evidence-based remaining gates.
+See `docs/BUILDING.md` for platform bootstrap/build commands, `docs/BRANDING.md` for deterministic native icon/splash generation, `docs/LINUX_PACKAGING.md` for Debian packaging, `docs/QA_CHECKLIST.md` for the full hardware/release checklist, `docs/RELEASING.md` for the release procedure, `RELEASE_NOTES.md` for the development-preview notes, and `TODO.md` for evidence-based remaining gates.
 
 ## Contributing
 
