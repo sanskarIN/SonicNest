@@ -1,7 +1,17 @@
 import 'recording_settings.dart';
 
 class RecordingMarker {
-  const RecordingMarker({required this.positionMs, required this.label, this.note = ''});
+  const RecordingMarker({
+    required this.positionMs,
+    required this.label,
+    this.note = '',
+  });
+
+  factory RecordingMarker.fromJson(Map<String, dynamic> json) => RecordingMarker(
+        positionMs: (json['positionMs'] as num?)?.toInt() ?? 0,
+        label: json['label'] as String? ?? 'Marker',
+        note: json['note'] as String? ?? '',
+      );
 
   final int positionMs;
   final String label;
@@ -12,12 +22,6 @@ class RecordingMarker {
         'label': label,
         'note': note,
       };
-
-  factory RecordingMarker.fromJson(Map<String, dynamic> json) => RecordingMarker(
-        positionMs: (json['positionMs'] as num?)?.toInt() ?? 0,
-        label: json['label'] as String? ?? 'Marker',
-        note: json['note'] as String? ?? '',
-      );
 }
 
 class RecordingEntry {
@@ -42,6 +46,49 @@ class RecordingEntry {
     this.waveform = const [],
     this.trashedAt,
   });
+
+  factory RecordingEntry.fromJson(Map<String, dynamic> json) {
+    final formatName = json['format'] as String?;
+    final format = RecordingFormat.values
+            .where((f) => f.name == formatName)
+            .firstOrNull ??
+        RecordingFormat.m4a;
+    return RecordingEntry(
+      id: json['id'] as String? ?? '',
+      title: json['title'] as String? ?? 'Recording',
+      filePath: json['filePath'] as String? ?? '',
+      durationMs: (json['durationMs'] as num?)?.toInt() ?? 0,
+      sizeBytes: (json['sizeBytes'] as num?)?.toInt() ?? 0,
+      format: format,
+      bitRate: (json['bitRate'] as num?)?.toInt() ?? 0,
+      sampleRate: (json['sampleRate'] as num?)?.toInt() ?? 0,
+      channels: (json['channels'] as num?)?.toInt() ?? 1,
+      createdAt:
+          DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
+      modifiedAt:
+          DateTime.tryParse(json['modifiedAt'] as String? ?? '') ?? DateTime.now(),
+      favorite: json['favorite'] as bool? ?? false,
+      pinned: json['pinned'] as bool? ?? false,
+      tags: (json['tags'] as List<dynamic>? ?? const [])
+          .whereType<String>()
+          .toList(),
+      folder: json['folder'] as String? ?? '',
+      notes: json['notes'] as String? ?? '',
+      markers: (json['markers'] as List<dynamic>? ?? const [])
+          .whereType<Map>()
+          .map(
+            (marker) => RecordingMarker.fromJson(
+              Map<String, dynamic>.from(marker),
+            ),
+          )
+          .toList(),
+      waveform: (json['waveform'] as List<dynamic>? ?? const [])
+          .whereType<num>()
+          .map((number) => number.toDouble())
+          .toList(),
+      trashedAt: DateTime.tryParse(json['trashedAt'] as String? ?? ''),
+    );
+  }
 
   final String id;
   final String title;
@@ -128,42 +175,10 @@ class RecordingEntry {
         'tags': tags,
         'folder': folder,
         'notes': notes,
-        'markers': markers.map((m) => m.toJson()).toList(),
+        'markers': markers.map((marker) => marker.toJson()).toList(),
         'waveform': waveform,
         'trashedAt': trashedAt?.toIso8601String(),
       };
-
-  factory RecordingEntry.fromJson(Map<String, dynamic> json) {
-    final formatName = json['format'] as String?;
-    final format = RecordingFormat.values.where((f) => f.name == formatName).firstOrNull ?? RecordingFormat.m4a;
-    return RecordingEntry(
-      id: json['id'] as String? ?? '',
-      title: json['title'] as String? ?? 'Recording',
-      filePath: json['filePath'] as String? ?? '',
-      durationMs: (json['durationMs'] as num?)?.toInt() ?? 0,
-      sizeBytes: (json['sizeBytes'] as num?)?.toInt() ?? 0,
-      format: format,
-      bitRate: (json['bitRate'] as num?)?.toInt() ?? 0,
-      sampleRate: (json['sampleRate'] as num?)?.toInt() ?? 0,
-      channels: (json['channels'] as num?)?.toInt() ?? 1,
-      createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
-      modifiedAt: DateTime.tryParse(json['modifiedAt'] as String? ?? '') ?? DateTime.now(),
-      favorite: json['favorite'] as bool? ?? false,
-      pinned: json['pinned'] as bool? ?? false,
-      tags: (json['tags'] as List<dynamic>? ?? const []).whereType<String>().toList(),
-      folder: json['folder'] as String? ?? '',
-      notes: json['notes'] as String? ?? '',
-      markers: (json['markers'] as List<dynamic>? ?? const [])
-          .whereType<Map>()
-          .map((m) => RecordingMarker.fromJson(Map<String, dynamic>.from(m)))
-          .toList(),
-      waveform: (json['waveform'] as List<dynamic>? ?? const [])
-          .whereType<num>()
-          .map((n) => n.toDouble())
-          .toList(),
-      trashedAt: DateTime.tryParse(json['trashedAt'] as String? ?? ''),
-    );
-  }
 }
 
 extension _IterableFirstOrNull<T> on Iterable<T> {
