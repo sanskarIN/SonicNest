@@ -1,0 +1,23 @@
+name: Feature request
+description: Suggest a focused improvement to SonicNest.
+title: "feat: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What recording workflow would this improve?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: textarea
+    id: privacy
+    attributes:
+      label: Privacy and platform considerations
+      description: Mention permissions, cloud use, codec limitations, or platform differences if relevant.
