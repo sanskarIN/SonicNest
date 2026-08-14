@@ -3,7 +3,8 @@ class AppConstants {
 
   static const appName = 'SonicNest';
   static const developerCredit = 'Made by the Sanskar';
-  static const githubProfile = 'https://www.github.com/sanskarIN';
+  static const githubProfileUrl = 'https://www.github.com/sanskarIN';
+  static const githubProfile = githubProfileUrl;
   static const repositoryUrl = 'https://github.com/sanskarIN/SonicNest';
   static const buyMeACoffeeUrl = 'https://buymeacoffee.com/sanskarIN';
   static const businessEmailPrimary = 'sanskarin@outlook.in';
