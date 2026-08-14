@@ -1,0 +1,193 @@
+name: One-shot localization and library hardening validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/continuation-localization-validation.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    name: Analyze and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install Linux audio prerequisites
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg pulseaudio-utils libjson-glib-dev
+      - name: Generate platform hosts
+        run: bash tool/bootstrap_platforms.sh
+      - name: Resolve dependencies
+        run: flutter pub get
+      - name: Format Dart sources
+        run: dart format lib test
+      - name: Static analysis
+        run: flutter analyze --no-fatal-infos
+      - name: Unit tests
+        run: flutter test
+
+  android:
+    name: Android debug build
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: bash tool/bootstrap_platforms.sh
+      - run: flutter pub get
+      - run: flutter build apk --debug
+
+  linux:
+    name: Linux debug build
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev ffmpeg pulseaudio-utils libjson-glib-dev
+      - run: flutter config --enable-linux-desktop
+      - run: bash tool/bootstrap_platforms.sh
+      - run: flutter pub get
+      - run: flutter build linux --debug
+
+  windows:
+    name: Windows debug build
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter config --enable-windows-desktop
+      - shell: pwsh
+        run: ./tool/bootstrap_platforms.ps1
+      - run: flutter pub get
+      - run: flutter build windows --debug
+
+  macos:
+    name: macOS debug build
+    runs-on: macos-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter config --enable-macos-desktop
+      - run: bash tool/bootstrap_platforms.sh
+      - run: flutter pub get
+      - run: flutter build macos --debug
+
+  ios:
+    name: iOS no-codesign debug build
+    runs-on: macos-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: bash tool/bootstrap_platforms.sh
+      - run: flutter pub get
+      - run: flutter build ios --debug --no-codesign
+
+  record:
+    name: Record successful continuation
+    needs: [validate, android, linux, windows, macos, ios]
+    if: success()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Synchronize continuation documentation
+        env:
+          VALIDATED_SHA: ${{ github.sha }}
+          VALIDATION_RUN_ID: ${{ github.run_id }}
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          sha = os.environ['VALIDATED_SHA']
+          run_id = os.environ['VALIDATION_RUN_ID']
+
+          what = Path('what_changed.md')
+          text = what.read_text(encoding='utf-8')
+          marker = '# Localization, library interaction, and batch reliability continuation'
+          if marker not in text:
+              text += f'''\n\n---\n\n# Localization, library interaction, and batch reliability continuation\n\nValidated implementation added in this continuation:\n\n- Batch Convert now honors **Stop after current file** between items rather than describing cancellation without wiring it.\n- Batch Convert can optionally copy successful managed outputs to a user-selected external directory.\n- External copies use collision-safe numbered filenames and never intentionally overwrite an existing destination file.\n- External-copy failures are reported independently and do not roll back a successfully registered SonicNest library conversion.\n- External copy behavior moved into `ExternalActions.copyFileToDirectoryCollisionSafe` with temporary-directory unit coverage for normal copies, collisions, missing sources, and missing destinations.\n- Native file and directory pickers now use platform-default dialog titles, allowing the host OS to provide localized native picker chrome.\n- Home, About/support, Recorder, Player, Library, Settings, Batch Convert, Editor, startup failure presentation, and reusable recording-tile controls were routed through the application localization layer.\n- Dynamic localization paths now cover batch progress/failure counts, library deletion counts, storage summaries, recorder statuses, player controls, and editor processing statuses.\n- Added localization catalog smoke tests for baseline locale support and dynamic batch/library/editor/storage text.\n- Restored exact-tag and date-range filters directly in the responsive Library filter surface.\n- Restored desktop secondary-click access to recording actions.\n- Removed the duplicate legacy floating advanced-filter component so one responsive filter surface owns the behavior.\n- Removed the obsolete pre-localization `AppStrings` constants file.\n- Startup loading and startup failure are now distinct states; the generic failure copy comes from localization while diagnostic detail remains available.\n\nExact automated validation:\n\n- Validated revision: `{sha}`\n- One-shot validation run: `{run_id}`\n- Dart formatting: SUCCESS\n- Flutter static analysis: SUCCESS\n- Unit tests: SUCCESS\n- Android debug APK: SUCCESS\n- Linux debug build: SUCCESS\n- Windows debug build: SUCCESS\n- macOS debug build: SUCCESS\n- unsigned iOS debug build: SUCCESS\n\nRelease classification remains **development preview**. Physical microphone, routing, interruption/background, low-storage, accessibility, long-duration, large-library, real screenshot/icon, signing, notarization, packaging, and store-dashboard gates still require real evidence and remain unchecked.\n'''
+              what.write_text(text, encoding='utf-8')
+
+          state = Path('PROJECT_STATE.md')
+          stext = state.read_text(encoding='utf-8')
+          sm = '## Latest exact validation — localization and library hardening'
+          if sm not in stext:
+              stext += f'''\n\n{sm}\n\n- Validated revision: `{sha}`\n- Validation run: `{run_id}`\n- Analyzer and unit tests: **SUCCESS**\n- Android, Linux, Windows, macOS, and unsigned iOS debug builds: **SUCCESS**\n- Primary Flutter presentation surfaces now use the localization catalog; English remains the only shipped locale.\n- Advanced tag/date filters and desktop secondary-click recording actions are active in the current Library UI.\n- Batch conversion external-copy and stop-after-current behavior is implemented and test-supported.\n- Release classification remains **development preview** until evidence-dependent manual gates are complete.\n'''
+              state.write_text(stext, encoding='utf-8')
+
+          changelog = Path('CHANGELOG.md')
+          ctext = changelog.read_text(encoding='utf-8')
+          cm = '### Localization and library hardening continuation'
+          if cm not in ctext:
+              ctext += f'''\n\n{cm}\n- Routed primary application screens and reusable recording controls through the localization catalog.\n- Added localization smoke tests and dynamic status/count strings.\n- Restored responsive exact-tag/date filters and secondary-click recording actions.\n- Removed duplicate legacy advanced-filter UI and obsolete `AppStrings`.\n- Added safe between-file batch cancellation and collision-safe optional external-folder copies with unit-tested filesystem behavior.\n- Validated revision `{sha}` in run `{run_id}` across analyzer/tests and all five platform debug-build targets.\n'''
+              changelog.write_text(ctext, encoding='utf-8')
+
+          readme = Path('README.md')
+          rtext = readme.read_text(encoding='utf-8')
+          rm = '### Localization-ready presentation'
+          if rm not in rtext:
+              rtext += '''\n\n### Localization-ready presentation\n\nSonicNest currently ships English, but primary Flutter presentation text is centralized in `lib/l10n/app_localizations.dart` across startup, Home, Recorder, Library, Player, Editor, Settings, Batch Convert, About/support, and reusable recording controls. Additional languages still require translation, text-expansion review, and platform accessibility QA before release.\n'''
+              readme.write_text(rtext, encoding='utf-8')
+
+          roadmap = Path('ROADMAP.md')
+          rdtext = roadmap.read_text(encoding='utf-8')
+          rdm = '## Localization migration status'
+          if rdm not in rdtext:
+              rdtext += '''\n\n## Localization migration status\n\nPrimary Flutter presentation surfaces are centralized in the localization catalog and English remains the baseline locale. Remaining localization work is translation introduction, text-expansion testing, translation QA, and deciding how much backend diagnostic text should be localized versus retained as technical detail.\n'''
+              roadmap.write_text(rdtext, encoding='utf-8')
+
+          todo = Path('TODO.md')
+          ttext = todo.read_text(encoding='utf-8')
+          old = '''## Localization\n\n- [ ] Finish migrating remaining hard-coded presentation strings into the localization layer before adding non-English translations.\n- [ ] Add translation QA once additional languages are introduced.\n- [ ] Include Batch Convert and desktop context/action strings in the localization migration.\n'''
+          new = '''## Localization\n\n- [x] Migrate primary Flutter presentation strings, including Batch Convert and desktop recording actions, into the localization layer.\n- [ ] Decide whether backend diagnostic/error details should be translated or intentionally retained as technical text before adding non-English releases.\n- [ ] Add additional locales only with translation review, text-expansion testing, and translation QA.\n'''
+          if old in ttext:
+              ttext = ttext.replace(old, new)
+          elif new not in ttext:
+              ttext += '\n\n' + new
+          todo.write_text(ttext, encoding='utf-8')
+
+          qa = Path('docs/QA_CHECKLIST.md')
+          qtext = qa.read_text(encoding='utf-8')
+          qm = '## Localization migration continuation'
+          if qm not in qtext:
+              qtext += '''\n\n## Localization migration continuation\n\n- [ ] Verify Home, Recorder, Library, Player, Editor, Settings, Batch Convert, About/support, and startup visible labels are sourced from the localization catalog.\n- [ ] Verify Library exact-tag/from-date/through-date filters work together after the UI restoration.\n- [ ] Verify secondary-click on desktop recordings opens the same safe action surface as the More button.\n- [ ] Verify long localized strings do not overflow compact phone and narrow desktop layouts before adding another locale.\n- [ ] Verify backend diagnostic details remain understandable when combined with localized generic error copy.\n'''
+              qa.write_text(qtext, encoding='utf-8')
+          PY
+      - name: Remove one-shot validation workflow
+        run: git rm .github/workflows/continuation-localization-validation.yml
+      - name: Commit validated continuation documentation
+        run: |
+          git config user.name 'Sanskar'
+          git config user.email 'sanskarin@outlook.in'
+          git add what_changed.md PROJECT_STATE.md CHANGELOG.md README.md ROADMAP.md TODO.md docs/QA_CHECKLIST.md
+          git commit -m 'docs: record validated localization and library continuation'
+          git push origin HEAD:main
