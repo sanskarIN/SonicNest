@@ -56,7 +56,11 @@ The generated full icon is converted into the Windows application icon resources
 
 ## Linux
 
-Linux application icons are normally provided by the selected distribution/package format (`.deb`, RPM, AppImage, Flatpak, Snap, desktop-entry packaging, etc.). The deterministic SonicNest PNG source can be reused by that packaging layer, but the repository does not claim a final Linux distribution icon until a packaging target is selected and tested.
+Debian `.deb` is the initial repository-supported Linux installation format. `tool/build_linux_deb.sh` consumes `assets/generated/sonicnest_icon.png` and installs it as `/usr/share/icons/hicolor/512x512/apps/sonicnest.png`. The package also installs `packaging/linux/debian/sonicnest.desktop`, which references the icon by the freedesktop name `sonicnest`, and AppStream metadata under `/usr/share/metainfo/`.
+
+`tool/verify_linux_deb.sh` checks that the icon, executable, desktop entry, AppStream metadata, package control data, and checksum are present and structurally valid. `desktop-file-validate` and `appstreamcli` are used when available. See `docs/LINUX_PACKAGING.md` for package construction and installation testing.
+
+The packaged icon still requires visual review on representative Linux desktop environments. Structural CI validation is not a substitute for installing the `.deb` and inspecting launcher, menu, task-switcher, scaling, and uninstall behavior on real systems.
 
 ## Native splash versus Flutter startup UI
 
@@ -64,4 +68,4 @@ The native splash exists only to cover the time before Flutter paints its first 
 
 ## Validation rule
 
-Successful generation and compilation prove that the resource pipeline is structurally valid. They do not prove that every icon crop, launcher mask, dark-mode splash, store preview, or OS-specific rendering is visually correct. Real release-candidate inspection remains required and is tracked in `docs/QA_CHECKLIST.md` and `TODO.md`.
+Successful generation, compilation, and package-structure verification prove that the resource pipeline is structurally valid. They do not prove that every icon crop, launcher mask, dark-mode splash, store preview, package installation surface, or OS-specific rendering is visually correct. Real release-candidate inspection remains required and is tracked in `docs/QA_CHECKLIST.md` and `TODO.md`.
