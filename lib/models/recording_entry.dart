@@ -9,9 +9,9 @@ class RecordingMarker {
 
   factory RecordingMarker.fromJson(Map<String, dynamic> json) =>
       RecordingMarker(
-        positionMs: (json['positionMs'] as num?)?.toInt() ?? 0,
-        label: json['label'] as String? ?? 'Marker',
-        note: json['note'] as String? ?? '',
+        positionMs: _intValue(json['positionMs']),
+        label: _stringValue(json['label'], 'Marker'),
+        note: _stringValue(json['note']),
       );
 
   final int positionMs;
@@ -49,45 +49,31 @@ class RecordingEntry {
   });
 
   factory RecordingEntry.fromJson(Map<String, dynamic> json) {
-    final formatName = json['format'] as String?;
+    final formatName = _stringValue(json['format']);
     final format =
         RecordingFormat.values.where((f) => f.name == formatName).firstOrNull ??
         RecordingFormat.m4a;
+    final now = DateTime.now();
     return RecordingEntry(
-      id: json['id'] as String? ?? '',
-      title: json['title'] as String? ?? 'Recording',
-      filePath: json['filePath'] as String? ?? '',
-      durationMs: (json['durationMs'] as num?)?.toInt() ?? 0,
-      sizeBytes: (json['sizeBytes'] as num?)?.toInt() ?? 0,
+      id: _stringValue(json['id']),
+      title: _stringValue(json['title'], 'Recording'),
+      filePath: _stringValue(json['filePath']),
+      durationMs: _intValue(json['durationMs']),
+      sizeBytes: _intValue(json['sizeBytes']),
       format: format,
-      bitRate: (json['bitRate'] as num?)?.toInt() ?? 0,
-      sampleRate: (json['sampleRate'] as num?)?.toInt() ?? 0,
-      channels: (json['channels'] as num?)?.toInt() ?? 1,
-      createdAt:
-          DateTime.tryParse(json['createdAt'] as String? ?? '') ??
-          DateTime.now(),
-      modifiedAt:
-          DateTime.tryParse(json['modifiedAt'] as String? ?? '') ??
-          DateTime.now(),
-      favorite: json['favorite'] as bool? ?? false,
-      pinned: json['pinned'] as bool? ?? false,
-      tags: (json['tags'] as List<dynamic>? ?? const [])
-          .whereType<String>()
-          .toList(),
-      folder: json['folder'] as String? ?? '',
-      notes: json['notes'] as String? ?? '',
-      markers: (json['markers'] as List<dynamic>? ?? const [])
-          .whereType<Map>()
-          .map(
-            (marker) =>
-                RecordingMarker.fromJson(Map<String, dynamic>.from(marker)),
-          )
-          .toList(),
-      waveform: (json['waveform'] as List<dynamic>? ?? const [])
-          .whereType<num>()
-          .map((number) => number.toDouble())
-          .toList(),
-      trashedAt: DateTime.tryParse(json['trashedAt'] as String? ?? ''),
+      bitRate: _intValue(json['bitRate']),
+      sampleRate: _intValue(json['sampleRate']),
+      channels: _intValue(json['channels'], 1),
+      createdAt: _dateTimeValue(json['createdAt']) ?? now,
+      modifiedAt: _dateTimeValue(json['modifiedAt']) ?? now,
+      favorite: _boolValue(json['favorite']),
+      pinned: _boolValue(json['pinned']),
+      tags: _stringList(json['tags']),
+      folder: _stringValue(json['folder']),
+      notes: _stringValue(json['notes']),
+      markers: _markerList(json['markers']),
+      waveform: _doubleList(json['waveform']),
+      trashedAt: _dateTimeValue(json['trashedAt']),
     );
   }
 
@@ -180,6 +166,54 @@ class RecordingEntry {
     'waveform': waveform,
     'trashedAt': trashedAt?.toIso8601String(),
   };
+}
+
+String _stringValue(Object? value, [String fallback = '']) =>
+    value is String ? value : fallback;
+
+int _intValue(Object? value, [int fallback = 0]) =>
+    value is num ? value.toInt() : fallback;
+
+bool _boolValue(Object? value, [bool fallback = false]) =>
+    value is bool ? value : fallback;
+
+DateTime? _dateTimeValue(Object? value) =>
+    value is String ? DateTime.tryParse(value) : null;
+
+List<String> _stringList(Object? value) {
+  if (value is! Iterable) {
+    return const [];
+  }
+  return value.whereType<String>().toList(growable: false);
+}
+
+List<double> _doubleList(Object? value) {
+  if (value is! Iterable) {
+    return const [];
+  }
+  return value.whereType<num>().map((number) => number.toDouble()).toList(
+    growable: false,
+  );
+}
+
+List<RecordingMarker> _markerList(Object? value) {
+  if (value is! Iterable) {
+    return const [];
+  }
+  final markers = <RecordingMarker>[];
+  for (final item in value) {
+    if (item is! Map) {
+      continue;
+    }
+    try {
+      markers.add(
+        RecordingMarker.fromJson(Map<String, dynamic>.from(item)),
+      );
+    } on Object {
+      // A malformed marker must not invalidate the containing recording.
+    }
+  }
+  return List.unmodifiable(markers);
 }
 
 extension _IterableFirstOrNull<T> on Iterable<T> {
