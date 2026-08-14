@@ -44,16 +44,11 @@ class ExternalActions {
   }
 
   Future<String?> chooseExportPath(String fileName) {
-    return FilePicker.platform.saveFile(
-      dialogTitle: 'Export recording',
-      fileName: fileName,
-    );
+    return FilePicker.platform.saveFile(fileName: fileName);
   }
 
   Future<String?> chooseExportDirectory() {
-    return FilePicker.platform.getDirectoryPath(
-      dialogTitle: 'Choose export folder',
-    );
+    return FilePicker.platform.getDirectoryPath();
   }
 
   Future<String> copyFileToDirectoryCollisionSafe({
