@@ -1,0 +1,48 @@
+name: One-shot repository integrity audit validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/continuation-repository-audit-validation.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+      - name: Compile audit script
+        run: python3 -m py_compile tool/repository_audit.py
+      - name: Run repository audit
+        run: python3 tool/repository_audit.py
+      - name: Validate Bash helper syntax
+        run: |
+          bash -n tool/bootstrap_platforms.sh
+          bash -n tool/apply_branding.sh
+          bash -n tool/release_preflight.sh
+      - name: Record audit validation
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('what_changed.md')
+          text = path.read_text(encoding='utf-8')
+          marker = '# Repository integrity audit continuation'
+          if marker not in text:
+              text += '''\n\n---\n\n# Repository integrity audit continuation\n\n- Added `tool/repository_audit.py` as a network-free deterministic repository invariant checker.\n- Added permanent `.github/workflows/repository-audit.yml`.\n- The audit requires core open-source, privacy, security, release, branding, QA, evidence, user-guide, troubleshooting, and workflow files.\n- The audit rejects tracked signing/private material, common private-key headers, selected credential patterns, generated native-branding PNG source outputs, stale generated top-level Flutter host trees, and unexpectedly large tracked files.\n- The audit verifies the Apache-2.0 license marker, required pubspec branding/project invariants, release-candidate warning/checksum/upload markers, read-only permanent release-workflow permissions, `.gitignore` safety entries, removal of the superseded brand generator, and preservation of long-form `what_changed.md` history.\n- Bash helper syntax is checked alongside the repository audit.\n- This one-shot validation executed the audit successfully on the current repository state before recording this section.\n'''
+              path.write_text(text, encoding='utf-8')
+          PY
+      - name: Remove one-shot validator
+        run: git rm .github/workflows/continuation-repository-audit-validation.yml
+      - name: Commit audit validation record
+        run: |
+          git config user.name 'Sanskar'
+          git config user.email 'sanskarin@outlook.in'
+          git add what_changed.md
+          git commit -m 'docs: record validated repository integrity audit'
+          git push origin HEAD:main
