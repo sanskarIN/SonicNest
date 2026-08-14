@@ -7,6 +7,7 @@
 - Python 3 for the generated-host patch step.
 - Linux capture/build validation: PulseAudio utilities, FFmpeg, GTK development packages, and JSON-GLib development files used by the selected audio backends.
 - Debian package validation: `dpkg-deb`, `desktop-file-validate`, and `appstreamcli` on a Debian/Ubuntu-compatible build host.
+- Installed-package GUI startup smoke testing: `xvfb-run` on a disposable Linux validation host.
 
 ## Bootstrap host projects
 
@@ -92,7 +93,7 @@ Only run build targets supported by the host OS. Signing, provisioning profiles,
 
 ## Debian Linux package
 
-Debian `.deb` is the initial repository-supported Linux installation package. Build and validate it after producing a Linux bundle:
+Debian `.deb` is the initial repository-supported Linux installation package. Build and structurally validate it after producing a Linux bundle:
 
 ```bash
 dart tool/generate_brand_assets_v2.dart
@@ -103,14 +104,25 @@ bash tool/verify_linux_deb.sh
 
 The package embeds the complete Flutter bundle under `/opt/sonicnest`, installs the deterministic SonicNest icon into the freedesktop hicolor icon hierarchy, installs a `.desktop` launcher and AppStream metadata, includes project licensing notices, and writes a SHA-256 checksum beside the `.deb` in `build/linux-package/`.
 
-See `docs/LINUX_PACKAGING.md` for package layout, dependencies, CI behavior, installation testing, and release boundaries.
+On a disposable Debian/Ubuntu-compatible validation host with `xvfb-run` installed, the package can also be installed and startup-smoke-tested through the same path used by Linux Package CI:
+
+```bash
+PACKAGE="$(find build/linux-package -maxdepth 1 -type f -name 'sonicnest_*.deb' -print -quit)"
+sudo apt-get install -y "./$PACKAGE"
+bash tool/smoke_test_installed_linux_deb.sh
+sudo apt-get remove -y sonicnest
+```
+
+The smoke script checks the installed package state and files, re-validates desktop/AppStream metadata, then starts the packaged application under a bounded virtual X display. It is intentionally not a microphone, real-desktop, accessibility, upgrade, long-duration, or release-approval test.
+
+See `docs/LINUX_PACKAGING.md` for package layout, dependencies, CI behavior, installation testing, evidence levels, and release boundaries.
 
 ## CI coverage
 
 - `.github/workflows/ci.yml`: deterministic brand image generation, analyzer, unit tests, branded Android debug APK, Linux debug build.
-- `.github/workflows/linux-package.yml`: Linux release bundle, Debian package construction, desktop/AppStream/icon/package verification, checksum verification, and short-retention CI artifact.
+- `.github/workflows/linux-package.yml`: Linux release bundle, Debian package construction, structural verification, checksum verification, package-manager installation, installed-files/metadata checks, virtual-display startup smoke, uninstall cleanup checks, and short-retention CI artifact.
 - `.github/workflows/windows.yml`: branded Windows debug desktop build.
 - `.github/workflows/macos.yml`: branded macOS debug build and branded iOS no-codesign debug build.
 - `.github/workflows/release-candidate.yml`: manually triggered release-mode validation artifacts, including the structurally verified Linux `.deb`.
 
-CI build success confirms compilation and structural packaging on GitHub-hosted runners; microphone hardware, audio routing, lock-screen/background behavior, device interruptions, real icon/launch visual inspection, long-duration recording, package installation behavior on representative real systems, and store/signing approval still require target-device validation.
+CI build/install-smoke success confirms compilation and repository-controlled package behavior on GitHub-hosted runners; microphone hardware, audio routing, lock-screen/background behavior, device interruptions, real icon/launch visual inspection, long-duration recording, package upgrade behavior on representative maintained systems, accessibility, and store/signing approval still require target-device validation.
