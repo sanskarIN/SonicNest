@@ -35,38 +35,75 @@ class MetadataStore {
 
   Future<List<RecordingEntry>> load() async {
     final file = await _metadataFile;
+    final backup = File('${file.path}.bak');
+
     if (!await file.exists()) {
+      if (!await backup.exists()) {
+        return [];
+      }
+      final recovered = await _decodeEntries(backup);
+      if (!recovered.valid) {
+        await _backupCorruptFile(backup);
+        return [];
+      }
+      await backup.copy(file.path);
+      await backup.delete();
+      return recovered.entries;
+    }
+
+    final primary = await _decodeEntries(file);
+    if (primary.valid) {
+      if (await backup.exists()) {
+        await backup.delete();
+      }
+      return primary.entries;
+    }
+
+    await _backupCorruptFile(file);
+    if (!await backup.exists()) {
       return [];
     }
 
+    final recovered = await _decodeEntries(backup);
+    if (!recovered.valid) {
+      await _backupCorruptFile(backup);
+      return [];
+    }
+
+    await backup.copy(file.path);
+    await backup.delete();
+    return recovered.entries;
+  }
+
+  Future<({bool valid, List<RecordingEntry> entries})> _decodeEntries(
+    File file,
+  ) async {
     dynamic decoded;
     try {
       decoded = jsonDecode(await file.readAsString());
     } on FormatException {
-      await _backupCorruptFile(file);
-      return [];
+      return (valid: false, entries: const []);
+    } on FileSystemException {
+      return (valid: false, entries: const []);
     }
 
     if (decoded is! Map) {
-      await _backupCorruptFile(file);
-      return [];
+      return (valid: false, entries: const []);
     }
 
     Map<String, dynamic> root;
     try {
       root = Map<String, dynamic>.from(decoded);
     } on Object {
-      await _backupCorruptFile(file);
-      return [];
+      return (valid: false, entries: const []);
     }
 
     final rawEntries = root['recordings'];
     if (rawEntries == null) {
-      return [];
+      return (valid: true, entries: const []);
     }
     if (rawEntries is! List) {
-      await _backupCorruptFile(file);
-      return [];
+      return (valid: false, entries: const []);
     }
 
     final entries = <RecordingEntry>[];
@@ -86,7 +123,7 @@ class MetadataStore {
         // hide otherwise recoverable library metadata.
       }
     }
-    return entries;
+    return (valid: true, entries: entries);
   }
 
   Future<void> save(List<RecordingEntry> entries) async {
