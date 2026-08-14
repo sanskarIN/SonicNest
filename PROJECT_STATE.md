@@ -65,6 +65,7 @@ completed_features:
   - Bash and PowerShell reproducible platform bootstrap tooling
   - unit tests open-source docs GitHub project templates and release documentation
   - analyzer unit-test Android Linux Windows macOS and unsigned iOS build workflows
+  - core CI path filtering that avoids documentation-only rebuild churn
   - detailed QA checklist release procedure development-preview release notes and remaining-work tracker
 partial_features:
   - additional languages are not shipped yet; remaining hard-coded presentation strings must be migrated before translation expansion
@@ -88,24 +89,29 @@ pending_manual_validation:
   - real screenshots final native icon/launch asset review and store metadata
   - store packaging signing certificates provisioning notarization and release credentials
 latest_automated_validation:
-  source_and_docs_head_at_state_update: b17ca5b6f004da4ad71f63c62cafe253e5562203
-  newest_core_flutter_ci_at_state_update:
-    run_id: 31771331644
-    state: pending_at_document_update
-  previous_fully_green_baseline:
-    core_flutter_ci_run_id: 31769746659
-    core_flutter_ci_commit: 09269684f9a9936d39caf9340fd70eb25ae4ebb4
+  core_flutter_ci:
+    run_id: 31771542490
+    validated_commit: 594f94a7b55826d1f27abbdf2aadd0a17ae42991
+    platform_bootstrap: success
+    dependency_resolution: success
+    formatter: success
     analyzer: success
     unit_tests: success
     android_debug_apk: success
     linux_debug_build: success
-    windows_ci_run_id: 31769582816
-    windows_ci_commit: 59fe40b761ad52920d8640a4edb23b680db234c8
+  windows_ci:
+    run_id: 31771214266
+    validated_source_commit: 3eed20635099bbcc2b4777d8a9881c0eb34caae0
     windows_debug_build: success
-    apple_ci_run_id: 31769582823
-    apple_ci_commit: 59fe40b761ad52920d8640a4edb23b680db234c8
+  apple_ci:
+    run_id: 31771214284
+    validated_source_commit: 3eed20635099bbcc2b4777d8a9881c0eb34caae0
     macos_debug_build: success
     ios_debug_no_codesign: success
+  validation_relationship:
+    - commits after 3eed20635099bbcc2b4777d8a9881c0eb34caae0 and before 594f94a7b55826d1f27abbdf2aadd0a17ae42991 changed documentation or core CI configuration, not application source
+    - run 31771542490 validates the current application source plus the core CI workflow correction
+    - documentation-only state/log commits after the validated commit do not trigger core CI by design
 known_limitations:
   - codec availability and effective sample bitrate channel and DSP settings depend on OS device and runtime support
   - sharing silence-skip media-session input-device and screen-wake capabilities differ by platform backend
@@ -118,7 +124,6 @@ commit_identity:
   name: Sanskar
   email: sanskarin@outlook.in
 next_exact_tasks:
-  - keep all latest CI workflows green after final documentation synchronization
   - execute docs/QA_CHECKLIST.md on representative Android iOS macOS Windows and Linux hardware
   - verify countdown screen-wake microphone routing interruption and media-session behavior on physical devices
   - listen-test and tune advanced processing presets against representative recordings
