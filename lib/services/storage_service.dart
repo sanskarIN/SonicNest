@@ -9,30 +9,40 @@ class StorageService {
   Directory? _root;
 
   Future<Directory> get root async {
-    if (_root != null) return _root!;
+    if (_root != null) {
+      return _root!;
+    }
     final base = await getApplicationDocumentsDirectory();
     final directory = Directory(p.join(base.path, 'SonicNest'));
-    if (!await directory.exists()) await directory.create(recursive: true);
+    if (!await directory.exists()) {
+      await directory.create(recursive: true);
+    }
     _root = directory;
     return directory;
   }
 
   Future<Directory> get recordingsDirectory async {
     final directory = Directory(p.join((await root).path, 'Recordings'));
-    if (!await directory.exists()) await directory.create(recursive: true);
+    if (!await directory.exists()) {
+      await directory.create(recursive: true);
+    }
     return directory;
   }
 
   Future<Directory> get trashDirectory async {
     final directory = Directory(p.join((await root).path, '.trash'));
-    if (!await directory.exists()) await directory.create(recursive: true);
+    if (!await directory.exists()) {
+      await directory.create(recursive: true);
+    }
     return directory;
   }
 
   Future<Directory> get tempDirectory async {
     final base = await getTemporaryDirectory();
     final directory = Directory(p.join(base.path, 'SonicNest'));
-    if (!await directory.exists()) await directory.create(recursive: true);
+    if (!await directory.exists()) {
+      await directory.create(recursive: true);
+    }
     return directory;
   }
 
@@ -48,7 +58,11 @@ class StorageService {
     return _uniquePath(await tempDirectory, title, extension);
   }
 
-  Future<String> _uniquePath(Directory directory, String title, String extension) async {
+  Future<String> _uniquePath(
+    Directory directory,
+    String title,
+    String extension,
+  ) async {
     final stem = sanitizeFileStem(title);
     final ext = extension.startsWith('.') ? extension.substring(1) : extension;
     var candidate = p.join(directory.path, '$stem.$ext');
@@ -91,12 +105,16 @@ class StorageService {
 
   Future<void> deleteIfExists(String path) async {
     final file = File(path);
-    if (await file.exists()) await file.delete();
+    if (await file.exists()) {
+      await file.delete();
+    }
   }
 
   Future<String> importFile(String sourcePath) async {
     final source = File(sourcePath);
-    if (!await source.exists()) throw const FileSystemException('Selected audio file no longer exists.');
+    if (!await source.exists()) {
+      throw const FileSystemException('Selected audio file no longer exists.');
+    }
     final extension = p.extension(source.path).replaceFirst('.', '').toLowerCase();
     const supported = {'m4a', 'wav', 'flac', 'opus', 'mp3', 'ogg', 'aac'};
     if (!supported.contains(extension)) {
