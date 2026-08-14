@@ -259,6 +259,77 @@ class AppLocalizations {
   String get offlineFirstRecordingsHint =>
       'SonicNest stores recordings locally and does not upload microphone data by default.';
 
+  String get audioEditor => 'Audio Editor';
+  String get undoSelectionChange => 'Undo selection change';
+  String get redoSelectionChange => 'Redo selection change';
+  String get resetSelection => 'Reset selection';
+  String get editorNonDestructiveHint =>
+      'Edits are exported as new files. Your original recording is never overwritten.';
+  String get selectionEditor => 'Selection editor';
+  String get selectionEditorHint =>
+      'Drag either handle directly on the waveform or use the range slider.';
+  String selectionStart(String value) => 'Start $value';
+  String selectionEnd(String end, String selected) =>
+      'End $end • $selected selected';
+  String get keepSelectionAsCopy => 'Keep selection as copy';
+  String get cutSelectionFromCopy => 'Cut selection from copy';
+  String get quickProcessing => 'Quick processing';
+  String get normalize => 'Normalize';
+  String get removeSilence => 'Remove silence';
+  String get fadeInOut => 'Fade in/out';
+  String get splitAtPlayhead => 'Split at playhead';
+  String get mergeAnotherFile => 'Merge another file';
+  String get basicNoiseCleanup => 'Basic noise cleanup';
+  String get compressor => 'Compressor';
+  String get limiter => 'Limiter';
+  String get highPassVoiceFilter => 'High-pass voice filter';
+  String get lowPassFilter => 'Low-pass filter';
+  String get gainAndSilence => 'Gain & silence';
+  String outputGain(String value) => 'Output gain: $value dB';
+  String get exportGainAdjustedCopy => 'Export gain-adjusted copy';
+  String get silenceDuration => 'Silence duration';
+  String get insertAtPlayhead => 'Insert at playhead';
+  String get exportPreset => 'Export preset';
+  String get exportPresetHint =>
+      'Create a converted copy in a common recording format.';
+  String exportFormatCopy(String format) => 'Export $format copy';
+  String get pausePreview => 'Pause preview';
+  String get playPreview => 'Play preview';
+  String get previewOriginal => 'Preview original';
+  String get editorStatus => 'Editor status';
+  String get selectionCopyCreated => 'Selection copy created.';
+  String get cutCopyCreated => 'Cut copy created.';
+  String get normalizedCopyCreated => 'Normalized copy created.';
+  String get silenceCleanedCopyCreated => 'Silence-cleaned copy created.';
+  String get fadedCopyCreated => 'Faded copy created.';
+  String get recordingTooShortToSplit => 'This recording is too short to split.';
+  String get splitCopiesCreated => 'Split copies created.';
+  String get mergedCopyCreated => 'Merged copy created.';
+  String get gainAdjustedCopyCreated => 'Gain-adjusted copy created.';
+  String get silenceInsertedCopyCreated => 'Silence-inserted copy created.';
+  String get noiseCleanedCopyCreated => 'Noise-cleaned copy created.';
+  String get compressedDynamicsCopyCreated =>
+      'Compressed-dynamics copy created.';
+  String get limitedCopyCreated => 'Limited copy created.';
+  String get highPassFilteredCopyCreated =>
+      'High-pass filtered copy created.';
+  String get lowPassFilteredCopyCreated => 'Low-pass filtered copy created.';
+  String formatCopyCreated(String format) => '$format copy created.';
+  String processingFailed(Object error) => 'Processing failed: $error';
+  String selectionCopyTitle(String title) => '$title Selection';
+  String cutCopyTitle(String title) => '$title Cut';
+  String normalizedCopyTitle(String title) => '$title Normalized';
+  String silenceCleanedCopyTitle(String title) => '$title Silence Cleaned';
+  String fadedCopyTitle(String title) => '$title Faded';
+  String partTitle(String title, int part) => '$title Part $part';
+  String mergedCopyTitle(String title) => '$title Merged';
+  String silenceInsertedCopyTitle(String title) => '$title With Silence';
+  String noiseCleanedCopyTitle(String title) => '$title Noise Cleaned';
+  String compressedCopyTitle(String title) => '$title Compressed';
+  String limitedCopyTitle(String title) => '$title Limited';
+  String highPassCopyTitle(String title) => '$title High Pass';
+  String lowPassCopyTitle(String title) => '$title Low Pass';
+
   String get batchConvert => 'Batch Convert';
   String get createConvertedCopies => 'Create converted copies';
   String get batchConvertDescription =>
