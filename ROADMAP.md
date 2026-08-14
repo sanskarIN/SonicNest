@@ -98,3 +98,8 @@ Remaining:
 ## External batch export status
 
 Implemented: optional user-selected destination-folder copies, collision-safe destination names, independent external-copy failure reporting, and stop-after-current cancellation between files. Remaining work is physical/per-platform validation, low-storage/large-batch testing, and deciding whether any richer destination/export workflow is justified by real use.
+
+
+## Localization migration status
+
+Primary Flutter presentation surfaces are centralized in the localization catalog and English remains the baseline locale. Remaining localization work is translation introduction, text-expansion testing, translation QA, and deciding how much backend diagnostic text should be localized versus retained as technical detail.

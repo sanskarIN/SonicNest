@@ -124,3 +124,8 @@ Apache License 2.0. See `LICENSE` and `NOTICE`. Dependency licenses remain their
 ### External folder copies and safe stopping
 
 Batch Convert can optionally copy each successful converted output to a user-selected folder. SonicNest avoids destination overwrites with numbered names and keeps the managed library result even if the external copy fails. During a long batch, **Stop after current file** prevents new items from starting after the current conversion finishes. The source revision implementing this behavior passed analyzer/tests and all five platform debug-build targets in validation run `31773250023`.
+
+
+### Localization-ready presentation
+
+SonicNest currently ships English, but primary Flutter presentation text is centralized in `lib/l10n/app_localizations.dart` across startup, Home, Recorder, Library, Player, Editor, Settings, Batch Convert, About/support, and reusable recording controls. Additional languages still require translation, text-expansion review, and platform accessibility QA before release.

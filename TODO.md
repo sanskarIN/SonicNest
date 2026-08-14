@@ -85,3 +85,10 @@ This file intentionally contains only work that is still incomplete, requires ph
 - [ ] Verify Stop after current file during long conversions.
 - [ ] Verify closing/navigating away from Batch Convert during processing.
 - [ ] Profile very large batches and mixed-format batches.
+
+
+## Localization
+
+- [x] Migrate primary Flutter presentation strings, including Batch Convert and desktop recording actions, into the localization layer.
+- [ ] Decide whether backend diagnostic/error details should be translated or intentionally retained as technical text before adding non-English releases.
+- [ ] Add additional locales only with translation review, text-expansion testing, and translation QA.

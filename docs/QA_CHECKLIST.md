@@ -306,3 +306,12 @@ A checkbox is evidence, not decoration. If a test requires physical hardware, a 
 - [ ] Trigger an external-copy failure and verify conversion success/failure counts remain correct.
 - [ ] Request Stop after current file during a long conversion and verify the current output completes before the next item is skipped.
 - [ ] Verify already completed outputs are not rolled back after a stop request.
+
+
+## Localization migration continuation
+
+- [ ] Verify Home, Recorder, Library, Player, Editor, Settings, Batch Convert, About/support, and startup visible labels are sourced from the localization catalog.
+- [ ] Verify Library exact-tag/from-date/through-date filters work together after the UI restoration.
+- [ ] Verify secondary-click on desktop recordings opens the same safe action surface as the More button.
+- [ ] Verify long localized strings do not overflow compact phone and narrow desktop layouts before adding another locale.
+- [ ] Verify backend diagnostic details remain understandable when combined with localized generic error copy.

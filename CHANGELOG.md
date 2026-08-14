@@ -74,3 +74,12 @@ All notable project changes are documented here.
 - Added safe stop-after-current cancellation between batch items.
 - Kept conversion and external-copy failures independently reported so a destination-copy failure does not invalidate a successful managed conversion.
 - Validated revision `54b727db6dd887fb0b2df2d36cabb2cd78671d7a` with analyzer/tests and Android, Linux, Windows, macOS, and unsigned iOS debug builds in run `31773250023`.
+
+
+### Localization and library hardening continuation
+- Routed primary application screens and reusable recording controls through the localization catalog.
+- Added localization smoke tests and dynamic status/count strings.
+- Restored responsive exact-tag/date filters and secondary-click recording actions.
+- Removed duplicate legacy advanced-filter UI and obsolete `AppStrings`.
+- Added safe between-file batch cancellation and collision-safe optional external-folder copies with unit-tested filesystem behavior.
+- Validated revision `3fa56d26fb6cb64ccddf2b71e7b8c677aa4aa69b` in run `31774726146` across analyzer/tests and all five platform debug-build targets.

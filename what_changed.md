@@ -886,3 +886,40 @@ Exact validation evidence:
 The external copy is intentionally performed only after the managed SonicNest conversion/library registration succeeds. Destination-copy failure therefore does not roll back a valid managed-library output. Existing destination names are protected with collision-safe numbered filenames. Cancellation is observed between files so a running FFmpeg write is not intentionally terminated mid-file.
 
 Manual validation still required: directory-picker behavior and access persistence on real platforms, destination removal/revocation, low-storage external-copy behavior, very large batches, closing/navigating away during processing, and long-running stop-after-current behavior.
+
+
+---
+
+# Localization, library interaction, and batch reliability continuation
+
+Validated implementation added in this continuation:
+
+- Batch Convert now honors **Stop after current file** between items rather than describing cancellation without wiring it.
+- Batch Convert can optionally copy successful managed outputs to a user-selected external directory.
+- External copies use collision-safe numbered filenames and never intentionally overwrite an existing destination file.
+- External-copy failures are reported independently and do not roll back a successfully registered SonicNest library conversion.
+- External copy behavior moved into `ExternalActions.copyFileToDirectoryCollisionSafe` with temporary-directory unit coverage for normal copies, collisions, missing sources, and missing destinations.
+- Native file and directory pickers now use platform-default dialog titles, allowing the host OS to provide localized native picker chrome.
+- Home, About/support, Recorder, Player, Library, Settings, Batch Convert, Editor, startup failure presentation, and reusable recording-tile controls were routed through the application localization layer.
+- Dynamic localization paths now cover batch progress/failure counts, library deletion counts, storage summaries, recorder statuses, player controls, and editor processing statuses.
+- Added localization catalog smoke tests for baseline locale support and dynamic batch/library/editor/storage text.
+- Restored exact-tag and date-range filters directly in the responsive Library filter surface.
+- Restored desktop secondary-click access to recording actions.
+- Removed the duplicate legacy floating advanced-filter component so one responsive filter surface owns the behavior.
+- Removed the obsolete pre-localization `AppStrings` constants file.
+- Startup loading and startup failure are now distinct states; the generic failure copy comes from localization while diagnostic detail remains available.
+
+Exact automated validation:
+
+- Validated revision: `3fa56d26fb6cb64ccddf2b71e7b8c677aa4aa69b`
+- One-shot validation run: `31774726146`
+- Dart formatting: SUCCESS
+- Flutter static analysis: SUCCESS
+- Unit tests: SUCCESS
+- Android debug APK: SUCCESS
+- Linux debug build: SUCCESS
+- Windows debug build: SUCCESS
+- macOS debug build: SUCCESS
+- unsigned iOS debug build: SUCCESS
+
+Release classification remains **development preview**. Physical microphone, routing, interruption/background, low-storage, accessibility, long-duration, large-library, real screenshot/icon, signing, notarization, packaging, and store-dashboard gates still require real evidence and remain unchecked.

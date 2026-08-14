@@ -149,3 +149,15 @@ next_exact_tasks:
 - Analyzer/unit tests: **SUCCESS**
 - Android/Linux/Windows/macOS/unsigned-iOS debug builds: **SUCCESS**
 - Repository classification remains **development preview** because physical-device, accessibility, long-duration, low-storage, signing, packaging, and store-release gates remain evidence-dependent.
+
+
+## Latest exact validation — localization and library hardening
+
+- Validated revision: `3fa56d26fb6cb64ccddf2b71e7b8c677aa4aa69b`
+- Validation run: `31774726146`
+- Analyzer and unit tests: **SUCCESS**
+- Android, Linux, Windows, macOS, and unsigned iOS debug builds: **SUCCESS**
+- Primary Flutter presentation surfaces now use the localization catalog; English remains the only shipped locale.
+- Advanced tag/date filters and desktop secondary-click recording actions are active in the current Library UI.
+- Batch conversion external-copy and stop-after-current behavior is implemented and test-supported.
+- Release classification remains **development preview** until evidence-dependent manual gates are complete.
