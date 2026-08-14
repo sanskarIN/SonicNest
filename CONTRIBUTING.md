@@ -32,6 +32,24 @@ Do not commit secrets, signing keys, personal recordings, build outputs, generat
 
 Audio code must preserve originals unless the user explicitly chooses destructive deletion. New codecs must have documented platform support and a licensing review in `docs/CODECS.md`. Recorder, routing, interruption, long-duration, and DSP-quality claims that depend on physical hardware must remain evidence-based rather than inferred from successful compilation.
 
+Import changes must preserve per-file failure isolation: a missing, unreadable, unprobeable, or waveform-invalid selected file must not leave a copied managed orphan or prevent later valid selections from being attempted. Run the focused import tests after changing import behavior:
+
+```bash
+flutter test test/audio_import_service_test.dart
+```
+
+## Metadata integrity changes
+
+Changes to recording metadata decoding or persistence must preserve the recovery invariants documented in `docs/METADATA_INTEGRITY.md`: structurally corrupt documents are preserved, malformed individual records are isolated, completed saves do not leave `.tmp`/`.bak` debris, and a valid backup can recover an interrupted replacement.
+
+Run the focused metadata tests after persistence/decoder changes:
+
+```bash
+flutter test test/recording_entry_test.dart test/metadata_store_test.dart
+```
+
+Do not weaken corruption checks merely to make malformed fixtures pass. A deterministic 3,000-entry metadata round-trip is a regression gate, not a substitute for real large-library performance profiling.
+
 ## Native branding changes
 
 The vector mark under `assets/logo/` and deterministic generator `tool/generate_brand_assets_v2.dart` are repository-controlled brand sources. Do not replace generated launcher/splash outputs manually and then treat those generated binaries as authoritative source.
