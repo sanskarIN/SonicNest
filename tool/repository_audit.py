@@ -89,6 +89,7 @@ PRIVATE_MATERIAL_PATTERNS = (
     re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
 )
 
+SELF_AUDIT_PATH = "tool/repository_audit.py"
 MAX_TRACKED_FILE_BYTES = 10 * 1024 * 1024
 
 
@@ -160,6 +161,10 @@ def audit() -> list[str]:
             )
 
     for relative in tracked:
+        # The audit source contains the detector signatures by design. Skipping only
+        # this exact file prevents self-matches without exempting any other source.
+        if relative == SELF_AUDIT_PATH:
+            continue
         path = ROOT / relative
         if not path.is_file() or not is_text_candidate(path):
             continue
