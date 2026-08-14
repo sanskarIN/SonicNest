@@ -34,6 +34,11 @@ completed_features:
   - project architecture and Material 3 design system
   - branded Flutter startup screen with recoverable startup failure state
   - local-first recording metadata and cross-platform-safe filename allocation
+  - tolerant metadata field decoding and malformed-record isolation
+  - structural metadata corruption preservation with timestamped diagnostic copies
+  - interrupted metadata replacement recovery from recordings.json.bak
+  - corrupt-primary fallback to a valid metadata backup
+  - deterministic 3000-entry metadata filesystem save/load regression coverage
   - start countdown pause resume stop cancel recording lifecycle
   - cancellable 0 3 5 10 second recording countdown
   - recorder transition guards and failed-capture cleanup
@@ -50,6 +55,7 @@ completed_features:
   - format folder exact-tag and date-range filters
   - favorites pins tags folders trash restore permanent delete
   - rename duplicate import export share
+  - multi-file audio import with per-file copy probe waveform failure isolation and managed-copy cleanup
   - multi-selection bulk favorite pin share trash restore delete actions
   - managed storage statistics for recordings Trash and temporary files
   - guarded temporary-file cleanup
@@ -82,6 +88,7 @@ completed_features:
   - Debian Linux package builder verifier desktop entry AppStream metadata generated icon integration and package checksums
   - hosted-runner Debian package install installed-payload GUI startup smoke and uninstall cleanup validation
   - dedicated Linux Debian package CI and Debian release-candidate artifact integration
+  - repository workflow allowlist rejecting leftover temporary one-shot workflows and permanent contents-write permissions
   - unit tests open-source docs GitHub project templates and release documentation
   - analyzer unit-test Android Linux Windows macOS and unsigned iOS build workflows
   - core CI path filtering that avoids documentation-only rebuild churn
@@ -91,6 +98,8 @@ partial_features:
   - Windows and Linux do not yet expose a dedicated SonicNest system-wide media-session integration beyond the selected desktop playback backend
   - desktop secondary-click opens the complete action surface but a cursor-anchored platform-native context menu can still be evaluated after usability testing
   - advanced filter and audio-processing defaults require listening tests before claiming mastering-grade behavior
+  - deterministic corrupt-import failure isolation is covered but representative malformed-media corpus testing remains manual
+  - deterministic 3000-entry metadata persistence is covered but real large-library UI memory and performance profiling remains manual
   - Debian package structure and hosted-runner install/startup/uninstall smoke are automated but representative-system microphone routing desktop rendering accessibility upgrade and signing/distribution policy remain manual release gates
 pending_manual_validation:
   - microphone permission accepted denied revoked and permanently denied behavior on devices
@@ -100,31 +109,35 @@ pending_manual_validation:
   - wired USB Bluetooth and built-in microphone routing where available
   - headphone Bluetooth reconnect and media-button behavior
   - low-storage failure and recovery
-  - malformed audio imports across supported operating systems
+  - disk and file permission failure recovery on target systems
+  - malformed audio imports across supported operating systems using representative corpus files
   - batch conversion and direct export quality large-batch destination-loss and low-storage behavior on representative real recordings
   - desktop secondary-click ergonomics on Windows macOS and Linux
   - advanced editor output quality on representative voice and music recordings
   - 30-minute and multi-hour recording soak tests
   - screen-reader audits with TalkBack VoiceOver Narrator and desktop tooling
-  - large-library performance with thousands of recordings
+  - large-library UI memory and performance with thousands of recordings
   - Debian package install launch upgrade uninstall microphone routing and desktop icon visual behavior on representative Debian Ubuntu family systems
   - real screenshots final native icon launch asset review and store metadata
   - store packaging signing certificates provisioning notarization and release credentials
 latest_automated_validation:
-  application_source_commit: 40c4a758debef136c2d8c977c321446cca2697cd
+  application_source_commit: a88aeadadda017b0aced4dbc25c8426a27364b77
   core_flutter_ci:
-    run_id: 31776174696
+    run_id: 31807193932
+    source_commit: a88aeadadda017b0aced4dbc25c8426a27364b77
     brand_generation: success
     analyzer: success
     unit_tests: success
     android_debug_apk: success
     linux_debug_build: success
   windows_ci:
-    run_id: 31776174725
+    run_id: 31807141053
+    source_commit: 3bf63e69186a7a538f7d0587f3d361e00c2e29e9
     brand_generation: success
     windows_debug_build: success
   apple_ci:
-    run_id: 31776174715
+    run_id: 31807141166
+    source_commit: 3bf63e69186a7a538f7d0587f3d361e00c2e29e9
     brand_generation: success
     macos_debug_build: success
     ios_debug_no_codesign: success
@@ -144,20 +157,24 @@ latest_automated_validation:
     uninstall_cleanup_verification: success
     artifact_upload: success
   repository_integrity_audit:
-    validated_source_commit: e0b9658a4cb18a61ac42046a6914ca080df7eb51
-    run_id: 31785152042
+    validated_source_commit: c7b9c41a8afcf83ff03ae5a014c9968f2f09c5e4
+    run_id: 31807662729
     result: success
   validation_relationship:
-    - core Windows and Apple workflows validate deterministic native branding source revision 40c4a758debef136c2d8c977c321446cca2697cd
+    - core Flutter CI run 31807193932 validates metadata recovery and import-service tests through revision a88aeadadda017b0aced4dbc25c8426a27364b77 including Android and Linux debug builds
+    - Windows run 31807141053 and Apple run 31807141166 validate the cross-platform import-controller source revision 3bf63e69186a7a538f7d0587f3d361e00c2e29e9
     - Linux package workflow validates package construction plus hosted-runner install startup smoke and uninstall behavior through revision a07468b4b7c14a76b9bce537bbe0455e4539e6bf
-    - repository audit revision e0b9658a4cb18a61ac42046a6914ca080df7eb51 locks the installed-package smoke script and CI install/remove markers as required repository invariants
-    - documentation-only synchronization commits after validated source revisions do not trigger all application build workflows by design
+    - repository audit run 31807662729 validates the cleaned permanent workflow set and workflow permission allowlist on current change records
+    - documentation-only synchronization commits after validated application source revisions do not trigger all application build workflows by design
 known_limitations:
   - codec availability and effective sample bitrate channel and DSP settings depend on OS device and runtime support
   - sharing silence-skip media-session input-device and screen-wake capabilities differ by platform backend
   - A-B loop is application-managed and requires real-device timing validation
   - generated platform hosts require the Flutter SDK and repository bootstrap tooling
   - batch conversion and direct export are sequential and non-destructive; very large batches require performance validation
+  - deterministic import failures use controlled test doubles and do not substitute for malformed real-media corpora on each platform
+  - deterministic 3000-entry metadata roundtrip proves persistence integrity rather than real UI latency memory pressure or filesystem performance
+  - metadata backup recovery does not recreate audio files deleted or damaged outside SonicNest and still requires low-storage abrupt-power and permission-failure evidence on real systems
   - hosted-runner Linux package smoke proves install installed-payload startup-window and uninstall behavior only on the CI runner and does not prove representative real-system audio routing desktop integration accessibility upgrade or long-duration quality
   - automated compilation cannot substitute for microphone hardware interruption background lock-screen routing media-button accessibility storage-failure and long-duration QA
   - signed distributable packages require maintainer-owned signing material that must not be committed
@@ -168,6 +185,9 @@ commit_identity:
 next_exact_tasks:
   - execute docs/QA_CHECKLIST.md on representative Android iOS macOS Windows and Linux hardware
   - verify countdown screen-wake microphone routing interruption and media-session behavior on physical devices
+  - run a privacy-safe malformed audio corpus through import on each maintained platform and record per-file results
+  - profile thousands of Library entries in the real UI for latency memory and scrolling behavior rather than relying only on metadata serialization tests
+  - test low-storage abrupt-interruption and permission-failure metadata/filesystem recovery on representative systems
   - install the Debian package on representative Debian Ubuntu family systems and verify launcher icon microphone routing upgrade and uninstall behavior with release evidence
   - decide the public Linux distribution channel and any Debian repository/package signing policy
   - listen-test and tune advanced processing presets against representative recordings
@@ -238,4 +258,18 @@ next_exact_tasks:
 - Repository audit run `31785152042` on revision `e0b9658a4cb18a61ac42046a6914ca080df7eb51` also passed after making installed-smoke invariants mandatory.
 - Earlier structural-only package run `31783749267` remains historical evidence; the newer run supersedes it for automated Linux package validation.
 - Representative real-system package installation/upgrade/uninstall behavior, microphone routing, accessibility, desktop icon visual inspection, public distribution policy, and signing remain manual release gates.
+- Release classification remains **development preview**.
+
+## Latest exact validation — metadata integrity and resilient imports
+
+- Core validation source revision: `a88aeadadda017b0aced4dbc25c8426a27364b77`.
+- Core Flutter CI run: `31807193932` — formatting, analyzer, unit tests, Android debug APK, and Linux debug build **SUCCESS**.
+- Cross-platform controller source revision: `3bf63e69186a7a538f7d0587f3d361e00c2e29e9`.
+- Windows run `31807141053`: Windows debug build **SUCCESS**.
+- Apple run `31807141166`: macOS debug and unsigned-iOS debug builds **SUCCESS**.
+- Metadata tests cover invalid JSON, invalid document structure, malformed-record isolation, interrupted backup recovery, corrupt-primary fallback, and a 3,000-entry filesystem round-trip.
+- Import tests cover valid managed import plus cleanup on source-copy, media-probe, and waveform-extraction failure.
+- Multi-file import now continues after isolated malformed/missing audio failures and reports partial success; a metadata persistence failure remains fail-fast and cleans the just-created unregistered managed file.
+- Repository Integrity Audit run `31807662729` on revision `c7b9c41a8afcf83ff03ae5a014c9968f2f09c5e4` passed after temporary/one-shot workflows were removed and the permanent workflow allowlist/read-only invariant was active.
+- Real malformed-media corpus testing, real large-library UI/memory profiling, low-storage/permission/power-loss recovery, and physical-device release QA remain evidence-dependent manual gates.
 - Release classification remains **development preview**.
