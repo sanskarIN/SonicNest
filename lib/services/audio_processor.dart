@@ -21,28 +21,33 @@ class AudioProcessor {
   AudioProcessor(this._storage);
   final StorageService _storage;
 
-  String _q(String value) => '"${value.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"';
+  String _q(String value) =>
+      '"${value.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"';
 
   Future<void> _run(String command) async {
     final session = await FFmpegKit.execute(command);
     final code = await session.getReturnCode();
     if (!ReturnCode.isSuccess(code)) {
       final output = await session.getOutput();
-      throw AudioProcessingException(output?.trim().isNotEmpty == true
-          ? output!.trim()
-          : 'FFmpeg processing failed.');
+      throw AudioProcessingException(
+        output?.trim().isNotEmpty == true
+            ? output!.trim()
+            : 'FFmpeg processing failed.',
+      );
     }
   }
 
   Future<Duration> probeDuration(String inputPath) async {
     final session = await FFprobeKit.getMediaInformation(inputPath);
-    final information = await session.getMediaInformation();
+    final information = session.getMediaInformation();
     final seconds = double.tryParse(information?.getDuration() ?? '');
     if (seconds == null || !seconds.isFinite || seconds < 0) {
       final output = await session.getOutput();
-      throw AudioProcessingException(output?.trim().isNotEmpty == true
-          ? output!.trim()
-          : 'Could not determine audio duration.');
+      throw AudioProcessingException(
+        output?.trim().isNotEmpty == true
+            ? output!.trim()
+            : 'Could not determine audio duration.',
+      );
     }
     return Duration(milliseconds: (seconds * 1000).round());
   }
@@ -61,21 +66,29 @@ class AudioProcessor {
     String inputPath, {
     int points = AppConstants.maxWaveformSamples,
   }) async {
-    if (points <= 0) return const [];
+    if (points <= 0) {
+      return const [];
+    }
     final pcmPath = await _storage.uniqueTempPath('waveform_envelope', 'pcm');
     try {
       await _run(
         '-y -i ${_q(inputPath)} -vn -ac 1 -ar 8000 -f s16le ${_q(pcmPath)}',
       );
       final pcm = File(pcmPath);
-      if (!await pcm.exists()) return const [];
+      if (!await pcm.exists()) {
+        return const [];
+      }
       final length = await pcm.length();
-      if (length < 2) return const [];
+      if (length < 2) {
+        return const [];
+      }
 
       final sampleCount = length ~/ 2;
       final envelopePoints = math.min(points, sampleCount);
       var bytesPerBin = (length / envelopePoints).ceil();
-      if (bytesPerBin.isOdd) bytesPerBin++;
+      if (bytesPerBin.isOdd) {
+        bytesPerBin++;
+      }
       bytesPerBin = math.max(2, bytesPerBin);
 
       final result = <double>[];
@@ -106,9 +119,12 @@ class AudioProcessor {
     required int sampleRate,
     required int channels,
   }) async {
-    final output = await _storage.uniqueRecordingPath(outputTitle, format.extension);
+    final output =
+        await _storage.uniqueRecordingPath(outputTitle, format.extension);
     final args = _codecArgs(format, bitRate);
-    await _run('-y -i ${_q(inputPath)} -vn -ar $sampleRate -ac $channels $args ${_q(output)}');
+    await _run(
+      '-y -i ${_q(inputPath)} -vn -ar $sampleRate -ac $channels $args ${_q(output)}',
+    );
     if (!await File(output).exists()) {
       throw const AudioProcessingException('Output file was not created.');
     }
@@ -126,11 +142,14 @@ class AudioProcessor {
     if (start.isNegative || end <= start) {
       throw const AudioProcessingException('Trim range is invalid.');
     }
-    final output = await _storage.uniqueRecordingPath(outputTitle, format.extension);
+    final output =
+        await _storage.uniqueRecordingPath(outputTitle, format.extension);
     final args = _codecArgs(format, bitRate);
     final startSeconds = start.inMilliseconds / 1000;
     final durationSeconds = (end - start).inMilliseconds / 1000;
-    await _run('-y -ss $startSeconds -i ${_q(inputPath)} -t $durationSeconds -vn $args ${_q(output)}');
+    await _run(
+      '-y -ss $startSeconds -i ${_q(inputPath)} -t $durationSeconds -vn $args ${_q(output)}',
+    );
     return output;
   }
 
@@ -142,14 +161,26 @@ class AudioProcessor {
     required int bitRate,
   }) async {
     if (at <= Duration.zero) {
-      throw const AudioProcessingException('Split point must be greater than zero.');
+      throw const AudioProcessingException(
+        'Split point must be greater than zero.',
+      );
     }
-    final first = await _storage.uniqueRecordingPath('$outputTitle Part 1', format.extension);
-    final second = await _storage.uniqueRecordingPath('$outputTitle Part 2', format.extension);
+    final first = await _storage.uniqueRecordingPath(
+      '$outputTitle Part 1',
+      format.extension,
+    );
+    final second = await _storage.uniqueRecordingPath(
+      '$outputTitle Part 2',
+      format.extension,
+    );
     final args = _codecArgs(format, bitRate);
     final seconds = at.inMilliseconds / 1000;
-    await _run('-y -i ${_q(inputPath)} -t $seconds -vn $args ${_q(first)}');
-    await _run('-y -ss $seconds -i ${_q(inputPath)} -vn $args ${_q(second)}');
+    await _run(
+      '-y -i ${_q(inputPath)} -t $seconds -vn $args ${_q(first)}',
+    );
+    await _run(
+      '-y -ss $seconds -i ${_q(inputPath)} -vn $args ${_q(second)}',
+    );
     return [first, second];
   }
 
@@ -160,17 +191,24 @@ class AudioProcessor {
     required int bitRate,
   }) async {
     if (inputPaths.length < 2) {
-      throw const AudioProcessingException('Choose at least two files to merge.');
+      throw const AudioProcessingException(
+        'Choose at least two files to merge.',
+      );
     }
-    final output = await _storage.uniqueRecordingPath(outputTitle, format.extension);
+    final output =
+        await _storage.uniqueRecordingPath(outputTitle, format.extension);
     final temp = await _storage.uniqueTempPath('sonicnest_concat', 'txt');
     final listFile = File(temp);
-    await listFile.writeAsString(inputPaths
-        .map((path) => "file '${path.replaceAll("'", "'\\''")}'")
-        .join('\n'));
+    await listFile.writeAsString(
+      inputPaths
+          .map((path) => "file '${path.replaceAll("'", "'\\''")}'")
+          .join('\n'),
+    );
     try {
       final args = _codecArgs(format, bitRate);
-      await _run('-y -f concat -safe 0 -i ${_q(temp)} -vn $args ${_q(output)}');
+      await _run(
+        '-y -f concat -safe 0 -i ${_q(temp)} -vn $args ${_q(output)}',
+      );
       return output;
     } finally {
       await _storage.deleteIfExists(temp);
@@ -208,7 +246,8 @@ class AudioProcessor {
       outputTitle: outputTitle,
       format: format,
       bitRate: bitRate,
-      audioFilter: 'afade=t=in:st=0:d=$inSeconds,afade=t=out:st=$outStart:d=$outDuration',
+      audioFilter:
+          'afade=t=in:st=0:d=$inSeconds,afade=t=out:st=$outStart:d=$outDuration',
     );
   }
 
@@ -234,9 +273,12 @@ class AudioProcessor {
     required int bitRate,
     required String audioFilter,
   }) async {
-    final output = await _storage.uniqueRecordingPath(outputTitle, format.extension);
+    final output =
+        await _storage.uniqueRecordingPath(outputTitle, format.extension);
     final args = _codecArgs(format, bitRate);
-    await _run('-y -i ${_q(inputPath)} -vn -af ${_q(audioFilter)} $args ${_q(output)}');
+    await _run(
+      '-y -i ${_q(inputPath)} -vn -af ${_q(audioFilter)} $args ${_q(output)}',
+    );
     return output;
   }
 }
