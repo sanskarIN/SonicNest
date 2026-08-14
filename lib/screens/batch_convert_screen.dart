@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
 
 import '../controllers/app_controller.dart';
 import '../models/recording_entry.dart';
@@ -21,6 +24,7 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
   int _completed = 0;
   int _total = 0;
   String? _status;
+  String? _exportDirectory;
 
   AppController get controller => widget.controller;
 
@@ -110,7 +114,38 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
                                     }
                                   },
                           ),
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 10),
+                          SwitchListTile.adaptive(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('Copy to an external folder'),
+                            subtitle: Text(
+                              _exportDirectory ??
+                                  'Keep converted copies only in the SonicNest library.',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            value: _exportDirectory != null,
+                            onChanged: _processing
+                                ? null
+                                : (enabled) async {
+                                    if (!enabled) {
+                                      setState(() => _exportDirectory = null);
+                                      return;
+                                    }
+                                    await _chooseExportDirectory();
+                                  },
+                          ),
+                          if (_exportDirectory != null)
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: TextButton.icon(
+                                onPressed:
+                                    _processing ? null : _chooseExportDirectory,
+                                icon: const Icon(Icons.folder_open_outlined),
+                                label: const Text('Change export folder'),
+                              ),
+                            ),
+                          const SizedBox(height: 10),
                           if (_processing)
                             OutlinedButton.icon(
                               onPressed: _stopRequested
@@ -205,11 +240,20 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
     );
   }
 
+  Future<void> _chooseExportDirectory() async {
+    final directory = await controller.external.chooseExportDirectory();
+    if (!mounted || directory == null) {
+      return;
+    }
+    setState(() => _exportDirectory = directory);
+  }
+
   Future<void> _convert(List<RecordingEntry> entries) async {
     if (_processing || entries.isEmpty) {
       return;
     }
     final format = _targetFormat;
+    final exportDirectory = _exportDirectory;
     setState(() {
       _processing = true;
       _stopRequested = false;
@@ -219,7 +263,9 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
     });
 
     final failures = <String>[];
+    final exportFailures = <String>[];
     var successes = 0;
+    var externalCopies = 0;
     var stopped = false;
 
     for (final entry in entries) {
@@ -252,6 +298,15 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
           markers: entry.markers,
         );
         successes++;
+
+        if (exportDirectory != null) {
+          try {
+            await _copyToExternalDirectory(output, exportDirectory);
+            externalCopies++;
+          } catch (error) {
+            exportFailures.add('${entry.title}: $error');
+          }
+        }
       } catch (error) {
         if (output != null) {
           await controller.storage.deleteIfExists(output);
@@ -273,20 +328,58 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
       return;
     }
 
-    final failureText = failures.isEmpty
+    final conversionFailureText = failures.isEmpty
         ? ''
-        : ' ${failures.length} failed: ${failures.take(2).join(' | ')}';
+        : ' ${failures.length} conversion failed: '
+            '${failures.take(2).join(' | ')}';
+    final exportText = exportDirectory == null
+        ? ''
+        : exportFailures.isEmpty
+            ? ' $externalCopies copied to the export folder.'
+            : ' $externalCopies copied externally; '
+                '${exportFailures.length} external copy failed: '
+                '${exportFailures.take(2).join(' | ')}';
+
     setState(() {
       _processing = false;
       _stopRequested = false;
       _status = stopped
           ? 'Stopped after $_completed of $_total. '
-              '$successes converted.$failureText'
+              '$successes converted.$conversionFailureText$exportText'
           : failures.isEmpty
-              ? '$successes converted copies created.'
+              ? '$successes converted copies created.$exportText'
               : '$successes converted; ${failures.length} failed. '
-                  '${failures.take(2).join(' | ')}';
+                  '${failures.take(2).join(' | ')}$exportText';
       _selectedIds.clear();
     });
+  }
+
+  Future<String> _copyToExternalDirectory(
+    String sourcePath,
+    String directoryPath,
+  ) async {
+    final source = File(sourcePath);
+    if (!await source.exists()) {
+      throw StateError('Converted source file no longer exists.');
+    }
+
+    final directory = Directory(directoryPath);
+    if (!await directory.exists()) {
+      throw StateError('The selected export folder is unavailable.');
+    }
+
+    final fileName = p.basename(sourcePath);
+    final stem = p.basenameWithoutExtension(fileName);
+    final extension = p.extension(fileName);
+    var candidate = p.join(directory.path, '$stem$extension');
+    var suffix = 2;
+
+    while (await File(candidate).exists()) {
+      candidate = p.join(directory.path, '$stem ($suffix)$extension');
+      suffix++;
+    }
+
+    final copied = await source.copy(candidate);
+    return copied.path;
   }
 }
