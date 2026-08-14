@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../controllers/app_controller.dart';
 import '../core/formatters.dart';
+import '../l10n/app_localizations.dart';
 import '../models/recording_entry.dart';
 import '../models/recording_settings.dart';
 import '../widgets/waveform_view.dart';
@@ -16,6 +17,7 @@ class PlayerScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final player = controller.player;
     final duration =
         player.duration > Duration.zero ? player.duration : entry.duration;
@@ -28,19 +30,19 @@ class PlayerScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Now Playing'),
+        title: Text(l10n.nowPlaying),
         actions: [
           IconButton(
             tooltip: entry.favorite
-                ? 'Remove from favorites'
-                : 'Add to favorites',
+                ? l10n.removeFromFavorites
+                : l10n.addToFavorites,
             onPressed: () => controller.toggleFavorite(entry),
             icon: Icon(
               entry.favorite ? Icons.favorite : Icons.favorite_border,
             ),
           ),
           IconButton(
-            tooltip: 'Share',
+            tooltip: l10n.share,
             onPressed: () => controller.shareRecording(entry),
             icon: const Icon(Icons.share_outlined),
           ),
@@ -107,15 +109,16 @@ class PlayerScreen extends StatelessWidget {
                   runSpacing: 12,
                   children: [
                     IconButton.filledTonal(
-                      tooltip: 'Previous recording',
+                      tooltip: l10n.previousRecording,
                       onPressed: adjacent.hasPrevious
                           ? () => _openRelative(-1)
                           : null,
                       icon: const Icon(Icons.skip_previous_rounded),
                     ),
                     IconButton.filledTonal(
-                      tooltip:
-                          'Jump back ${controller.settings.skipIntervalSeconds} seconds',
+                      tooltip: l10n.jumpBackSeconds(
+                        controller.settings.skipIntervalSeconds,
+                      ),
                       onPressed: () => player.jump(
                         Duration(
                           seconds: -controller.settings.skipIntervalSeconds,
@@ -139,11 +142,12 @@ class PlayerScreen extends StatelessWidget {
                             : Icons.play_arrow_rounded,
                         size: 34,
                       ),
-                      label: Text(player.isPlaying ? 'Pause' : 'Play'),
+                      label: Text(player.isPlaying ? l10n.pause : l10n.play),
                     ),
                     IconButton.filledTonal(
-                      tooltip:
-                          'Jump forward ${controller.settings.skipIntervalSeconds} seconds',
+                      tooltip: l10n.jumpForwardSeconds(
+                        controller.settings.skipIntervalSeconds,
+                      ),
                       onPressed: () => player.jump(
                         Duration(
                           seconds: controller.settings.skipIntervalSeconds,
@@ -152,7 +156,7 @@ class PlayerScreen extends StatelessWidget {
                       icon: const Icon(Icons.forward_10),
                     ),
                     IconButton.filledTonal(
-                      tooltip: 'Next recording',
+                      tooltip: l10n.nextRecording,
                       onPressed:
                           adjacent.hasNext ? () => _openRelative(1) : null,
                       icon: const Icon(Icons.skip_next_rounded),
@@ -167,7 +171,7 @@ class PlayerScreen extends StatelessWidget {
                   children: [
                     _SpeedMenu(controller: controller),
                     FilterChip(
-                      label: const Text('Repeat'),
+                      label: Text(l10n.repeat),
                       selected: player.looping,
                       onSelected: player.setLooping,
                       avatar: const Icon(Icons.repeat, size: 18),
@@ -182,18 +186,18 @@ class PlayerScreen extends StatelessWidget {
                       label: Text(
                         player.hasSelectionLoop
                             ? '${formatDuration(player.selectionLoopStart!)}–${formatDuration(player.selectionLoopEnd!)}'
-                            : 'A–B loop',
+                            : l10n.abLoop,
                       ),
                       onPressed: () => _configureSelectionLoop(context, duration),
                     ),
                     if (player.hasSelectionLoop)
                       ActionChip(
                         avatar: const Icon(Icons.close, size: 18),
-                        label: const Text('Clear loop'),
+                        label: Text(l10n.clearLoop),
                         onPressed: player.clearSelectionLoop,
                       ),
                     FilterChip(
-                      label: const Text('Skip silence'),
+                      label: Text(l10n.skipSilence),
                       selected: player.skipSilence,
                       onSelected: (value) async {
                         try {
@@ -229,7 +233,7 @@ class PlayerScreen extends StatelessWidget {
                 if (entry.markers.isNotEmpty) ...[
                   const SizedBox(height: 20),
                   Text(
-                    'Bookmarks',
+                    l10n.bookmarks,
                     style: Theme.of(context)
                         .textTheme
                         .titleLarge
@@ -293,9 +297,11 @@ class PlayerScreen extends StatelessWidget {
     if (duration <= const Duration(milliseconds: 400)) {
       return;
     }
+    final l10n = AppLocalizations.of(context);
     final maxMs = duration.inMilliseconds.toDouble();
     final player = controller.player;
-    final current = player.position.inMilliseconds.clamp(0, duration.inMilliseconds);
+    final current =
+        player.position.inMilliseconds.clamp(0, duration.inMilliseconds);
     final defaultStart = player.hasSelectionLoop
         ? player.selectionLoopStart!.inMilliseconds.toDouble()
         : math.max(0, current - 5000).toDouble();
@@ -311,7 +317,7 @@ class PlayerScreen extends StatelessWidget {
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (dialogContext, setDialogState) => AlertDialog(
-          title: const Text('A–B loop'),
+          title: Text(l10n.abLoop),
           content: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
             child: Column(
@@ -325,7 +331,10 @@ class PlayerScreen extends StatelessWidget {
                   values: values,
                   min: 0,
                   max: maxMs,
-                  divisions: math.min(1000, math.max(1, duration.inMilliseconds ~/ 100)),
+                  divisions: math.min(
+                    1000,
+                    math.max(1, duration.inMilliseconds ~/ 100),
+                  ),
                   onChanged: (next) {
                     if (next.end - next.start >= 200) {
                       setDialogState(() => values = next);
@@ -338,11 +347,11 @@ class PlayerScreen extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
+              child: Text(l10n.cancel),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(dialogContext, values),
-              child: const Text('Loop selection'),
+              child: Text(l10n.loopSelection),
             ),
           ],
         ),
@@ -375,6 +384,7 @@ class _Artwork extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     return Center(
       child: Container(
@@ -392,7 +402,7 @@ class _Artwork extends StatelessWidget {
           isPlaying ? Icons.graphic_eq_rounded : Icons.multitrack_audio_rounded,
           size: 88,
           color: scheme.onPrimaryContainer,
-          semanticLabel: isPlaying ? 'Audio playing' : 'Audio recording',
+          semanticLabel: isPlaying ? l10n.audioPlaying : l10n.audioRecording,
         ),
       ),
     );
