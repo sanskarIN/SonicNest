@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.sanskarIN.SonicNest</id>
+  <name>SonicNest</name>
+  <summary>Privacy-first sound and voice recorder</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>Apache-2.0</project_license>
+  <developer_name>Sanskar</developer_name>
+  <description>
+    <p>
+      SonicNest is a local-first, cross-platform sound and voice recorder with
+      recording, playback, organization, conversion, and non-destructive audio
+      editing tools.
+    </p>
+    <p>
+      The application is designed to keep recording metadata and managed audio
+      files on the user's device unless the user explicitly exports or shares
+      content.
+    </p>
+  </description>
+  <launchable type="desktop-id">sonicnest.desktop</launchable>
+  <url type="homepage">https://github.com/sanskarIN/SonicNest</url>
+  <url type="bugtracker">https://github.com/sanskarIN/SonicNest/issues</url>
+  <provides>
+    <binary>sonic_nest</binary>
+  </provides>
+  <categories>
+    <category>AudioVideo</category>
+    <category>Audio</category>
+    <category>Utility</category>
+  </categories>
+</component>
