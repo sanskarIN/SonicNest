@@ -82,28 +82,28 @@ class MetadataStore {
     try {
       decoded = jsonDecode(await file.readAsString());
     } on FormatException {
-      return (valid: false, entries: const []);
+      return (valid: false, entries: const <RecordingEntry>[]);
     } on FileSystemException {
-      return (valid: false, entries: const []);
+      return (valid: false, entries: const <RecordingEntry>[]);
     }
 
     if (decoded is! Map) {
-      return (valid: false, entries: const []);
+      return (valid: false, entries: const <RecordingEntry>[]);
     }
 
     Map<String, dynamic> root;
     try {
       root = Map<String, dynamic>.from(decoded);
     } on Object {
-      return (valid: false, entries: const []);
+      return (valid: false, entries: const <RecordingEntry>[]);
     }
 
     final rawEntries = root['recordings'];
     if (rawEntries == null) {
-      return (valid: true, entries: const []);
+      return (valid: true, entries: const <RecordingEntry>[]);
     }
     if (rawEntries is! List) {
-      return (valid: false, entries: const []);
+      return (valid: false, entries: const <RecordingEntry>[]);
     }
 
     final entries = <RecordingEntry>[];
