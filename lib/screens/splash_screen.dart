@@ -6,10 +6,12 @@ import '../widgets/sonicnest_mark.dart';
 class SplashScreen extends StatelessWidget {
   const SplashScreen({
     super.key,
+    this.failed = false,
     this.errorMessage,
     this.onRetry,
   });
 
+  final bool failed;
   final String? errorMessage;
   final VoidCallback? onRetry;
 
@@ -17,6 +19,10 @@ class SplashScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final strings = AppLocalizations.of(context);
+    final detail = errorMessage?.trim();
+    final failureText = detail == null || detail.isEmpty
+        ? strings.startupFailure
+        : '${strings.startupFailure}\n\n$detail';
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -52,7 +58,7 @@ class SplashScreen extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
                   const SizedBox(height: 24),
-                  if (errorMessage == null)
+                  if (!failed)
                     const SizedBox(
                       width: 32,
                       height: 32,
@@ -62,7 +68,7 @@ class SplashScreen extends StatelessWidget {
                     Semantics(
                       liveRegion: true,
                       child: Text(
-                        errorMessage!,
+                        failureText,
                         textAlign: TextAlign.center,
                         style: TextStyle(color: scheme.error),
                       ),
