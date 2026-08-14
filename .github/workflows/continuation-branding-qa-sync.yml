@@ -1,0 +1,39 @@
+name: Append native branding QA checklist
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/continuation-branding-qa-sync.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Append branding QA gates
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('docs/QA_CHECKLIST.md')
+          text = path.read_text(encoding='utf-8')
+          marker = '## Native launcher and splash branding QA'
+          if marker not in text:
+              text += '''\n\n## Native launcher and splash branding QA\n\nRepository implementation/automation evidence:\n\n- [x] Deterministic SonicNest brand raster generator executes in CI.\n- [x] Android launcher/splash generation executes before representative Android compilation.\n- [x] Windows icon generation executes before representative Windows compilation.\n- [x] macOS icon generation executes before representative macOS compilation.\n- [x] iOS icon/native-splash generation executes before representative unsigned-iOS compilation.\n- [x] Generated branding source PNGs are reproducible and ignored as authoritative Git source.\n\nAndroid real-device/release-candidate review:\n\n- [ ] Legacy launcher icon has safe margins and no clipped microphone/sound bars.\n- [ ] Adaptive icon looks correct under circle, rounded-square, squircle, and other launcher masks.\n- [ ] Themed/monochrome icon remains recognizable where supported.\n- [ ] Android 11-and-earlier native launch screen is visually correct.\n- [ ] Android 12+ splash is centered, correctly scaled, and not cropped.\n- [ ] Light and dark launch-screen backgrounds/contrast are acceptable.\n- [ ] App icon appearance is checked in launcher, app info/settings, recent-apps surfaces where applicable, and notification-related surfaces that use application branding.\n\niOS/macOS real-device/release-candidate review:\n\n- [ ] iOS icon is inspected on at least one real iPhone at normal home-screen scale.\n- [ ] iOS icon remains readable at smaller Settings/Search/App Library surfaces.\n- [ ] iOS launch screen is checked in light and dark appearance on representative device sizes.\n- [ ] macOS icon is checked in Finder, Dock, Spotlight, and application-switcher surfaces.\n- [ ] macOS icon remains readable at small Finder/list sizes and large Dock sizes.\n\nWindows real-device/release-candidate review:\n\n- [ ] Windows icon is checked in Explorer.\n- [ ] Windows icon is checked in taskbar/pinned-taskbar surfaces.\n- [ ] Windows icon is checked in Start/Search and shortcut surfaces.\n- [ ] Final installer/package icon is checked once a distribution format is selected.\n\nLinux packaging review:\n\n- [ ] Select a Linux package/distribution format.\n- [ ] Install the generated SonicNest icon into the selected desktop-entry/package metadata.\n- [ ] Check application menu/launcher, task switcher, and desktop-entry surfaces on the selected desktop environments.\n\nRelease evidence:\n\n- [ ] Capture real screenshots from the exact tested release candidate.\n- [ ] Record device/OS versions used for native-brand visual QA.\n- [ ] Confirm the signed/release package still contains the reviewed native resources.\n- [ ] Do not substitute generated mockups for real release-candidate screenshots.\n'''
+              path.write_text(text, encoding='utf-8')
+          PY
+      - run: git rm .github/workflows/continuation-branding-qa-sync.yml
+      - name: Commit QA update
+        run: |
+          git config user.name 'Sanskar'
+          git config user.email 'sanskarin@outlook.in'
+          git add docs/QA_CHECKLIST.md
+          git commit -m 'docs: add native branding release QA matrix'
+          git push origin HEAD:main
