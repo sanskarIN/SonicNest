@@ -64,6 +64,17 @@ flutter test
 
 The repository CI treats analyzer errors/warnings as failures while allowing informational style lints to remain non-fatal. New source should still be formatted before commit.
 
+Focused reliability checks can be run while changing local-library persistence or audio import behavior:
+
+```bash
+flutter test test/recording_entry_test.dart test/metadata_store_test.dart
+flutter test test/audio_import_service_test.dart
+```
+
+The metadata suite covers malformed field decoding, corrupt-document preservation, interrupted `.bak` recovery, and a 3,000-entry filesystem round-trip. The import suite covers successful managed imports and cleanup after copy/probe/waveform failures. These deterministic tests do not replace real malformed-audio corpus testing, filesystem-failure simulation on target devices, or large-library UI/performance profiling.
+
+See `docs/METADATA_INTEGRITY.md` for the persistence/recovery invariants behind those tests.
+
 ## Platform builds
 
 Android/Linux:
