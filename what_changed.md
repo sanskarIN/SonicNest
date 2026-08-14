@@ -122,8 +122,10 @@ Implemented:
 - Bookmark seeking.
 - Optional silence skipping on backends that support it.
 - Graceful unsupported-backend handling for silence skipping.
+- Android, iOS, and macOS media-session metadata and notification/lock-screen transport integration through `just_audio_background`.
+- Tagged `MediaItem` playback sources so OS media surfaces receive SonicNest title/album metadata.
 
-Dedicated OS media-session / lock-screen transport controls are intentionally still listed as future platform work rather than being falsely marked complete.
+Physical-device lock-screen, notification, interruption, and background behavior remains a manual QA gate. Dedicated Windows/Linux system-wide media-session integration is not currently claimed beyond the desktop playback backend.
 
 ## Settings
 
@@ -191,63 +193,47 @@ Final project constraint:
 
 - `file_picker: 10.3.10`
 
-The application uses `FilePicker.platform.pickFiles(...)` and `FilePicker.platform.saveFile(...)` for that compatible release. This resolved the Android plugin registration/API combination that failed with the earlier dependency selection.
+The application uses `FilePicker.platform.pickFiles(...)` and `FilePicker.platform.saveFile(...)` for that compatible release. A temporary static-API migration made during this continuation was immediately superseded after reconciling the repository's intentionally pinned compatibility version.
 
 `share_plus` remains on the dependency line compatible with the selected file picker / Windows dependency graph.
 
 ## CI and automated validation
 
-### Core Flutter CI
+### Previous fully green baseline
 
-Validated run:
-
+Core Flutter CI:
 - Run ID: `31766868164`
 - Source commit: `f2560ef02a1f046197188bd1e5112d43176a2b46`
-
-Results:
-
-- Platform host generation: SUCCESS
-- `flutter pub get`: SUCCESS
-- Dart formatting step: SUCCESS
-- Flutter static analysis: SUCCESS
+- Analyzer: SUCCESS
 - Unit tests: SUCCESS
-- Android debug APK build: SUCCESS
-- Linux debug desktop build: SUCCESS
+- Android debug APK: SUCCESS
+- Linux debug build: SUCCESS
 
-### Windows CI
-
-Workflow: `.github/workflows/windows.yml`
-
-Validated run:
-
+Windows CI:
 - Run ID: `31767240173`
-- Workflow commit: `92801465e9647a652f006709ea851a0b0dfe0fea`
+- Windows debug build: SUCCESS
 
-Results:
-
-- PowerShell platform bootstrap: SUCCESS
-- Dependency resolution: SUCCESS
-- Windows debug desktop build: SUCCESS
-
-### Apple CI
-
-Workflow: `.github/workflows/macos.yml`
-
-Validated run:
-
+Apple CI:
 - Run ID: `31767248520`
-- Workflow commit: `e6ca3d1fa8cd3828644a8c865ab1601a0789262e`
-
-Results:
-
-- macOS platform bootstrap: SUCCESS
-- macOS dependency resolution: SUCCESS
 - macOS debug build: SUCCESS
-- iOS platform bootstrap: SUCCESS
-- iOS dependency resolution: SUCCESS
 - iOS debug no-codesign build: SUCCESS
 
-These results validate compilation and automated tests on GitHub-hosted runners. They do not substitute for microphone hardware testing, interruption/background testing, long-duration recording tests, low-storage behavior, audio routing, accessibility testing with real assistive technologies, or signed store/release packaging.
+### Latest code-validation cycle
+
+Source code commit under validation: `59fe40b761ad52920d8640a4edb23b680db234c8`.
+
+Core Flutter CI run `31769582811` reached:
+- Platform host generation: SUCCESS
+- `flutter pub get`: SUCCESS
+- Dart formatting: SUCCESS
+- Flutter static analysis: SUCCESS
+- Unit tests: SUCCESS
+- Android debug APK: still running when this documentation commit was created
+- Linux debug build: still running when this documentation commit was created
+
+Windows run `31769582816` and Apple run `31769582823` were also active when the documentation synchronization commits began. New documentation-only commits trigger replacement workflow runs because the repository uses concurrency cancellation.
+
+Automated compilation does not substitute for microphone hardware testing, interruption/background testing, long-duration recording tests, low-storage behavior, audio routing, accessibility testing with real assistive technologies, or signed store/release packaging.
 
 ## Tests present
 
@@ -321,7 +307,14 @@ The work was intentionally divided into many focused commits. Notable commit mes
 - `feat: add native PowerShell platform bootstrap`
 - `ci: add Windows desktop build validation`
 - `ci: validate macOS and iOS host builds`
-- documentation synchronization commits for building, README, roadmap, changelog, project state, and this file
+- `fix: update file picker calls for current API` (superseded in the same continuation after pinned-version reconciliation)
+- `fix: render recording format labels without extension lookup`
+- `fix: render recording format in library tiles reliably`
+- `fix: keep file picker API aligned with pinned compatibility release`
+- `docs: synchronize project state with media session integration`
+- `docs: sync playback roadmap`
+- `docs: document media session playback support`
+- this continuation-log synchronization commit
 
 Earlier foundation commits are preserved in the repository history and remain part of the same project.
 
@@ -336,6 +329,7 @@ The following cannot be truthfully completed by repository-only automation and m
 - Screen-lock/background recording behavior.
 - Android foreground-service behavior across OEM/device variants.
 - iOS background recording behavior under current OS policies.
+- Android/iOS/macOS media-session and lock-screen playback behavior on physical hardware.
 - Low-storage and filesystem failure recovery.
 - 30-minute and multi-hour recording soak tests.
 - Very large recording-library performance.
@@ -346,6 +340,6 @@ Do not mark those items complete without real evidence.
 
 ## Exact continuation point
 
-Automated source analysis/tests and debug compilation are green for Android, Linux, Windows, macOS, and unsigned iOS using the workflows/runs recorded above. The repository is now in cross-platform release-hardening state rather than initial implementation state.
+The source tree is in cross-platform release-hardening state. On the latest code-validation cycle, analyzer and unit tests are green; platform build workflows are being re-run after focused code and documentation synchronization commits.
 
-For the next continuation, start with `PROJECT_STATE.md`, this `what_changed.md`, `ROADMAP.md`, and the newest GitHub Actions runs. Prioritize physical-device QA findings and media-session/lock-screen integration rather than reimplementing completed recorder/library/editor functionality.
+For the next continuation, start with `PROJECT_STATE.md`, this `what_changed.md`, `ROADMAP.md`, and the newest GitHub Actions runs. Do not reimplement completed recorder/library/editor/media-session source work. Prioritize any remaining CI regression first, then physical-device QA, dedicated Windows/Linux system media-session evaluation, richer desktop context menus, batch conversion/export evaluation, performance profiling, accessibility verification, and release packaging gates.
