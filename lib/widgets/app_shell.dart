@@ -11,7 +11,6 @@ import '../screens/library_screen.dart';
 import '../screens/recorder_screen.dart';
 import '../screens/settings_screen.dart';
 import '../services/recorder_service.dart';
-import 'library_filter_button.dart';
 import 'sonicnest_mark.dart';
 
 class AppShell extends StatelessWidget {
@@ -144,9 +143,6 @@ class AppShell extends StatelessWidget {
                       )
                     : content,
               ),
-              floatingActionButton: controller.navigationIndex == 2
-                  ? LibraryFilterButton(controller: controller)
-                  : null,
               bottomNavigationBar: wide
                   ? null
                   : NavigationBar(
