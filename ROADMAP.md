@@ -79,14 +79,18 @@ Completed/in progress:
 - Reproducible Android/iOS native splash resources and Android/iOS/macOS/Windows launcher/application icon generation.
 - Permanent Android/Windows/Apple workflows apply generated native branding before compiling representative debug builds.
 - Native branding source revision `40c4a758debef136c2d8c977c321446cca2697cd` validated by analyzer/tests plus Android, Linux, Windows, macOS, and unsigned iOS debug builds.
+- Debian `.deb` selected as the initial repository-supported Linux installation package.
+- Linux desktop entry, deterministic icon installation, AppStream metadata, package builder, structural verifier, checksum generation, dedicated package CI, and release-candidate `.deb` output implemented.
 
 Remaining:
 - Keep Android/Linux/Windows/macOS/iOS build workflows green for the final source revision.
+- Keep the Linux Debian package workflow green for the final source revision.
 - Validate microphone input switching and codec availability on each supported OS.
 - Verify background/lock-screen/interruption behavior against each platform's current policies.
 - Validate countdown, screen-wake, A-B loop, media buttons, batch conversion/export, desktop secondary-click interaction, and advanced editor outputs on physical target hardware.
 - Visually inspect generated Android/iOS/macOS/Windows native icons and Android/iOS launch/splash resources on real release candidates.
-- Choose a Linux package/distribution target and integrate the generated SonicNest icon into its desktop/package metadata.
+- Install and visually inspect the generated Linux `.deb` on representative Debian/Ubuntu-family systems, including launcher/menu/task-switcher icon surfaces and package uninstall behavior.
+- Decide the public Linux distribution channel and any package/repository signing policy.
 - Prepare reproducible release-build checks before signing is introduced.
 - Keep dependency/API compatibility pinned and documented when upstream plugins introduce breaking API or native-registration changes.
 - Capture real screenshots from tested release candidates.
@@ -108,6 +112,6 @@ Implemented: optional user-selected destination-folder copies, collision-safe de
 
 Primary Flutter presentation surfaces are centralized in the localization catalog and English remains the baseline locale. Remaining localization work is translation introduction, text-expansion testing, translation QA, and deciding how much backend diagnostic text should be localized versus retained as technical detail.
 
-## Native branding status
+## Native branding and Linux packaging status
 
-Implemented: deterministic brand source generation, Android adaptive/monochrome/full launcher inputs, Android/iOS native splash resources, and Android/iOS/macOS/Windows icon generation integrated into build workflows. Remaining work is real OS-level visual inspection, signed/release launch-screen review, real screenshots, and Linux package-format icon integration.
+Implemented: deterministic brand source generation, Android adaptive/monochrome/full launcher inputs, Android/iOS native splash resources, Android/iOS/macOS/Windows icon generation integrated into build workflows, and Debian `.deb` packaging with a Linux desktop entry, AppStream metadata, hicolor icon installation, checksum generation, structural verification, and CI/release-candidate integration. Remaining work is real OS-level visual inspection, signed/release launch-screen review, real screenshots, representative `.deb` install/uninstall testing, and the final public Linux distribution/signing policy.
