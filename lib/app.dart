@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'controllers/app_controller.dart';
 import 'core/constants.dart';
 import 'core/theme.dart';
+import 'l10n/app_localizations.dart';
 import 'screens/splash_screen.dart';
 import 'widgets/app_shell.dart';
 
@@ -74,6 +75,8 @@ class _SplashMaterialApp extends StatelessWidget {
       theme: SonicNestTheme.light(),
       darkTheme: SonicNestTheme.dark(),
       themeMode: controller.settings.themeMode,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: SplashScreen(errorMessage: errorMessage, onRetry: onRetry),
     );
   }
@@ -93,6 +96,8 @@ class SonicNestApp extends StatelessWidget {
         theme: SonicNestTheme.light(),
         darkTheme: SonicNestTheme.dark(),
         themeMode: controller.settings.themeMode,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: AppShell(controller: controller),
       ),
     );
