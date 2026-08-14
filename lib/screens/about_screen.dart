@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 
 import '../controllers/app_controller.dart';
 import '../core/constants.dart';
@@ -25,13 +24,7 @@ class AboutScreen extends StatelessWidget {
             const SizedBox(height: 6),
             const Text('Modern, privacy-first sound and voice recording.', textAlign: TextAlign.center),
             const SizedBox(height: 6),
-            FutureBuilder<PackageInfo>(
-              future: PackageInfo.fromPlatform(),
-              builder: (context, snapshot) => Text(
-                snapshot.hasData ? 'Version ${snapshot.data!.version} (${snapshot.data!.buildNumber})' : 'Version information',
-                textAlign: TextAlign.center,
-              ),
-            ),
+            const Text('Version 0.1.0 (1)', textAlign: TextAlign.center),
             const SizedBox(height: 28),
             Card(
               child: Padding(
@@ -87,6 +80,7 @@ class AboutScreen extends StatelessWidget {
               onTap: () => showLicensePage(
                 context: context,
                 applicationName: 'SonicNest',
+                applicationVersion: '0.1.0',
                 applicationLegalese: AppConstants.developerCredit,
               ),
             ),
