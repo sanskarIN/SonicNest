@@ -18,6 +18,7 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
   final Set<String> _selectedIds = <String>{};
   RecordingFormat _targetFormat = RecordingFormat.mp3;
   bool _processing = false;
+  bool _exportingOriginals = false;
   bool _stopRequested = false;
   int _completed = 0;
   int _total = 0;
@@ -25,6 +26,7 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
   String? _exportDirectory;
 
   AppController get controller => widget.controller;
+  bool get _busy => _processing || _exportingOriginals;
 
   List<RecordingEntry> get _entries => controller.recordings
       .where((entry) => !entry.isTrashed)
@@ -45,7 +47,7 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
         title: Text(l10n.batchConvert),
         actions: [
           TextButton(
-            onPressed: _processing || entries.isEmpty
+            onPressed: _busy || entries.isEmpty
                 ? null
                 : () {
                     setState(() {
@@ -103,7 +105,7 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
                                   ),
                                 )
                                 .toList(),
-                            onChanged: _processing
+                            onChanged: _busy
                                 ? null
                                 : (format) {
                                     if (format != null) {
@@ -122,7 +124,7 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
                               overflow: TextOverflow.ellipsis,
                             ),
                             value: _exportDirectory != null,
-                            onChanged: _processing
+                            onChanged: _busy
                                 ? null
                                 : (enabled) async {
                                     if (!enabled) {
@@ -136,8 +138,7 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
                             Align(
                               alignment: Alignment.centerLeft,
                               child: TextButton.icon(
-                                onPressed:
-                                    _processing ? null : _chooseExportDirectory,
+                                onPressed: _busy ? null : _chooseExportDirectory,
                                 icon: const Icon(Icons.folder_open_outlined),
                                 label: Text(l10n.changeExportFolder),
                               ),
@@ -162,22 +163,44 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
                               ),
                             )
                           else
-                            FilledButton.icon(
-                              onPressed: selected.isEmpty
-                                  ? null
-                                  : () => _convert(selected),
-                              icon: const Icon(Icons.multiple_stop_outlined),
-                              label: Text(l10n.convertSelected(selected.length)),
+                            Wrap(
+                              spacing: 10,
+                              runSpacing: 10,
+                              children: [
+                                FilledButton.icon(
+                                  onPressed: _busy || selected.isEmpty
+                                      ? null
+                                      : () => _convert(selected),
+                                  icon:
+                                      const Icon(Icons.multiple_stop_outlined),
+                                  label: Text(
+                                    l10n.convertSelected(selected.length),
+                                  ),
+                                ),
+                                OutlinedButton.icon(
+                                  onPressed: _busy || selected.isEmpty
+                                      ? null
+                                      : () => _exportOriginals(selected),
+                                  icon: const Icon(Icons.folder_copy_outlined),
+                                  label: Text(
+                                    '${l10n.exportCopy} (${selected.length})',
+                                  ),
+                                ),
+                              ],
                             ),
-                          if (_processing || _status != null) ...[
+                          if (_busy || _status != null) ...[
                             const SizedBox(height: 14),
                             if (_processing)
-                              LinearProgressIndicator(value: progress),
+                              LinearProgressIndicator(value: progress)
+                            else if (_exportingOriginals)
+                              const LinearProgressIndicator(),
                             const SizedBox(height: 8),
                             Text(
                               _processing && !_stopRequested
                                   ? l10n.convertedProgress(_completed, _total)
-                                  : _status!,
+                                  : _exportingOriginals
+                                      ? l10n.exportCopy
+                                      : _status!,
                             ),
                           ],
                         ],
@@ -204,7 +227,7 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
                             final checked = _selectedIds.contains(entry.id);
                             return CheckboxListTile(
                               value: checked,
-                              onChanged: _processing
+                              onChanged: _busy
                                   ? null
                                   : (value) {
                                       setState(() {
@@ -235,16 +258,69 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
     );
   }
 
-  Future<void> _chooseExportDirectory() async {
+  Future<String?> _chooseExportDirectory() async {
     final directory = await controller.external.chooseExportDirectory();
+    if (!mounted || directory == null) {
+      return directory;
+    }
+    setState(() => _exportDirectory = directory);
+    return directory;
+  }
+
+  Future<void> _exportOriginals(List<RecordingEntry> entries) async {
+    if (_busy || entries.isEmpty) {
+      return;
+    }
+    final l10n = AppLocalizations.of(context);
+    final directory =
+        _exportDirectory ?? await _chooseExportDirectory();
     if (!mounted || directory == null) {
       return;
     }
-    setState(() => _exportDirectory = directory);
+
+    setState(() {
+      _exportingOriginals = true;
+      _status = null;
+    });
+
+    try {
+      final result = await controller.external.copyFilesToDirectoryCollisionSafe(
+        sourcePaths: entries.map((entry) => entry.filePath),
+        directoryPath: directory,
+      );
+      if (!mounted) {
+        return;
+      }
+      final details = result.failures.entries.take(2).map((failure) {
+        final entry = entries.where(
+          (candidate) => candidate.filePath == failure.key,
+        );
+        final title = entry.isEmpty ? failure.key : entry.first.title;
+        return '$title: ${failure.value}';
+      }).join(' | ');
+      setState(() {
+        _status = result.hasFailures
+            ? l10n.externalCopyFailureSummary(
+                result.copiedCount,
+                result.failedCount,
+                details,
+              ).trim()
+            : l10n.copiedToExportFolder(result.copiedCount).trim();
+        _selectedIds.clear();
+      });
+    } catch (error) {
+      if (mounted) {
+        setState(() => _status = l10n.bulkActionFailed(error));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _exportingOriginals = false);
+      }
+    }
   }
 
   Future<void> _convert(List<RecordingEntry> entries) async {
-    if (_processing || entries.isEmpty) {
+    if (_busy || entries.isEmpty) {
       return;
     }
     final l10n = AppLocalizations.of(context);
