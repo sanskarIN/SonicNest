@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../controllers/app_controller.dart';
 import '../core/formatters.dart';
 import '../models/recording_entry.dart';
+import '../models/recording_settings.dart';
 import '../widgets/waveform_view.dart';
 
 class PlayerScreen extends StatelessWidget {
@@ -217,7 +218,7 @@ class _SpeedMenu extends StatelessWidget {
             (speed) => MenuItemButton(
               onPressed: () => controller.player.setSpeed(speed),
               leadingIcon: controller.player.speed == speed ? const Icon(Icons.check) : const SizedBox(width: 24),
-              child: Text('${speed}×'),
+              child: Text('$speed×'),
             ),
           )
           .toList(),
