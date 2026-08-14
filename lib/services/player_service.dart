@@ -54,8 +54,14 @@ class PlayerService extends ChangeNotifier {
     }
   }
 
-  Future<void> load(String path, {double speed = 1, bool skipSilence = false}) async {
-    if (!await File(path).exists()) throw const FileSystemException('Audio file does not exist.');
+  Future<void> load(
+    String path, {
+    double speed = 1,
+    bool skipSilence = false,
+  }) async {
+    if (!await File(path).exists()) {
+      throw const FileSystemException('Audio file does not exist.');
+    }
     lastError = null;
     await _player.setFilePath(path);
     loadedPath = path;
@@ -105,7 +111,9 @@ class PlayerService extends ChangeNotifier {
       await _player.setSkipSilenceEnabled(enabled);
       notifyListeners();
     } catch (_) {
-      throw UnsupportedError('Silence skipping is not available on this playback backend.');
+      throw UnsupportedError(
+        'Silence skipping is not available on this playback backend.',
+      );
     }
   }
 
