@@ -82,4 +82,81 @@ void main() {
       );
     });
   });
+
+  group('ExternalActions.copyFilesToDirectoryCollisionSafe', () {
+    late Directory root;
+    late Directory destination;
+    late ExternalActions actions;
+
+    setUp(() async {
+      root = await Directory.systemTemp.createTemp('sonicnest_batch_export_');
+      destination = await Directory(p.join(root.path, 'exports')).create();
+      actions = ExternalActions();
+    });
+
+    tearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+
+    test('copies every available source and reports counts', () async {
+      final first = File(p.join(root.path, 'first.wav'));
+      final second = File(p.join(root.path, 'second.flac'));
+      await first.writeAsBytes([1, 2]);
+      await second.writeAsBytes([3, 4]);
+
+      final result = await actions.copyFilesToDirectoryCollisionSafe(
+        sourcePaths: [first.path, second.path],
+        directoryPath: destination.path,
+      );
+
+      expect(result.copiedCount, 2);
+      expect(result.failedCount, 0);
+      expect(result.hasFailures, isFalse);
+      expect(result.copiedPaths.map(p.basename), containsAll(['first.wav', 'second.flac']));
+    });
+
+    test('keeps successful copies when another source is missing', () async {
+      final valid = File(p.join(root.path, 'valid.m4a'));
+      final missing = p.join(root.path, 'missing.m4a');
+      await valid.writeAsBytes([9, 8, 7]);
+
+      final result = await actions.copyFilesToDirectoryCollisionSafe(
+        sourcePaths: [valid.path, missing],
+        directoryPath: destination.path,
+      );
+
+      expect(result.copiedCount, 1);
+      expect(result.failedCount, 1);
+      expect(result.hasFailures, isTrue);
+      expect(result.failures, contains(missing));
+      expect(await File(result.copiedPaths.single).readAsBytes(), [9, 8, 7]);
+    });
+
+    test('allocates collision-safe names independently across a batch', () async {
+      final sourceOneDir = await Directory(p.join(root.path, 'one')).create();
+      final sourceTwoDir = await Directory(p.join(root.path, 'two')).create();
+      final first = File(p.join(sourceOneDir.path, 'voice.wav'));
+      final second = File(p.join(sourceTwoDir.path, 'voice.wav'));
+      await first.writeAsBytes([1]);
+      await second.writeAsBytes([2]);
+
+      final result = await actions.copyFilesToDirectoryCollisionSafe(
+        sourcePaths: [first.path, second.path],
+        directoryPath: destination.path,
+      );
+
+      expect(result.copiedCount, 2);
+      expect(
+        result.copiedPaths.map(p.basename),
+        containsAll(['voice.wav', 'voice (2).wav']),
+      );
+      expect(await File(p.join(destination.path, 'voice.wav')).readAsBytes(), [1]);
+      expect(
+        await File(p.join(destination.path, 'voice (2).wav')).readAsBytes(),
+        [2],
+      );
+    });
+  });
 }
