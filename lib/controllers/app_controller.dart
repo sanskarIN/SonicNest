@@ -113,6 +113,11 @@ class AppController extends ChangeNotifier {
       .map((e) => e.folder)
       .toSet();
 
+  List<RecordingEntry> recordingsByIds(Iterable<String> ids) {
+    final wanted = ids.toSet();
+    return _recordings.where((entry) => wanted.contains(entry.id)).toList(growable: false);
+  }
+
   Future<void> initialize() async {
     if (initialized) return;
     busy = true;
@@ -274,6 +279,14 @@ class AppController extends ChangeNotifier {
   Future<void> shareRecording(RecordingEntry entry) =>
       external.shareFile(entry.filePath, text: 'Shared from SonicNest');
 
+  Future<void> shareRecordings(Iterable<RecordingEntry> entries) {
+    final paths = entries
+        .where((entry) => !entry.isTrashed)
+        .map((entry) => entry.filePath)
+        .toList(growable: false);
+    return external.shareFiles(paths, text: 'Shared from SonicNest');
+  }
+
   Future<void> openRecording(RecordingEntry entry) async {
     selectedRecording = entry;
     await player.load(
@@ -335,6 +348,24 @@ class AppController extends ChangeNotifier {
         ),
       );
 
+  Future<void> setFavoriteForEntries(
+    Iterable<RecordingEntry> entries,
+    bool favorite,
+  ) =>
+      _updateEntries(
+        entries,
+        (entry, now) => entry.copyWith(favorite: favorite, modifiedAt: now),
+      );
+
+  Future<void> setPinnedForEntries(
+    Iterable<RecordingEntry> entries,
+    bool pinned,
+  ) =>
+      _updateEntries(
+        entries.where((entry) => !entry.isTrashed),
+        (entry, now) => entry.copyWith(pinned: pinned, modifiedAt: now),
+      );
+
   Future<void> updateMetadata(
     RecordingEntry entry, {
     String? folder,
@@ -352,41 +383,68 @@ class AppController extends ChangeNotifier {
         ),
       );
 
-  Future<void> moveToTrash(RecordingEntry entry) async {
-    if (entry.isTrashed) return;
+  Future<void> moveToTrash(RecordingEntry entry) => moveEntriesToTrash([entry]);
+
+  Future<void> moveEntriesToTrash(Iterable<RecordingEntry> entries) async {
+    final targets = entries.where((entry) => !entry.isTrashed).toList(growable: false);
+    if (targets.isEmpty) return;
     await _guarded(() async {
-      if (player.loadedPath == entry.filePath) await player.stop();
-      final path = await _storage.moveToTrash(entry.filePath, entry.title);
-      await _replace(
-        entry.copyWith(
-          filePath: path,
-          trashedAt: DateTime.now(),
-          modifiedAt: DateTime.now(),
-        ),
-      );
+      final targetIds = targets.map((entry) => entry.id).toSet();
+      for (final entry in targets) {
+        if (player.loadedPath == entry.filePath) await player.stop();
+        final path = await _storage.moveToTrash(entry.filePath, entry.title);
+        final index = _recordings.indexWhere((item) => item.id == entry.id);
+        if (index >= 0) {
+          _recordings[index] = entry.copyWith(
+            filePath: path,
+            trashedAt: DateTime.now(),
+            modifiedAt: DateTime.now(),
+          );
+        }
+      }
+      if (selectedRecording != null && targetIds.contains(selectedRecording!.id)) {
+        selectedRecording = null;
+      }
+      await _persist();
     });
   }
 
-  Future<void> restore(RecordingEntry entry) async {
-    if (!entry.isTrashed) return;
+  Future<void> restore(RecordingEntry entry) => restoreEntries([entry]);
+
+  Future<void> restoreEntries(Iterable<RecordingEntry> entries) async {
+    final targets = entries.where((entry) => entry.isTrashed).toList(growable: false);
+    if (targets.isEmpty) return;
     await _guarded(() async {
-      final path = await _storage.restoreFromTrash(entry.filePath, entry.title);
-      await _replace(
-        entry.copyWith(
-          filePath: path,
-          clearTrashedAt: true,
-          modifiedAt: DateTime.now(),
-        ),
-      );
+      for (final entry in targets) {
+        final path = await _storage.restoreFromTrash(entry.filePath, entry.title);
+        final index = _recordings.indexWhere((item) => item.id == entry.id);
+        if (index >= 0) {
+          _recordings[index] = entry.copyWith(
+            filePath: path,
+            clearTrashedAt: true,
+            modifiedAt: DateTime.now(),
+          );
+        }
+      }
+      await _persist();
     });
   }
 
-  Future<void> permanentlyDelete(RecordingEntry entry) async {
+  Future<void> permanentlyDelete(RecordingEntry entry) => permanentlyDeleteEntries([entry]);
+
+  Future<void> permanentlyDeleteEntries(Iterable<RecordingEntry> entries) async {
+    final targets = entries.toList(growable: false);
+    if (targets.isEmpty) return;
     await _guarded(() async {
-      if (player.loadedPath == entry.filePath) await player.stop();
-      await _storage.deleteIfExists(entry.filePath);
-      _recordings.removeWhere((item) => item.id == entry.id);
-      if (selectedRecording?.id == entry.id) selectedRecording = null;
+      final ids = targets.map((entry) => entry.id).toSet();
+      for (final entry in targets) {
+        if (player.loadedPath == entry.filePath) await player.stop();
+        await _storage.deleteIfExists(entry.filePath);
+      }
+      _recordings.removeWhere((item) => ids.contains(item.id));
+      if (selectedRecording != null && ids.contains(selectedRecording!.id)) {
+        selectedRecording = null;
+      }
       await _persist();
     });
   }
@@ -413,6 +471,25 @@ class AppController extends ChangeNotifier {
 
   void clearError() {
     errorMessage = null;
+    notifyListeners();
+  }
+
+  Future<void> _updateEntries(
+    Iterable<RecordingEntry> entries,
+    RecordingEntry Function(RecordingEntry entry, DateTime now) update,
+  ) async {
+    final targets = entries.toList(growable: false);
+    if (targets.isEmpty) return;
+    final now = DateTime.now();
+    final updates = {for (final entry in targets) entry.id: update(entry, now)};
+    for (var index = 0; index < _recordings.length; index++) {
+      final updated = updates[_recordings[index].id];
+      if (updated != null) _recordings[index] = updated;
+    }
+    if (selectedRecording != null) {
+      selectedRecording = updates[selectedRecording!.id] ?? selectedRecording;
+    }
+    await _persist();
     notifyListeners();
   }
 
