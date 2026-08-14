@@ -953,3 +953,76 @@ Exact automated validation:
 - unsigned iOS debug build: SUCCESS
 
 Physical directory-picker behavior, permission revocation, low-storage copies, and very large batch behavior remain manual evidence gates.
+
+
+---
+
+# Native launcher and splash branding continuation
+
+This continuation replaces generated Flutter-default native artwork with a reproducible SonicNest-controlled branding pipeline while keeping visual release approval as an evidence-dependent manual gate.
+
+## Deterministic native brand source
+
+- Added `tool/generate_brand_assets_v2.dart` as the single canonical raster generator.
+- The generator is pure Dart and reproduces SonicNest's gradient, microphone/stand mark, and sound bars from repository-controlled geometry.
+- It deterministically writes `assets/generated/sonicnest_icon.png`, `assets/generated/sonicnest_icon_foreground.png`, and `assets/generated/sonicnest_splash.png`.
+- Generated PNGs are ignored by Git because the generator is the source of truth.
+- A superseded first-pass raster generator was removed so the repository has only one branding implementation.
+
+## Native launcher and splash generation
+
+- Added reproducible Bash branding via `tool/apply_branding.sh`.
+- Added reproducible Windows PowerShell branding via `tool/apply_branding.ps1`.
+- Both paths run the deterministic raster generator and then apply native launcher/splash resources through the configured Flutter tooling.
+- Android launcher resources include full, adaptive-foreground, and monochrome/themed-icon source paths.
+- Android native splash resources include Android 12+ configuration and dark/light launch colors.
+- iOS launcher icons and native splash resources are generated from the SonicNest brand source.
+- macOS application icon resources are generated from the SonicNest brand source.
+- Windows application icon resources are generated from the SonicNest brand source.
+- Linux receives deterministic brand source PNG generation, while final desktop-entry/package icon integration remains tied to the distribution format selected later.
+
+## Build integration
+
+- `pubspec.yaml` now contains the launcher-icon and native-splash configuration.
+- `.github/workflows/ci.yml` generates deterministic brand source images during validation and applies native branding before Android compilation.
+- `.github/workflows/windows.yml` applies SonicNest native branding before the Windows debug build.
+- `.github/workflows/macos.yml` applies SonicNest native branding before macOS and unsigned-iOS debug builds.
+- `docs/BUILDING.md` and `docs/BRANDING.md` document reproducible generation and the visual-QA boundary.
+- README quick-start commands now include the native-brand application step.
+
+## Exact automated validation
+
+Validated source revision: `40c4a758debef136c2d8c977c321446cca2697cd`
+
+Core Flutter CI run `31776174696`:
+- deterministic brand image generation: SUCCESS
+- Dart formatting: SUCCESS
+- Flutter static analysis: SUCCESS
+- unit tests: SUCCESS
+- Android native branding generation: SUCCESS
+- Android debug APK: SUCCESS
+- Linux deterministic brand source generation: SUCCESS
+- Linux debug build: SUCCESS
+
+Windows run `31776174725`:
+- Windows native branding generation: SUCCESS
+- Windows debug build: SUCCESS
+
+Apple run `31776174715`:
+- macOS native branding generation: SUCCESS
+- macOS debug build: SUCCESS
+- iOS native branding/splash generation: SUCCESS
+- unsigned iOS debug build: SUCCESS
+
+## Evidence-dependent branding gates that remain
+
+Automated resource generation and compilation prove structural validity, not visual release approval. The following remain intentionally unchecked until real release-candidate evidence exists:
+
+- Android legacy/adaptive/themed icon crop and mask review on real launchers.
+- iOS/macOS icon inspection at small and large OS-rendered sizes.
+- Windows Explorer/taskbar/Start/shortcut/final package icon inspection.
+- Signed/release Android and iOS launch/splash inspection, including dark mode.
+- Linux package/desktop-entry icon integration after choosing a distribution format.
+- Real screenshots and store listing assets from tested release candidates.
+
+The project remains a **development preview** until the broader hardware, accessibility, stress, signing, packaging, and store-release gates are completed with evidence.

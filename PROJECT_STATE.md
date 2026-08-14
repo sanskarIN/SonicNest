@@ -170,3 +170,14 @@ next_exact_tasks:
 - Analyzer/unit tests and Android/Linux/Windows/macOS/unsigned-iOS debug builds: **SUCCESS**
 - Direct selected-original export to a user-selected directory is implemented with collision-safe copies and per-file failure isolation.
 - Real platform-picker, low-storage, permission-revocation, and large-batch evidence is still required before stable release.
+
+
+## Latest exact validation — deterministic native branding
+
+- Validated source revision: `40c4a758debef136c2d8c977c321446cca2697cd`
+- Core run `31776174696`: brand source generation, analyzer, tests, Android branded APK, and Linux build **SUCCESS**.
+- Windows run `31776174725`: native branding generation and Windows debug build **SUCCESS**.
+- Apple run `31776174715`: native branding generation plus macOS and unsigned-iOS debug builds **SUCCESS**.
+- Android/iOS native splash generation and Android/iOS/macOS/Windows launcher-icon generation are repository-automatable and implemented.
+- Linux final package icon integration and all OS-level visual inspection remain manual/release-distribution gates.
+- Release classification remains **development preview**.
