@@ -6,6 +6,7 @@
 - Platform toolchains required by Flutter for the platform being built.
 - Python 3 for the generated-host patch step.
 - Linux capture/build validation: PulseAudio utilities, FFmpeg, GTK development packages, and JSON-GLib development files used by the selected audio backends.
+- Debian package validation: `dpkg-deb`, `desktop-file-validate`, and `appstreamcli` on a Debian/Ubuntu-compatible build host.
 
 ## Bootstrap host projects
 
@@ -89,10 +90,27 @@ flutter build ios --debug --no-codesign
 
 Only run build targets supported by the host OS. Signing, provisioning profiles, keystores, certificates, and store credentials must remain outside the repository.
 
+## Debian Linux package
+
+Debian `.deb` is the initial repository-supported Linux installation package. Build and validate it after producing a Linux bundle:
+
+```bash
+dart tool/generate_brand_assets_v2.dart
+flutter build linux --release
+bash tool/build_linux_deb.sh release
+bash tool/verify_linux_deb.sh
+```
+
+The package embeds the complete Flutter bundle under `/opt/sonicnest`, installs the deterministic SonicNest icon into the freedesktop hicolor icon hierarchy, installs a `.desktop` launcher and AppStream metadata, includes project licensing notices, and writes a SHA-256 checksum beside the `.deb` in `build/linux-package/`.
+
+See `docs/LINUX_PACKAGING.md` for package layout, dependencies, CI behavior, installation testing, and release boundaries.
+
 ## CI coverage
 
 - `.github/workflows/ci.yml`: deterministic brand image generation, analyzer, unit tests, branded Android debug APK, Linux debug build.
+- `.github/workflows/linux-package.yml`: Linux release bundle, Debian package construction, desktop/AppStream/icon/package verification, checksum verification, and short-retention CI artifact.
 - `.github/workflows/windows.yml`: branded Windows debug desktop build.
 - `.github/workflows/macos.yml`: branded macOS debug build and branded iOS no-codesign debug build.
+- `.github/workflows/release-candidate.yml`: manually triggered release-mode validation artifacts, including the structurally verified Linux `.deb`.
 
-CI build success confirms compilation on GitHub-hosted runners; microphone hardware, audio routing, lock-screen/background behavior, device interruptions, real icon/launch visual inspection, long-duration recording, and store signing still require target-device validation.
+CI build success confirms compilation and structural packaging on GitHub-hosted runners; microphone hardware, audio routing, lock-screen/background behavior, device interruptions, real icon/launch visual inspection, long-duration recording, package installation behavior on representative real systems, and store/signing approval still require target-device validation.
