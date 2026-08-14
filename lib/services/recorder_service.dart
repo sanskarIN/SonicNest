@@ -53,6 +53,7 @@ class RecorderService extends ChangeNotifier {
   String? _title;
   RecordingSettings? _settings;
   InputDevice? _selectedDevice;
+  bool _postTranscode = false;
 
   RecorderStatus status = RecorderStatus.idle;
   Duration elapsed = Duration.zero;
@@ -99,11 +100,31 @@ class RecorderService extends ChangeNotifier {
       elapsed = Duration.zero;
       effectiveConfig = null;
 
-      final captureExtension = settings.format.needsTranscode ? 'wav' : settings.format.extension;
-      _capturePath = settings.format.needsTranscode
+      final requestedEncoder = settings.format.nativeEncoder;
+      final directSupported = !settings.format.needsTranscode &&
+          await _recorder.isEncoderSupported(requestedEncoder);
+      AudioEncoder captureEncoder;
+      String captureExtension;
+      if (directSupported) {
+        captureEncoder = requestedEncoder;
+        captureExtension = settings.format.extension;
+        _postTranscode = false;
+      } else if (await _recorder.isEncoderSupported(AudioEncoder.wav)) {
+        captureEncoder = AudioEncoder.wav;
+        captureExtension = 'wav';
+        _postTranscode = true;
+      } else if (await _recorder.isEncoderSupported(AudioEncoder.aacLc)) {
+        captureEncoder = AudioEncoder.aacLc;
+        captureExtension = 'm4a';
+        _postTranscode = true;
+      } else {
+        throw UnsupportedError('No compatible capture encoder is available on this platform.');
+      }
+
+      _capturePath = _postTranscode
           ? await _storage.uniqueTempPath('${_title}_capture', captureExtension)
           : await _storage.uniqueRecordingPath(_title!, captureExtension);
-      _targetPath = settings.format.needsTranscode
+      _targetPath = _postTranscode
           ? await _storage.uniqueRecordingPath(_title!, settings.format.extension)
           : _capturePath;
 
@@ -113,7 +134,7 @@ class RecorderService extends ChangeNotifier {
       });
 
       final config = RecordConfig(
-        encoder: settings.format.needsTranscode ? AudioEncoder.wav : settings.format.nativeEncoder,
+        encoder: captureEncoder,
         bitRate: settings.bitRate,
         sampleRate: settings.sampleRate,
         numChannels: settings.channels,
@@ -226,7 +247,7 @@ class RecorderService extends ChangeNotifier {
       }
 
       var finalPath = capturePath;
-      if (settings.format.needsTranscode) {
+      if (_postTranscode) {
         finalPath = await _processor.transcode(
           inputPath: capturePath,
           outputTitle: title,
@@ -286,7 +307,9 @@ class RecorderService extends ChangeNotifier {
   Future<void> _safeStopBackground() async {
     try {
       await _background.stop();
-    } catch (_) {}
+    } catch (_) {
+      // Core recording cleanup must not be blocked by a foreground-service error.
+    }
   }
 
   void _resetState() {
@@ -298,6 +321,7 @@ class RecorderService extends ChangeNotifier {
     _targetPath = null;
     _title = null;
     _settings = null;
+    _postTranscode = false;
     elapsed = Duration.zero;
     amplitude = 0;
     peakAmplitude = 0;
