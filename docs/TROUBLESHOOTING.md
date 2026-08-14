@@ -20,6 +20,8 @@ Actions:
 
 SonicNest separates generic localized startup failure copy from technical detail so an underlying filesystem/settings error can remain diagnosable.
 
+The local Library metadata layer also attempts deterministic recovery before giving up: malformed individual records are isolated, structurally corrupt metadata is preserved to a timestamped `.corrupt.*` copy, and a valid `recordings.json.bak` can be restored after an interrupted metadata replacement. See **Metadata appears damaged or a backup remains** below and `docs/METADATA_INTEGRITY.md`.
+
 ## 2. Microphone permission denied
 
 Symptoms:
@@ -144,17 +146,28 @@ If another managed file already uses the original destination name, SonicNest al
 
 This is expected safety behavior.
 
-## 12. Import fails
+## 12. Import fails or only some selected files import
+
+SonicNest processes selected import files independently. A missing, unreadable, malformed, unprobeable, or waveform-invalid file should not prevent later selections from being attempted.
 
 Actions:
 
-1. Confirm the source path/file still exists.
-2. Confirm the extension is one of the application's supported import types.
-3. Confirm SonicNest has permission to access the selected file/path under the current OS picker/security model.
-4. Try a known-good audio file.
-5. For malformed/corrupt files, keep a privacy-safe reproduction file if possible for QA.
+1. Read the import summary. It reports the number of successful selections and names a limited set of failed files.
+2. Confirm each failed source path/file still exists.
+3. Confirm the extension is one of the application's supported import types.
+4. Confirm SonicNest has permission to access the selected file/path under the current OS picker/security model.
+5. Try a known-good audio file from the same location.
+6. For malformed/corrupt files, keep a privacy-safe reproduction file if possible for QA.
 
-A failed import should not intentionally leave a false Library entry; partially imported/generated outputs are cleaned up where possible.
+Expected cleanup behavior:
+
+- if copying the selected source fails before a managed copy exists, no unrelated managed file is deleted;
+- if media probing or waveform extraction fails after the source was copied, the incomplete managed copy is removed;
+- successfully completed earlier imports remain in the Library;
+- later selections continue after an isolated audio-file failure;
+- a metadata persistence failure stops the operation and removes the just-created unregistered managed copy rather than pretending it was saved.
+
+Deterministic unit tests cover copy/probe/waveform failure cleanup, but real malformed-media corpus testing across supported operating systems remains a release QA gate.
 
 ## 13. Export destination already contains the same filename
 
@@ -356,7 +369,29 @@ Record:
 
 Compare with a built-in microphone and a simple format such as WAV/M4A where appropriate. Keep this as physical-system QA evidence; do not mark the automated package gate as failed merely because a device-specific audio path needs diagnosis.
 
-## 28. GitHub Actions build passes but the app fails on hardware
+## 28. Metadata appears damaged or a backup remains
+
+SonicNest may leave diagnostic/recovery files next to its local metadata document after an interrupted or corrupt write:
+
+```text
+recordings.json
+recordings.json.bak
+recordings.json.corrupt.<timestamp>
+```
+
+Expected automatic behavior:
+
+- a valid primary is preferred and a stale `.bak` is removed;
+- if the primary is missing and `.bak` is valid, the backup is restored to the primary path;
+- if the primary is structurally corrupt, a timestamped corrupt copy is preserved before a valid `.bak` is used;
+- malformed individual recording records are skipped instead of invalidating valid neighbors;
+- a corrupt backup is preserved for diagnosis rather than silently treated as valid data.
+
+Do not manually delete all metadata/recovery files as a first troubleshooting step. That can destroy evidence and organizer metadata even when the underlying audio files still exist. Preserve privacy-sensitive local files securely, capture the exact build/OS and error, and use `docs/METADATA_INTEGRITY.md` to understand the expected recovery sequence.
+
+Automatic metadata recovery does not reconstruct an audio file that has been deleted or damaged outside SonicNest.
+
+## 29. GitHub Actions build passes but the app fails on hardware
 
 Compilation is necessary but not sufficient for a recorder.
 
@@ -374,7 +409,7 @@ Create a **Device / Release QA report** using the repository issue form and incl
 
 Do not upload tokens, signing credentials, private certificates, personal recordings, device serial numbers, or other sensitive information.
 
-## 29. Before reporting a bug
+## 30. Before reporting a bug
 
 Check:
 
