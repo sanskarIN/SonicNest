@@ -6,6 +6,7 @@ import '../controllers/app_controller.dart';
 import '../core/formatters.dart';
 import '../models/recording_entry.dart';
 import '../models/recording_settings.dart';
+import '../services/advanced_audio_processor.dart';
 import '../widgets/waveform_view.dart';
 
 class EditorScreen extends StatefulWidget {
@@ -21,11 +22,14 @@ class EditorScreen extends StatefulWidget {
 class _EditorScreenState extends State<EditorScreen> {
   late RangeValues _trimRange;
   late RecordingFormat _exportFormat;
+  late final AdvancedAudioProcessor _advanced;
   final List<RangeValues> _undoRanges = <RangeValues>[];
   final List<RangeValues> _redoRanges = <RangeValues>[];
   RangeValues? _interactionStart;
   bool _processing = false;
   String? _status;
+  double _gainDb = 0;
+  Duration _silenceDuration = const Duration(seconds: 1);
 
   AppController get controller => widget.controller;
   RecordingEntry get entry => widget.entry;
@@ -36,6 +40,7 @@ class _EditorScreenState extends State<EditorScreen> {
     final maxMs = math.max(1, entry.durationMs).toDouble();
     _trimRange = RangeValues(0, maxMs);
     _exportFormat = entry.format;
+    _advanced = AdvancedAudioProcessor(controller.storage);
   }
 
   @override
@@ -43,6 +48,7 @@ class _EditorScreenState extends State<EditorScreen> {
     final maxMs = math.max(1, entry.durationMs).toDouble();
     final start = Duration(milliseconds: _trimRange.start.round());
     final end = Duration(milliseconds: _trimRange.end.round());
+    final selectionDuration = end - start;
     final normalizedSelection = RangeValues(
       (_trimRange.start / maxMs).clamp(0.0, 1.0).toDouble(),
       (_trimRange.end / maxMs).clamp(0.0, 1.0).toDouble(),
@@ -53,12 +59,14 @@ class _EditorScreenState extends State<EditorScreen> {
         actions: [
           IconButton(
             tooltip: 'Undo selection change',
-            onPressed: _processing || _undoRanges.isEmpty ? null : _undoSelection,
+            onPressed:
+                _processing || _undoRanges.isEmpty ? null : _undoSelection,
             icon: const Icon(Icons.undo),
           ),
           IconButton(
             tooltip: 'Redo selection change',
-            onPressed: _processing || _redoRanges.isEmpty ? null : _redoSelection,
+            onPressed:
+                _processing || _redoRanges.isEmpty ? null : _redoSelection,
             icon: const Icon(Icons.redo),
           ),
           IconButton(
@@ -94,7 +102,7 @@ class _EditorScreenState extends State<EditorScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Trim',
+                          'Selection editor',
                           style: Theme.of(context)
                               .textTheme
                               .titleLarge
@@ -131,28 +139,51 @@ class _EditorScreenState extends State<EditorScreen> {
                             formatDuration(start),
                             formatDuration(end),
                           ),
-                          onChangeStart: _processing ? null : (_) => _beginRangeEdit(),
+                          onChangeStart:
+                              _processing ? null : (_) => _beginRangeEdit(),
                           onChanged: _processing
                               ? null
-                              : (value) => setState(() => _trimRange = value),
-                          onChangeEnd: _processing ? null : (_) => _finishRangeEdit(),
+                              : (value) =>
+                                  setState(() => _trimRange = value),
+                          onChangeEnd:
+                              _processing ? null : (_) => _finishRangeEdit(),
                         ),
                         Row(
                           children: [
                             Expanded(
                               child: Text('Start ${formatDuration(start)}'),
                             ),
-                            Text('End ${formatDuration(end)}'),
+                            Text(
+                              'End ${formatDuration(end)} • '
+                              '${formatDuration(selectionDuration)} selected',
+                            ),
                           ],
                         ),
                         const SizedBox(height: 12),
-                        FilledButton.icon(
-                          onPressed: _processing ||
-                                  end - start < const Duration(milliseconds: 200)
-                              ? null
-                              : () => _runTrim(start, end),
-                          icon: const Icon(Icons.content_cut),
-                          label: const Text('Export trimmed copy'),
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: [
+                            FilledButton.icon(
+                              onPressed: _processing ||
+                                      selectionDuration <
+                                          const Duration(milliseconds: 200)
+                                  ? null
+                                  : () => _runTrim(start, end),
+                              icon: const Icon(Icons.crop),
+                              label: const Text('Keep selection as copy'),
+                            ),
+                            FilledButton.tonalIcon(
+                              onPressed: _processing ||
+                                      selectionDuration <
+                                          const Duration(milliseconds: 200) ||
+                                      selectionDuration >= entry.duration
+                                  ? null
+                                  : () => _cutSelection(start, end),
+                              icon: const Icon(Icons.content_cut),
+                              label: const Text('Cut selection from copy'),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -201,6 +232,114 @@ class _EditorScreenState extends State<EditorScreen> {
                               onPressed: _processing ? null : _merge,
                               icon: const Icon(Icons.merge_type),
                               label: const Text('Merge another file'),
+                            ),
+                            FilledButton.tonalIcon(
+                              onPressed: _processing ? null : _noiseCleanup,
+                              icon: const Icon(Icons.cleaning_services_outlined),
+                              label: const Text('Basic noise cleanup'),
+                            ),
+                            FilledButton.tonalIcon(
+                              onPressed: _processing ? null : _compress,
+                              icon: const Icon(Icons.compress),
+                              label: const Text('Compressor'),
+                            ),
+                            FilledButton.tonalIcon(
+                              onPressed: _processing ? null : _limit,
+                              icon: const Icon(Icons.vertical_align_center),
+                              label: const Text('Limiter'),
+                            ),
+                            FilledButton.tonalIcon(
+                              onPressed: _processing ? null : _highPass,
+                              icon: const Icon(Icons.trending_up),
+                              label: const Text('High-pass voice filter'),
+                            ),
+                            FilledButton.tonalIcon(
+                              onPressed: _processing ? null : _lowPass,
+                              icon: const Icon(Icons.trending_down),
+                              label: const Text('Low-pass filter'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Gain & silence',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 10),
+                        Text('Output gain: ${_gainDb.toStringAsFixed(1)} dB'),
+                        Slider(
+                          value: _gainDb,
+                          min: -18,
+                          max: 12,
+                          divisions: 60,
+                          label: '${_gainDb.toStringAsFixed(1)} dB',
+                          onChanged: _processing
+                              ? null
+                              : (value) => setState(() => _gainDb = value),
+                        ),
+                        FilledButton.tonalIcon(
+                          onPressed: _processing || _gainDb.abs() < .05
+                              ? null
+                              : _applyGain,
+                          icon: const Icon(Icons.volume_up_outlined),
+                          label: const Text('Export gain-adjusted copy'),
+                        ),
+                        const Divider(height: 32),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: DropdownButtonFormField<Duration>(
+                                initialValue: _silenceDuration,
+                                decoration: const InputDecoration(
+                                  labelText: 'Silence duration',
+                                ),
+                                items: const [
+                                  Duration(milliseconds: 250),
+                                  Duration(milliseconds: 500),
+                                  Duration(seconds: 1),
+                                  Duration(seconds: 2),
+                                  Duration(seconds: 5),
+                                ]
+                                    .map(
+                                      (duration) => DropdownMenuItem(
+                                        value: duration,
+                                        child: Text(
+                                          duration.inMilliseconds < 1000
+                                              ? '${duration.inMilliseconds} ms'
+                                              : '${duration.inMilliseconds / 1000} s',
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+                                onChanged: _processing
+                                    ? null
+                                    : (value) {
+                                        if (value != null) {
+                                          setState(
+                                            () => _silenceDuration = value,
+                                          );
+                                        }
+                                      },
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            FilledButton.tonalIcon(
+                              onPressed: _processing ? null : _insertSilence,
+                              icon: const Icon(Icons.space_bar),
+                              label: const Text('Insert at playhead'),
                             ),
                           ],
                         ),
@@ -252,9 +391,12 @@ class _EditorScreenState extends State<EditorScreen> {
                                   .toList(),
                             ),
                             FilledButton.tonalIcon(
-                              onPressed: _processing ? null : _exportPreset,
+                              onPressed:
+                                  _processing ? null : _exportPreset,
                               icon: const Icon(Icons.audio_file_outlined),
-                              label: Text('Export ${_exportFormat.label} copy'),
+                              label: Text(
+                                'Export ${_exportFormat.label} copy',
+                              ),
                             ),
                           ],
                         ),
@@ -295,7 +437,10 @@ class _EditorScreenState extends State<EditorScreen> {
                                 )
                                 .toDouble(),
                         max: math
-                            .max(1, controller.player.duration.inMilliseconds)
+                            .max(
+                              1,
+                              controller.player.duration.inMilliseconds,
+                            )
                             .toDouble(),
                         onChanged: (value) => controller.player.seek(
                           Duration(milliseconds: value.round()),
@@ -337,10 +482,14 @@ class _EditorScreenState extends State<EditorScreen> {
   void _finishRangeEdit() {
     final before = _interactionStart;
     _interactionStart = null;
-    if (before == null || _sameRange(before, _trimRange)) return;
+    if (before == null || _sameRange(before, _trimRange)) {
+      return;
+    }
     setState(() {
       _undoRanges.add(before);
-      if (_undoRanges.length > 50) _undoRanges.removeAt(0);
+      if (_undoRanges.length > 50) {
+        _undoRanges.removeAt(0);
+      }
       _redoRanges.clear();
     });
   }
@@ -349,7 +498,9 @@ class _EditorScreenState extends State<EditorScreen> {
       (a.start - b.start).abs() < .5 && (a.end - b.end).abs() < .5;
 
   void _undoSelection() {
-    if (_undoRanges.isEmpty) return;
+    if (_undoRanges.isEmpty) {
+      return;
+    }
     setState(() {
       _redoRanges.add(_trimRange);
       _trimRange = _undoRanges.removeLast();
@@ -357,7 +508,9 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   void _redoSelection() {
-    if (_redoRanges.isEmpty) return;
+    if (_redoRanges.isEmpty) {
+      return;
+    }
     setState(() {
       _undoRanges.add(_trimRange);
       _trimRange = _redoRanges.removeLast();
@@ -366,7 +519,9 @@ class _EditorScreenState extends State<EditorScreen> {
 
   void _resetSelection() {
     final full = RangeValues(0, math.max(1, entry.durationMs).toDouble());
-    if (_sameRange(full, _trimRange)) return;
+    if (_sameRange(full, _trimRange)) {
+      return;
+    }
     setState(() {
       _undoRanges.add(_trimRange);
       _redoRanges.clear();
@@ -375,10 +530,11 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   Future<void> _runTrim(Duration start, Duration end) async {
-    await _run('Trimmed copy created.', () async {
+    await _run('Selection copy created.', () async {
+      final title = '${entry.title} Selection';
       final output = await controller.processor.trim(
         inputPath: entry.filePath,
-        outputTitle: '${entry.title} Trimmed',
+        outputTitle: title,
         format: entry.format,
         start: start,
         end: end,
@@ -386,9 +542,29 @@ class _EditorScreenState extends State<EditorScreen> {
       );
       await controller.addProcessedFile(
         output,
-        title: '${entry.title} Trimmed',
+        title: title,
         format: entry.format,
         markers: _markersInside(start, end),
+      );
+    });
+  }
+
+  Future<void> _cutSelection(Duration start, Duration end) async {
+    await _run('Cut copy created.', () async {
+      final title = '${entry.title} Cut';
+      final output = await _advanced.cutSelection(
+        inputPath: entry.filePath,
+        outputTitle: title,
+        format: entry.format,
+        start: start,
+        end: end,
+        bitRate: _bitRate,
+      );
+      await controller.addProcessedFile(
+        output,
+        title: title,
+        format: entry.format,
+        markers: _markersAfterCut(start, end),
       );
     });
   }
@@ -480,7 +656,9 @@ class _EditorScreenState extends State<EditorScreen> {
 
   Future<void> _merge() async {
     final other = await controller.external.pickSingleAudioFile();
-    if (other == null) return;
+    if (other == null) {
+      return;
+    }
     await _run('Merged copy created.', () async {
       final output = await controller.processor.merge(
         inputPaths: [entry.filePath, other],
@@ -492,6 +670,130 @@ class _EditorScreenState extends State<EditorScreen> {
         output,
         title: '${entry.title} Merged',
         format: entry.format,
+      );
+    });
+  }
+
+  Future<void> _applyGain() async {
+    final gain = _gainDb;
+    await _run('Gain-adjusted copy created.', () async {
+      final title = '${entry.title} ${gain >= 0 ? '+' : ''}${gain.toStringAsFixed(1)}dB';
+      final output = await _advanced.adjustVolume(
+        inputPath: entry.filePath,
+        outputTitle: title,
+        format: entry.format,
+        bitRate: _bitRate,
+        gainDb: gain,
+      );
+      await controller.addProcessedFile(
+        output,
+        title: title,
+        format: entry.format,
+        markers: entry.markers,
+      );
+    });
+  }
+
+  Future<void> _insertSilence() async {
+    final raw = controller.player.position;
+    final at = raw < Duration.zero
+        ? Duration.zero
+        : (raw > entry.duration ? entry.duration : raw);
+    final silence = _silenceDuration;
+    await _run('Silence-inserted copy created.', () async {
+      final title = '${entry.title} With Silence';
+      final output = await _advanced.insertSilence(
+        inputPath: entry.filePath,
+        outputTitle: title,
+        format: entry.format,
+        at: at,
+        silenceDuration: silence,
+        bitRate: _bitRate,
+        sampleRate: entry.sampleRate > 0
+            ? entry.sampleRate
+            : controller.settings.recording.sampleRate,
+        channels: entry.channels > 0
+            ? entry.channels
+            : controller.settings.recording.channels,
+      );
+      await controller.addProcessedFile(
+        output,
+        title: title,
+        format: entry.format,
+        markers: _markersAfterInsertion(at, silence),
+      );
+    });
+  }
+
+  Future<void> _noiseCleanup() => _advancedCopy(
+        success: 'Noise-cleaned copy created.',
+        title: '${entry.title} Noise Cleaned',
+        action: (title) => _advanced.noiseCleanup(
+          inputPath: entry.filePath,
+          outputTitle: title,
+          format: entry.format,
+          bitRate: _bitRate,
+        ),
+      );
+
+  Future<void> _compress() => _advancedCopy(
+        success: 'Compressed-dynamics copy created.',
+        title: '${entry.title} Compressed',
+        action: (title) => _advanced.compressor(
+          inputPath: entry.filePath,
+          outputTitle: title,
+          format: entry.format,
+          bitRate: _bitRate,
+        ),
+      );
+
+  Future<void> _limit() => _advancedCopy(
+        success: 'Limited copy created.',
+        title: '${entry.title} Limited',
+        action: (title) => _advanced.limiter(
+          inputPath: entry.filePath,
+          outputTitle: title,
+          format: entry.format,
+          bitRate: _bitRate,
+        ),
+      );
+
+  Future<void> _highPass() => _advancedCopy(
+        success: 'High-pass filtered copy created.',
+        title: '${entry.title} High Pass',
+        action: (title) => _advanced.highPass(
+          inputPath: entry.filePath,
+          outputTitle: title,
+          format: entry.format,
+          bitRate: _bitRate,
+          frequencyHz: 100,
+        ),
+      );
+
+  Future<void> _lowPass() => _advancedCopy(
+        success: 'Low-pass filtered copy created.',
+        title: '${entry.title} Low Pass',
+        action: (title) => _advanced.lowPass(
+          inputPath: entry.filePath,
+          outputTitle: title,
+          format: entry.format,
+          bitRate: _bitRate,
+          frequencyHz: 12000,
+        ),
+      );
+
+  Future<void> _advancedCopy({
+    required String success,
+    required String title,
+    required Future<String> Function(String title) action,
+  }) async {
+    await _run(success, () async {
+      final output = await action(title);
+      await controller.addProcessedFile(
+        output,
+        title: title,
+        format: entry.format,
+        markers: entry.markers,
       );
     });
   }
@@ -541,24 +843,69 @@ class _EditorScreenState extends State<EditorScreen> {
         .toList();
   }
 
+  List<RecordingMarker> _markersAfterCut(Duration start, Duration end) {
+    final removedMs = (end - start).inMilliseconds;
+    return entry.markers
+        .where(
+          (marker) =>
+              marker.positionMs < start.inMilliseconds ||
+              marker.positionMs > end.inMilliseconds,
+        )
+        .map(
+          (marker) => RecordingMarker(
+            positionMs: marker.positionMs > end.inMilliseconds
+                ? marker.positionMs - removedMs
+                : marker.positionMs,
+            label: marker.label,
+            note: marker.note,
+          ),
+        )
+        .toList();
+  }
+
+  List<RecordingMarker> _markersAfterInsertion(
+    Duration at,
+    Duration inserted,
+  ) {
+    return entry.markers
+        .map(
+          (marker) => RecordingMarker(
+            positionMs: marker.positionMs >= at.inMilliseconds
+                ? marker.positionMs + inserted.inMilliseconds
+                : marker.positionMs,
+            label: marker.label,
+            note: marker.note,
+          ),
+        )
+        .toList();
+  }
+
   Future<void> _run(String success, Future<void> Function() action) async {
-    if (_processing) return;
+    if (_processing) {
+      return;
+    }
     setState(() {
       _processing = true;
       _status = null;
     });
     try {
       await action();
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       setState(() => _status = success);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(success)),
       );
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       setState(() => _status = 'Processing failed: $error');
     } finally {
-      if (mounted) setState(() => _processing = false);
+      if (mounted) {
+        setState(() => _processing = false);
+      }
     }
   }
 }
