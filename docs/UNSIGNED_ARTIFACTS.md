@@ -38,10 +38,12 @@ The repository does not provide maintainer production signing credentials. A rel
 ### Linux
 
 - release-mode Flutter desktop bundle compressed as a tar archive;
-- SHA-256 checksum;
-- explicit warning that this is not a finalized Linux package.
+- Debian `.deb` installation package produced by `tool/build_linux_deb.sh`;
+- structural verification of package control data, executable payload, desktop entry, AppStream metadata, deterministic SonicNest icon, and package checksum through `tool/verify_linux_deb.sh`;
+- SHA-256 checksums for the candidate tar archive and `.deb`;
+- explicit warning that release-candidate output is not yet approved for public distribution.
 
-A final Linux distribution target, desktop entry, package metadata, icon integration, and signing policy remain separate release decisions.
+Debian `.deb` is the initial repository-supported Linux package target. Real-machine microphone/routing tests, accessibility review, long-duration/low-storage tests, package install/upgrade/uninstall testing, desktop icon visual inspection, and the final public distribution/signing policy remain separate release gates.
 
 ### Windows
 
@@ -99,6 +101,8 @@ Get-FileHash -Algorithm SHA256 <artifact-file>
 
 Compare the result with the checksum recorded alongside the artifact.
 
+The Debian package builder also writes `<package>.deb.sha256` beside its direct build output under `build/linux-package/`; the package verifier compares that digest against the actual `.deb` bytes.
+
 ## What successful automation does not prove
 
 A successful unsigned release-candidate workflow does not complete any of these gates:
@@ -109,8 +113,8 @@ A successful unsigned release-candidate workflow does not complete any of these 
 - long-duration/large-library stress testing;
 - accessibility audits;
 - native icon/splash visual approval on real OS surfaces;
+- Linux `.deb` install/upgrade/uninstall quality on representative real systems;
 - production signing or notarization;
-- installer/package quality;
 - store privacy/listing review;
 - public distribution approval.
 
