@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../controllers/app_controller.dart';
+import '../l10n/app_localizations.dart';
 import '../screens/about_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/library_screen.dart';
@@ -18,36 +19,36 @@ class AppShell extends StatelessWidget {
 
   final AppController controller;
 
-  static const destinations = [
-    NavigationDestination(
-      icon: Icon(Icons.home_outlined),
-      selectedIcon: Icon(Icons.home),
-      label: 'Home',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.mic_none),
-      selectedIcon: Icon(Icons.mic),
-      label: 'Record',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.library_music_outlined),
-      selectedIcon: Icon(Icons.library_music),
-      label: 'Library',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.settings_outlined),
-      selectedIcon: Icon(Icons.settings),
-      label: 'Settings',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.info_outline),
-      selectedIcon: Icon(Icons.info),
-      label: 'About',
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
+    final destinations = [
+      NavigationDestination(
+        icon: const Icon(Icons.home_outlined),
+        selectedIcon: const Icon(Icons.home),
+        label: strings.home,
+      ),
+      NavigationDestination(
+        icon: const Icon(Icons.mic_none),
+        selectedIcon: const Icon(Icons.mic),
+        label: strings.record,
+      ),
+      NavigationDestination(
+        icon: const Icon(Icons.library_music_outlined),
+        selectedIcon: const Icon(Icons.library_music),
+        label: strings.library,
+      ),
+      NavigationDestination(
+        icon: const Icon(Icons.settings_outlined),
+        selectedIcon: const Icon(Icons.settings),
+        label: strings.settings,
+      ),
+      NavigationDestination(
+        icon: const Icon(Icons.info_outline),
+        selectedIcon: const Icon(Icons.info),
+        label: strings.about,
+      ),
+    ];
     final pages = [
       HomeScreen(controller: controller),
       RecorderScreen(controller: controller),
@@ -106,12 +107,12 @@ class AppShell extends StatelessWidget {
               appBar: wide
                   ? null
                   : AppBar(
-                      title: const Row(
+                      title: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          SonicNestMark(size: 34),
-                          SizedBox(width: 10),
-                          Text('SonicNest'),
+                          const SonicNestMark(size: 34),
+                          const SizedBox(width: 10),
+                          Text(strings.appName),
                         ],
                       ),
                     ),
