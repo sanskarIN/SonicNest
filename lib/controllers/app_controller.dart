@@ -14,7 +14,17 @@ import '../services/recorder_service.dart';
 import '../services/settings_service.dart';
 import '../services/storage_service.dart';
 
-enum RecordingSort { newest, oldest, nameAsc, nameDesc, longest, shortest, largest, smallest }
+enum RecordingSort {
+  newest,
+  oldest,
+  nameAsc,
+  nameDesc,
+  longest,
+  shortest,
+  largest,
+  smallest,
+}
+
 enum LibraryScope { all, favorites, pinned, trash }
 
 class AppController extends ChangeNotifier {
@@ -52,6 +62,9 @@ class AppController extends ChangeNotifier {
   LibraryScope scope = LibraryScope.all;
   String? formatFilter;
   String? folderFilter;
+  String? tagFilter;
+  DateTime? dateFromFilter;
+  DateTime? dateToFilter;
   RecordingEntry? selectedRecording;
 
   List<RecordingEntry> get recordings => List.unmodifiable(_recordings);
@@ -83,6 +96,25 @@ class AppController extends ChangeNotifier {
     if (folderFilter != null) {
       values = values.where((entry) => entry.folder == folderFilter);
     }
+    final normalizedTag = tagFilter?.trim().toLowerCase();
+    if (normalizedTag != null && normalizedTag.isNotEmpty) {
+      values = values.where(
+        (entry) => entry.tags.any(
+          (tag) => tag.trim().toLowerCase() == normalizedTag,
+        ),
+      );
+    }
+    final from = dateFromFilter;
+    if (from != null) {
+      final start = DateTime(from.year, from.month, from.day);
+      values = values.where((entry) => !entry.createdAt.isBefore(start));
+    }
+    final to = dateToFilter;
+    if (to != null) {
+      final endExclusive = DateTime(to.year, to.month, to.day + 1);
+      values = values.where((entry) => entry.createdAt.isBefore(endExclusive));
+    }
+
     final list = values.toList();
     int compareBool(bool a, bool b) => a == b ? 0 : (a ? -1 : 1);
     list.sort((a, b) {
@@ -93,8 +125,10 @@ class AppController extends ChangeNotifier {
       return switch (sort) {
         RecordingSort.newest => b.createdAt.compareTo(a.createdAt),
         RecordingSort.oldest => a.createdAt.compareTo(b.createdAt),
-        RecordingSort.nameAsc => a.title.toLowerCase().compareTo(b.title.toLowerCase()),
-        RecordingSort.nameDesc => b.title.toLowerCase().compareTo(a.title.toLowerCase()),
+        RecordingSort.nameAsc =>
+          a.title.toLowerCase().compareTo(b.title.toLowerCase()),
+        RecordingSort.nameDesc =>
+          b.title.toLowerCase().compareTo(a.title.toLowerCase()),
         RecordingSort.longest => b.durationMs.compareTo(a.durationMs),
         RecordingSort.shortest => a.durationMs.compareTo(b.durationMs),
         RecordingSort.largest => b.sizeBytes.compareTo(a.sizeBytes),
@@ -108,6 +142,16 @@ class AppController extends ChangeNotifier {
       .where((e) => !e.isTrashed && e.folder.trim().isNotEmpty)
       .map((e) => e.folder)
       .toSet();
+
+  Set<String> get tags => _recordings
+      .where((entry) => !entry.isTrashed)
+      .expand((entry) => entry.tags)
+      .map((tag) => tag.trim())
+      .where((tag) => tag.isNotEmpty)
+      .toSet();
+
+  bool get hasAdvancedLibraryFilters =>
+      tagFilter != null || dateFromFilter != null || dateToFilter != null;
 
   List<RecordingEntry> recordingsByIds(Iterable<String> ids) {
     final wanted = ids.toSet();
@@ -165,6 +209,30 @@ class AppController extends ChangeNotifier {
 
   void setFolderFilter(String? value) {
     folderFilter = value;
+    notifyListeners();
+  }
+
+  void setTagFilter(String? value) {
+    final clean = value?.trim();
+    tagFilter = clean == null || clean.isEmpty ? null : clean;
+    notifyListeners();
+  }
+
+  void setDateRangeFilter(DateTime? from, DateTime? to) {
+    if (from != null && to != null && from.isAfter(to)) {
+      dateFromFilter = to;
+      dateToFilter = from;
+    } else {
+      dateFromFilter = from;
+      dateToFilter = to;
+    }
+    notifyListeners();
+  }
+
+  void clearAdvancedLibraryFilters() {
+    tagFilter = null;
+    dateFromFilter = null;
+    dateToFilter = null;
     notifyListeners();
   }
 
@@ -281,7 +349,8 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> exportRecording(RecordingEntry entry) async {
-    final destination = await external.chooseExportPath(p.basename(entry.filePath));
+    final destination =
+        await external.chooseExportPath(p.basename(entry.filePath));
     if (destination != null) {
       await File(entry.filePath).copy(destination);
     }
@@ -402,7 +471,8 @@ class AppController extends ChangeNotifier {
         ),
       );
 
-  Future<void> moveToTrash(RecordingEntry entry) => moveEntriesToTrash([entry]);
+  Future<void> moveToTrash(RecordingEntry entry) =>
+      moveEntriesToTrash([entry]);
 
   Future<void> moveEntriesToTrash(Iterable<RecordingEntry> entries) async {
     final targets = entries
@@ -438,7 +508,8 @@ class AppController extends ChangeNotifier {
   Future<void> restore(RecordingEntry entry) => restoreEntries([entry]);
 
   Future<void> restoreEntries(Iterable<RecordingEntry> entries) async {
-    final targets = entries.where((entry) => entry.isTrashed).toList(growable: false);
+    final targets =
+        entries.where((entry) => entry.isTrashed).toList(growable: false);
     if (targets.isEmpty) {
       return;
     }
@@ -461,7 +532,9 @@ class AppController extends ChangeNotifier {
   Future<void> permanentlyDelete(RecordingEntry entry) =>
       permanentlyDeleteEntries([entry]);
 
-  Future<void> permanentlyDeleteEntries(Iterable<RecordingEntry> entries) async {
+  Future<void> permanentlyDeleteEntries(
+    Iterable<RecordingEntry> entries,
+  ) async {
     final targets = entries.toList(growable: false);
     if (targets.isEmpty) {
       return;
@@ -492,6 +565,14 @@ class AppController extends ChangeNotifier {
     });
   }
 
+  Future<void> clearTemporaryStorage() async {
+    if (recorder.isActive) {
+      throw StateError('Temporary files cannot be cleaned while recording.');
+    }
+    await storage.clearTemporaryFiles();
+    notifyListeners();
+  }
+
   Future<void> updateSettings(SettingsSnapshot snapshot) async {
     settings = snapshot;
     await settingsService.save(snapshot);
@@ -515,7 +596,9 @@ class AppController extends ChangeNotifier {
       return;
     }
     final now = DateTime.now();
-    final updates = {for (final entry in targets) entry.id: update(entry, now)};
+    final updates = {
+      for (final entry in targets) entry.id: update(entry, now),
+    };
     for (var index = 0; index < _recordings.length; index++) {
       final updated = updates[_recordings[index].id];
       if (updated != null) {
