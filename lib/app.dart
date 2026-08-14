@@ -46,8 +46,8 @@ class _SonicNestBootstrapState extends State<SonicNestBootstrap> {
           }
           return _SplashMaterialApp(
             controller: widget.controller,
-            errorMessage: widget.controller.errorMessage ??
-                'SonicNest could not finish startup.',
+            failed: true,
+            errorMessage: widget.controller.errorMessage,
             onRetry: _retry,
           );
         },
@@ -59,11 +59,13 @@ class _SonicNestBootstrapState extends State<SonicNestBootstrap> {
 class _SplashMaterialApp extends StatelessWidget {
   const _SplashMaterialApp({
     required this.controller,
+    this.failed = false,
     this.errorMessage,
     this.onRetry,
   });
 
   final AppController controller;
+  final bool failed;
   final String? errorMessage;
   final VoidCallback? onRetry;
 
@@ -77,7 +79,11 @@ class _SplashMaterialApp extends StatelessWidget {
       themeMode: controller.settings.themeMode,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: SplashScreen(errorMessage: errorMessage, onRetry: onRetry),
+      home: SplashScreen(
+        failed: failed,
+        errorMessage: errorMessage,
+        onRetry: onRetry,
+      ),
     );
   }
 }
