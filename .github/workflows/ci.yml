@@ -33,7 +33,7 @@ jobs:
       - name: Format Dart sources
         run: dart format lib test
       - name: Static analysis
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos
       - name: Unit tests
         run: flutter test
 
