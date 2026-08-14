@@ -163,7 +163,9 @@ class AppShell extends StatelessWidget {
 
   void _toggleRecording() {
     controller.setNavigationIndex(1);
-    if (controller.recorder.isActive) {
+    if (controller.recorder.status == RecorderStatus.countdown) {
+      unawaited(controller.cancelRecording());
+    } else if (controller.recorder.isCapturing) {
       unawaited(controller.stopRecording());
     } else if (controller.recorder.status == RecorderStatus.idle) {
       unawaited(controller.startRecording());
