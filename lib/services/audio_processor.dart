@@ -5,6 +5,7 @@ import 'package:ffmpeg_kit_flutter_new_audio/ffmpeg_kit.dart';
 import 'package:ffmpeg_kit_flutter_new_audio/return_code.dart';
 
 import '../core/constants.dart';
+import '../core/pcm_waveform.dart';
 import '../models/recording_settings.dart';
 import 'storage_service.dart';
 
@@ -66,17 +67,13 @@ class AudioProcessor {
       final result = <double>[];
       final handle = await pcm.open();
       try {
-        for (var offset = 0; offset < length && result.length < envelopePoints; offset += bytesPerBin) {
+        for (var offset = 0;
+            offset < length && result.length < envelopePoints;
+            offset += bytesPerBin) {
           await handle.setPosition(offset);
           final remaining = length - offset;
           final bytes = await handle.read(math.min(bytesPerBin, remaining));
-          var peak = 0;
-          for (var index = 0; index + 1 < bytes.length; index += 2) {
-            var value = bytes[index] | (bytes[index + 1] << 8);
-            if (value >= 0x8000) value -= 0x10000;
-            peak = math.max(peak, value.abs());
-          }
-          result.add((peak / 32768.0).clamp(0.0, 1.0).toDouble());
+          result.add(pcm16LePeak(bytes));
         }
       } finally {
         await handle.close();
