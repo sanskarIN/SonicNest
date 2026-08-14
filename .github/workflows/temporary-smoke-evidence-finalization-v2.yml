@@ -1,0 +1,146 @@
+name: Temporary Smoke Evidence Finalization V2
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/temporary-smoke-evidence-finalization-v2.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  finalize-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Finalize installed-package evidence and self-remove
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -c 'from pathlib import Path; p=Path("docs/QA_CHECKLIST.md"); t=p.read_text(encoding="utf-8"); old="""- [x] Linux Package CI run `31783749267` validated source `f2c773e59b27a2aaac77e0590e20441ed7eba03f` and built/structurally verified `sonicnest_0.1.0_amd64.deb` successfully."""; new="""- [x] Historical Linux Package CI run `31783749267` validated source `f2c773e59b27a2aaac77e0590e20441ed7eba03f` and built/structurally verified `sonicnest_0.1.0_amd64.deb` successfully.\n- [x] Linux Package CI run `31785105648` validated source `a07468b4b7c14a76b9bce537bbe0455e4539e6bf` through release build, `.deb` construction, structural verification, package-manager installation, installed-payload validation, bounded virtual-display startup smoke, package-manager removal, uninstall cleanup verification, and artifact upload.\n- [x] Repository Integrity Audit run `31785152042` validated revision `e0b9658a4cb18a61ac42046a6914ca080df7eb51` after the installed-package smoke script and install/remove CI markers became protected repository invariants."""; assert old in t, "expected QA evidence line not found"; p.write_text(t.replace(old,new,1),encoding="utf-8")'
+          MARKER='# Hosted-runner Debian install/startup/uninstall smoke continuation — 2026-08-14'
+          if ! grep -Fq "$MARKER" what_changed.md; then
+            cat >> what_changed.md <<'EOF'
+
+---
+
+# Hosted-runner Debian install/startup/uninstall smoke continuation — 2026-08-14
+
+The Debian package gate was extended beyond package-archive inspection. This continuation adds a disposable hosted-runner install/startup/uninstall layer without changing the evidence boundary for real Linux audio or release approval.
+
+## Installed-package smoke script
+
+Added `tool/smoke_test_installed_linux_deb.sh` in commit `45c94018c9c9c8074421e419125e38fe2b29c4d3`.
+
+The script validates an actually installed SonicNest package by checking:
+
+- `dpkg-query` reports `sonicnest` as installed;
+- `/opt/sonicnest/sonic_nest` exists and is executable;
+- the installed desktop entry exists and still targets `/opt/sonicnest/sonic_nest`;
+- the installed hicolor SonicNest icon exists and is non-empty;
+- AppStream metadata exists with the expected application and lowercase developer identifiers;
+- LICENSE and NOTICE exist in the installed package documentation directory;
+- `desktop-file-validate` and `appstreamcli validate --no-net` pass when available;
+- the installed GUI can enter a bounded startup window under `xvfb-run` with software rendering;
+- obvious segmentation-fault, symbol-lookup, and shared-library-loader failures are rejected.
+
+The bounded virtual-display launch is a startup smoke test only. It does not assert microphone capture, real desktop integration, hardware acceleration quality, accessibility, media routing, or long-duration stability.
+
+## Linux Package CI install/remove extension
+
+Commit `a07468b4b7c14a76b9bce537bbe0455e4539e6bf` extended `.github/workflows/linux-package.yml` so the package job now:
+
+1. builds the Flutter Linux release bundle;
+2. builds the Debian `.deb`;
+3. performs structural package verification;
+4. inspects package metadata and contents;
+5. installs the generated `.deb` through `apt-get`;
+6. verifies installation through `dpkg-query`;
+7. executes `tool/smoke_test_installed_linux_deb.sh` against installed files;
+8. removes the package through `apt-get remove`;
+9. verifies the package-owned `/opt/sonicnest`, desktop entry, hicolor icon, and AppStream metadata are absent after removal;
+10. uploads the `.deb` and checksum artifact.
+
+`xvfb` was added to the hosted runner's validation dependencies. The package itself does not depend on Xvfb; it is only a CI test utility.
+
+## Exact stronger Linux validation
+
+Linux Package CI run `31785105648` validated source revision `a07468b4b7c14a76b9bce537bbe0455e4539e6bf` with the complete stronger package path green:
+
+- Linux release build: SUCCESS.
+- Debian package build: SUCCESS.
+- structural package verification: SUCCESS.
+- desktop-entry validation: SUCCESS.
+- AppStream validation: SUCCESS.
+- package checksum verification: SUCCESS.
+- package metadata/content inspection: SUCCESS.
+- package-manager installation: SUCCESS.
+- installed-payload/metadata verification: SUCCESS.
+- virtual-display packaged-app startup smoke: SUCCESS.
+- package-manager removal: SUCCESS.
+- package-owned integration cleanup after uninstall: SUCCESS.
+- validation artifact upload: SUCCESS.
+
+The earlier structural-only run `31783749267` remains historical evidence, but run `31785105648` supersedes it as the current automated Linux package gate.
+
+## Repository invariant protection
+
+`tool/repository_audit.py` was extended in commit `e0b9658a4cb18a61ac42046a6914ca080df7eb51` so it now requires:
+
+- `tool/smoke_test_installed_linux_deb.sh`;
+- installed-state verification through `dpkg-query`;
+- installed executable validation;
+- desktop/AppStream validation inside the smoke script;
+- `xvfb-run` bounded startup execution;
+- package installation in the Linux package workflow;
+- execution of the installed-package smoke script;
+- package removal in the Linux package workflow.
+
+Repository Integrity Audit run `31785152042` passed on that revision.
+
+## Documentation synchronized for the stronger gate
+
+The installed-package smoke path is now documented in:
+
+- `docs/LINUX_PACKAGING.md`;
+- `docs/BUILDING.md`;
+- `CONTRIBUTING.md`;
+- `PROJECT_STATE.md`;
+- `CHANGELOG.md`;
+- `RELEASE_NOTES.md`;
+- `docs/QA_CHECKLIST.md`;
+- `what_changed.md`.
+
+The documentation deliberately distinguishes structural verification, hosted-runner install/startup/uninstall smoke, and representative real-system QA.
+
+## Evidence-dependent Linux release gates that remain
+
+The hosted-runner smoke does not complete these real-system gates:
+
+- representative Debian-family and Ubuntu-family installation evidence;
+- real launcher/menu/task-switcher/AppStream visual inspection;
+- microphone permission/capture and real PulseAudio/PipeWire routing;
+- built-in, wired, USB, and Bluetooth input behavior where available;
+- accessibility-tool review;
+- representative upgrade testing;
+- low-storage and long-duration recording tests;
+- real import/export/editor workloads;
+- final public Linux distribution channel decision;
+- package/repository signing policy and maintainer-owned signing credentials.
+
+Those gates remain unchecked in the release QA record. SonicNest remains a **development preview** until the required real-system and cross-platform release evidence is complete.
+EOF
+          fi
+          grep -Fq '31785105648' docs/QA_CHECKLIST.md
+          grep -Fq "$MARKER" what_changed.md
+          git diff --check
+          git rm .github/workflows/temporary-smoke-evidence-finalization-v2.yml
+          git config user.name 'Sanskar'
+          git config user.email 'sanskarin@outlook.in'
+          git add docs/QA_CHECKLIST.md what_changed.md
+          git commit -m 'docs: append installed Debian smoke evidence'
+          git push origin HEAD:main
