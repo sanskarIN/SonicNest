@@ -23,6 +23,8 @@ Current development version: **0.1.0**. The repository is structured as a produc
 - Live amplitude waveform, clipping warning, recording timer, markers/bookmarks, and input-device-aware recording services.
 - Persisted waveform envelopes for recorded, imported, and processed media.
 - Searchable library with favorites, pinned items, tags, folders, trash/restore, rename, duplicate, import, export, share, sorting, format/folder/tag/date filtering, and multi-selection bulk actions.
+- Desktop secondary/right-click access to the same complete recording action surface used by touch/menu workflows.
+- Multi-recording batch format conversion with target-format selection, progress, per-file failure isolation, preserved source files, retained markers, and successful-output registration in the library.
 - Managed storage statistics for recordings, Trash, and temporary processing files, plus guarded temporary-file cleanup.
 - Integrated player with seek, jump controls, volume, speed, repeat-one, previous/next recording navigation, A-B selection looping, bookmarks, and silence-skip support where available.
 - Android, iOS, and macOS media-session metadata plus notification/lock-screen playback integration using `just_audio_background` and tagged media sources.
@@ -40,6 +42,11 @@ Current development version: **0.1.0**. The repository is structured as a produc
 - `F10`: pause/resume recording.
 - `Ctrl+Alt+P`: play/pause the loaded recording.
 - `Ctrl+Alt+Left` / `Ctrl+Alt+Right`: jump backward/forward by the configured interval.
+- Secondary/right-click on a recording tile opens its recording action surface on desktop pointer devices.
+
+## Batch conversion
+
+Open **Batch Convert** from Home, select one or more saved non-Trash recordings, choose the target format, and start conversion. SonicNest processes the selected items sequentially so each output can be tracked independently. The source recording is never overwritten; successful converted files are registered as new library recordings and a failure in one item does not discard earlier successful outputs.
 
 ## Supported platforms
 
@@ -76,7 +83,9 @@ flutter analyze --no-fatal-infos
 flutter test
 ```
 
-GitHub Actions additionally compiles representative debug builds for Android, Linux, Windows, macOS, and unsigned iOS host validation. Hardware-dependent recorder, interruption, background, routing, screen-wake, media-button, and lock-screen behavior still requires real target devices.
+GitHub Actions additionally compiles representative debug builds for Android, Linux, Windows, macOS, and unsigned iOS host validation. Hardware-dependent recorder, interruption, background, routing, screen-wake, media-button, batch-performance, and lock-screen behavior still requires real target devices.
+
+The current batch-conversion/right-click source revision `985f2dd1500a03b0b65ee58b142cf31f545b0cc5` passed analyzer and unit tests plus Android, Linux, Windows, macOS, and unsigned iOS debug builds in GitHub Actions. This automated result does not replace the physical-device release checklist.
 
 ## Architecture
 
