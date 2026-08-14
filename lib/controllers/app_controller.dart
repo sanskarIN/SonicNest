@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 
 import '../models/recording_entry.dart';
 import '../models/recording_settings.dart';
+import '../services/audio_import_service.dart';
 import '../services/audio_processor.dart';
 import '../services/external_actions.dart';
 import '../services/metadata_store.dart';
@@ -309,45 +310,56 @@ class AppController extends ChangeNotifier {
     if (paths.isEmpty) {
       return;
     }
+
+    final importer = AudioImportService(storage: storage, processor: processor);
+    final failures = <String, String>{};
+    var importedCount = 0;
+
     await _guarded(() async {
       for (final source in paths) {
-        String? imported;
+        ImportedAudioData imported;
         try {
-          imported = await storage.importFile(source);
-          final ext = p.extension(imported).replaceFirst('.', '').toLowerCase();
-          final format =
-              RecordingFormat.values
-                  .where((format) => format.extension == ext)
-                  .firstOrNull ??
-              RecordingFormat.m4a;
-          final duration = await player.probeDuration(imported);
-          final waveform = await processor.extractWaveformEnvelope(imported);
-          final now = DateTime.now();
-          _recordings.add(
-            RecordingEntry(
-              id: _uuid.v7(),
-              title: p.basenameWithoutExtension(imported),
-              filePath: imported,
-              durationMs: duration.inMilliseconds,
-              sizeBytes: await storage.fileSize(imported),
-              format: format,
-              bitRate: 0,
-              sampleRate: 0,
-              channels: 0,
-              createdAt: now,
-              modifiedAt: now,
-              waveform: waveform,
-            ),
-          );
+          imported = await importer.importOne(source);
+        } on AudioImportException catch (error) {
+          failures[source] = error.message;
+          continue;
+        }
+
+        final now = DateTime.now();
+        final entry = RecordingEntry(
+          id: _uuid.v7(),
+          title: imported.title,
+          filePath: imported.filePath,
+          durationMs: imported.duration.inMilliseconds,
+          sizeBytes: imported.sizeBytes,
+          format: imported.format,
+          bitRate: 0,
+          sampleRate: 0,
+          channels: 0,
+          createdAt: now,
+          modifiedAt: now,
+          waveform: imported.waveform,
+        );
+        _recordings.add(entry);
+        try {
           await _persist();
+          importedCount += 1;
         } catch (_) {
-          if (imported != null) {
-            await storage.deleteIfExists(imported);
-          }
+          _recordings.removeWhere((item) => item.id == entry.id);
+          await storage.deleteIfExists(imported.filePath);
           rethrow;
         }
       }
     });
+
+    if (failures.isNotEmpty) {
+      final failedNames = failures.keys.map(p.basename).take(3).join(', ');
+      final remaining = failures.length - failures.keys.take(3).length;
+      errorMessage =
+          'Imported $importedCount of ${paths.length} files. '
+          'Could not import: $failedNames${remaining > 0 ? ' and $remaining more' : ''}.';
+      notifyListeners();
+    }
   }
 
   Future<void> exportRecording(RecordingEntry entry) async {
@@ -659,8 +671,4 @@ class AppController extends ChangeNotifier {
     player.dispose();
     super.dispose();
   }
-}
-
-extension _IterableFirstOrNull<T> on Iterable<T> {
-  T? get firstOrNull => isEmpty ? null : first;
 }
