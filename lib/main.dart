@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import 'package:just_audio_media_kit/just_audio_media_kit.dart';
 
 import 'app.dart';
@@ -15,6 +18,19 @@ import 'services/storage_service.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   JustAudioMediaKit.ensureInitialized();
+
+  if (Platform.isAndroid || Platform.isIOS || Platform.isMacOS) {
+    await JustAudioBackground.init(
+      androidNotificationChannelId:
+          'io.github.sanskarin.sonicnest.channel.playback',
+      androidNotificationChannelName: 'SonicNest playback',
+      androidNotificationOngoing: false,
+      androidStopForegroundOnPause: true,
+      fastForwardInterval: const Duration(seconds: 10),
+      rewindInterval: const Duration(seconds: 10),
+    );
+  }
+
   final storage = StorageService();
   final processor = AudioProcessor(storage);
   final controller = AppController(
