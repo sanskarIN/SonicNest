@@ -1,0 +1,197 @@
+name: One-shot direct multi-file export validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/continuation-direct-export-validation.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    name: Analyze and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg pulseaudio-utils libjson-glib-dev
+      - run: bash tool/bootstrap_platforms.sh
+      - run: flutter pub get
+      - run: dart format lib test
+      - run: flutter analyze --no-fatal-infos
+      - run: flutter test
+
+  android:
+    name: Android debug build
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: bash tool/bootstrap_platforms.sh
+      - run: flutter pub get
+      - run: flutter build apk --debug
+
+  linux:
+    name: Linux debug build
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev ffmpeg pulseaudio-utils libjson-glib-dev
+      - run: flutter config --enable-linux-desktop
+      - run: bash tool/bootstrap_platforms.sh
+      - run: flutter pub get
+      - run: flutter build linux --debug
+
+  windows:
+    name: Windows debug build
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter config --enable-windows-desktop
+      - shell: pwsh
+        run: ./tool/bootstrap_platforms.ps1
+      - run: flutter pub get
+      - run: flutter build windows --debug
+
+  macos:
+    name: macOS debug build
+    runs-on: macos-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter config --enable-macos-desktop
+      - run: bash tool/bootstrap_platforms.sh
+      - run: flutter pub get
+      - run: flutter build macos --debug
+
+  ios:
+    name: iOS no-codesign debug build
+    runs-on: macos-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: bash tool/bootstrap_platforms.sh
+      - run: flutter pub get
+      - run: flutter build ios --debug --no-codesign
+
+  record:
+    name: Record direct export continuation
+    needs: [validate, android, linux, windows, macos, ios]
+    if: success()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Synchronize direct export documentation
+        env:
+          VALIDATED_SHA: ${{ github.sha }}
+          VALIDATION_RUN_ID: ${{ github.run_id }}
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          sha = os.environ['VALIDATED_SHA']
+          run_id = os.environ['VALIDATION_RUN_ID']
+
+          what = Path('what_changed.md')
+          text = what.read_text(encoding='utf-8')
+          marker = '# Direct multi-file original export continuation'
+          if marker not in text:
+              text += f'''\n\n---\n\n# Direct multi-file original export continuation\n\nImplemented after the localization/library hardening pass:\n\n- Added `ExternalCopyBatchResult` and `ExternalActions.copyFilesToDirectoryCollisionSafe`.\n- Multi-file copies continue past per-file failures and return independent success/failure counts.\n- Added unit tests for complete batch success, mixed success with a missing source, and collision-safe numbering when multiple sources share a basename.\n- Batch Convert now exposes direct export of selected original recordings without transcoding.\n- Direct original export uses a user-selected directory and preserves the original recording files.\n- Existing destination files are never intentionally overwritten; numbered names are allocated instead.\n- Direct-export failures are summarized without deleting or rolling back successful copies.\n\nExact automated validation:\n\n- Validated revision: `{sha}`\n- Validation run: `{run_id}`\n- Dart formatting: SUCCESS\n- Flutter static analysis: SUCCESS\n- Unit tests: SUCCESS\n- Android debug APK: SUCCESS\n- Linux debug build: SUCCESS\n- Windows debug build: SUCCESS\n- macOS debug build: SUCCESS\n- unsigned iOS debug build: SUCCESS\n\nPhysical directory-picker behavior, permission revocation, low-storage copies, and very large batch behavior remain manual evidence gates.\n'''
+              what.write_text(text, encoding='utf-8')
+
+          state = Path('PROJECT_STATE.md')
+          stext = state.read_text(encoding='utf-8')
+          marker = '## Latest exact validation — direct multi-file original export'
+          if marker not in stext:
+              stext += f'''\n\n{marker}\n\n- Validated revision: `{sha}`\n- Validation run: `{run_id}`\n- Analyzer/unit tests and Android/Linux/Windows/macOS/unsigned-iOS debug builds: **SUCCESS**\n- Direct selected-original export to a user-selected directory is implemented with collision-safe copies and per-file failure isolation.\n- Real platform-picker, low-storage, permission-revocation, and large-batch evidence is still required before stable release.\n'''
+              state.write_text(stext, encoding='utf-8')
+
+          changelog = Path('CHANGELOG.md')
+          ctext = changelog.read_text(encoding='utf-8')
+          marker = '### Direct multi-file original export continuation'
+          if marker not in ctext:
+              ctext += f'''\n\n{marker}\n- Added resilient multi-file directory-copy results and collision-safe batch copying.\n- Added direct export of selected original recordings without transcoding.\n- Added mixed-success and duplicate-basename filesystem tests.\n- Validated revision `{sha}` in run `{run_id}` across analyzer/tests and all five platform debug-build targets.\n'''
+              changelog.write_text(ctext, encoding='utf-8')
+
+          readme = Path('README.md')
+          rtext = readme.read_text(encoding='utf-8')
+          needle = '- Searchable library with favorites, pinned items, tags, folders, trash/restore, rename, duplicate, import, export, share, sorting, format/folder/tag/date filtering, and multi-selection bulk actions.'
+          replacement = '- Searchable library with favorites, pinned items, tags, folders, trash/restore, rename, duplicate, import, export, share, sorting, format/folder/tag/date filtering, and multi-selection bulk actions.\n- Batch tools can convert several recordings or copy selected originals directly to a user-selected folder with collision-safe naming.'
+          if needle in rtext and replacement not in rtext:
+              rtext = rtext.replace(needle, replacement)
+              readme.write_text(rtext, encoding='utf-8')
+
+          roadmap = Path('ROADMAP.md')
+          rdtext = roadmap.read_text(encoding='utf-8')
+          old = '- Evaluate true multi-file batch conversion/export after real-world library testing.'
+          new = '- Multi-file batch conversion and direct original-file export are implemented; profile them with large real-world libraries and low-storage conditions before stable release.'
+          if old in rdtext:
+              rdtext = rdtext.replace(old, new)
+          marker = '## Direct export implementation status'
+          if marker not in rdtext:
+              rdtext += '''\n\n## Direct export implementation status\n\nSelected original recordings can be copied directly to a chosen folder without transcoding. Collision-safe naming and per-file failure isolation are implemented and unit-tested. Remaining work is real-platform picker/permission/low-storage/large-batch validation.\n'''
+          roadmap.write_text(rdtext, encoding='utf-8')
+
+          todo = Path('TODO.md')
+          ttext = todo.read_text(encoding='utf-8')
+          stale = '''## Localization\n\n- [ ] Finish migrating remaining hard-coded presentation strings into the localization layer before adding non-English translations.\n- [ ] Add translation QA once additional languages are introduced.\n- [ ] Include batch-conversion and desktop-action strings in the localization migration.\n\n'''
+          ttext = ttext.replace(stale, '')
+          ttext = ttext.replace(
+              '- [ ] Evaluate direct multi-file export to a user-selected external destination after batch-conversion usability testing.\n',
+              ''
+          )
+          export_heading = '## External batch export validation'
+          if export_heading in ttext and '- [ ] Verify direct original-file multi-export on each supported platform.' not in ttext:
+              ttext = ttext.replace(
+                  export_heading,
+                  export_heading + '\n\n- [ ] Verify direct original-file multi-export on each supported platform.\n- [ ] Verify mixed-success direct export when one selected source disappears before copying.'
+              )
+          todo.write_text(ttext, encoding='utf-8')
+
+          qa = Path('docs/QA_CHECKLIST.md')
+          qtext = qa.read_text(encoding='utf-8')
+          marker = '## Direct original-file batch export'
+          if marker not in qtext:
+              qtext += '''\n\n## Direct original-file batch export\n\n- [ ] Select several saved recordings and export their originals to a user-selected directory without transcoding.\n- [ ] Verify same-basename originals receive collision-safe numbered destination names.\n- [ ] Verify an existing destination file is not overwritten.\n- [ ] Verify one missing/unavailable source does not roll back other successful copies.\n- [ ] Verify destination disappearance/permission revocation produces a recoverable result.\n- [ ] Verify low-storage behavior.\n- [ ] Verify very large files and large selected batches on representative target hardware.\n'''
+              qa.write_text(qtext, encoding='utf-8')
+          PY
+      - run: git rm .github/workflows/continuation-direct-export-validation.yml
+      - name: Commit validated direct export documentation
+        run: |
+          git config user.name 'Sanskar'
+          git config user.email 'sanskarin@outlook.in'
+          git add what_changed.md PROJECT_STATE.md CHANGELOG.md README.md ROADMAP.md TODO.md docs/QA_CHECKLIST.md
+          git commit -m 'docs: record validated direct multi-file export continuation'
+          git push origin HEAD:main
