@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -7,6 +9,7 @@ import '../screens/home_screen.dart';
 import '../screens/library_screen.dart';
 import '../screens/recorder_screen.dart';
 import '../screens/settings_screen.dart';
+import '../services/recorder_service.dart';
 import 'sonicnest_mark.dart';
 
 class AppShell extends StatelessWidget {
@@ -63,6 +66,31 @@ class AppShell extends StatelessWidget {
             controller.setNavigationIndex(3),
         const SingleActivator(LogicalKeyboardKey.digit5, control: true): () =>
             controller.setNavigationIndex(4),
+        const SingleActivator(LogicalKeyboardKey.f9): _toggleRecording,
+        const SingleActivator(LogicalKeyboardKey.f10): _toggleRecordingPause,
+        const SingleActivator(
+          LogicalKeyboardKey.keyP,
+          control: true,
+          alt: true,
+        ): _togglePlayback,
+        const SingleActivator(
+          LogicalKeyboardKey.arrowLeft,
+          control: true,
+          alt: true,
+        ): () => unawaited(
+              controller.player.jump(
+                Duration(seconds: -controller.settings.skipIntervalSeconds),
+              ),
+            ),
+        const SingleActivator(
+          LogicalKeyboardKey.arrowRight,
+          control: true,
+          alt: true,
+        ): () => unawaited(
+              controller.player.jump(
+                Duration(seconds: controller.settings.skipIntervalSeconds),
+              ),
+            ),
       },
       child: Focus(
         autofocus: true,
@@ -126,5 +154,33 @@ class AppShell extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _toggleRecording() {
+    controller.setNavigationIndex(1);
+    if (controller.recorder.isActive) {
+      unawaited(controller.stopRecording());
+    } else if (controller.recorder.status == RecorderStatus.idle) {
+      unawaited(controller.startRecording());
+    }
+  }
+
+  void _toggleRecordingPause() {
+    if (controller.recorder.status == RecorderStatus.recording) {
+      unawaited(controller.pauseRecording());
+    } else if (controller.recorder.status == RecorderStatus.paused) {
+      unawaited(controller.resumeRecording());
+    }
+  }
+
+  void _togglePlayback() {
+    if (controller.player.loadedPath == null) {
+      return;
+    }
+    if (controller.player.isPlaying) {
+      unawaited(controller.player.pause());
+    } else {
+      unawaited(controller.player.play());
+    }
   }
 }
