@@ -91,7 +91,8 @@ All notable project changes are documented here.
 - Current Linux package source revision `a07468b4b7c14a76b9bce537bbe0455e4539e6bf` is green in Linux Package CI run `31785105648`: release Linux build, `.deb` construction, structural verification, desktop/AppStream validation, checksum verification, package inspection, package-manager installation, installed-payload validation, virtual-display application startup smoke, package-manager removal, uninstall cleanup verification, and artifact upload all succeeded.
 - Repository audit run `31785152042` is green on revision `e0b9658a4cb18a61ac42046a6914ca080df7eb51` after making the installed-package smoke script and install/remove CI markers mandatory repository invariants.
 - Windows run `31807141053` and Apple run `31807141166` are green on import-controller source revision `3bf63e69186a7a538f7d0587f3d361e00c2e29e9` for Windows debug, macOS debug, and unsigned iOS debug builds.
-- Core Flutter CI run `31807193932` has analyzer/unit tests and Linux debug build green on later import-test revision `a88aeadadda017b0aced4dbc25c8426a27364b77`; the exact full core result is recorded only after every job completes.
+- Core Flutter CI run `31807193932` is fully green on import-test revision `a88aeadadda017b0aced4dbc25c8426a27364b77`: formatting, analyzer, unit tests, Android debug APK, and Linux debug build all succeeded.
+- Repository Integrity Audit run `31807662729` is green on revision `c7b9c41a8afcf83ff03ae5a014c9968f2f09c5e4` with the cleaned permanent workflow set and workflow allowlist/read-only invariant active.
 - The continuation intentionally does not convert representative-system microphone/background/interruption/routing/screen-wake/media-button/batch-performance/native-brand visual inspection/accessibility/upgrade/signing or malformed-real-media corpus checks into false automated claims.
 - Exact newest workflow/run results are also recorded in `what_changed.md` and `PROJECT_STATE.md`.
 
