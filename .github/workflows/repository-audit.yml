@@ -1,0 +1,70 @@
+name: Repository Integrity Audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tool/repository_audit.py'
+      - 'pubspec.yaml'
+      - '.gitignore'
+      - 'LICENSE'
+      - 'NOTICE'
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - 'PRIVACY.md'
+      - 'SECURITY.md'
+      - 'SUPPORT.md'
+      - 'ROADMAP.md'
+      - 'PROJECT_STATE.md'
+      - 'TODO.md'
+      - 'what_changed.md'
+      - 'docs/**'
+      - '.github/workflows/**'
+      - '.github/ISSUE_TEMPLATE/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tool/repository_audit.py'
+      - 'pubspec.yaml'
+      - '.gitignore'
+      - 'LICENSE'
+      - 'NOTICE'
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - 'PRIVACY.md'
+      - 'SECURITY.md'
+      - 'SUPPORT.md'
+      - 'ROADMAP.md'
+      - 'PROJECT_STATE.md'
+      - 'TODO.md'
+      - 'what_changed.md'
+      - 'docs/**'
+      - '.github/workflows/**'
+      - '.github/ISSUE_TEMPLATE/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sonicnest-repository-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    name: Repository invariants
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Compile audit script
+        run: python3 -m py_compile tool/repository_audit.py
+      - name: Run repository integrity audit
+        run: python3 tool/repository_audit.py
+      - name: Validate Bash helper syntax
+        run: |
+          bash -n tool/bootstrap_platforms.sh
+          bash -n tool/apply_branding.sh
+          bash -n tool/release_preflight.sh
