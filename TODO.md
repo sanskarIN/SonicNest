@@ -56,21 +56,23 @@ This file intentionally contains only work that is still incomplete, requires ph
 - [x] Implement deterministic native launcher-icon source generation from SonicNest-controlled mark geometry.
 - [x] Implement reproducible Android/iOS native splash resource generation.
 - [x] Integrate launcher-icon generation for Android, iOS, macOS, and Windows build workflows.
+- [x] Select Debian `.deb` as the initial Linux installation format and integrate the deterministic SonicNest icon with its desktop entry and AppStream package metadata.
 - [ ] Visually review generated Android launcher icons across legacy/adaptive/themed masks on real devices.
 - [ ] Visually review generated iOS and macOS icons at small/large OS sizes on real Apple hardware.
 - [ ] Visually review generated Windows icon in Explorer, taskbar, Start, shortcuts, and final package/installer surfaces.
-- [ ] Select a Linux distribution/package format and integrate the generated SonicNest icon into that package/desktop entry.
+- [ ] Install the generated Linux `.deb` on representative Debian/Ubuntu-family systems and visually review launcher/menu/task-switcher icon surfaces.
 - [ ] Verify native launch/splash assets in signed/release Android and iOS configurations, including dark mode.
 - [ ] Capture real screenshots from tested builds; do not use fabricated screenshots.
-- [ ] Prepare store listing copy and privacy declarations for each selected distribution channel.
+- [ ] Prepare store/listing copy and privacy declarations for each selected distribution channel.
 
 ## Signing and distribution
 
 - [ ] Configure private Android upload/release signing outside the repository.
 - [ ] Configure Apple certificates/provisioning/notarization outside the repository.
 - [ ] Decide and configure Windows signing for public distribution.
-- [ ] Decide Linux packaging/distribution targets.
-- [ ] Produce signed release candidates.
+- [x] Select Debian `.deb` as the initial repository-supported Linux package target.
+- [ ] Decide the public Linux distribution channel and any repository/package signing policy.
+- [ ] Produce signed release candidates where the selected distribution channel requires signing.
 - [ ] Complete the release checklist in `docs/RELEASING.md`.
 - [ ] Tag `v1.0.0` only after all required stable-release gates are complete.
 
