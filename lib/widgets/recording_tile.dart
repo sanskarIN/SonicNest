@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/formatters.dart';
+import '../l10n/app_localizations.dart';
 import '../models/recording_entry.dart';
 import '../models/recording_settings.dart';
 import 'waveform_view.dart';
@@ -27,6 +28,7 @@ class RecordingTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     return Card(
       color: selected ? scheme.secondaryContainer.withValues(alpha: 0.55) : null,
@@ -34,8 +36,7 @@ class RecordingTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         onTap: onTap,
         onLongPress: onLongPress,
-        onSecondaryTapDown:
-            onSecondaryTapDown ?? (details) => onMore(),
+        onSecondaryTapDown: onSecondaryTapDown ?? (details) => onMore(),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -74,15 +75,15 @@ class RecordingTile extends StatelessWidget {
                   if (!selected) ...[
                     IconButton(
                       tooltip: entry.favorite
-                          ? 'Remove from favorites'
-                          : 'Add to favorites',
+                          ? l10n.removeFromFavorites
+                          : l10n.addToFavorites,
                       onPressed: onFavorite,
                       icon: Icon(
                         entry.favorite ? Icons.favorite : Icons.favorite_border,
                       ),
                     ),
                     IconButton(
-                      tooltip: 'More actions',
+                      tooltip: l10n.bulkActions,
                       onPressed: onMore,
                       icon: const Icon(Icons.more_vert),
                     ),
