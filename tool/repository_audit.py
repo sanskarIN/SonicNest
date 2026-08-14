@@ -210,6 +210,7 @@ def audit() -> list[str]:
             "Exec=/opt/sonicnest/sonic_nest",
             "Icon=sonicnest",
             "Terminal=false",
+            "Categories=AudioVideo;Recorder;",
         ):
             if fragment not in desktop_text:
                 errors.append(
@@ -223,9 +224,11 @@ def audit() -> list[str]:
         metainfo_text = metainfo_file.read_text(encoding="utf-8", errors="ignore")
         for fragment in (
             "<id>io.github.sanskarIN.SonicNest</id>",
+            '<developer id="io.github.sanskarin">',
             '<launchable type="desktop-id">sonicnest.desktop</launchable>',
             "<binary>sonic_nest</binary>",
             "<project_license>Apache-2.0</project_license>",
+            '<content_rating type="oars-1.1" />',
         ):
             if fragment not in metainfo_text:
                 errors.append(
