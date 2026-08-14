@@ -22,6 +22,7 @@ Current development version: **0.1.0**. The repository is structured as a produc
 - Persisted waveform envelopes for recorded, imported, and processed media.
 - Searchable library with favorites, pinned items, tags, folders, trash/restore, rename, duplicate, import, export, share, sorting, filtering, and multi-selection bulk actions.
 - Integrated player with seek, jump controls, volume, speed, repeat, bookmarks, and silence-skip support where available.
+- Android, iOS, and macOS media-session metadata plus notification/lock-screen playback integration using `just_audio_background` and tagged media sources.
 - Non-destructive FFmpeg-backed editing: trim, split, merge, normalize, fades, silence removal, format conversion, draggable selection handles, selection undo/redo, and export presets.
 - Light, dark, and system themes; responsive phone/tablet/desktop navigation; keyboard navigation shortcuts.
 - Offline-first local metadata and audio storage. No hidden upload, tracking, or analytics.
@@ -62,7 +63,7 @@ flutter analyze --no-fatal-infos
 flutter test
 ```
 
-GitHub Actions additionally compiles representative debug builds for Android, Linux, Windows, macOS, and unsigned iOS host validation. Hardware-dependent recorder behavior still requires real target devices.
+GitHub Actions additionally compiles representative debug builds for Android, Linux, Windows, macOS, and unsigned iOS host validation. Hardware-dependent recorder, interruption, background, and lock-screen behavior still requires real target devices.
 
 ## Architecture
 
