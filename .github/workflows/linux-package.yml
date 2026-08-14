@@ -1,0 +1,86 @@
+name: Linux Package CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'lib/**'
+      - 'tool/bootstrap_platforms.sh'
+      - 'tool/patch_generated_platforms.py'
+      - 'tool/platform_overrides/**'
+      - 'tool/generate_brand_assets_v2.dart'
+      - 'tool/build_linux_deb.sh'
+      - 'tool/verify_linux_deb.sh'
+      - 'packaging/linux/**'
+      - 'assets/logo/**'
+      - 'pubspec.yaml'
+      - '.github/workflows/linux-package.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'lib/**'
+      - 'tool/bootstrap_platforms.sh'
+      - 'tool/patch_generated_platforms.py'
+      - 'tool/platform_overrides/**'
+      - 'tool/generate_brand_assets_v2.dart'
+      - 'tool/build_linux_deb.sh'
+      - 'tool/verify_linux_deb.sh'
+      - 'packaging/linux/**'
+      - 'assets/logo/**'
+      - 'pubspec.yaml'
+      - '.github/workflows/linux-package.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sonicnest-linux-package-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  debian-package:
+    name: Build and verify Debian package
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install Linux build and package dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev \
+            ffmpeg pulseaudio-utils libjson-glib-dev \
+            desktop-file-utils appstream
+      - name: Enable Linux desktop
+        run: flutter config --enable-linux-desktop
+      - name: Generate platform hosts
+        run: bash tool/bootstrap_platforms.sh
+      - name: Resolve dependencies
+        run: flutter pub get
+      - name: Generate deterministic branding source images
+        run: dart tool/generate_brand_assets_v2.dart
+      - name: Build Linux release bundle
+        run: flutter build linux --release
+      - name: Build Debian package
+        run: bash tool/build_linux_deb.sh release
+      - name: Verify Debian package
+        run: bash tool/verify_linux_deb.sh
+      - name: Inspect package metadata
+        run: |
+          PACKAGE="$(find build/linux-package -maxdepth 1 -type f -name 'sonicnest_*.deb' -print -quit)"
+          test -n "$PACKAGE"
+          dpkg-deb --info "$PACKAGE"
+          dpkg-deb --contents "$PACKAGE"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sonicnest-linux-debian-package-ci
+          path: |
+            build/linux-package/*.deb
+            build/linux-package/*.sha256
+          if-no-files-found: error
+          retention-days: 3
