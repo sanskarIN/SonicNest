@@ -127,7 +127,7 @@ latest_automated_validation:
     macos_debug_build: success
     ios_debug_no_codesign: success
   linux_package_ci:
-    validated_source_commit: f2c773e1e03753ec62b9e4229a3f086871a26f29
+    validated_source_commit: f2c773e59b27a2aaac77e0590e20441ed7eba03f
     run_id: 31783749267
     linux_release_build: success
     debian_package_build: success
@@ -138,7 +138,7 @@ latest_automated_validation:
     artifact_upload: success
   validation_relationship:
     - core Windows and Apple workflows validate deterministic native branding source revision 40c4a758debef136c2d8c977c321446cca2697cd
-    - Linux package workflow validates package implementation through revision f2c773e1e03753ec62b9e4229a3f086871a26f29 including the checksum-verifier fix c0381eb59c34b0dc965784d74730615eb95bfcbb and corrected lowercase AppStream developer identifier
+    - Linux package workflow validates package implementation through revision f2c773e59b27a2aaac77e0590e20441ed7eba03f including the checksum-verifier fix c0381eb59c34b0dc965784d74730615eb95bfcbb and corrected lowercase AppStream developer identifier
     - documentation-only synchronization commits after validated source revisions do not trigger all application build workflows by design
 known_limitations:
   - codec availability and effective sample bitrate channel and DSP settings depend on OS device and runtime support
@@ -209,7 +209,7 @@ next_exact_tasks:
 ## Latest exact validation — Linux Debian packaging
 
 - Debian `.deb` is the initial repository-supported Linux installation format.
-- Package workflow validated source revision: `f2c773e1e03753ec62b9e4229a3f086871a26f29`.
+- Package workflow validated source revision: `f2c773e59b27a2aaac77e0590e20441ed7eba03f`.
 - Validation run: `31783749267`.
 - Flutter Linux release build: **SUCCESS**.
 - Debian package construction: **SUCCESS**.
