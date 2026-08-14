@@ -209,7 +209,19 @@ Restored filenames are allocated safely if a file with the original name already
 
 ### Import
 
-Library can import supported audio files selected through the platform picker. Imported media receives local SonicNest metadata and a persisted waveform envelope when processing succeeds.
+Library can import supported audio files selected through the platform picker. Each selected file is copied into managed storage, media duration is probed, and a persisted waveform envelope is generated before the imported item is registered in the Library.
+
+Multi-file import is failure-isolated. If one selected file is missing, cannot be copied, cannot be probed as audio, or fails waveform extraction:
+
+- its incomplete managed copy is removed when one was created;
+- that failure is recorded for the import summary;
+- later selected files are still attempted;
+- already completed imports remain saved;
+- SonicNest reports how many selected files succeeded and names a limited set of failed selections.
+
+A metadata-save failure is treated differently from a malformed audio file. SonicNest removes the just-created managed copy and stops the operation rather than claiming a Library item was safely registered when persistence failed.
+
+Real malformed-audio corpus behavior across every supported operating system/backend remains part of release QA even though deterministic failure-isolation tests are included in the repository.
 
 ### Share
 
@@ -351,7 +363,23 @@ Some recorder processing settings are requests to the native backend and can be 
 
 Temporary cleanup is disabled while an active recording could depend on temporary files.
 
-## 13. Desktop keyboard shortcuts
+## 13. Local metadata recovery
+
+SonicNest keeps recording-library metadata in a local JSON document separate from the audio files. The persistence layer uses a temporary file and a short-lived backup during replacement.
+
+On startup:
+
+- malformed optional fields fall back to safe values instead of crashing the whole Library;
+- malformed individual recording objects are isolated so valid neighboring entries can still load;
+- structurally corrupt metadata is copied to a timestamped `.corrupt.*` diagnostic file;
+- if an interrupted replacement left a valid `recordings.json.bak`, SonicNest can restore that backup to the primary metadata path;
+- a corrupt primary can fall back to a valid backup after preserving the corrupt primary for diagnosis.
+
+This recovery behavior protects metadata continuity, but it does not recreate an audio file that was externally deleted or damaged. Missing managed audio references are removed during startup reconciliation.
+
+See `docs/METADATA_INTEGRITY.md` for the exact repository invariants and test coverage.
+
+## 14. Desktop keyboard shortcuts
 
 - `Ctrl+1`: Home
 - `Ctrl+2`: Recorder
@@ -366,7 +394,7 @@ Temporary cleanup is disabled while an active recording could depend on temporar
 
 Keyboard behavior must be checked with actual text fields/focus/navigation during desktop release QA.
 
-## 14. Privacy
+## 15. Privacy
 
 SonicNest is designed around local recording storage.
 
@@ -377,7 +405,7 @@ SonicNest is designed around local recording storage.
 
 See `PRIVACY.md` and `SECURITY.md` for project policy details.
 
-## 15. Native branding and startup
+## 16. Native branding and startup
 
 Before Flutter paints, supported generated hosts use reproducible SonicNest native launcher/splash resources. After Flutter starts, SonicNest shows its branded Flutter startup screen while local settings/metadata initialize.
 
@@ -385,7 +413,7 @@ Native branding is generated from repository-controlled mark geometry. Structura
 
 See `docs/BRANDING.md`.
 
-## 16. Development preview limitations
+## 17. Development preview limitations
 
 The current source has extensive automated compile/test coverage, but stable release still requires evidence for:
 
@@ -393,6 +421,7 @@ The current source has extensive automated compile/test coverage, but stable rel
 - calls/alarms/audio interruptions;
 - background/lock-screen behavior;
 - low-storage recovery;
+- real malformed-audio imports across maintained target systems;
 - long recordings and very large libraries/batches;
 - TalkBack/VoiceOver/Narrator/Linux accessibility audits;
 - real native-brand visual inspection;
@@ -402,6 +431,6 @@ The current source has extensive automated compile/test coverage, but stable rel
 
 Do not treat a CI artifact as a stable public release solely because it compiled.
 
-## 17. Getting help
+## 18. Getting help
 
 Use the support/contact links shown in the application About screen and repository `SUPPORT.md`. When reporting a hardware or release-QA problem, include the exact commit SHA, platform/OS version, device description, build source, steps performed, expected result, and actual result. The repository includes a structured **Device / Release QA report** issue form and `docs/RELEASE_EVIDENCE_TEMPLATE.md` for this purpose.
