@@ -47,9 +47,9 @@ jobs:
       - name: Resolve dependencies
         run: flutter pub get
       - name: Generate deterministic branding source images
-        run: dart tool/generate_brand_assets.dart
+        run: dart tool/generate_brand_assets_v2.dart
       - name: Format Dart sources
-        run: dart format lib test tool/generate_brand_assets.dart
+        run: dart format lib test tool/generate_brand_assets_v2.dart
       - name: Static analysis
         run: flutter analyze --no-fatal-infos
       - name: Unit tests
@@ -90,5 +90,5 @@ jobs:
         run: bash tool/bootstrap_platforms.sh
       - run: flutter pub get
       - name: Generate deterministic branding source images
-        run: dart tool/generate_brand_assets.dart
+        run: dart tool/generate_brand_assets_v2.dart
       - run: flutter build linux --debug
