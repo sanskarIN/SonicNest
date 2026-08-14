@@ -13,7 +13,14 @@ import 'audio_processor.dart';
 import 'background_service_bridge.dart';
 import 'storage_service.dart';
 
-enum RecorderStatus { idle, recording, paused, processing, error }
+enum RecorderStatus {
+  idle,
+  countdown,
+  recording,
+  paused,
+  processing,
+  error,
+}
 
 class RecorderResult {
   const RecorderResult({
@@ -53,16 +60,22 @@ class RecorderService extends ChangeNotifier {
   RecordingSettings? _settings;
   InputDevice? _selectedDevice;
   bool _postTranscode = false;
+  int _countdownGeneration = 0;
 
   RecorderStatus status = RecorderStatus.idle;
   Duration elapsed = Duration.zero;
   double amplitude = 0;
   double peakAmplitude = 0;
   bool clipping = false;
+  int countdownRemaining = 0;
   String? lastError;
   RecordConfig? effectiveConfig;
 
   bool get isActive =>
+      status == RecorderStatus.countdown ||
+      status == RecorderStatus.recording ||
+      status == RecorderStatus.paused;
+  bool get isCapturing =>
       status == RecorderStatus.recording || status == RecorderStatus.paused;
   List<double> get waveform => List.unmodifiable(_waveform);
   List<RecordingMarker> get markers => List.unmodifiable(_markers);
@@ -97,6 +110,7 @@ class RecorderService extends ChangeNotifier {
       return;
     }
     _transitioning = true;
+    final countdownGeneration = ++_countdownGeneration;
     try {
       lastError = null;
       final permission = await _recorder.hasPermission();
@@ -113,6 +127,25 @@ class RecorderService extends ChangeNotifier {
       clipping = false;
       elapsed = Duration.zero;
       effectiveConfig = null;
+
+      if (settings.countdownSeconds > 0) {
+        status = RecorderStatus.countdown;
+        countdownRemaining = settings.countdownSeconds;
+        notifyListeners();
+        while (countdownRemaining > 0) {
+          await Future<void>.delayed(const Duration(seconds: 1));
+          if (countdownGeneration != _countdownGeneration ||
+              status != RecorderStatus.countdown) {
+            return;
+          }
+          countdownRemaining--;
+          notifyListeners();
+        }
+      }
+
+      if (countdownGeneration != _countdownGeneration) {
+        return;
+      }
 
       final requestedEncoder = settings.format.nativeEncoder;
       final directSupported = !settings.format.needsTranscode &&
@@ -138,7 +171,10 @@ class RecorderService extends ChangeNotifier {
       }
 
       _capturePath = _postTranscode
-          ? await _storage.uniqueTempPath('${_title}_capture', captureExtension)
+          ? await _storage.uniqueTempPath(
+              '${_title}_capture',
+              captureExtension,
+            )
           : await _storage.uniqueRecordingPath(_title!, captureExtension);
       _targetPath = _postTranscode
           ? await _storage.uniqueRecordingPath(
@@ -182,10 +218,12 @@ class RecorderService extends ChangeNotifier {
           notifyListeners();
         },
       );
+      countdownRemaining = 0;
       status = RecorderStatus.recording;
       notifyListeners();
     } catch (error) {
       status = RecorderStatus.error;
+      countdownRemaining = 0;
       lastError = error.toString();
       await _safeStopBackground();
       await _cleanupFailedCapture();
@@ -246,7 +284,7 @@ class RecorderService extends ChangeNotifier {
   }
 
   void addMarker({String? label, String note = ''}) {
-    if (!isActive) {
+    if (!isCapturing) {
       return;
     }
     final index = _markers.length + 1;
@@ -263,7 +301,7 @@ class RecorderService extends ChangeNotifier {
   }
 
   Future<RecorderResult> stop() async {
-    if (_transitioning || !isActive) {
+    if (_transitioning || !isCapturing) {
       throw StateError('No active recording to stop.');
     }
     _transitioning = true;
@@ -322,7 +360,13 @@ class RecorderService extends ChangeNotifier {
   }
 
   Future<void> cancel() async {
-    if (_transitioning || !isActive) {
+    if (status == RecorderStatus.countdown) {
+      _countdownGeneration++;
+      countdownRemaining = 0;
+      _resetState();
+      return;
+    }
+    if (_transitioning || !isCapturing) {
       return;
     }
     _transitioning = true;
@@ -384,6 +428,7 @@ class RecorderService extends ChangeNotifier {
     _title = null;
     _settings = null;
     _postTranscode = false;
+    countdownRemaining = 0;
     elapsed = Duration.zero;
     amplitude = 0;
     peakAmplitude = 0;
@@ -394,6 +439,7 @@ class RecorderService extends ChangeNotifier {
 
   @override
   void dispose() {
+    _countdownGeneration++;
     _timer?.cancel();
     unawaited(_amplitudeSubscription?.cancel());
     _recorder.dispose();
