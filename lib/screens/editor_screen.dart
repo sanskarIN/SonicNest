@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../controllers/app_controller.dart';
 import '../core/formatters.dart';
+import '../l10n/app_localizations.dart';
 import '../models/recording_entry.dart';
 import '../models/recording_settings.dart';
 import '../services/advanced_audio_processor.dart';
@@ -45,6 +46,7 @@ class _EditorScreenState extends State<EditorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final maxMs = math.max(1, entry.durationMs).toDouble();
     final start = Duration(milliseconds: _trimRange.start.round());
     final end = Duration(milliseconds: _trimRange.end.round());
@@ -55,22 +57,22 @@ class _EditorScreenState extends State<EditorScreen> {
     );
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Audio Editor'),
+        title: Text(l10n.audioEditor),
         actions: [
           IconButton(
-            tooltip: 'Undo selection change',
+            tooltip: l10n.undoSelectionChange,
             onPressed:
                 _processing || _undoRanges.isEmpty ? null : _undoSelection,
             icon: const Icon(Icons.undo),
           ),
           IconButton(
-            tooltip: 'Redo selection change',
+            tooltip: l10n.redoSelectionChange,
             onPressed:
                 _processing || _redoRanges.isEmpty ? null : _redoSelection,
             icon: const Icon(Icons.redo),
           ),
           IconButton(
-            tooltip: 'Reset selection',
+            tooltip: l10n.resetSelection,
             onPressed: _processing ? null : _resetSelection,
             icon: const Icon(Icons.restart_alt),
           ),
@@ -91,9 +93,7 @@ class _EditorScreenState extends State<EditorScreen> {
                       ?.copyWith(fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 6),
-                const Text(
-                  'Edits are exported as new files. Your original recording is never overwritten.',
-                ),
+                Text(l10n.editorNonDestructiveHint),
                 const SizedBox(height: 24),
                 Card(
                   child: Padding(
@@ -102,16 +102,14 @@ class _EditorScreenState extends State<EditorScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Selection editor',
+                          l10n.selectionEditor,
                           style: Theme.of(context)
                               .textTheme
                               .titleLarge
                               ?.copyWith(fontWeight: FontWeight.w700),
                         ),
                         const SizedBox(height: 6),
-                        const Text(
-                          'Drag either handle directly on the waveform or use the range slider.',
-                        ),
+                        Text(l10n.selectionEditorHint),
                         const SizedBox(height: 16),
                         WaveformView(
                           samples: entry.waveform,
@@ -151,11 +149,15 @@ class _EditorScreenState extends State<EditorScreen> {
                         Row(
                           children: [
                             Expanded(
-                              child: Text('Start ${formatDuration(start)}'),
+                              child: Text(
+                                l10n.selectionStart(formatDuration(start)),
+                              ),
                             ),
                             Text(
-                              'End ${formatDuration(end)} • '
-                              '${formatDuration(selectionDuration)} selected',
+                              l10n.selectionEnd(
+                                formatDuration(end),
+                                formatDuration(selectionDuration),
+                              ),
                             ),
                           ],
                         ),
@@ -171,7 +173,7 @@ class _EditorScreenState extends State<EditorScreen> {
                                   ? null
                                   : () => _runTrim(start, end),
                               icon: const Icon(Icons.crop),
-                              label: const Text('Keep selection as copy'),
+                              label: Text(l10n.keepSelectionAsCopy),
                             ),
                             FilledButton.tonalIcon(
                               onPressed: _processing ||
@@ -181,7 +183,7 @@ class _EditorScreenState extends State<EditorScreen> {
                                   ? null
                                   : () => _cutSelection(start, end),
                               icon: const Icon(Icons.content_cut),
-                              label: const Text('Cut selection from copy'),
+                              label: Text(l10n.cutSelectionFromCopy),
                             ),
                           ],
                         ),
@@ -197,7 +199,7 @@ class _EditorScreenState extends State<EditorScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Quick processing',
+                          l10n.quickProcessing,
                           style: Theme.of(context)
                               .textTheme
                               .titleLarge
@@ -211,52 +213,52 @@ class _EditorScreenState extends State<EditorScreen> {
                             FilledButton.tonalIcon(
                               onPressed: _processing ? null : _normalize,
                               icon: const Icon(Icons.multiline_chart),
-                              label: const Text('Normalize'),
+                              label: Text(l10n.normalize),
                             ),
                             FilledButton.tonalIcon(
                               onPressed: _processing ? null : _removeSilence,
                               icon: const Icon(Icons.content_cut_outlined),
-                              label: const Text('Remove silence'),
+                              label: Text(l10n.removeSilence),
                             ),
                             FilledButton.tonalIcon(
                               onPressed: _processing ? null : _fade,
                               icon: const Icon(Icons.gradient),
-                              label: const Text('Fade in/out'),
+                              label: Text(l10n.fadeInOut),
                             ),
                             FilledButton.tonalIcon(
                               onPressed: _processing ? null : _split,
                               icon: const Icon(Icons.call_split),
-                              label: const Text('Split at playhead'),
+                              label: Text(l10n.splitAtPlayhead),
                             ),
                             FilledButton.tonalIcon(
                               onPressed: _processing ? null : _merge,
                               icon: const Icon(Icons.merge_type),
-                              label: const Text('Merge another file'),
+                              label: Text(l10n.mergeAnotherFile),
                             ),
                             FilledButton.tonalIcon(
                               onPressed: _processing ? null : _noiseCleanup,
                               icon: const Icon(Icons.cleaning_services_outlined),
-                              label: const Text('Basic noise cleanup'),
+                              label: Text(l10n.basicNoiseCleanup),
                             ),
                             FilledButton.tonalIcon(
                               onPressed: _processing ? null : _compress,
                               icon: const Icon(Icons.compress),
-                              label: const Text('Compressor'),
+                              label: Text(l10n.compressor),
                             ),
                             FilledButton.tonalIcon(
                               onPressed: _processing ? null : _limit,
                               icon: const Icon(Icons.vertical_align_center),
-                              label: const Text('Limiter'),
+                              label: Text(l10n.limiter),
                             ),
                             FilledButton.tonalIcon(
                               onPressed: _processing ? null : _highPass,
                               icon: const Icon(Icons.trending_up),
-                              label: const Text('High-pass voice filter'),
+                              label: Text(l10n.highPassVoiceFilter),
                             ),
                             FilledButton.tonalIcon(
                               onPressed: _processing ? null : _lowPass,
                               icon: const Icon(Icons.trending_down),
-                              label: const Text('Low-pass filter'),
+                              label: Text(l10n.lowPassFilter),
                             ),
                           ],
                         ),
@@ -272,14 +274,14 @@ class _EditorScreenState extends State<EditorScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Gain & silence',
+                          l10n.gainAndSilence,
                           style: Theme.of(context)
                               .textTheme
                               .titleLarge
                               ?.copyWith(fontWeight: FontWeight.w700),
                         ),
                         const SizedBox(height: 10),
-                        Text('Output gain: ${_gainDb.toStringAsFixed(1)} dB'),
+                        Text(l10n.outputGain(_gainDb.toStringAsFixed(1))),
                         Slider(
                           value: _gainDb,
                           min: -18,
@@ -295,7 +297,7 @@ class _EditorScreenState extends State<EditorScreen> {
                               ? null
                               : _applyGain,
                           icon: const Icon(Icons.volume_up_outlined),
-                          label: const Text('Export gain-adjusted copy'),
+                          label: Text(l10n.exportGainAdjustedCopy),
                         ),
                         const Divider(height: 32),
                         Row(
@@ -303,8 +305,8 @@ class _EditorScreenState extends State<EditorScreen> {
                             Expanded(
                               child: DropdownButtonFormField<Duration>(
                                 initialValue: _silenceDuration,
-                                decoration: const InputDecoration(
-                                  labelText: 'Silence duration',
+                                decoration: InputDecoration(
+                                  labelText: l10n.silenceDuration,
                                 ),
                                 items: const [
                                   Duration(milliseconds: 250),
@@ -339,7 +341,7 @@ class _EditorScreenState extends State<EditorScreen> {
                             FilledButton.tonalIcon(
                               onPressed: _processing ? null : _insertSilence,
                               icon: const Icon(Icons.space_bar),
-                              label: const Text('Insert at playhead'),
+                              label: Text(l10n.insertAtPlayhead),
                             ),
                           ],
                         ),
@@ -355,16 +357,14 @@ class _EditorScreenState extends State<EditorScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Export preset',
+                          l10n.exportPreset,
                           style: Theme.of(context)
                               .textTheme
                               .titleLarge
                               ?.copyWith(fontWeight: FontWeight.w700),
                         ),
                         const SizedBox(height: 6),
-                        const Text(
-                          'Create a converted copy in a common recording format.',
-                        ),
+                        Text(l10n.exportPresetHint),
                         const SizedBox(height: 14),
                         Wrap(
                           spacing: 12,
@@ -373,7 +373,7 @@ class _EditorScreenState extends State<EditorScreen> {
                           children: [
                             DropdownMenu<RecordingFormat>(
                               initialSelection: _exportFormat,
-                              label: const Text('Format'),
+                              label: Text(l10n.format),
                               onSelected: _processing
                                   ? null
                                   : (value) {
@@ -391,11 +391,10 @@ class _EditorScreenState extends State<EditorScreen> {
                                   .toList(),
                             ),
                             FilledButton.tonalIcon(
-                              onPressed:
-                                  _processing ? null : _exportPreset,
+                              onPressed: _processing ? null : _exportPreset,
                               icon: const Icon(Icons.audio_file_outlined),
                               label: Text(
-                                'Export ${_exportFormat.label} copy',
+                                l10n.exportFormatCopy(_exportFormat.label),
                               ),
                             ),
                           ],
@@ -409,8 +408,8 @@ class _EditorScreenState extends State<EditorScreen> {
                   child: ListTile(
                     leading: IconButton.filledTonal(
                       tooltip: controller.player.isPlaying
-                          ? 'Pause preview'
-                          : 'Play preview',
+                          ? l10n.pausePreview
+                          : l10n.playPreview,
                       onPressed: () => controller.player.isPlaying
                           ? controller.player.pause()
                           : controller.player.play(),
@@ -420,7 +419,7 @@ class _EditorScreenState extends State<EditorScreen> {
                             : Icons.play_arrow,
                       ),
                     ),
-                    title: const Text('Preview original'),
+                    title: Text(l10n.previewOriginal),
                     subtitle: Text(
                       '${formatDuration(controller.player.position)} / '
                       '${formatDuration(controller.player.duration)}',
@@ -461,7 +460,7 @@ class _EditorScreenState extends State<EditorScreen> {
                             )
                           : const Icon(Icons.check_circle_outline),
                       title: Text(
-                        _processing ? 'Processing audio' : 'Editor status',
+                        _processing ? l10n.processingAudio : l10n.editorStatus,
                       ),
                       subtitle: _status == null ? null : Text(_status!),
                     ),
@@ -530,8 +529,9 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   Future<void> _runTrim(Duration start, Duration end) async {
-    await _run('Selection copy created.', () async {
-      final title = '${entry.title} Selection';
+    final l10n = AppLocalizations.of(context);
+    await _run(l10n.selectionCopyCreated, () async {
+      final title = l10n.selectionCopyTitle(entry.title);
       final output = await controller.processor.trim(
         inputPath: entry.filePath,
         outputTitle: title,
@@ -550,8 +550,9 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   Future<void> _cutSelection(Duration start, Duration end) async {
-    await _run('Cut copy created.', () async {
-      final title = '${entry.title} Cut';
+    final l10n = AppLocalizations.of(context);
+    await _run(l10n.cutCopyCreated, () async {
+      final title = l10n.cutCopyTitle(entry.title);
       final output = await _advanced.cutSelection(
         inputPath: entry.filePath,
         outputTitle: title,
@@ -570,16 +571,18 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   Future<void> _normalize() async {
-    await _run('Normalized copy created.', () async {
+    final l10n = AppLocalizations.of(context);
+    final title = l10n.normalizedCopyTitle(entry.title);
+    await _run(l10n.normalizedCopyCreated, () async {
       final output = await controller.processor.normalize(
         inputPath: entry.filePath,
-        outputTitle: '${entry.title} Normalized',
+        outputTitle: title,
         format: entry.format,
         bitRate: _bitRate,
       );
       await controller.addProcessedFile(
         output,
-        title: '${entry.title} Normalized',
+        title: title,
         format: entry.format,
         markers: entry.markers,
       );
@@ -587,37 +590,41 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   Future<void> _removeSilence() async {
-    await _run('Silence-cleaned copy created.', () async {
+    final l10n = AppLocalizations.of(context);
+    final title = l10n.silenceCleanedCopyTitle(entry.title);
+    await _run(l10n.silenceCleanedCopyCreated, () async {
       final output = await controller.processor.removeSilence(
         inputPath: entry.filePath,
-        outputTitle: '${entry.title} Silence Cleaned',
+        outputTitle: title,
         format: entry.format,
         bitRate: _bitRate,
       );
       await controller.addProcessedFile(
         output,
-        title: '${entry.title} Silence Cleaned',
+        title: title,
         format: entry.format,
       );
     });
   }
 
   Future<void> _fade() async {
+    final l10n = AppLocalizations.of(context);
     final duration = entry.duration;
     final outStart = duration > const Duration(seconds: 2)
         ? duration - const Duration(seconds: 1)
         : duration * .5;
-    await _run('Faded copy created.', () async {
+    final title = l10n.fadedCopyTitle(entry.title);
+    await _run(l10n.fadedCopyCreated, () async {
       final output = await controller.processor.fade(
         inputPath: entry.filePath,
-        outputTitle: '${entry.title} Faded',
+        outputTitle: title,
         format: entry.format,
         bitRate: _bitRate,
         fadeOutStart: outStart,
       );
       await controller.addProcessedFile(
         output,
-        title: '${entry.title} Faded',
+        title: title,
         format: entry.format,
         markers: entry.markers,
       );
@@ -625,15 +632,16 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   Future<void> _split() async {
+    final l10n = AppLocalizations.of(context);
     var at = controller.player.position;
     if (at <= Duration.zero || at >= entry.duration) {
       at = Duration(milliseconds: entry.durationMs ~/ 2);
     }
     if (at <= Duration.zero) {
-      setState(() => _status = 'This recording is too short to split.');
+      setState(() => _status = l10n.recordingTooShortToSplit);
       return;
     }
-    await _run('Split copies created.', () async {
+    await _run(l10n.splitCopiesCreated, () async {
       final outputs = await controller.processor.split(
         inputPath: entry.filePath,
         outputTitle: entry.title,
@@ -643,41 +651,45 @@ class _EditorScreenState extends State<EditorScreen> {
       );
       await controller.addProcessedFile(
         outputs[0],
-        title: '${entry.title} Part 1',
+        title: l10n.partTitle(entry.title, 1),
         format: entry.format,
       );
       await controller.addProcessedFile(
         outputs[1],
-        title: '${entry.title} Part 2',
+        title: l10n.partTitle(entry.title, 2),
         format: entry.format,
       );
     });
   }
 
   Future<void> _merge() async {
+    final l10n = AppLocalizations.of(context);
     final other = await controller.external.pickSingleAudioFile();
     if (other == null) {
       return;
     }
-    await _run('Merged copy created.', () async {
+    final title = l10n.mergedCopyTitle(entry.title);
+    await _run(l10n.mergedCopyCreated, () async {
       final output = await controller.processor.merge(
         inputPaths: [entry.filePath, other],
-        outputTitle: '${entry.title} Merged',
+        outputTitle: title,
         format: entry.format,
         bitRate: _bitRate,
       );
       await controller.addProcessedFile(
         output,
-        title: '${entry.title} Merged',
+        title: title,
         format: entry.format,
       );
     });
   }
 
   Future<void> _applyGain() async {
+    final l10n = AppLocalizations.of(context);
     final gain = _gainDb;
-    await _run('Gain-adjusted copy created.', () async {
-      final title = '${entry.title} ${gain >= 0 ? '+' : ''}${gain.toStringAsFixed(1)}dB';
+    await _run(l10n.gainAdjustedCopyCreated, () async {
+      final title =
+          '${entry.title} ${gain >= 0 ? '+' : ''}${gain.toStringAsFixed(1)}dB';
       final output = await _advanced.adjustVolume(
         inputPath: entry.filePath,
         outputTitle: title,
@@ -695,13 +707,14 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   Future<void> _insertSilence() async {
+    final l10n = AppLocalizations.of(context);
     final raw = controller.player.position;
     final at = raw < Duration.zero
         ? Duration.zero
         : (raw > entry.duration ? entry.duration : raw);
     final silence = _silenceDuration;
-    await _run('Silence-inserted copy created.', () async {
-      final title = '${entry.title} With Silence';
+    await _run(l10n.silenceInsertedCopyCreated, () async {
+      final title = l10n.silenceInsertedCopyTitle(entry.title);
       final output = await _advanced.insertSilence(
         inputPath: entry.filePath,
         outputTitle: title,
@@ -725,62 +738,77 @@ class _EditorScreenState extends State<EditorScreen> {
     });
   }
 
-  Future<void> _noiseCleanup() => _advancedCopy(
-        success: 'Noise-cleaned copy created.',
-        title: '${entry.title} Noise Cleaned',
-        action: (title) => _advanced.noiseCleanup(
-          inputPath: entry.filePath,
-          outputTitle: title,
-          format: entry.format,
-          bitRate: _bitRate,
-        ),
-      );
+  Future<void> _noiseCleanup() {
+    final l10n = AppLocalizations.of(context);
+    return _advancedCopy(
+      success: l10n.noiseCleanedCopyCreated,
+      title: l10n.noiseCleanedCopyTitle(entry.title),
+      action: (title) => _advanced.noiseCleanup(
+        inputPath: entry.filePath,
+        outputTitle: title,
+        format: entry.format,
+        bitRate: _bitRate,
+      ),
+    );
+  }
 
-  Future<void> _compress() => _advancedCopy(
-        success: 'Compressed-dynamics copy created.',
-        title: '${entry.title} Compressed',
-        action: (title) => _advanced.compressor(
-          inputPath: entry.filePath,
-          outputTitle: title,
-          format: entry.format,
-          bitRate: _bitRate,
-        ),
-      );
+  Future<void> _compress() {
+    final l10n = AppLocalizations.of(context);
+    return _advancedCopy(
+      success: l10n.compressedDynamicsCopyCreated,
+      title: l10n.compressedCopyTitle(entry.title),
+      action: (title) => _advanced.compressor(
+        inputPath: entry.filePath,
+        outputTitle: title,
+        format: entry.format,
+        bitRate: _bitRate,
+      ),
+    );
+  }
 
-  Future<void> _limit() => _advancedCopy(
-        success: 'Limited copy created.',
-        title: '${entry.title} Limited',
-        action: (title) => _advanced.limiter(
-          inputPath: entry.filePath,
-          outputTitle: title,
-          format: entry.format,
-          bitRate: _bitRate,
-        ),
-      );
+  Future<void> _limit() {
+    final l10n = AppLocalizations.of(context);
+    return _advancedCopy(
+      success: l10n.limitedCopyCreated,
+      title: l10n.limitedCopyTitle(entry.title),
+      action: (title) => _advanced.limiter(
+        inputPath: entry.filePath,
+        outputTitle: title,
+        format: entry.format,
+        bitRate: _bitRate,
+      ),
+    );
+  }
 
-  Future<void> _highPass() => _advancedCopy(
-        success: 'High-pass filtered copy created.',
-        title: '${entry.title} High Pass',
-        action: (title) => _advanced.highPass(
-          inputPath: entry.filePath,
-          outputTitle: title,
-          format: entry.format,
-          bitRate: _bitRate,
-          frequencyHz: 100,
-        ),
-      );
+  Future<void> _highPass() {
+    final l10n = AppLocalizations.of(context);
+    return _advancedCopy(
+      success: l10n.highPassFilteredCopyCreated,
+      title: l10n.highPassCopyTitle(entry.title),
+      action: (title) => _advanced.highPass(
+        inputPath: entry.filePath,
+        outputTitle: title,
+        format: entry.format,
+        bitRate: _bitRate,
+        frequencyHz: 100,
+      ),
+    );
+  }
 
-  Future<void> _lowPass() => _advancedCopy(
-        success: 'Low-pass filtered copy created.',
-        title: '${entry.title} Low Pass',
-        action: (title) => _advanced.lowPass(
-          inputPath: entry.filePath,
-          outputTitle: title,
-          format: entry.format,
-          bitRate: _bitRate,
-          frequencyHz: 12000,
-        ),
-      );
+  Future<void> _lowPass() {
+    final l10n = AppLocalizations.of(context);
+    return _advancedCopy(
+      success: l10n.lowPassFilteredCopyCreated,
+      title: l10n.lowPassCopyTitle(entry.title),
+      action: (title) => _advanced.lowPass(
+        inputPath: entry.filePath,
+        outputTitle: title,
+        format: entry.format,
+        bitRate: _bitRate,
+        frequencyHz: 12000,
+      ),
+    );
+  }
 
   Future<void> _advancedCopy({
     required String success,
@@ -799,8 +827,9 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   Future<void> _exportPreset() async {
+    final l10n = AppLocalizations.of(context);
     final format = _exportFormat;
-    await _run('${format.label} copy created.', () async {
+    await _run(l10n.formatCopyCreated(format.label), () async {
       final title = '${entry.title} ${format.label}';
       final output = await controller.processor.transcode(
         inputPath: entry.filePath,
@@ -901,7 +930,8 @@ class _EditorScreenState extends State<EditorScreen> {
       if (!mounted) {
         return;
       }
-      setState(() => _status = 'Processing failed: $error');
+      final message = AppLocalizations.of(context).processingFailed(error);
+      setState(() => _status = message);
     } finally {
       if (mounted) {
         setState(() => _processing = false);
