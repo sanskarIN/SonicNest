@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
+import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -51,6 +54,35 @@ class ExternalActions {
     return FilePicker.platform.getDirectoryPath(
       dialogTitle: 'Choose export folder',
     );
+  }
+
+  Future<String> copyFileToDirectoryCollisionSafe({
+    required String sourcePath,
+    required String directoryPath,
+  }) async {
+    final source = File(sourcePath);
+    if (!await source.exists()) {
+      throw StateError('Source file no longer exists.');
+    }
+
+    final directory = Directory(directoryPath);
+    if (!await directory.exists()) {
+      throw StateError('The selected destination folder is unavailable.');
+    }
+
+    final fileName = p.basename(sourcePath);
+    final stem = p.basenameWithoutExtension(fileName);
+    final extension = p.extension(fileName);
+    var candidate = p.join(directory.path, '$stem$extension');
+    var suffix = 2;
+
+    while (await File(candidate).exists()) {
+      candidate = p.join(directory.path, '$stem ($suffix)$extension');
+      suffix++;
+    }
+
+    final copied = await source.copy(candidate);
+    return copied.path;
   }
 
   Future<void> shareFile(String path, {String? text}) =>
