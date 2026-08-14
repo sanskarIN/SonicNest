@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:ffmpeg_kit_flutter_new_audio/ffprobe_kit.dart';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
+import 'package:path/path.dart' as p;
 
 class PlayerService extends ChangeNotifier {
   PlayerService() {
@@ -46,12 +49,13 @@ class PlayerService extends ChangeNotifier {
   bool get skipSilence => _player.skipSilenceEnabled;
 
   Future<Duration> probeDuration(String path) async {
-    final probe = AudioPlayer();
-    try {
-      return await probe.setFilePath(path) ?? Duration.zero;
-    } finally {
-      await probe.dispose();
+    final session = await FFprobeKit.getMediaInformation(path);
+    final information = await session.getMediaInformation();
+    final seconds = double.tryParse(information?.getDuration() ?? '');
+    if (seconds == null || !seconds.isFinite || seconds < 0) {
+      return Duration.zero;
     }
+    return Duration(milliseconds: (seconds * 1000).round());
   }
 
   Future<void> load(
@@ -63,7 +67,17 @@ class PlayerService extends ChangeNotifier {
       throw const FileSystemException('Audio file does not exist.');
     }
     lastError = null;
-    await _player.setFilePath(path);
+    final title = p.basenameWithoutExtension(path);
+    await _player.setAudioSource(
+      AudioSource.uri(
+        Uri.file(path),
+        tag: MediaItem(
+          id: path,
+          album: 'SonicNest',
+          title: title,
+        ),
+      ),
+    );
     loadedPath = path;
     await _player.setSpeed(speed.clamp(.5, 2.0).toDouble());
     try {
