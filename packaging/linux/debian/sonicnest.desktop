@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=SonicNest
+GenericName=Sound Recorder
+Comment=Privacy-first sound and voice recorder
+Exec=/opt/sonicnest/sonic_nest
+Icon=sonicnest
+Terminal=false
+Categories=AudioVideo;Audio;Recorder;Utility;
+Keywords=audio;sound;voice;recorder;recording;microphone;
+StartupNotify=true
+StartupWMClass=sonic_nest
