@@ -53,14 +53,14 @@ class AudioProcessor {
   }
 
   String _codecArgs(RecordingFormat format, int bitRate) => switch (format) {
-        RecordingFormat.mp3 => '-codec:a libmp3lame -b:a ${bitRate ~/ 1000}k',
-        RecordingFormat.ogg => '-codec:a libvorbis -q:a 5',
-        RecordingFormat.aac => '-codec:a aac -b:a ${bitRate ~/ 1000}k -f adts',
-        RecordingFormat.m4a => '-codec:a aac -b:a ${bitRate ~/ 1000}k',
-        RecordingFormat.flac => '-codec:a flac',
-        RecordingFormat.opus => '-codec:a libopus -b:a ${bitRate ~/ 1000}k',
-        RecordingFormat.wav => '-codec:a pcm_s16le',
-      };
+    RecordingFormat.mp3 => '-codec:a libmp3lame -b:a ${bitRate ~/ 1000}k',
+    RecordingFormat.ogg => '-codec:a libvorbis -q:a 5',
+    RecordingFormat.aac => '-codec:a aac -b:a ${bitRate ~/ 1000}k -f adts',
+    RecordingFormat.m4a => '-codec:a aac -b:a ${bitRate ~/ 1000}k',
+    RecordingFormat.flac => '-codec:a flac',
+    RecordingFormat.opus => '-codec:a libopus -b:a ${bitRate ~/ 1000}k',
+    RecordingFormat.wav => '-codec:a pcm_s16le',
+  };
 
   Future<List<double>> extractWaveformEnvelope(
     String inputPath, {
@@ -94,9 +94,11 @@ class AudioProcessor {
       final result = <double>[];
       final handle = await pcm.open();
       try {
-        for (var offset = 0;
-            offset < length && result.length < envelopePoints;
-            offset += bytesPerBin) {
+        for (
+          var offset = 0;
+          offset < length && result.length < envelopePoints;
+          offset += bytesPerBin
+        ) {
           await handle.setPosition(offset);
           final remaining = length - offset;
           final bytes = await handle.read(math.min(bytesPerBin, remaining));
@@ -119,8 +121,10 @@ class AudioProcessor {
     required int sampleRate,
     required int channels,
   }) async {
-    final output =
-        await _storage.uniqueRecordingPath(outputTitle, format.extension);
+    final output = await _storage.uniqueRecordingPath(
+      outputTitle,
+      format.extension,
+    );
     final args = _codecArgs(format, bitRate);
     await _run(
       '-y -i ${_q(inputPath)} -vn -ar $sampleRate -ac $channels $args ${_q(output)}',
@@ -142,8 +146,10 @@ class AudioProcessor {
     if (start.isNegative || end <= start) {
       throw const AudioProcessingException('Trim range is invalid.');
     }
-    final output =
-        await _storage.uniqueRecordingPath(outputTitle, format.extension);
+    final output = await _storage.uniqueRecordingPath(
+      outputTitle,
+      format.extension,
+    );
     final args = _codecArgs(format, bitRate);
     final startSeconds = start.inMilliseconds / 1000;
     final durationSeconds = (end - start).inMilliseconds / 1000;
@@ -175,12 +181,8 @@ class AudioProcessor {
     );
     final args = _codecArgs(format, bitRate);
     final seconds = at.inMilliseconds / 1000;
-    await _run(
-      '-y -i ${_q(inputPath)} -t $seconds -vn $args ${_q(first)}',
-    );
-    await _run(
-      '-y -ss $seconds -i ${_q(inputPath)} -vn $args ${_q(second)}',
-    );
+    await _run('-y -i ${_q(inputPath)} -t $seconds -vn $args ${_q(first)}');
+    await _run('-y -ss $seconds -i ${_q(inputPath)} -vn $args ${_q(second)}');
     return [first, second];
   }
 
@@ -195,8 +197,10 @@ class AudioProcessor {
         'Choose at least two files to merge.',
       );
     }
-    final output =
-        await _storage.uniqueRecordingPath(outputTitle, format.extension);
+    final output = await _storage.uniqueRecordingPath(
+      outputTitle,
+      format.extension,
+    );
     final temp = await _storage.uniqueTempPath('sonicnest_concat', 'txt');
     final listFile = File(temp);
     await listFile.writeAsString(
@@ -206,9 +210,7 @@ class AudioProcessor {
     );
     try {
       final args = _codecArgs(format, bitRate);
-      await _run(
-        '-y -f concat -safe 0 -i ${_q(temp)} -vn $args ${_q(output)}',
-      );
+      await _run('-y -f concat -safe 0 -i ${_q(temp)} -vn $args ${_q(output)}');
       return output;
     } finally {
       await _storage.deleteIfExists(temp);
@@ -220,14 +222,13 @@ class AudioProcessor {
     required String outputTitle,
     required RecordingFormat format,
     required int bitRate,
-  }) =>
-      _filter(
-        inputPath: inputPath,
-        outputTitle: outputTitle,
-        format: format,
-        bitRate: bitRate,
-        audioFilter: 'loudnorm=I=-16:LRA=11:TP=-1.5',
-      );
+  }) => _filter(
+    inputPath: inputPath,
+    outputTitle: outputTitle,
+    format: format,
+    bitRate: bitRate,
+    audioFilter: 'loudnorm=I=-16:LRA=11:TP=-1.5',
+  );
 
   Future<String> fade({
     required String inputPath,
@@ -256,15 +257,13 @@ class AudioProcessor {
     required String outputTitle,
     required RecordingFormat format,
     required int bitRate,
-  }) =>
-      _filter(
-        inputPath: inputPath,
-        outputTitle: outputTitle,
-        format: format,
-        bitRate: bitRate,
-        audioFilter:
-            'silenceremove=start_periods=1:start_duration=0.2:start_threshold=-45dB:stop_periods=-1:stop_duration=0.6:stop_threshold=-45dB',
-      );
+  }) => _filter(
+    inputPath: inputPath,
+    outputTitle: outputTitle,
+    format: format,
+    bitRate: bitRate,
+    audioFilter: 'silenceremove=start_periods=1:start_duration=0.2:start_threshold=-45dB:stop_periods=-1:stop_duration=0.6:stop_threshold=-45dB',
+  );
 
   Future<String> _filter({
     required String inputPath,
@@ -273,8 +272,10 @@ class AudioProcessor {
     required int bitRate,
     required String audioFilter,
   }) async {
-    final output =
-        await _storage.uniqueRecordingPath(outputTitle, format.extension);
+    final output = await _storage.uniqueRecordingPath(
+      outputTitle,
+      format.extension,
+    );
     final args = _codecArgs(format, bitRate);
     await _run(
       '-y -i ${_q(inputPath)} -vn -af ${_q(audioFilter)} $args ${_q(output)}',

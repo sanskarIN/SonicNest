@@ -11,7 +11,11 @@ import '../services/advanced_audio_processor.dart';
 import '../widgets/waveform_view.dart';
 
 class EditorScreen extends StatefulWidget {
-  const EditorScreen({super.key, required this.controller, required this.entry});
+  const EditorScreen({
+    super.key,
+    required this.controller,
+    required this.entry,
+  });
 
   final AppController controller;
   final RecordingEntry entry;
@@ -61,14 +65,16 @@ class _EditorScreenState extends State<EditorScreen> {
         actions: [
           IconButton(
             tooltip: l10n.undoSelectionChange,
-            onPressed:
-                _processing || _undoRanges.isEmpty ? null : _undoSelection,
+            onPressed: _processing || _undoRanges.isEmpty
+                ? null
+                : _undoSelection,
             icon: const Icon(Icons.undo),
           ),
           IconButton(
             tooltip: l10n.redoSelectionChange,
-            onPressed:
-                _processing || _redoRanges.isEmpty ? null : _redoSelection,
+            onPressed: _processing || _redoRanges.isEmpty
+                ? null
+                : _redoSelection,
             icon: const Icon(Icons.redo),
           ),
           IconButton(
@@ -87,9 +93,7 @@ class _EditorScreenState extends State<EditorScreen> {
               children: [
                 Text(
                   entry.title,
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineSmall
+                  style: Theme.of(context).textTheme.headlineSmall
                       ?.copyWith(fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 6),
@@ -103,9 +107,7 @@ class _EditorScreenState extends State<EditorScreen> {
                       children: [
                         Text(
                           l10n.selectionEditor,
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleLarge
+                          style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(fontWeight: FontWeight.w700),
                         ),
                         const SizedBox(height: 6),
@@ -137,14 +139,15 @@ class _EditorScreenState extends State<EditorScreen> {
                             formatDuration(start),
                             formatDuration(end),
                           ),
-                          onChangeStart:
-                              _processing ? null : (_) => _beginRangeEdit(),
+                          onChangeStart: _processing
+                              ? null
+                              : (_) => _beginRangeEdit(),
                           onChanged: _processing
                               ? null
-                              : (value) =>
-                                  setState(() => _trimRange = value),
-                          onChangeEnd:
-                              _processing ? null : (_) => _finishRangeEdit(),
+                              : (value) => setState(() => _trimRange = value),
+                          onChangeEnd: _processing
+                              ? null
+                              : (_) => _finishRangeEdit(),
                         ),
                         Row(
                           children: [
@@ -167,7 +170,8 @@ class _EditorScreenState extends State<EditorScreen> {
                           runSpacing: 10,
                           children: [
                             FilledButton.icon(
-                              onPressed: _processing ||
+                              onPressed:
+                                  _processing ||
                                       selectionDuration <
                                           const Duration(milliseconds: 200)
                                   ? null
@@ -176,7 +180,8 @@ class _EditorScreenState extends State<EditorScreen> {
                               label: Text(l10n.keepSelectionAsCopy),
                             ),
                             FilledButton.tonalIcon(
-                              onPressed: _processing ||
+                              onPressed:
+                                  _processing ||
                                       selectionDuration <
                                           const Duration(milliseconds: 200) ||
                                       selectionDuration >= entry.duration
@@ -200,9 +205,7 @@ class _EditorScreenState extends State<EditorScreen> {
                       children: [
                         Text(
                           l10n.quickProcessing,
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleLarge
+                          style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(fontWeight: FontWeight.w700),
                         ),
                         const SizedBox(height: 14),
@@ -237,7 +240,9 @@ class _EditorScreenState extends State<EditorScreen> {
                             ),
                             FilledButton.tonalIcon(
                               onPressed: _processing ? null : _noiseCleanup,
-                              icon: const Icon(Icons.cleaning_services_outlined),
+                              icon: const Icon(
+                                Icons.cleaning_services_outlined,
+                              ),
                               label: Text(l10n.basicNoiseCleanup),
                             ),
                             FilledButton.tonalIcon(
@@ -275,9 +280,7 @@ class _EditorScreenState extends State<EditorScreen> {
                       children: [
                         Text(
                           l10n.gainAndSilence,
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleLarge
+                          style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(fontWeight: FontWeight.w700),
                         ),
                         const SizedBox(height: 10),
@@ -308,24 +311,25 @@ class _EditorScreenState extends State<EditorScreen> {
                                 decoration: InputDecoration(
                                   labelText: l10n.silenceDuration,
                                 ),
-                                items: const [
-                                  Duration(milliseconds: 250),
-                                  Duration(milliseconds: 500),
-                                  Duration(seconds: 1),
-                                  Duration(seconds: 2),
-                                  Duration(seconds: 5),
-                                ]
-                                    .map(
-                                      (duration) => DropdownMenuItem(
-                                        value: duration,
-                                        child: Text(
-                                          duration.inMilliseconds < 1000
-                                              ? '${duration.inMilliseconds} ms'
-                                              : '${duration.inMilliseconds / 1000} s',
-                                        ),
-                                      ),
-                                    )
-                                    .toList(),
+                                items:
+                                    const [
+                                          Duration(milliseconds: 250),
+                                          Duration(milliseconds: 500),
+                                          Duration(seconds: 1),
+                                          Duration(seconds: 2),
+                                          Duration(seconds: 5),
+                                        ]
+                                        .map(
+                                          (duration) => DropdownMenuItem(
+                                            value: duration,
+                                            child: Text(
+                                              duration.inMilliseconds < 1000
+                                                  ? '${duration.inMilliseconds} ms'
+                                                  : '${duration.inMilliseconds / 1000} s',
+                                            ),
+                                          ),
+                                        )
+                                        .toList(),
                                 onChanged: _processing
                                     ? null
                                     : (value) {
@@ -358,9 +362,7 @@ class _EditorScreenState extends State<EditorScreen> {
                       children: [
                         Text(
                           l10n.exportPreset,
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleLarge
+                          style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(fontWeight: FontWeight.w700),
                         ),
                         const SizedBox(height: 6),
@@ -430,16 +432,13 @@ class _EditorScreenState extends State<EditorScreen> {
                         value: controller.player.duration.inMilliseconds <= 0
                             ? 0
                             : controller.player.position.inMilliseconds
-                                .clamp(
-                                  0,
-                                  controller.player.duration.inMilliseconds,
-                                )
-                                .toDouble(),
+                                  .clamp(
+                                    0,
+                                    controller.player.duration.inMilliseconds,
+                                  )
+                                  .toDouble(),
                         max: math
-                            .max(
-                              1,
-                              controller.player.duration.inMilliseconds,
-                            )
+                            .max(1, controller.player.duration.inMilliseconds)
                             .toDouble(),
                         onChanged: (value) => controller.player.seek(
                           Duration(milliseconds: value.round()),
@@ -892,10 +891,7 @@ class _EditorScreenState extends State<EditorScreen> {
         .toList();
   }
 
-  List<RecordingMarker> _markersAfterInsertion(
-    Duration at,
-    Duration inserted,
-  ) {
+  List<RecordingMarker> _markersAfterInsertion(Duration at, Duration inserted) {
     return entry.markers
         .map(
           (marker) => RecordingMarker(
@@ -923,9 +919,8 @@ class _EditorScreenState extends State<EditorScreen> {
         return;
       }
       setState(() => _status = success);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(success)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(success)));
     } catch (error) {
       if (!mounted) {
         return;

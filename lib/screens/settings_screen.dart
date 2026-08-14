@@ -24,9 +24,7 @@ class SettingsScreen extends StatelessWidget {
           children: [
             Text(
               l10n.settings,
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineMedium
+              style: Theme.of(context).textTheme.headlineMedium
                   ?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 18),
@@ -108,7 +106,8 @@ class SettingsScreen extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: DropdownButtonFormField<int>(
-                        initialValue: _sampleRates.contains(recording.sampleRate)
+                        initialValue:
+                            _sampleRates.contains(recording.sampleRate)
                             ? recording.sampleRate
                             : 44100,
                         decoration: InputDecoration(labelText: l10n.sampleRate),
@@ -151,11 +150,11 @@ class SettingsScreen extends StatelessWidget {
                   selected: {recording.channels},
                   onSelectionChanged: (value) =>
                       controller.updateRecordingSettings(
-                    recording.copyWith(
-                      channels: value.first,
-                      preset: QualityPreset.custom,
-                    ),
-                  ),
+                        recording.copyWith(
+                          channels: value.first,
+                          preset: QualityPreset.custom,
+                        ),
+                      ),
                 ),
                 const SizedBox(height: 10),
                 SwitchListTile(
@@ -195,9 +194,7 @@ class SettingsScreen extends StatelessWidget {
                 const Divider(height: 28),
                 Text(
                   l10n.smartNaming,
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
+                  style: Theme.of(context).textTheme.titleMedium
                       ?.copyWith(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 10),
@@ -211,12 +208,12 @@ class SettingsScreen extends StatelessWidget {
                   maxLength: 40,
                   onFieldSubmitted: (value) =>
                       controller.updateRecordingSettings(
-                    recording.copyWith(
-                      namingPrefix: value.trim().isEmpty
-                          ? l10n.recordingDefaultPrefix
-                          : value.trim(),
-                    ),
-                  ),
+                        recording.copyWith(
+                          namingPrefix: value.trim().isEmpty
+                              ? l10n.recordingDefaultPrefix
+                              : value.trim(),
+                        ),
+                      ),
                 ),
                 TextFormField(
                   key: ValueKey('template-${recording.namingTemplate}'),
@@ -229,8 +226,8 @@ class SettingsScreen extends StatelessWidget {
                   maxLength: 120,
                   onFieldSubmitted: (value) =>
                       controller.updateRecordingSettings(
-                    recording.copyWith(namingTemplate: value.trim()),
-                  ),
+                        recording.copyWith(namingTemplate: value.trim()),
+                      ),
                 ),
                 const SizedBox(height: 4),
                 Row(
@@ -239,12 +236,14 @@ class SettingsScreen extends StatelessWidget {
                       child: TextFormField(
                         key: ValueKey('category-${recording.namingCategory}'),
                         initialValue: recording.namingCategory,
-                        decoration: InputDecoration(labelText: l10n.categoryToken),
+                        decoration: InputDecoration(
+                          labelText: l10n.categoryToken,
+                        ),
                         maxLength: 30,
                         onFieldSubmitted: (value) =>
                             controller.updateRecordingSettings(
-                          recording.copyWith(namingCategory: value.trim()),
-                        ),
+                              recording.copyWith(namingCategory: value.trim()),
+                            ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -252,12 +251,14 @@ class SettingsScreen extends StatelessWidget {
                       child: TextFormField(
                         key: ValueKey('suffix-${recording.namingSuffix}'),
                         initialValue: recording.namingSuffix,
-                        decoration: InputDecoration(labelText: l10n.suffixToken),
+                        decoration: InputDecoration(
+                          labelText: l10n.suffixToken,
+                        ),
                         maxLength: 30,
                         onFieldSubmitted: (value) =>
                             controller.updateRecordingSettings(
-                          recording.copyWith(namingSuffix: value.trim()),
-                        ),
+                              recording.copyWith(namingSuffix: value.trim()),
+                            ),
                       ),
                     ),
                   ],
@@ -301,8 +302,8 @@ class SettingsScreen extends StatelessWidget {
                 DropdownButtonFormField<double>(
                   initialValue:
                       _playbackSpeeds.contains(settings.defaultPlaybackSpeed)
-                          ? settings.defaultPlaybackSpeed
-                          : 1.0,
+                      ? settings.defaultPlaybackSpeed
+                      : 1.0,
                   decoration: InputDecoration(
                     labelText: l10n.defaultPlaybackSpeed,
                   ),
@@ -326,8 +327,8 @@ class SettingsScreen extends StatelessWidget {
                 DropdownButtonFormField<int>(
                   initialValue:
                       _skipIntervals.contains(settings.skipIntervalSeconds)
-                          ? settings.skipIntervalSeconds
-                          : 10,
+                      ? settings.skipIntervalSeconds
+                      : 10,
                   decoration: InputDecoration(labelText: l10n.jumpInterval),
                   items: _skipIntervals
                       .map(
@@ -441,8 +442,9 @@ class SettingsScreen extends StatelessWidget {
                         if (stats.temporaryFileCount > 0)
                           ListTile(
                             contentPadding: EdgeInsets.zero,
-                            leading:
-                                const Icon(Icons.cleaning_services_outlined),
+                            leading: const Icon(
+                              Icons.cleaning_services_outlined,
+                            ),
                             title: Text(l10n.temporaryAudioFiles),
                             subtitle: Text(
                               l10n.temporaryFilesSummary(
@@ -475,14 +477,7 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  static const _bitRates = [
-    64000,
-    96000,
-    128000,
-    192000,
-    256000,
-    320000,
-  ];
+  static const _bitRates = [64000, 96000, 128000, 192000, 256000, 320000];
   static const _sampleRates = [8000, 16000, 22050, 44100, 48000, 96000];
   static const _playbackSpeeds = [.5, .75, 1.0, 1.25, 1.5, 1.75, 2.0];
   static const _skipIntervals = [5, 10, 15, 30];
@@ -490,10 +485,7 @@ class SettingsScreen extends StatelessWidget {
   static String _sampleRateLabel(int rate) =>
       rate == 22050 ? '22.05 kHz' : '${rate / 1000} kHz';
 
-  static String _presetLabel(
-    QualityPreset preset,
-    AppLocalizations l10n,
-  ) =>
+  static String _presetLabel(QualityPreset preset, AppLocalizations l10n) =>
       switch (preset) {
         QualityPreset.speech => l10n.speech,
         QualityPreset.meeting => l10n.meeting,
@@ -535,9 +527,7 @@ class _Section extends StatelessWidget {
                   const SizedBox(width: 10),
                   Text(
                     title,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleLarge
+                    style: Theme.of(context).textTheme.titleLarge
                         ?.copyWith(fontWeight: FontWeight.w700),
                   ),
                 ],

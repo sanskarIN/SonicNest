@@ -53,8 +53,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final entries = controller.visibleRecordings;
-    final savedCount =
-        controller.recordings.where((entry) => !entry.isTrashed).length;
+    final savedCount = controller.recordings
+        .where((entry) => !entry.isTrashed)
+        .length;
     return CustomScrollView(
       slivers: [
         SliverPadding(
@@ -121,13 +122,19 @@ class _LibraryScreenState extends State<LibraryScreen> {
                                       .headlineMedium
                                       ?.copyWith(fontWeight: FontWeight.w800),
                                 ),
-                                Text(l10n.libraryCounts(entries.length, savedCount)),
+                                Text(
+                                  l10n.libraryCounts(
+                                    entries.length,
+                                    savedCount,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
                           FilledButton.tonalIcon(
-                            onPressed:
-                                controller.busy ? null : controller.importAudio,
+                            onPressed: controller.busy
+                                ? null
+                                : controller.importAudio,
                             icon: const Icon(Icons.file_download_outlined),
                             label: Text(l10n.importAudio),
                           ),
@@ -237,9 +244,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.bulkActionFailed(error))),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.bulkActionFailed(error))));
     }
   }
 
@@ -249,7 +255,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
     if (entries.isEmpty) {
       return;
     }
-    final approved = !controller.settings.confirmDelete ||
+    final approved =
+        !controller.settings.confirmDelete ||
         await showDialog<bool>(
               context: context,
               builder: (dialogContext) => AlertDialog(
@@ -429,10 +436,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
       MaterialPageRoute(
         builder: (_) => ListenableBuilder(
           listenable: controller,
-          builder: (context, child) => EditorScreen(
-            controller: controller,
-            entry: entry,
-          ),
+          builder: (context, child) =>
+              EditorScreen(controller: controller, entry: entry),
         ),
       ),
     );
@@ -541,7 +546,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
     RecordingEntry entry,
   ) async {
     final l10n = AppLocalizations.of(context);
-    final approved = !controller.settings.confirmDelete ||
+    final approved =
+        !controller.settings.confirmDelete ||
         await showDialog<bool>(
               context: context,
               builder: (dialogContext) => AlertDialog(
@@ -569,7 +575,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   Future<void> _confirmEmptyTrash(BuildContext context) async {
     final l10n = AppLocalizations.of(context);
-    final approved = await showDialog<bool>(
+    final approved =
+        await showDialog<bool>(
           context: context,
           builder: (dialogContext) => AlertDialog(
             title: Text(l10n.emptyTrashQuestion),
@@ -638,9 +645,7 @@ class _SelectionToolbar extends StatelessWidget {
             Expanded(
               child: Text(
                 l10n.selectedCount(count),
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
+                style: Theme.of(context).textTheme.titleMedium
                     ?.copyWith(fontWeight: FontWeight.w700),
               ),
             ),
@@ -812,10 +817,7 @@ class _FilterBar extends StatelessWidget {
             controller.setFormatFilter(value);
           },
           dropdownMenuEntries: [
-            DropdownMenuEntry<String?>(
-              value: null,
-              label: l10n.anyFormat,
-            ),
+            DropdownMenuEntry<String?>(value: null, label: l10n.anyFormat),
             ...RecordingFormat.values.map(
               (format) => DropdownMenuEntry<String?>(
                 value: format.name,
@@ -833,15 +835,10 @@ class _FilterBar extends StatelessWidget {
               controller.setFolderFilter(value);
             },
             dropdownMenuEntries: [
-              DropdownMenuEntry<String?>(
-                value: null,
-                label: l10n.anyFolder,
-              ),
+              DropdownMenuEntry<String?>(value: null, label: l10n.anyFolder),
               ...controller.folders.map(
-                (folder) => DropdownMenuEntry<String?>(
-                  value: folder,
-                  label: folder,
-                ),
+                (folder) =>
+                    DropdownMenuEntry<String?>(value: folder, label: folder),
               ),
             ],
           ),
@@ -893,9 +890,7 @@ class _FilterBar extends StatelessWidget {
                   children: [
                     Text(
                       l10n.advancedFilters,
-                      style: Theme.of(sheetContext)
-                          .textTheme
-                          .titleLarge
+                      style: Theme.of(sheetContext).textTheme.titleLarge
                           ?.copyWith(fontWeight: FontWeight.w800),
                     ),
                     const SizedBox(height: 16),
@@ -996,10 +991,7 @@ class _FilterBar extends StatelessWidget {
     );
   }
 
-  static String _sortLabel(
-    RecordingSort sort,
-    AppLocalizations l10n,
-  ) =>
+  static String _sortLabel(RecordingSort sort, AppLocalizations l10n) =>
       switch (sort) {
         RecordingSort.newest => l10n.newestFirst,
         RecordingSort.oldest => l10n.oldestFirst,
@@ -1023,25 +1015,25 @@ class _EmptyLibrary extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final (icon, title, message) = switch (scope) {
       LibraryScope.all => (
-          Icons.mic_none,
-          l10n.noRecordingsYet,
-          l10n.noRecordingsLibraryHint,
-        ),
+        Icons.mic_none,
+        l10n.noRecordingsYet,
+        l10n.noRecordingsLibraryHint,
+      ),
       LibraryScope.favorites => (
-          Icons.favorite_border,
-          l10n.noFavorites,
-          l10n.noFavoritesHint,
-        ),
+        Icons.favorite_border,
+        l10n.noFavorites,
+        l10n.noFavoritesHint,
+      ),
       LibraryScope.pinned => (
-          Icons.push_pin_outlined,
-          l10n.nothingPinned,
-          l10n.nothingPinnedHint,
-        ),
+        Icons.push_pin_outlined,
+        l10n.nothingPinned,
+        l10n.nothingPinnedHint,
+      ),
       LibraryScope.trash => (
-          Icons.delete_outline,
-          l10n.trashIsEmpty,
-          l10n.trashIsEmptyHint,
-        ),
+        Icons.delete_outline,
+        l10n.trashIsEmpty,
+        l10n.trashIsEmptyHint,
+      ),
     };
     return Center(
       child: Padding(
@@ -1053,9 +1045,7 @@ class _EmptyLibrary extends StatelessWidget {
             const SizedBox(height: 14),
             Text(
               title,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge
+              style: Theme.of(context).textTheme.titleLarge
                   ?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 6),

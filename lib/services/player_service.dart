@@ -9,39 +9,48 @@ import 'package:path/path.dart' as p;
 
 class PlayerService extends ChangeNotifier {
   PlayerService() {
-    _subscriptions.add(_player.positionStream.listen((value) {
-      position = value;
-      final start = selectionLoopStart;
-      final end = selectionLoopEnd;
-      if (_player.playing &&
-          start != null &&
-          end != null &&
-          end > start &&
-          value >= end) {
-        unawaited(_player.seek(start));
-        position = start;
-      }
-      notifyListeners();
-    }));
-    _subscriptions.add(_player.durationStream.listen((value) {
-      duration = value ?? Duration.zero;
-      notifyListeners();
-    }));
-    _subscriptions.add(_player.playerStateStream.listen((value) {
-      isPlaying = value.playing;
-      isLoading = value.processingState == ProcessingState.loading ||
-          value.processingState == ProcessingState.buffering;
-      if (value.processingState == ProcessingState.completed &&
-          _player.loopMode == LoopMode.off &&
-          !hasSelectionLoop) {
-        isPlaying = false;
-      }
-      notifyListeners();
-    }));
-    _subscriptions.add(_player.errorStream.listen((error) {
-      lastError = error.message;
-      notifyListeners();
-    }));
+    _subscriptions.add(
+      _player.positionStream.listen((value) {
+        position = value;
+        final start = selectionLoopStart;
+        final end = selectionLoopEnd;
+        if (_player.playing &&
+            start != null &&
+            end != null &&
+            end > start &&
+            value >= end) {
+          unawaited(_player.seek(start));
+          position = start;
+        }
+        notifyListeners();
+      }),
+    );
+    _subscriptions.add(
+      _player.durationStream.listen((value) {
+        duration = value ?? Duration.zero;
+        notifyListeners();
+      }),
+    );
+    _subscriptions.add(
+      _player.playerStateStream.listen((value) {
+        isPlaying = value.playing;
+        isLoading =
+            value.processingState == ProcessingState.loading ||
+            value.processingState == ProcessingState.buffering;
+        if (value.processingState == ProcessingState.completed &&
+            _player.loopMode == LoopMode.off &&
+            !hasSelectionLoop) {
+          isPlaying = false;
+        }
+        notifyListeners();
+      }),
+    );
+    _subscriptions.add(
+      _player.errorStream.listen((error) {
+        lastError = error.message;
+        notifyListeners();
+      }),
+    );
   }
 
   final AudioPlayer _player = AudioPlayer();
@@ -87,11 +96,7 @@ class PlayerService extends ChangeNotifier {
     await _player.setAudioSource(
       AudioSource.uri(
         Uri.file(path),
-        tag: MediaItem(
-          id: path,
-          album: 'SonicNest',
-          title: title,
-        ),
+        tag: MediaItem(id: path, album: 'SonicNest', title: title),
       ),
     );
     loadedPath = path;

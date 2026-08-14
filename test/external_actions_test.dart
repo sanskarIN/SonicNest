@@ -36,28 +36,32 @@ void main() {
       expect(await source.readAsBytes(), [1, 2, 3, 4]);
     });
 
-    test('uses numbered names instead of overwriting an existing file', () async {
-      final source = File(p.join(root.path, 'lecture.mp3'));
-      await source.writeAsBytes([7, 8, 9]);
-      await File(p.join(destination.path, 'lecture.mp3')).writeAsBytes([1]);
-      await File(p.join(destination.path, 'lecture (2).mp3')).writeAsBytes([2]);
+    test(
+      'uses numbered names instead of overwriting an existing file',
+      () async {
+        final source = File(p.join(root.path, 'lecture.mp3'));
+        await source.writeAsBytes([7, 8, 9]);
+        await File(p.join(destination.path, 'lecture.mp3')).writeAsBytes([1]);
+        await File(p.join(destination.path, 'lecture (2).mp3'))
+            .writeAsBytes([2]);
 
-      final copiedPath = await actions.copyFileToDirectoryCollisionSafe(
-        sourcePath: source.path,
-        directoryPath: destination.path,
-      );
+        final copiedPath = await actions.copyFileToDirectoryCollisionSafe(
+          sourcePath: source.path,
+          directoryPath: destination.path,
+        );
 
-      expect(p.basename(copiedPath), 'lecture (3).mp3');
-      expect(await File(copiedPath).readAsBytes(), [7, 8, 9]);
-      expect(
-        await File(p.join(destination.path, 'lecture.mp3')).readAsBytes(),
-        [1],
-      );
-      expect(
-        await File(p.join(destination.path, 'lecture (2).mp3')).readAsBytes(),
-        [2],
-      );
-    });
+        expect(p.basename(copiedPath), 'lecture (3).mp3');
+        expect(await File(copiedPath).readAsBytes(), [7, 8, 9]);
+        expect(
+          await File(p.join(destination.path, 'lecture.mp3')).readAsBytes(),
+          [1],
+        );
+        expect(
+          await File(p.join(destination.path, 'lecture (2).mp3')).readAsBytes(),
+          [2],
+        );
+      },
+    );
 
     test('rejects a missing source file', () async {
       expect(
@@ -114,7 +118,10 @@ void main() {
       expect(result.copiedCount, 2);
       expect(result.failedCount, 0);
       expect(result.hasFailures, isFalse);
-      expect(result.copiedPaths.map(p.basename), containsAll(['first.wav', 'second.flac']));
+      expect(
+        result.copiedPaths.map(p.basename),
+        containsAll(['first.wav', 'second.flac']),
+      );
     });
 
     test('keeps successful copies when another source is missing', () async {
@@ -134,29 +141,35 @@ void main() {
       expect(await File(result.copiedPaths.single).readAsBytes(), [9, 8, 7]);
     });
 
-    test('allocates collision-safe names independently across a batch', () async {
-      final sourceOneDir = await Directory(p.join(root.path, 'one')).create();
-      final sourceTwoDir = await Directory(p.join(root.path, 'two')).create();
-      final first = File(p.join(sourceOneDir.path, 'voice.wav'));
-      final second = File(p.join(sourceTwoDir.path, 'voice.wav'));
-      await first.writeAsBytes([1]);
-      await second.writeAsBytes([2]);
+    test(
+      'allocates collision-safe names independently across a batch',
+      () async {
+        final sourceOneDir = await Directory(p.join(root.path, 'one')).create();
+        final sourceTwoDir = await Directory(p.join(root.path, 'two')).create();
+        final first = File(p.join(sourceOneDir.path, 'voice.wav'));
+        final second = File(p.join(sourceTwoDir.path, 'voice.wav'));
+        await first.writeAsBytes([1]);
+        await second.writeAsBytes([2]);
 
-      final result = await actions.copyFilesToDirectoryCollisionSafe(
-        sourcePaths: [first.path, second.path],
-        directoryPath: destination.path,
-      );
+        final result = await actions.copyFilesToDirectoryCollisionSafe(
+          sourcePaths: [first.path, second.path],
+          directoryPath: destination.path,
+        );
 
-      expect(result.copiedCount, 2);
-      expect(
-        result.copiedPaths.map(p.basename),
-        containsAll(['voice.wav', 'voice (2).wav']),
-      );
-      expect(await File(p.join(destination.path, 'voice.wav')).readAsBytes(), [1]);
-      expect(
-        await File(p.join(destination.path, 'voice (2).wav')).readAsBytes(),
-        [2],
-      );
-    });
+        expect(result.copiedCount, 2);
+        expect(
+          result.copiedPaths.map(p.basename),
+          containsAll(['voice.wav', 'voice (2).wav']),
+        );
+        expect(
+          await File(p.join(destination.path, 'voice.wav')).readAsBytes(),
+          [1],
+        );
+        expect(
+          await File(p.join(destination.path, 'voice (2).wav')).readAsBytes(),
+          [2],
+        );
+      },
+    );
   });
 }

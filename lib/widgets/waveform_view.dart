@@ -34,9 +34,12 @@ class _WaveformViewState extends State<WaveformView> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final interactive = widget.selection != null && widget.onSelectionChanged != null;
+    final interactive =
+        widget.selection != null && widget.onSelectionChanged != null;
     return Semantics(
-      label: interactive ? 'Audio waveform with draggable selection handles' : 'Audio waveform',
+      label: interactive
+          ? 'Audio waveform with draggable selection handles'
+          : 'Audio waveform',
       child: SizedBox(
         height: widget.height,
         width: double.infinity,
@@ -46,10 +49,12 @@ class _WaveformViewState extends State<WaveformView> {
             return GestureDetector(
               behavior: HitTestBehavior.opaque,
               onPanStart: interactive
-                  ? (details) => _startSelectionDrag(details.localPosition.dx, width)
+                  ? (details) =>
+                        _startSelectionDrag(details.localPosition.dx, width)
                   : null,
               onPanUpdate: interactive
-                  ? (details) => _updateSelectionDrag(details.localPosition.dx, width)
+                  ? (details) =>
+                        _updateSelectionDrag(details.localPosition.dx, width)
                   : null,
               onPanEnd: interactive ? (_) => _finishSelectionDrag() : null,
               onPanCancel: interactive ? _cancelSelectionDrag : null,
@@ -58,7 +63,9 @@ class _WaveformViewState extends State<WaveformView> {
                   samples: widget.samples,
                   baseColor: scheme.primary.withValues(alpha: .45),
                   playedColor: scheme.primary,
-                  selectionColor: scheme.secondaryContainer.withValues(alpha: .55),
+                  selectionColor: scheme.secondaryContainer.withValues(
+                    alpha: .55,
+                  ),
                   handleColor: scheme.secondary,
                   progress: widget.progress,
                   compact: widget.compact,
@@ -76,8 +83,8 @@ class _WaveformViewState extends State<WaveformView> {
     final selection = widget.selection!;
     final position = (dx / width).clamp(0.0, 1.0).toDouble();
     widget.onSelectionChangeStart?.call();
-    _draggingStart = (position - selection.start).abs() <=
-        (position - selection.end).abs();
+    _draggingStart =
+        (position - selection.start).abs() <= (position - selection.end).abs();
     _updateSelection(position);
   }
 
@@ -101,7 +108,9 @@ class _WaveformViewState extends State<WaveformView> {
     if (_draggingStart == true) {
       widget.onSelectionChanged!(
         RangeValues(
-          position.clamp(0.0, math.max(0.0, selection.end - minimumSpan)).toDouble(),
+          position
+              .clamp(0.0, math.max(0.0, selection.end - minimumSpan))
+              .toDouble(),
           selection.end,
         ),
       );
@@ -109,7 +118,9 @@ class _WaveformViewState extends State<WaveformView> {
       widget.onSelectionChanged!(
         RangeValues(
           selection.start,
-          position.clamp(math.min(1.0, selection.start + minimumSpan), 1.0).toDouble(),
+          position
+              .clamp(math.min(1.0, selection.start + minimumSpan), 1.0)
+              .toDouble(),
         ),
       );
     }
@@ -173,7 +184,8 @@ class _WaveformPainter extends CustomPainter {
           );
         }
         final x =
-            (bar / math.max(1, (samples.length / step).ceil() - 1)) * size.width;
+            (bar / math.max(1, (samples.length / step).ceil() - 1)) *
+            size.width;
         final normalizedProgress = progress?.clamp(0.0, 1.0).toDouble();
         final played =
             normalizedProgress != null && x <= size.width * normalizedProgress;

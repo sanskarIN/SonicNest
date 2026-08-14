@@ -34,9 +34,7 @@ Uint8List _renderIcon() {
   final image = Uint8List(canvasSize * canvasSize * 4);
   for (var y = 0; y < canvasSize; y++) {
     for (var x = 0; x < canvasSize; x++) {
-      final t = ((x + y) / (2 * (canvasSize - 1)))
-          .clamp(0.0, 1.0)
-          .toDouble();
+      final t = ((x + y) / (2 * (canvasSize - 1))).clamp(0.0, 1.0).toDouble();
       final color = _gradient(t);
       _setPixel(image, x, y, color.$1, color.$2, color.$3, 255);
     }
@@ -49,10 +47,7 @@ Uint8List _renderForeground() {
   final image = Uint8List(canvasSize * canvasSize * 4);
   const scale = 1.38;
   final offset = (canvasSize - designSize * scale) / 2;
-  _drawMark(
-    image,
-    _Transform(scale: scale, offsetX: offset, offsetY: offset),
-  );
+  _drawMark(image, _Transform(scale: scale, offsetX: offset, offsetY: offset));
   return image;
 }
 
@@ -85,25 +80,13 @@ Uint8List _renderSplash() {
           .clamp(0.0, 1.0)
           .toDouble();
       final color = _gradient(t);
-      _blendPixel(
-        image,
-        x,
-        y,
-        color.$1,
-        color.$2,
-        color.$3,
-        coverage,
-      );
+      _blendPixel(image, x, y, color.$1, color.$2, color.$3, coverage);
     }
   }
 
   _drawMark(
     image,
-    _Transform(
-      scale: markSize / designSize,
-      offsetX: left,
-      offsetY: top,
-    ),
+    _Transform(scale: markSize / designSize, offsetX: left, offsetY: top),
   );
   return image;
 }
@@ -259,8 +242,8 @@ void _drawSegment(
       final projection = lengthSquared == 0
           ? 0.0
           : (((px - start.x) * dx + (py - start.y) * dy) / lengthSquared)
-              .clamp(0.0, 1.0)
-              .toDouble();
+                .clamp(0.0, 1.0)
+                .toDouble();
       final nearestX = start.x + dx * projection;
       final nearestY = start.y + dy * projection;
       final distance = math.sqrt(
@@ -289,7 +272,8 @@ double _roundedRectCoverage(
   final qy = (py - cy).abs() - (height / 2 - radius);
   final ox = math.max(qx, 0.0).toDouble();
   final oy = math.max(qy, 0.0).toDouble();
-  final signedDistance = math.sqrt(ox * ox + oy * oy) +
+  final signedDistance =
+      math.sqrt(ox * ox + oy * oy) +
       math.min(math.max(qx, qy), 0.0).toDouble() -
       radius;
   return (0.5 - signedDistance).clamp(0.0, 1.0).toDouble();
@@ -298,15 +282,7 @@ double _roundedRectCoverage(
 double _edgeCoverage(double distance, double radius) =>
     (radius + .75 - distance).clamp(0.0, 1.0).toDouble();
 
-void _setPixel(
-  Uint8List image,
-  int x,
-  int y,
-  int r,
-  int g,
-  int b,
-  int a,
-) {
+void _setPixel(Uint8List image, int x, int y, int r, int g, int b, int a) {
   final index = (y * canvasSize + x) * 4;
   image[index] = r;
   image[index + 1] = g;
@@ -335,8 +311,7 @@ void _blendPixel(
     (r * sourceA + image[index] * destinationA * (1 - sourceA)) / outA,
   );
   image[index + 1] = _channel(
-    (g * sourceA + image[index + 1] * destinationA * (1 - sourceA)) /
-        outA,
+    (g * sourceA + image[index + 1] * destinationA * (1 - sourceA)) / outA,
   );
   image[index + 2] = _channel(
     (b * sourceA + image[index + 2] * destinationA * (1 - sourceA)) / outA,

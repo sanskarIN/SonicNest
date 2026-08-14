@@ -7,7 +7,8 @@ class RecordingMarker {
     this.note = '',
   });
 
-  factory RecordingMarker.fromJson(Map<String, dynamic> json) => RecordingMarker(
+  factory RecordingMarker.fromJson(Map<String, dynamic> json) =>
+      RecordingMarker(
         positionMs: (json['positionMs'] as num?)?.toInt() ?? 0,
         label: json['label'] as String? ?? 'Marker',
         note: json['note'] as String? ?? '',
@@ -18,10 +19,10 @@ class RecordingMarker {
   final String note;
 
   Map<String, Object> toJson() => {
-        'positionMs': positionMs,
-        'label': label,
-        'note': note,
-      };
+    'positionMs': positionMs,
+    'label': label,
+    'note': note,
+  };
 }
 
 class RecordingEntry {
@@ -49,9 +50,8 @@ class RecordingEntry {
 
   factory RecordingEntry.fromJson(Map<String, dynamic> json) {
     final formatName = json['format'] as String?;
-    final format = RecordingFormat.values
-            .where((f) => f.name == formatName)
-            .firstOrNull ??
+    final format =
+        RecordingFormat.values.where((f) => f.name == formatName).firstOrNull ??
         RecordingFormat.m4a;
     return RecordingEntry(
       id: json['id'] as String? ?? '',
@@ -64,9 +64,11 @@ class RecordingEntry {
       sampleRate: (json['sampleRate'] as num?)?.toInt() ?? 0,
       channels: (json['channels'] as num?)?.toInt() ?? 1,
       createdAt:
-          DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
+          DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+          DateTime.now(),
       modifiedAt:
-          DateTime.tryParse(json['modifiedAt'] as String? ?? '') ?? DateTime.now(),
+          DateTime.tryParse(json['modifiedAt'] as String? ?? '') ??
+          DateTime.now(),
       favorite: json['favorite'] as bool? ?? false,
       pinned: json['pinned'] as bool? ?? false,
       tags: (json['tags'] as List<dynamic>? ?? const [])
@@ -77,9 +79,8 @@ class RecordingEntry {
       markers: (json['markers'] as List<dynamic>? ?? const [])
           .whereType<Map>()
           .map(
-            (marker) => RecordingMarker.fromJson(
-              Map<String, dynamic>.from(marker),
-            ),
+            (marker) =>
+                RecordingMarker.fromJson(Map<String, dynamic>.from(marker)),
           )
           .toList(),
       waveform: (json['waveform'] as List<dynamic>? ?? const [])
@@ -159,26 +160,26 @@ class RecordingEntry {
   }
 
   Map<String, Object?> toJson() => {
-        'id': id,
-        'title': title,
-        'filePath': filePath,
-        'durationMs': durationMs,
-        'sizeBytes': sizeBytes,
-        'format': format.name,
-        'bitRate': bitRate,
-        'sampleRate': sampleRate,
-        'channels': channels,
-        'createdAt': createdAt.toIso8601String(),
-        'modifiedAt': modifiedAt.toIso8601String(),
-        'favorite': favorite,
-        'pinned': pinned,
-        'tags': tags,
-        'folder': folder,
-        'notes': notes,
-        'markers': markers.map((marker) => marker.toJson()).toList(),
-        'waveform': waveform,
-        'trashedAt': trashedAt?.toIso8601String(),
-      };
+    'id': id,
+    'title': title,
+    'filePath': filePath,
+    'durationMs': durationMs,
+    'sizeBytes': sizeBytes,
+    'format': format.name,
+    'bitRate': bitRate,
+    'sampleRate': sampleRate,
+    'channels': channels,
+    'createdAt': createdAt.toIso8601String(),
+    'modifiedAt': modifiedAt.toIso8601String(),
+    'favorite': favorite,
+    'pinned': pinned,
+    'tags': tags,
+    'folder': folder,
+    'notes': notes,
+    'markers': markers.map((marker) => marker.toJson()).toList(),
+    'waveform': waveform,
+    'trashedAt': trashedAt?.toIso8601String(),
+  };
 }
 
 extension _IterableFirstOrNull<T> on Iterable<T> {

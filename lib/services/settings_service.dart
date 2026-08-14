@@ -17,14 +17,14 @@ class SettingsSnapshot {
   });
 
   factory SettingsSnapshot.defaults() => SettingsSnapshot(
-        recording: RecordingSettings.defaults(),
-        themeMode: ThemeMode.system,
-        defaultPlaybackSpeed: 1,
-        skipIntervalSeconds: 10,
-        skipSilence: false,
-        confirmDelete: true,
-        reducedMotion: false,
-      );
+    recording: RecordingSettings.defaults(),
+    themeMode: ThemeMode.system,
+    defaultPlaybackSpeed: 1,
+    skipIntervalSeconds: 10,
+    skipSilence: false,
+    confirmDelete: true,
+    reducedMotion: false,
+  );
 
   final RecordingSettings recording;
   final ThemeMode themeMode;
@@ -71,18 +71,24 @@ class SettingsService {
     final rawRecording = prefs.getString(_recordingKey);
     if (rawRecording != null) {
       try {
-        recording = RecordingSettings.fromJson(jsonDecode(rawRecording) as Map<String, dynamic>);
+        recording = RecordingSettings.fromJson(
+          jsonDecode(rawRecording) as Map<String, dynamic>,
+        );
       } catch (_) {
         recording = defaults.recording;
       }
     }
     final themeName = prefs.getString(_themeKey);
-    final theme = ThemeMode.values.where((mode) => mode.name == themeName).firstOrNull ?? defaults.themeMode;
+    final theme =
+        ThemeMode.values.where((mode) => mode.name == themeName).firstOrNull ??
+        defaults.themeMode;
     return SettingsSnapshot(
       recording: recording,
       themeMode: theme,
-      defaultPlaybackSpeed: prefs.getDouble(_speedKey) ?? defaults.defaultPlaybackSpeed,
-      skipIntervalSeconds: prefs.getInt(_skipKey) ?? defaults.skipIntervalSeconds,
+      defaultPlaybackSpeed:
+          prefs.getDouble(_speedKey) ?? defaults.defaultPlaybackSpeed,
+      skipIntervalSeconds:
+          prefs.getInt(_skipKey) ?? defaults.skipIntervalSeconds,
       skipSilence: prefs.getBool(_skipSilenceKey) ?? defaults.skipSilence,
       confirmDelete: prefs.getBool(_confirmDeleteKey) ?? defaults.confirmDelete,
       reducedMotion: prefs.getBool(_reducedMotionKey) ?? defaults.reducedMotion,

@@ -242,8 +242,7 @@ class AppLocalizations {
   String get lightTheme => 'Light';
   String get darkTheme => 'Dark';
   String get reduceMotion => 'Reduce motion';
-  String get reduceMotionHint =>
-      'Avoid non-essential animation and movement.';
+  String get reduceMotionHint => 'Avoid non-essential animation and movement.';
   String get safetyStorage => 'Safety & storage';
   String get confirmPermanentDeletion => 'Confirm permanent deletion';
   String get confirmPermanentDeletionHint =>
@@ -253,7 +252,8 @@ class AppLocalizations {
       '$total total • $recordings recordings • $trash Trash';
   String savedCount(int count) => '$count saved';
   String get temporaryAudioFiles => 'Temporary audio files';
-  String temporaryFilesSummary(int count, String size) => '$count files • $size';
+  String temporaryFilesSummary(int count, String size) =>
+      '$count files • $size';
   String get clean => 'Clean';
   String get offlineFirstRecordings => 'Offline-first recordings';
   String get offlineFirstRecordingsHint =>
@@ -302,7 +302,8 @@ class AppLocalizations {
   String get normalizedCopyCreated => 'Normalized copy created.';
   String get silenceCleanedCopyCreated => 'Silence-cleaned copy created.';
   String get fadedCopyCreated => 'Faded copy created.';
-  String get recordingTooShortToSplit => 'This recording is too short to split.';
+  String get recordingTooShortToSplit =>
+      'This recording is too short to split.';
   String get splitCopiesCreated => 'Split copies created.';
   String get mergedCopyCreated => 'Merged copy created.';
   String get gainAdjustedCopyCreated => 'Gain-adjusted copy created.';
@@ -311,8 +312,7 @@ class AppLocalizations {
   String get compressedDynamicsCopyCreated =>
       'Compressed-dynamics copy created.';
   String get limitedCopyCreated => 'Limited copy created.';
-  String get highPassFilteredCopyCreated =>
-      'High-pass filtered copy created.';
+  String get highPassFilteredCopyCreated => 'High-pass filtered copy created.';
   String get lowPassFilteredCopyCreated => 'Low-pass filtered copy created.';
   String formatCopyCreated(String format) => '$format copy created.';
   String processingFailed(Object error) => 'Processing failed: $error';
@@ -353,11 +353,7 @@ class AppLocalizations {
       '$count converted copies created.';
   String copiedToExportFolder(int count) =>
       ' $count copied to the export folder.';
-  String externalCopyFailureSummary(
-    int copied,
-    int failed,
-    String details,
-  ) =>
+  String externalCopyFailureSummary(int copied, int failed, String details) =>
       ' $copied copied externally; $failed external copy failed: $details';
   String conversionFailureDetails(int failed, String details) =>
       ' $failed conversion failed: $details';
@@ -381,14 +377,14 @@ class AppLocalizations {
   ];
 }
 
-class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override
-  bool isSupported(Locale locale) =>
-      AppLocalizations.supportedLocales.any(
-        (supported) => supported.languageCode == locale.languageCode,
-      );
+  bool isSupported(Locale locale) => AppLocalizations.supportedLocales.any(
+    (supported) => supported.languageCode == locale.languageCode,
+  );
 
   @override
   Future<AppLocalizations> load(Locale locale) =>

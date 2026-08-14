@@ -10,7 +10,10 @@ class SonicNestTheme {
     final seed = brightness == Brightness.light
         ? const Color(0xFF6750A4)
         : const Color(0xFFB7A6EE);
-    final scheme = ColorScheme.fromSeed(seedColor: seed, brightness: brightness);
+    final scheme = ColorScheme.fromSeed(
+      seedColor: seed,
+      brightness: brightness,
+    );
     return ThemeData(
       useMaterial3: true,
       brightness: brightness,

@@ -10,7 +10,11 @@ import '../models/recording_settings.dart';
 import '../widgets/waveform_view.dart';
 
 class PlayerScreen extends StatelessWidget {
-  const PlayerScreen({super.key, required this.controller, required this.entry});
+  const PlayerScreen({
+    super.key,
+    required this.controller,
+    required this.entry,
+  });
 
   final AppController controller;
   final RecordingEntry entry;
@@ -19,8 +23,9 @@ class PlayerScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final player = controller.player;
-    final duration =
-        player.duration > Duration.zero ? player.duration : entry.duration;
+    final duration = player.duration > Duration.zero
+        ? player.duration
+        : entry.duration;
     final position = player.position > duration ? duration : player.position;
     final maxMs = duration.inMilliseconds <= 0
         ? 1.0
@@ -37,9 +42,7 @@ class PlayerScreen extends StatelessWidget {
                 ? l10n.removeFromFavorites
                 : l10n.addToFavorites,
             onPressed: () => controller.toggleFavorite(entry),
-            icon: Icon(
-              entry.favorite ? Icons.favorite : Icons.favorite_border,
-            ),
+            icon: Icon(entry.favorite ? Icons.favorite : Icons.favorite_border),
           ),
           IconButton(
             tooltip: l10n.share,
@@ -60,9 +63,7 @@ class PlayerScreen extends StatelessWidget {
                 Text(
                   entry.title,
                   textAlign: TextAlign.center,
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineSmall
+                  style: Theme.of(context).textTheme.headlineSmall
                       ?.copyWith(fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 6),
@@ -134,8 +135,8 @@ class PlayerScreen extends StatelessWidget {
                       onPressed: player.isLoading
                           ? null
                           : () => player.isPlaying
-                              ? player.pause()
-                              : player.play(),
+                                ? player.pause()
+                                : player.play(),
                       icon: Icon(
                         player.isPlaying
                             ? Icons.pause_rounded
@@ -157,8 +158,9 @@ class PlayerScreen extends StatelessWidget {
                     ),
                     IconButton.filledTonal(
                       tooltip: l10n.nextRecording,
-                      onPressed:
-                          adjacent.hasNext ? () => _openRelative(1) : null,
+                      onPressed: adjacent.hasNext
+                          ? () => _openRelative(1)
+                          : null,
                       icon: const Icon(Icons.skip_next_rounded),
                     ),
                   ],
@@ -188,7 +190,8 @@ class PlayerScreen extends StatelessWidget {
                             ? '${formatDuration(player.selectionLoopStart!)}–${formatDuration(player.selectionLoopEnd!)}'
                             : l10n.abLoop,
                       ),
-                      onPressed: () => _configureSelectionLoop(context, duration),
+                      onPressed: () =>
+                          _configureSelectionLoop(context, duration),
                     ),
                     if (player.hasSelectionLoop)
                       ActionChip(
@@ -234,9 +237,7 @@ class PlayerScreen extends StatelessWidget {
                   const SizedBox(height: 20),
                   Text(
                     l10n.bookmarks,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleLarge
+                    style: Theme.of(context).textTheme.titleLarge
                         ?.copyWith(fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 8),
@@ -265,11 +266,12 @@ class PlayerScreen extends StatelessWidget {
   }
 
   ({bool hasPrevious, bool hasNext, int index, List<RecordingEntry> entries})
-      _adjacentState() {
-    final entries = controller.recordings
-        .where((candidate) => !candidate.isTrashed)
-        .toList(growable: false)
-      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+  _adjacentState() {
+    final entries =
+        controller.recordings
+            .where((candidate) => !candidate.isTrashed)
+            .toList(growable: false)
+          ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
     final index = entries.indexWhere((candidate) => candidate.id == entry.id);
     return (
       hasPrevious: index > 0,
@@ -300,8 +302,10 @@ class PlayerScreen extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final maxMs = duration.inMilliseconds.toDouble();
     final player = controller.player;
-    final current =
-        player.position.inMilliseconds.clamp(0, duration.inMilliseconds);
+    final current = player.position.inMilliseconds.clamp(
+      0,
+      duration.inMilliseconds,
+    );
     final defaultStart = player.hasSelectionLoop
         ? player.selectionLoopStart!.inMilliseconds.toDouble()
         : math.max(0, current - 5000).toDouble();
@@ -368,14 +372,14 @@ class PlayerScreen extends StatelessWidget {
 }
 
 String _formatLabel(RecordingFormat format) => switch (format) {
-      RecordingFormat.m4a => 'M4A / AAC',
-      RecordingFormat.wav => 'WAV',
-      RecordingFormat.flac => 'FLAC',
-      RecordingFormat.opus => 'Opus',
-      RecordingFormat.mp3 => 'MP3',
-      RecordingFormat.ogg => 'OGG / Vorbis',
-      RecordingFormat.aac => 'AAC',
-    };
+  RecordingFormat.m4a => 'M4A / AAC',
+  RecordingFormat.wav => 'WAV',
+  RecordingFormat.flac => 'FLAC',
+  RecordingFormat.opus => 'Opus',
+  RecordingFormat.mp3 => 'MP3',
+  RecordingFormat.ogg => 'OGG / Vorbis',
+  RecordingFormat.aac => 'AAC',
+};
 
 class _Artwork extends StatelessWidget {
   const _Artwork({required this.entry, required this.isPlaying});
@@ -423,8 +427,9 @@ class _SpeedMenu extends StatelessWidget {
         label: Text(
           '${controller.player.speed.toStringAsFixed(controller.player.speed % 1 == 0 ? 0 : 2)}×',
         ),
-        onPressed:
-            menuController.isOpen ? menuController.close : menuController.open,
+        onPressed: menuController.isOpen
+            ? menuController.close
+            : menuController.open,
       ),
       menuChildren: speeds
           .map(

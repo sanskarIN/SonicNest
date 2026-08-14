@@ -24,14 +24,14 @@ class AdvancedAudioProcessor {
       '"${value.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"';
 
   String _codecArgs(RecordingFormat format, int bitRate) => switch (format) {
-        RecordingFormat.mp3 => '-codec:a libmp3lame -b:a ${bitRate ~/ 1000}k',
-        RecordingFormat.ogg => '-codec:a libvorbis -q:a 5',
-        RecordingFormat.aac => '-codec:a aac -b:a ${bitRate ~/ 1000}k -f adts',
-        RecordingFormat.m4a => '-codec:a aac -b:a ${bitRate ~/ 1000}k',
-        RecordingFormat.flac => '-codec:a flac',
-        RecordingFormat.opus => '-codec:a libopus -b:a ${bitRate ~/ 1000}k',
-        RecordingFormat.wav => '-codec:a pcm_s16le',
-      };
+    RecordingFormat.mp3 => '-codec:a libmp3lame -b:a ${bitRate ~/ 1000}k',
+    RecordingFormat.ogg => '-codec:a libvorbis -q:a 5',
+    RecordingFormat.aac => '-codec:a aac -b:a ${bitRate ~/ 1000}k -f adts',
+    RecordingFormat.m4a => '-codec:a aac -b:a ${bitRate ~/ 1000}k',
+    RecordingFormat.flac => '-codec:a flac',
+    RecordingFormat.opus => '-codec:a libopus -b:a ${bitRate ~/ 1000}k',
+    RecordingFormat.wav => '-codec:a pcm_s16le',
+  };
 
   Future<void> _run(String command) async {
     final session = await FFmpegKit.execute(command);
@@ -57,8 +57,10 @@ class AdvancedAudioProcessor {
     if (start.isNegative || end <= start) {
       throw const AdvancedAudioProcessingException('Cut range is invalid.');
     }
-    final output =
-        await _storage.uniqueRecordingPath(outputTitle, format.extension);
+    final output = await _storage.uniqueRecordingPath(
+      outputTitle,
+      format.extension,
+    );
     final startSeconds = start.inMilliseconds / 1000;
     final endSeconds = end.inMilliseconds / 1000;
     final filter =
@@ -87,8 +89,10 @@ class AdvancedAudioProcessor {
         'Silence insertion values are invalid.',
       );
     }
-    final output =
-        await _storage.uniqueRecordingPath(outputTitle, format.extension);
+    final output = await _storage.uniqueRecordingPath(
+      outputTitle,
+      format.extension,
+    );
     final atSeconds = at.inMilliseconds / 1000;
     final silenceSeconds = silenceDuration.inMilliseconds / 1000;
     final channelLayout = channels <= 1 ? 'mono' : 'stereo';
@@ -166,8 +170,7 @@ class AdvancedAudioProcessor {
       outputTitle: outputTitle,
       format: format,
       bitRate: bitRate,
-      audioFilter:
-          'acompressor=threshold=-18dB:ratio=3:attack=20:release=250:makeup=2dB',
+      audioFilter: 'acompressor=threshold=-18dB:ratio=3:attack=20:release=250:makeup=2dB',
     );
   }
 
@@ -208,8 +211,10 @@ class AdvancedAudioProcessor {
     required int bitRate,
     required String audioFilter,
   }) async {
-    final output =
-        await _storage.uniqueRecordingPath(outputTitle, format.extension);
+    final output = await _storage.uniqueRecordingPath(
+      outputTitle,
+      format.extension,
+    );
     await _run(
       '-y -i ${_q(inputPath)} -vn -filter:a "$audioFilter" '
       '${_codecArgs(format, bitRate)} ${_q(output)}',

@@ -37,9 +37,7 @@ class MetadataStore {
       return rawEntries
           .whereType<Map>()
           .map(
-            (item) => RecordingEntry.fromJson(
-              Map<String, dynamic>.from(item),
-            ),
+            (item) => RecordingEntry.fromJson(Map<String, dynamic>.from(item)),
           )
           .where((entry) => entry.id.isNotEmpty && entry.filePath.isNotEmpty)
           .toList();

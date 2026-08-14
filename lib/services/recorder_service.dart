@@ -14,14 +14,7 @@ import 'audio_processor.dart';
 import 'background_service_bridge.dart';
 import 'storage_service.dart';
 
-enum RecorderStatus {
-  idle,
-  countdown,
-  recording,
-  paused,
-  processing,
-  error,
-}
+enum RecorderStatus { idle, countdown, recording, paused, processing, error }
 
 class RecorderResult {
   const RecorderResult({
@@ -155,7 +148,8 @@ class RecorderService extends ChangeNotifier {
       }
 
       final requestedEncoder = settings.format.nativeEncoder;
-      final directSupported = !settings.format.needsTranscode &&
+      final directSupported =
+          !settings.format.needsTranscode &&
           await _recorder.isEncoderSupported(requestedEncoder);
       AudioEncoder captureEncoder;
       String captureExtension;
@@ -178,10 +172,7 @@ class RecorderService extends ChangeNotifier {
       }
 
       _capturePath = _postTranscode
-          ? await _storage.uniqueTempPath(
-              '${_title}_capture',
-              captureExtension,
-            )
+          ? await _storage.uniqueTempPath('${_title}_capture', captureExtension)
           : await _storage.uniqueRecordingPath(_title!, captureExtension);
       _targetPath = _postTranscode
           ? await _storage.uniqueRecordingPath(
@@ -219,12 +210,12 @@ class RecorderService extends ChangeNotifier {
       _amplitudeSubscription = _recorder
           .onAmplitudeChanged(const Duration(milliseconds: 100))
           .listen(
-        _onAmplitude,
-        onError: (Object error, StackTrace stack) {
-          lastError = 'Amplitude monitor error: $error';
-          notifyListeners();
-        },
-      );
+            _onAmplitude,
+            onError: (Object error, StackTrace stack) {
+              lastError = 'Amplitude monitor error: $error';
+              notifyListeners();
+            },
+          );
       countdownRemaining = 0;
       status = RecorderStatus.recording;
       notifyListeners();

@@ -22,7 +22,13 @@ void main() {
       tags: const ['study', 'ai'],
       folder: 'School',
       notes: 'Review chapter 4',
-      markers: const [RecordingMarker(positionMs: 5000, label: 'Important', note: 'Definition')],
+      markers: const [
+        RecordingMarker(
+          positionMs: 5000,
+          label: 'Important',
+          note: 'Definition',
+        ),
+      ],
       waveform: const [.1, .3, .8],
     );
 

@@ -4,13 +4,14 @@ import 'package:sonic_nest/models/recording_settings.dart';
 
 void main() {
   test('settings JSON roundtrip is stable', () {
-    final original = RecordingSettings.forPreset(QualityPreset.podcast).copyWith(
-      format: RecordingFormat.mp3,
-      namingPrefix: 'Studio',
-      namingTemplate: '{category}_{prefix}_{sequence}_{suffix}',
-      namingCategory: 'Podcast',
-      namingSuffix: 'Final',
-    );
+    final original = RecordingSettings.forPreset(QualityPreset.podcast)
+        .copyWith(
+          format: RecordingFormat.mp3,
+          namingPrefix: 'Studio',
+          namingTemplate: '{category}_{prefix}_{sequence}_{suffix}',
+          namingCategory: 'Podcast',
+          namingSuffix: 'Final',
+        );
     final restored = RecordingSettings.fromJson(original.toJson());
 
     expect(restored.format, RecordingFormat.mp3);
@@ -25,9 +26,7 @@ void main() {
   });
 
   test('legacy settings use safe smart-naming defaults', () {
-    final restored = RecordingSettings.fromJson({
-      'namingPrefix': 'Legacy',
-    });
+    final restored = RecordingSettings.fromJson({'namingPrefix': 'Legacy'});
 
     expect(restored.namingPrefix, 'Legacy');
     expect(restored.namingTemplate, defaultRecordingNameTemplate);

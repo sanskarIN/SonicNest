@@ -40,7 +40,8 @@ String renderRecordingName({
       .replaceAll(RegExp(r'^[_\- ]+|[_\- ]+$'), '');
 
   if (result.trim().isEmpty) {
-    result = '${replacements['{prefix}']}_${replacements['{date}']}_${replacements['{time}']}';
+    result =
+        '${replacements['{prefix}']}_${replacements['{date}']}_${replacements['{time}']}';
   }
   return sanitizeFileStem(result);
 }

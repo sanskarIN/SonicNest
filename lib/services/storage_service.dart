@@ -125,13 +125,18 @@ class StorageService {
     }
   }
 
-  Future<({int bytes, int files})> _directoryMetrics(Directory directory) async {
+  Future<({int bytes, int files})> _directoryMetrics(
+    Directory directory,
+  ) async {
     var bytes = 0;
     var files = 0;
     if (!await directory.exists()) {
       return (bytes: 0, files: 0);
     }
-    await for (final entity in directory.list(recursive: true, followLinks: false)) {
+    await for (final entity in directory.list(
+      recursive: true,
+      followLinks: false,
+    )) {
       if (entity is File) {
         try {
           bytes += await entity.length();
@@ -190,7 +195,10 @@ class StorageService {
     if (!await source.exists()) {
       throw const FileSystemException('Selected audio file no longer exists.');
     }
-    final extension = p.extension(source.path).replaceFirst('.', '').toLowerCase();
+    final extension = p
+        .extension(source.path)
+        .replaceFirst('.', '')
+        .toLowerCase();
     const supported = {'m4a', 'wav', 'flac', 'opus', 'mp3', 'ogg', 'aac'};
     if (!supported.contains(extension)) {
       throw const FormatException('Unsupported audio extension.');

@@ -31,7 +31,9 @@ class RecordingTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     return Card(
-      color: selected ? scheme.secondaryContainer.withValues(alpha: 0.55) : null,
+      color: selected
+          ? scheme.secondaryContainer.withValues(alpha: 0.55)
+          : null,
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: onTap,
@@ -67,9 +69,8 @@ class RecordingTile extends StatelessWidget {
                       entry.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+                      style: Theme.of(context).textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w700),
                     ),
                   ),
                   if (!selected) ...[
@@ -132,11 +133,11 @@ class RecordingTile extends StatelessWidget {
 }
 
 String _formatLabel(RecordingFormat format) => switch (format) {
-      RecordingFormat.m4a => 'M4A / AAC',
-      RecordingFormat.wav => 'WAV',
-      RecordingFormat.flac => 'FLAC',
-      RecordingFormat.opus => 'Opus',
-      RecordingFormat.mp3 => 'MP3',
-      RecordingFormat.ogg => 'OGG / Vorbis',
-      RecordingFormat.aac => 'AAC',
-    };
+  RecordingFormat.m4a => 'M4A / AAC',
+  RecordingFormat.wav => 'WAV',
+  RecordingFormat.flac => 'FLAC',
+  RecordingFormat.opus => 'Opus',
+  RecordingFormat.mp3 => 'MP3',
+  RecordingFormat.ogg => 'OGG / Vorbis',
+  RecordingFormat.aac => 'AAC',
+};

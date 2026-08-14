@@ -17,4 +17,5 @@ String formatBytes(int bytes) {
   return '${(mb / 1024).toStringAsFixed(2)} GB';
 }
 
-String formatDateTime(DateTime value) => DateFormat.yMMMd().add_jm().format(value);
+String formatDateTime(DateTime value) =>
+    DateFormat.yMMMd().add_jm().format(value);

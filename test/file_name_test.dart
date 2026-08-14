@@ -4,7 +4,10 @@ import 'package:sonic_nest/core/file_name.dart';
 void main() {
   group('sanitizeFileStem', () {
     test('removes characters unsafe on common filesystems', () {
-      expect(sanitizeFileStem('Lecture: AI/ML? <final>'), 'Lecture_ AI_ML_ _final_');
+      expect(
+        sanitizeFileStem('Lecture: AI/ML? <final>'),
+        'Lecture_ AI_ML_ _final_',
+      );
     });
 
     test('protects Windows reserved names', () {
@@ -23,6 +26,9 @@ void main() {
   });
 
   test('replaceExtension preserves the stem', () {
-    expect(replaceExtension('/tmp/My Recording.wav', 'mp3'), '/tmp/My Recording.mp3');
+    expect(
+      replaceExtension('/tmp/My Recording.wav', 'mp3'),
+      '/tmp/My Recording.mp3',
+    );
   });
 }

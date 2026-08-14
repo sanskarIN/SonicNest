@@ -41,7 +41,8 @@ class _SonicNestMarkPainter extends CustomPainter {
     final rect = Offset.zero & size;
     final radius = Radius.circular(size.width * .22);
     final bg = Paint()
-      ..shader = LinearGradient(colors: [primary, secondary]).createShader(rect);
+      ..shader = LinearGradient(colors: [primary, secondary])
+          .createShader(rect);
     canvas.drawRRect(RRect.fromRectAndRadius(rect, radius), bg);
 
     final stroke = Paint()
@@ -81,7 +82,10 @@ class _SonicNestMarkPainter extends CustomPainter {
       ..strokeWidth = size.width * .035
       ..strokeCap = StrokeCap.round;
     canvas.drawArc(
-      Rect.fromCircle(center: Offset(cx, size.height * .45), radius: size.width * .34),
+      Rect.fromCircle(
+        center: Offset(cx, size.height * .45),
+        radius: size.width * .34,
+      ),
       math.pi * 1.16,
       math.pi * .68,
       false,

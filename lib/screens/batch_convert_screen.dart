@@ -28,10 +28,11 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
   AppController get controller => widget.controller;
   bool get _busy => _processing || _exportingOriginals;
 
-  List<RecordingEntry> get _entries => controller.recordings
-      .where((entry) => !entry.isTrashed)
-      .toList(growable: false)
-    ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  List<RecordingEntry> get _entries =>
+      controller.recordings
+          .where((entry) => !entry.isTrashed)
+          .toList(growable: false)
+        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
   @override
   Widget build(BuildContext context) {
@@ -84,9 +85,7 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
                         children: [
                           Text(
                             l10n.createConvertedCopies,
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleLarge
+                            style: Theme.of(context).textTheme.titleLarge
                                 ?.copyWith(fontWeight: FontWeight.w800),
                           ),
                           const SizedBox(height: 6),
@@ -138,7 +137,9 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
                             Align(
                               alignment: Alignment.centerLeft,
                               child: TextButton.icon(
-                                onPressed: _busy ? null : _chooseExportDirectory,
+                                onPressed: _busy
+                                    ? null
+                                    : _chooseExportDirectory,
                                 icon: const Icon(Icons.folder_open_outlined),
                                 label: Text(l10n.changeExportFolder),
                               ),
@@ -171,8 +172,9 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
                                   onPressed: _busy || selected.isEmpty
                                       ? null
                                       : () => _convert(selected),
-                                  icon:
-                                      const Icon(Icons.multiple_stop_outlined),
+                                  icon: const Icon(
+                                    Icons.multiple_stop_outlined,
+                                  ),
                                   label: Text(
                                     l10n.convertSelected(selected.length),
                                   ),
@@ -199,8 +201,8 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
                               _processing && !_stopRequested
                                   ? l10n.convertedProgress(_completed, _total)
                                   : _exportingOriginals
-                                      ? l10n.exportCopy
-                                      : _status!,
+                                  ? l10n.exportCopy
+                                  : _status!,
                             ),
                           ],
                         ],
@@ -243,8 +245,7 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
                                 '${entry.format.label} • '
                                 '${entry.sampleRate > 0 ? '${entry.sampleRate} Hz' : l10n.rateUnknown}',
                               ),
-                              secondary:
-                                  const Icon(Icons.audio_file_outlined),
+                              secondary: const Icon(Icons.audio_file_outlined),
                               controlAffinity: ListTileControlAffinity.leading,
                             );
                           },
@@ -272,8 +273,7 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
       return;
     }
     final l10n = AppLocalizations.of(context);
-    final directory =
-        _exportDirectory ?? await _chooseExportDirectory();
+    final directory = _exportDirectory ?? await _chooseExportDirectory();
     if (!mounted || directory == null) {
       return;
     }
@@ -284,27 +284,33 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
     });
 
     try {
-      final result = await controller.external.copyFilesToDirectoryCollisionSafe(
-        sourcePaths: entries.map((entry) => entry.filePath),
-        directoryPath: directory,
-      );
+      final result = await controller.external
+          .copyFilesToDirectoryCollisionSafe(
+            sourcePaths: entries.map((entry) => entry.filePath),
+            directoryPath: directory,
+          );
       if (!mounted) {
         return;
       }
-      final details = result.failures.entries.take(2).map((failure) {
-        final entry = entries.where(
-          (candidate) => candidate.filePath == failure.key,
-        );
-        final title = entry.isEmpty ? failure.key : entry.first.title;
-        return '$title: ${failure.value}';
-      }).join(' | ');
+      final details = result.failures.entries
+          .take(2)
+          .map((failure) {
+            final entry = entries.where(
+              (candidate) => candidate.filePath == failure.key,
+            );
+            final title = entry.isEmpty ? failure.key : entry.first.title;
+            return '$title: ${failure.value}';
+          })
+          .join(' | ');
       setState(() {
         _status = result.hasFailures
-            ? l10n.externalCopyFailureSummary(
-                result.copiedCount,
-                result.failedCount,
-                details,
-              ).trim()
+            ? l10n
+                  .externalCopyFailureSummary(
+                    result.copiedCount,
+                    result.failedCount,
+                    details,
+                  )
+                  .trim()
             : l10n.copiedToExportFolder(result.copiedCount).trim();
         _selectedIds.clear();
       });
@@ -412,12 +418,12 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
     final exportText = exportDirectory == null
         ? ''
         : exportFailures.isEmpty
-            ? l10n.copiedToExportFolder(externalCopies)
-            : l10n.externalCopyFailureSummary(
-                externalCopies,
-                exportFailures.length,
-                exportFailures.take(2).join(' | '),
-              );
+        ? l10n.copiedToExportFolder(externalCopies)
+        : l10n.externalCopyFailureSummary(
+            externalCopies,
+            exportFailures.length,
+            exportFailures.take(2).join(' | '),
+          );
 
     setState(() {
       _processing = false;
@@ -431,12 +437,8 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
               exportText,
             )
           : failures.isEmpty
-              ? '${l10n.convertedCopiesCreated(successes)}$exportText'
-              : '${l10n.batchFailureSummary(
-                  successes,
-                  failures.length,
-                  failures.take(2).join(' | '),
-                )}$exportText';
+          ? '${l10n.convertedCopiesCreated(successes)}$exportText'
+          : '${l10n.batchFailureSummary(successes, failures.length, failures.take(2).join(' | '))}$exportText';
       _selectedIds.clear();
     });
   }

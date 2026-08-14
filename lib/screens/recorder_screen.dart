@@ -23,9 +23,7 @@ class RecorderScreen extends StatelessWidget {
       children: [
         Text(
           l10n.recorder,
-          style: Theme.of(context)
-              .textTheme
-              .headlineMedium
+          style: Theme.of(context).textTheme.headlineMedium
               ?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 4),
@@ -49,9 +47,7 @@ class RecorderScreen extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       _statusText(recorder, l10n),
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
+                      style: Theme.of(context).textTheme.titleMedium
                           ?.copyWith(fontWeight: FontWeight.w700),
                     ),
                   ],
@@ -60,23 +56,17 @@ class RecorderScreen extends StatelessWidget {
                 if (recorder.status == RecorderStatus.countdown)
                   Semantics(
                     liveRegion: true,
-                    label: l10n.recordingStartsIn(
-                      recorder.countdownRemaining,
-                    ),
+                    label: l10n.recordingStartsIn(recorder.countdownRemaining),
                     child: Text(
                       '${recorder.countdownRemaining}',
-                      style: Theme.of(context)
-                          .textTheme
-                          .displayLarge
+                      style: Theme.of(context).textTheme.displayLarge
                           ?.copyWith(fontWeight: FontWeight.w900),
                     ),
                   )
                 else
                   Text(
                     formatDuration(recorder.elapsed),
-                    style: Theme.of(context)
-                        .textTheme
-                        .displaySmall
+                    style: Theme.of(context).textTheme.displaySmall
                         ?.copyWith(fontFeatures: const []),
                   ),
                 const SizedBox(height: 18),
@@ -167,14 +157,12 @@ class RecorderScreen extends StatelessWidget {
     );
   }
 
-  String _statusText(
-    RecorderService recorder,
-    AppLocalizations l10n,
-  ) =>
+  String _statusText(RecorderService recorder, AppLocalizations l10n) =>
       switch (recorder.status) {
         RecorderStatus.idle => l10n.ready,
-        RecorderStatus.countdown =>
-          l10n.startingIn(recorder.countdownRemaining),
+        RecorderStatus.countdown => l10n.startingIn(
+          recorder.countdownRemaining,
+        ),
         RecorderStatus.recording => l10n.recordingStatus,
         RecorderStatus.paused => l10n.pausedStatus,
         RecorderStatus.processing => l10n.processingAudio,
@@ -203,15 +191,15 @@ class _StatusDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        width: 10,
-        height: 10,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: active
-              ? Theme.of(context).colorScheme.error
-              : Theme.of(context).colorScheme.outline,
-        ),
-      );
+    width: 10,
+    height: 10,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      color: active
+          ? Theme.of(context).colorScheme.error
+          : Theme.of(context).colorScheme.outline,
+    ),
+  );
 }
 
 class _Controls extends StatelessWidget {
@@ -247,9 +235,8 @@ class _Controls extends StatelessWidget {
               await controller.startRecording();
             } catch (error) {
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('$error')),
-                );
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(SnackBar(content: Text('$error')));
               }
             }
           },
@@ -285,9 +272,8 @@ class _Controls extends StatelessWidget {
               controller.setNavigationIndex(2);
             } catch (error) {
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('$error')),
-                );
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(SnackBar(content: Text('$error')));
               }
             }
           },
@@ -321,9 +307,7 @@ class _PresetSelector extends StatelessWidget {
           children: [
             Text(
               l10n.qualityPreset,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
+              style: Theme.of(context).textTheme.titleMedium
                   ?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 12),
@@ -353,7 +337,8 @@ class _PresetSelector extends StatelessWidget {
     );
   }
 
-  String _label(QualityPreset preset, AppLocalizations l10n) => switch (preset) {
+  String _label(QualityPreset preset, AppLocalizations l10n) =>
+      switch (preset) {
         QualityPreset.speech => l10n.speech,
         QualityPreset.meeting => l10n.meeting,
         QualityPreset.lecture => l10n.lecture,
@@ -375,11 +360,7 @@ class _InfoChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 18),
-          const SizedBox(width: 6),
-          Text(label),
-        ],
-      );
+    mainAxisSize: MainAxisSize.min,
+    children: [Icon(icon, size: 18), const SizedBox(width: 6), Text(label)],
+  );
 }

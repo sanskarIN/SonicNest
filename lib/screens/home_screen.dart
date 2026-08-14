@@ -28,9 +28,7 @@ class HomeScreen extends StatelessWidget {
       children: [
         Text(
           l10n.welcomeToSonicNest,
-          style: Theme.of(context)
-              .textTheme
-              .headlineMedium
+          style: Theme.of(context).textTheme.headlineMedium
               ?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 6),
@@ -157,12 +155,11 @@ class HomeScreen extends StatelessWidget {
                   onPressed: active.isEmpty
                       ? null
                       : () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => BatchConvertScreen(
-                                controller: controller,
-                              ),
-                            ),
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                BatchConvertScreen(controller: controller),
                           ),
+                        ),
                   icon: const Icon(Icons.transform_outlined),
                   label: Text(l10n.open),
                 ),
@@ -176,9 +173,7 @@ class HomeScreen extends StatelessWidget {
             Expanded(
               child: Text(
                 l10n.recentRecordings,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleLarge
+                style: Theme.of(context).textTheme.titleLarge
                     ?.copyWith(fontWeight: FontWeight.w700),
               ),
             ),
@@ -230,29 +225,27 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Card(
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Row(
+    child: Padding(
+      padding: const EdgeInsets.all(18),
+      child: Row(
+        children: [
+          Icon(icon, size: 30),
+          const SizedBox(width: 14),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, size: 30),
-              const SizedBox(width: 14),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleLarge
-                        ?.copyWith(fontWeight: FontWeight.w800),
-                  ),
-                  Text(subtitle),
-                ],
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleLarge
+                    ?.copyWith(fontWeight: FontWeight.w800),
               ),
+              Text(subtitle),
             ],
           ),
-        ),
-      );
+        ],
+      ),
+    ),
+  );
 }
 
 class _EmptyHome extends StatelessWidget {
@@ -306,9 +299,7 @@ class _MiniPlayer extends StatelessWidget {
           children: [
             Text(
               entry.title,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge
+              style: Theme.of(context).textTheme.titleLarge
                   ?.copyWith(fontWeight: FontWeight.w700),
             ),
             Slider(

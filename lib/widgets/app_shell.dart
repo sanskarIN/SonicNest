@@ -79,19 +79,19 @@ class AppShell extends StatelessWidget {
           control: true,
           alt: true,
         ): () => unawaited(
-              controller.player.jump(
-                Duration(seconds: -controller.settings.skipIntervalSeconds),
-              ),
-            ),
+          controller.player.jump(
+            Duration(seconds: -controller.settings.skipIntervalSeconds),
+          ),
+        ),
         const SingleActivator(
           LogicalKeyboardKey.arrowRight,
           control: true,
           alt: true,
         ): () => unawaited(
-              controller.player.jump(
-                Duration(seconds: controller.settings.skipIntervalSeconds),
-              ),
-            ),
+          controller.player.jump(
+            Duration(seconds: controller.settings.skipIntervalSeconds),
+          ),
+        ),
       },
       child: Focus(
         autofocus: true,
@@ -121,7 +121,8 @@ class AppShell extends StatelessWidget {
                         children: [
                           NavigationRail(
                             selectedIndex: controller.navigationIndex,
-                            onDestinationSelected: controller.setNavigationIndex,
+                            onDestinationSelected:
+                                controller.setNavigationIndex,
                             labelType: NavigationRailLabelType.all,
                             leading: const Padding(
                               padding: EdgeInsets.symmetric(vertical: 16),

@@ -99,9 +99,8 @@ class AppController extends ChangeNotifier {
     final normalizedTag = tagFilter?.trim().toLowerCase();
     if (normalizedTag != null && normalizedTag.isNotEmpty) {
       values = values.where(
-        (entry) => entry.tags.any(
-          (tag) => tag.trim().toLowerCase() == normalizedTag,
-        ),
+        (entry) =>
+            entry.tags.any((tag) => tag.trim().toLowerCase() == normalizedTag),
       );
     }
     final from = dateFromFilter;
@@ -125,10 +124,12 @@ class AppController extends ChangeNotifier {
       return switch (sort) {
         RecordingSort.newest => b.createdAt.compareTo(a.createdAt),
         RecordingSort.oldest => a.createdAt.compareTo(b.createdAt),
-        RecordingSort.nameAsc =>
-          a.title.toLowerCase().compareTo(b.title.toLowerCase()),
-        RecordingSort.nameDesc =>
-          b.title.toLowerCase().compareTo(a.title.toLowerCase()),
+        RecordingSort.nameAsc => a.title.toLowerCase().compareTo(
+          b.title.toLowerCase(),
+        ),
+        RecordingSort.nameDesc => b.title.toLowerCase().compareTo(
+          a.title.toLowerCase(),
+        ),
         RecordingSort.longest => b.durationMs.compareTo(a.durationMs),
         RecordingSort.shortest => a.durationMs.compareTo(b.durationMs),
         RecordingSort.largest => b.sizeBytes.compareTo(a.sizeBytes),
@@ -314,7 +315,8 @@ class AppController extends ChangeNotifier {
         try {
           imported = await storage.importFile(source);
           final ext = p.extension(imported).replaceFirst('.', '').toLowerCase();
-          final format = RecordingFormat.values
+          final format =
+              RecordingFormat.values
                   .where((format) => format.extension == ext)
                   .firstOrNull ??
               RecordingFormat.m4a;
@@ -349,8 +351,9 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> exportRecording(RecordingEntry entry) async {
-    final destination =
-        await external.chooseExportPath(p.basename(entry.filePath));
+    final destination = await external.chooseExportPath(
+      p.basename(entry.filePath),
+    );
     if (destination != null) {
       await File(entry.filePath).copy(destination);
     }
@@ -423,36 +426,28 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> toggleFavorite(RecordingEntry entry) => _replace(
-        entry.copyWith(
-          favorite: !entry.favorite,
-          modifiedAt: DateTime.now(),
-        ),
-      );
+    entry.copyWith(favorite: !entry.favorite, modifiedAt: DateTime.now()),
+  );
 
   Future<void> togglePinned(RecordingEntry entry) => _replace(
-        entry.copyWith(
-          pinned: !entry.pinned,
-          modifiedAt: DateTime.now(),
-        ),
-      );
+    entry.copyWith(pinned: !entry.pinned, modifiedAt: DateTime.now()),
+  );
 
   Future<void> setFavoriteForEntries(
     Iterable<RecordingEntry> entries,
     bool favorite,
-  ) =>
-      _updateEntries(
-        entries,
-        (entry, now) => entry.copyWith(favorite: favorite, modifiedAt: now),
-      );
+  ) => _updateEntries(
+    entries,
+    (entry, now) => entry.copyWith(favorite: favorite, modifiedAt: now),
+  );
 
   Future<void> setPinnedForEntries(
     Iterable<RecordingEntry> entries,
     bool pinned,
-  ) =>
-      _updateEntries(
-        entries.where((entry) => !entry.isTrashed),
-        (entry, now) => entry.copyWith(pinned: pinned, modifiedAt: now),
-      );
+  ) => _updateEntries(
+    entries.where((entry) => !entry.isTrashed),
+    (entry, now) => entry.copyWith(pinned: pinned, modifiedAt: now),
+  );
 
   Future<void> updateMetadata(
     RecordingEntry entry, {
@@ -460,19 +455,17 @@ class AppController extends ChangeNotifier {
     List<String>? tags,
     String? notes,
     List<RecordingMarker>? markers,
-  }) =>
-      _replace(
-        entry.copyWith(
-          folder: folder,
-          tags: tags,
-          notes: notes,
-          markers: markers,
-          modifiedAt: DateTime.now(),
-        ),
-      );
+  }) => _replace(
+    entry.copyWith(
+      folder: folder,
+      tags: tags,
+      notes: notes,
+      markers: markers,
+      modifiedAt: DateTime.now(),
+    ),
+  );
 
-  Future<void> moveToTrash(RecordingEntry entry) =>
-      moveEntriesToTrash([entry]);
+  Future<void> moveToTrash(RecordingEntry entry) => moveEntriesToTrash([entry]);
 
   Future<void> moveEntriesToTrash(Iterable<RecordingEntry> entries) async {
     final targets = entries
@@ -508,14 +501,18 @@ class AppController extends ChangeNotifier {
   Future<void> restore(RecordingEntry entry) => restoreEntries([entry]);
 
   Future<void> restoreEntries(Iterable<RecordingEntry> entries) async {
-    final targets =
-        entries.where((entry) => entry.isTrashed).toList(growable: false);
+    final targets = entries
+        .where((entry) => entry.isTrashed)
+        .toList(growable: false);
     if (targets.isEmpty) {
       return;
     }
     await _guarded(() async {
       for (final entry in targets) {
-        final path = await storage.restoreFromTrash(entry.filePath, entry.title);
+        final path = await storage.restoreFromTrash(
+          entry.filePath,
+          entry.title,
+        );
         final index = _recordings.indexWhere((item) => item.id == entry.id);
         if (index >= 0) {
           _recordings[index] = entry.copyWith(
@@ -596,9 +593,7 @@ class AppController extends ChangeNotifier {
       return;
     }
     final now = DateTime.now();
-    final updates = {
-      for (final entry in targets) entry.id: update(entry, now),
-    };
+    final updates = {for (final entry in targets) entry.id: update(entry, now)};
     for (var index = 0; index < _recordings.length; index++) {
       final updated = updates[_recordings[index].id];
       if (updated != null) {
