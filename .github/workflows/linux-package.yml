@@ -11,6 +11,7 @@ on:
       - 'tool/generate_brand_assets_v2.dart'
       - 'tool/build_linux_deb.sh'
       - 'tool/verify_linux_deb.sh'
+      - 'tool/smoke_test_installed_linux_deb.sh'
       - 'packaging/linux/**'
       - 'assets/logo/**'
       - 'pubspec.yaml'
@@ -25,6 +26,7 @@ on:
       - 'tool/generate_brand_assets_v2.dart'
       - 'tool/build_linux_deb.sh'
       - 'tool/verify_linux_deb.sh'
+      - 'tool/smoke_test_installed_linux_deb.sh'
       - 'packaging/linux/**'
       - 'assets/logo/**'
       - 'pubspec.yaml'
@@ -40,9 +42,9 @@ concurrency:
 
 jobs:
   debian-package:
-    name: Build and verify Debian package
+    name: Build, install, and verify Debian package
     runs-on: ubuntu-latest
-    timeout-minutes: 50
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -55,7 +57,7 @@ jobs:
           sudo apt-get install -y \
             clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev \
             ffmpeg pulseaudio-utils libjson-glib-dev \
-            desktop-file-utils appstream
+            desktop-file-utils appstream xvfb
       - name: Enable Linux desktop
         run: flutter config --enable-linux-desktop
       - name: Generate platform hosts
@@ -76,6 +78,24 @@ jobs:
           test -n "$PACKAGE"
           dpkg-deb --info "$PACKAGE"
           dpkg-deb --contents "$PACKAGE"
+      - name: Install generated Debian package
+        run: |
+          set -euo pipefail
+          PACKAGE="$(find build/linux-package -maxdepth 1 -type f -name 'sonicnest_*.deb' -print -quit)"
+          test -n "$PACKAGE"
+          sudo apt-get install -y "./$PACKAGE"
+          dpkg-query -W sonicnest
+      - name: Smoke-test installed package
+        run: bash tool/smoke_test_installed_linux_deb.sh
+      - name: Uninstall generated Debian package
+        run: |
+          set -euo pipefail
+          sudo apt-get remove -y sonicnest
+          ! dpkg-query -W -f='${Status}\n' sonicnest 2>/dev/null | grep -Fxq 'install ok installed'
+          test ! -e /opt/sonicnest
+          test ! -e /usr/share/applications/sonicnest.desktop
+          test ! -e /usr/share/icons/hicolor/512x512/apps/sonicnest.png
+          test ! -e /usr/share/metainfo/io.github.sanskarIN.SonicNest.metainfo.xml
       - uses: actions/upload-artifact@v4
         with:
           name: sonicnest-linux-debian-package-ci
