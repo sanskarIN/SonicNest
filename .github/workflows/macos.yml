@@ -1,7 +1,15 @@
-name: macOS Build
+name: Apple Builds
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'lib/**'
+      - 'macos/**'
+      - 'ios/**'
+      - 'pubspec.yaml'
+      - 'tool/**'
+      - '.github/workflows/macos.yml'
   pull_request:
     branches: [main]
     paths:
@@ -10,12 +18,19 @@ on:
       - 'ios/**'
       - 'pubspec.yaml'
       - 'tool/**'
+      - '.github/workflows/macos.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: sonicnest-apple-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   macos:
+    name: macOS debug build
     runs-on: macos-latest
     timeout-minutes: 45
     steps:
@@ -24,6 +39,28 @@ jobs:
         with:
           channel: stable
           cache: true
-      - run: bash tool/bootstrap_platforms.sh
-      - run: flutter pub get
-      - run: flutter build macos --debug
+      - name: Enable macOS desktop
+        run: flutter config --enable-macos-desktop
+      - name: Generate platform hosts
+        run: bash tool/bootstrap_platforms.sh
+      - name: Resolve dependencies
+        run: flutter pub get
+      - name: Build macOS debug application
+        run: flutter build macos --debug
+
+  ios:
+    name: iOS no-codesign debug build
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Generate platform hosts
+        run: bash tool/bootstrap_platforms.sh
+      - name: Resolve dependencies
+        run: flutter pub get
+      - name: Build iOS debug application without signing
+        run: flutter build ios --debug --no-codesign
