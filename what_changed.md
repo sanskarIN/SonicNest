@@ -1190,11 +1190,11 @@ A later metadata modernization intentionally reran strict AppStream validation. 
 
 - invalid developer ID observed: `io.github.sanskarIN`.
 
-The developer identifier was corrected to the valid lowercase reverse-domain identity `io.github.sanskarin` in source revision `f2c773e1e03753ec62b9e4229a3f086871a26f29`.
+The developer identifier was corrected to the valid lowercase reverse-domain identity `io.github.sanskarin` in source revision `f2c773e59b27a2aaac77e0590e20441ed7eba03f`.
 
 ### Latest exact Linux package validation
 
-Linux Package CI run `31783749267` validated source revision `f2c773e1e03753ec62b9e4229a3f086871a26f29` and completed the entire job successfully:
+Linux Package CI run `31783749267` validated source revision `f2c773e59b27a2aaac77e0590e20441ed7eba03f` and completed the entire job successfully:
 
 - Linux build dependencies: SUCCESS.
 - Flutter Linux desktop enablement: SUCCESS.
@@ -1305,6 +1305,6 @@ These items remain unchecked in `TODO.md` and `docs/QA_CHECKLIST.md` where appli
 
 SonicNest now has a repository-supported, deterministic Debian `.deb` package path with native icon integration, desktop/AppStream metadata, SHA-256 verification, dedicated CI, release-candidate integration, repository-audit invariants, troubleshooting, contribution rules, release evidence fields, and synchronized project documentation.
 
-The latest package source validation is revision `f2c773e1e03753ec62b9e4229a3f086871a26f29`, Linux Package CI run `31783749267`, with the complete release-build/package/verify/inspect/upload job green.
+The latest package source validation is revision `f2c773e59b27a2aaac77e0590e20441ed7eba03f`, Linux Package CI run `31783749267`, with the complete release-build/package/verify/inspect/upload job green.
 
 The next legitimate work is evidence-driven: install/test the package on representative real Linux systems, continue the broader physical-device/audio/accessibility/stress QA matrix, fix reproducible defects found there, and only then prepare signed/public distribution artifacts. The repository must continue to be classified as a **development preview** until those gates are completed with real evidence.
