@@ -40,6 +40,7 @@ class AppLocalizations {
   String get restore => 'Restore';
   String get selectAll => 'Select all';
   String get clearAll => 'Clear all';
+  String get off => 'Off';
 
   String get welcomeToSonicNest => 'Welcome to SonicNest';
   String get homeDescription =>
@@ -209,6 +210,54 @@ class AppLocalizations {
   String get trashIsEmptyHint =>
       'Deleted recordings you can restore will appear here.';
   String get recordNow => 'Record now';
+
+  String get recordingSettingsSection => 'Recording';
+  String get defaultFormat => 'Default format';
+  String get bitrate => 'Bitrate';
+  String get sampleRate => 'Sample rate';
+  String get automaticGainControl => 'Automatic gain control';
+  String get automaticGainHint =>
+      'Ask the recording backend to keep voice levels more consistent when supported.';
+  String get smartNaming => 'Smart naming';
+  String get prefix => 'Prefix';
+  String get recordingDefaultPrefix => 'Recording';
+  String get filenameTemplate => 'Filename template';
+  String get filenameTemplateHint => '{prefix}_{date}_{time}';
+  String get filenameTemplateHelper =>
+      'Tokens: {prefix} {suffix} {category} {date} {time} {sequence}';
+  String get categoryToken => 'Category token';
+  String get suffixToken => 'Suffix token';
+  String get countdown => 'Countdown';
+  String seconds(int count) => '$count seconds';
+  String get keepScreenAwakeDuringRecording =>
+      'Keep screen awake during recording';
+  String get playbackSettingsSection => 'Playback';
+  String get defaultPlaybackSpeed => 'Default playback speed';
+  String get jumpInterval => 'Jump interval';
+  String get skipSilenceByDefault => 'Skip silence by default';
+  String get skipSilenceBackendHint =>
+      'Used where the active playback backend supports silence skipping.';
+  String get appearanceAccessibility => 'Appearance & accessibility';
+  String get systemTheme => 'System';
+  String get lightTheme => 'Light';
+  String get darkTheme => 'Dark';
+  String get reduceMotion => 'Reduce motion';
+  String get reduceMotionHint =>
+      'Avoid non-essential animation and movement.';
+  String get safetyStorage => 'Safety & storage';
+  String get confirmPermanentDeletion => 'Confirm permanent deletion';
+  String get confirmPermanentDeletionHint =>
+      'Trash remains recoverable until you permanently delete an item.';
+  String get managedStorage => 'Managed storage';
+  String storageSummary(String total, String recordings, String trash) =>
+      '$total total • $recordings recordings • $trash Trash';
+  String savedCount(int count) => '$count saved';
+  String get temporaryAudioFiles => 'Temporary audio files';
+  String temporaryFilesSummary(int count, String size) => '$count files • $size';
+  String get clean => 'Clean';
+  String get offlineFirstRecordings => 'Offline-first recordings';
+  String get offlineFirstRecordingsHint =>
+      'SonicNest stores recordings locally and does not upload microphone data by default.';
 
   String get batchConvert => 'Batch Convert';
   String get createConvertedCopies => 'Create converted copies';
