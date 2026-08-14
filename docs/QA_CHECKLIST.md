@@ -296,7 +296,6 @@ Verify on each target platform which settings are honored by the native recorder
 
 A checkbox is evidence, not decoration. If a test requires physical hardware, a platform account, signing identity, store dashboard, external device, screen reader, or long-running test, leave it unchecked until that test has actually been performed and recorded.
 
-
 ## External-folder batch export
 
 - [ ] Choose an external destination folder on every supported platform where the picker exposes this capability.
@@ -307,7 +306,6 @@ A checkbox is evidence, not decoration. If a test requires physical hardware, a 
 - [ ] Request Stop after current file during a long conversion and verify the current output completes before the next item is skipped.
 - [ ] Verify already completed outputs are not rolled back after a stop request.
 
-
 ## Localization migration continuation
 
 - [ ] Verify Home, Recorder, Library, Player, Editor, Settings, Batch Convert, About/support, and startup visible labels are sourced from the localization catalog.
@@ -315,7 +313,6 @@ A checkbox is evidence, not decoration. If a test requires physical hardware, a 
 - [ ] Verify secondary-click on desktop recordings opens the same safe action surface as the More button.
 - [ ] Verify long localized strings do not overflow compact phone and narrow desktop layouts before adding another locale.
 - [ ] Verify backend diagnostic details remain understandable when combined with localized generic error copy.
-
 
 ## Direct original-file batch export
 
@@ -326,7 +323,6 @@ A checkbox is evidence, not decoration. If a test requires physical hardware, a 
 - [ ] Verify destination disappearance/permission revocation produces a recoverable result.
 - [ ] Verify low-storage behavior.
 - [ ] Verify very large files and large selected batches on representative target hardware.
-
 
 ## Native launcher and splash branding QA
 
@@ -364,11 +360,29 @@ Windows real-device/release-candidate review:
 - [ ] Windows icon is checked in Start/Search and shortcut surfaces.
 - [ ] Final installer/package icon is checked once a distribution format is selected.
 
-Linux packaging review:
+Linux Debian packaging review:
 
-- [ ] Select a Linux package/distribution format.
-- [ ] Install the generated SonicNest icon into the selected desktop-entry/package metadata.
-- [ ] Check application menu/launcher, task switcher, and desktop-entry surfaces on the selected desktop environments.
+Repository implementation/automation evidence:
+
+- [x] Debian `.deb` is selected as the initial repository-supported Linux installation format.
+- [x] The deterministic SonicNest icon is installed into the hicolor icon hierarchy and referenced by the packaged desktop entry.
+- [x] AppStream metadata is installed by the Debian package builder.
+- [x] Package verification checks control metadata, executable permissions, desktop entry, AppStream metadata, icon presence, and SHA-256 integrity.
+- [x] Linux Package CI run `31783018282` built and structurally verified `sonicnest_0.1.0_amd64.deb` successfully.
+
+Real-system/release-candidate review:
+
+- [ ] Fresh-install the exact candidate `.deb` on a representative Debian-family system.
+- [ ] Fresh-install the exact candidate `.deb` on a representative Ubuntu-family system.
+- [ ] Verify the package checksum before installation.
+- [ ] Launch SonicNest from the application menu/launcher.
+- [ ] Launch SonicNest directly from `/opt/sonicnest/sonic_nest`.
+- [ ] Verify launcher, menu, task-switcher, and AppStream surfaces use the expected SonicNest icon/identity.
+- [ ] Verify microphone permission/capture and representative playback/import/export behavior from the installed package.
+- [ ] Verify upgrade behavior from a prior compatible candidate package.
+- [ ] Verify uninstall removes the package-owned application payload and desktop integration.
+- [ ] Verify no user recording/library data is silently deleted merely because the application package is removed.
+- [ ] Record tested distribution version, desktop environment, architecture, exact `.deb` filename, SHA-256, and observations in the release evidence record.
 
 Release evidence:
 
