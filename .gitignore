@@ -8,6 +8,9 @@ coverage/
 .flutter-plugins
 .flutter-plugins-dependencies
 
+# Reproducible native branding outputs
+assets/generated/*.png
+
 # Generated platform files created by tool/bootstrap_platforms.sh
 android/.gradle/
 android/local.properties
