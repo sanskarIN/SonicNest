@@ -677,7 +677,7 @@ During this pass:
 - the redundant-await findings were fixed in separate processor/player commits
 - subsequent documentation synchronization commits intentionally caused replacement CI runs
 
-At the time this `what_changed.md` update is committed, the final documentation-synchronized HEAD still requires the newest replacement Flutter/Windows/Apple runs to finish. Do not convert an in-progress workflow into a success claim. The previous fully green cross-platform baseline remains recorded above and in `PROJECT_STATE.md`.
+At the time the first advanced `what_changed.md` update was committed, the documentation-synchronized HEAD still had replacement runs in progress. That temporary state has now been superseded by the final validation record below.
 
 ## Hardware/manual release gates that remain
 
@@ -719,3 +719,33 @@ For the next continuation:
 4. Do not reimplement completed smart naming, countdown, screen-wake, A-B loop, tag/date filters, storage accounting, advanced editor, localization scaffold, media-session source work, or release docs.
 5. Prioritize physical-device QA, listening tests, accessibility, localization completion, large-library/long-recording performance, real release assets, signing, packaging, and any reproducible issues found from those tests.
 6. Keep evidence-dependent release gates unchecked until actual evidence exists.
+
+## Final automated validation after CI concurrency correction
+
+The core workflow was hardened so documentation-only commits no longer restart analyzer/Android/Linux validation. Its concurrency group was also versioned so an older GitHub runner allocation could not block the replacement validation run.
+
+Focused commit:
+
+- `ci: avoid documentation-only core rebuild churn`
+
+Exact validated core run:
+
+- Run ID: `31771542490`
+- Validated commit: `594f94a7b55826d1f27abbdf2aadd0a17ae42991`
+- Platform bootstrap: SUCCESS
+- Dependency resolution: SUCCESS
+- Dart formatting step: SUCCESS
+- Flutter static analysis: SUCCESS
+- Unit tests: SUCCESS
+- Android debug APK build: SUCCESS
+- Linux debug desktop build: SUCCESS
+
+Source-equivalent desktop/Apple validation from the same final source revision before documentation-only synchronization:
+
+- Windows run `31771214266`: SUCCESS
+- Apple run `31771214284`: SUCCESS for macOS debug and unsigned iOS debug builds
+- Source revision validated by those workflows: `3eed20635099bbcc2b4777d8a9881c0eb34caae0`
+
+All commits after that Apple/Windows source revision and before the core CI workflow correction were documentation-only; the core run above validates the current source plus the CI workflow correction itself.
+
+This completes the repository-automatable validation for this continuation. It does **not** complete the physical-device, accessibility, long-duration, listening-quality, signing, packaging, or store-release gates listed above and in `TODO.md` / `docs/QA_CHECKLIST.md`.
