@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../controllers/app_controller.dart';
+import '../core/formatters.dart';
 import '../models/recording_settings.dart';
+import '../services/storage_service.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key, required this.controller});
@@ -190,12 +192,20 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const Divider(height: 28),
+                Text(
+                  'Smart naming',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 10),
                 TextFormField(
-                  key: ValueKey(recording.namingPrefix),
+                  key: ValueKey('prefix-${recording.namingPrefix}'),
                   initialValue: recording.namingPrefix,
                   decoration: const InputDecoration(
-                    labelText: 'Automatic filename prefix',
+                    labelText: 'Prefix',
                     hintText: 'Recording',
                   ),
                   maxLength: 40,
@@ -205,6 +215,87 @@ class SettingsScreen extends StatelessWidget {
                       namingPrefix:
                           value.trim().isEmpty ? 'Recording' : value.trim(),
                     ),
+                  ),
+                ),
+                TextFormField(
+                  key: ValueKey('template-${recording.namingTemplate}'),
+                  initialValue: recording.namingTemplate,
+                  decoration: const InputDecoration(
+                    labelText: 'Filename template',
+                    hintText: '{prefix}_{date}_{time}',
+                    helperText:
+                        'Tokens: {prefix} {suffix} {category} {date} {time} {sequence}',
+                  ),
+                  maxLength: 120,
+                  onFieldSubmitted: (value) =>
+                      controller.updateRecordingSettings(
+                    recording.copyWith(namingTemplate: value.trim()),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        key: ValueKey('category-${recording.namingCategory}'),
+                        initialValue: recording.namingCategory,
+                        decoration: const InputDecoration(labelText: 'Category token'),
+                        maxLength: 30,
+                        onFieldSubmitted: (value) =>
+                            controller.updateRecordingSettings(
+                          recording.copyWith(namingCategory: value.trim()),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        key: ValueKey('suffix-${recording.namingSuffix}'),
+                        initialValue: recording.namingSuffix,
+                        decoration: const InputDecoration(labelText: 'Suffix token'),
+                        maxLength: 30,
+                        onFieldSubmitted: (value) =>
+                            controller.updateRecordingSettings(
+                          recording.copyWith(namingSuffix: value.trim()),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<int>(
+                        initialValue: recording.countdownSeconds,
+                        decoration: const InputDecoration(labelText: 'Countdown'),
+                        items: const [0, 3, 5, 10]
+                            .map(
+                              (seconds) => DropdownMenuItem(
+                                value: seconds,
+                                child: Text(
+                                  seconds == 0 ? 'Off' : '$seconds seconds',
+                                ),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (seconds) {
+                          if (seconds != null) {
+                            controller.updateRecordingSettings(
+                              recording.copyWith(countdownSeconds: seconds),
+                            );
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Keep screen awake during recording'),
+                  value: recording.keepScreenAwake,
+                  onChanged: (value) => controller.updateRecordingSettings(
+                    recording.copyWith(keepScreenAwake: value),
                   ),
                 ),
               ],
@@ -328,6 +419,57 @@ class SettingsScreen extends StatelessWidget {
                   onChanged: (value) => controller.updateSettings(
                     settings.copyWith(confirmDelete: value),
                   ),
+                ),
+                FutureBuilder<StorageStats>(
+                  future: controller.storage.stats(),
+                  builder: (context, snapshot) {
+                    final stats = snapshot.data;
+                    if (stats == null) {
+                      return const ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(Icons.storage_outlined),
+                        title: Text('Managed storage'),
+                        subtitle: LinearProgressIndicator(),
+                      );
+                    }
+                    return Column(
+                      children: [
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(Icons.storage_outlined),
+                          title: const Text('Managed storage'),
+                          subtitle: Text(
+                            '${formatBytes(stats.totalManagedBytes)} total • '
+                            '${formatBytes(stats.recordingsBytes)} recordings • '
+                            '${formatBytes(stats.trashBytes)} Trash',
+                          ),
+                          trailing: Text(
+                            '${stats.recordingCount} saved',
+                            style: Theme.of(context).textTheme.labelLarge,
+                          ),
+                        ),
+                        if (stats.temporaryFileCount > 0)
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.cleaning_services_outlined),
+                            title: const Text('Temporary audio files'),
+                            subtitle: Text(
+                              '${stats.temporaryFileCount} files • '
+                              '${formatBytes(stats.temporaryBytes)}',
+                            ),
+                            trailing: TextButton(
+                              onPressed: controller.recorder.isActive
+                                  ? null
+                                  : () async {
+                                      await controller.storage.clearTemporaryFiles();
+                                      controller.notifyListeners();
+                                    },
+                              child: const Text('Clean'),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
                 ),
                 const ListTile(
                   contentPadding: EdgeInsets.zero,
