@@ -18,6 +18,8 @@ This file intentionally contains only work that is still incomplete, requires ph
 
 ## Reliability and stress validation
 
+Repository automation now provides a deterministic baseline for malformed metadata decoding, structural metadata corruption preservation, interrupted `.bak` recovery, a 3,000-entry metadata save/load round-trip, and isolated import copy/probe/waveform failures. The checks below intentionally remain incomplete because they require real filesystems, media corpora, devices, UI/performance profiling, or sustained workloads rather than synthetic regression coverage alone.
+
 - [ ] Low-storage recording and export failure tests.
 - [ ] Disk/file permission failure recovery tests.
 - [ ] Repeated start/stop stress test.
