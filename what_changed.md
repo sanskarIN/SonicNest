@@ -923,3 +923,33 @@ Exact automated validation:
 - unsigned iOS debug build: SUCCESS
 
 Release classification remains **development preview**. Physical microphone, routing, interruption/background, low-storage, accessibility, long-duration, large-library, real screenshot/icon, signing, notarization, packaging, and store-dashboard gates still require real evidence and remain unchecked.
+
+
+---
+
+# Direct multi-file original export continuation
+
+Implemented after the localization/library hardening pass:
+
+- Added `ExternalCopyBatchResult` and `ExternalActions.copyFilesToDirectoryCollisionSafe`.
+- Multi-file copies continue past per-file failures and return independent success/failure counts.
+- Added unit tests for complete batch success, mixed success with a missing source, and collision-safe numbering when multiple sources share a basename.
+- Batch Convert now exposes direct export of selected original recordings without transcoding.
+- Direct original export uses a user-selected directory and preserves the original recording files.
+- Existing destination files are never intentionally overwritten; numbered names are allocated instead.
+- Direct-export failures are summarized without deleting or rolling back successful copies.
+
+Exact automated validation:
+
+- Validated revision: `7c4702afcb9859f3507ac151f23372f96acec50a`
+- Validation run: `31775283791`
+- Dart formatting: SUCCESS
+- Flutter static analysis: SUCCESS
+- Unit tests: SUCCESS
+- Android debug APK: SUCCESS
+- Linux debug build: SUCCESS
+- Windows debug build: SUCCESS
+- macOS debug build: SUCCESS
+- unsigned iOS debug build: SUCCESS
+
+Physical directory-picker behavior, permission revocation, low-storage copies, and very large batch behavior remain manual evidence gates.

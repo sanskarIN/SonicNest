@@ -161,3 +161,12 @@ next_exact_tasks:
 - Advanced tag/date filters and desktop secondary-click recording actions are active in the current Library UI.
 - Batch conversion external-copy and stop-after-current behavior is implemented and test-supported.
 - Release classification remains **development preview** until evidence-dependent manual gates are complete.
+
+
+## Latest exact validation — direct multi-file original export
+
+- Validated revision: `7c4702afcb9859f3507ac151f23372f96acec50a`
+- Validation run: `31775283791`
+- Analyzer/unit tests and Android/Linux/Windows/macOS/unsigned-iOS debug builds: **SUCCESS**
+- Direct selected-original export to a user-selected directory is implemented with collision-safe copies and per-file failure isolation.
+- Real platform-picker, low-storage, permission-revocation, and large-batch evidence is still required before stable release.

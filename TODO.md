@@ -38,7 +38,6 @@ This file intentionally contains only work that is still incomplete, requires ph
 - [ ] Verify secondary/right-click recording actions on Linux.
 - [ ] Confirm secondary-click does not interfere with primary tap/double-click, keyboard focus, or touch long-press behavior.
 - [ ] Evaluate whether a cursor-anchored platform-native context menu materially improves usability over the implemented action surface before adding more native menu code.
-- [ ] Evaluate direct multi-file export to a user-selected external destination after batch-conversion usability testing.
 
 ## Accessibility and UX validation
 
@@ -51,12 +50,6 @@ This file intentionally contains only work that is still incomplete, requires ph
 - [ ] Keyboard-only end-to-end desktop review.
 - [ ] Reduced-motion behavior review.
 - [ ] Batch conversion screen with large text and keyboard-only interaction.
-
-## Localization
-
-- [ ] Finish migrating remaining hard-coded presentation strings into the localization layer before adding non-English translations.
-- [ ] Add translation QA once additional languages are introduced.
-- [ ] Include batch-conversion and desktop-action strings in the localization migration.
 
 ## Branding and release assets
 
@@ -77,6 +70,9 @@ This file intentionally contains only work that is still incomplete, requires ph
 
 
 ## External batch export validation
+
+- [ ] Verify direct original-file multi-export on each supported platform.
+- [ ] Verify mixed-success direct export when one selected source disappears before copying.
 
 - [ ] Verify directory-picker availability/behavior on Android, iOS, macOS, Windows, and Linux.
 - [ ] Verify collision-safe numbering in real user folders.

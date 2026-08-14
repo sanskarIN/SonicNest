@@ -23,6 +23,7 @@ Current development version: **0.1.0**. The repository is structured as a produc
 - Live amplitude waveform, clipping warning, recording timer, markers/bookmarks, and input-device-aware recording services.
 - Persisted waveform envelopes for recorded, imported, and processed media.
 - Searchable library with favorites, pinned items, tags, folders, trash/restore, rename, duplicate, import, export, share, sorting, format/folder/tag/date filtering, and multi-selection bulk actions.
+- Batch tools can convert several recordings or copy selected originals directly to a user-selected folder with collision-safe naming.
 - Desktop secondary/right-click access to the same complete recording action surface used by touch/menu workflows.
 - Multi-recording batch format conversion with target-format selection, progress, per-file failure isolation, preserved source files, retained markers, and successful-output registration in the library.
 - Managed storage statistics for recordings, Trash, and temporary processing files, plus guarded temporary-file cleanup.

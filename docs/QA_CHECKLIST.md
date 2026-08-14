@@ -315,3 +315,14 @@ A checkbox is evidence, not decoration. If a test requires physical hardware, a 
 - [ ] Verify secondary-click on desktop recordings opens the same safe action surface as the More button.
 - [ ] Verify long localized strings do not overflow compact phone and narrow desktop layouts before adding another locale.
 - [ ] Verify backend diagnostic details remain understandable when combined with localized generic error copy.
+
+
+## Direct original-file batch export
+
+- [ ] Select several saved recordings and export their originals to a user-selected directory without transcoding.
+- [ ] Verify same-basename originals receive collision-safe numbered destination names.
+- [ ] Verify an existing destination file is not overwritten.
+- [ ] Verify one missing/unavailable source does not roll back other successful copies.
+- [ ] Verify destination disappearance/permission revocation produces a recoverable result.
+- [ ] Verify low-storage behavior.
+- [ ] Verify very large files and large selected batches on representative target hardware.

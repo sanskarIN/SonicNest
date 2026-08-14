@@ -83,3 +83,10 @@ All notable project changes are documented here.
 - Removed duplicate legacy advanced-filter UI and obsolete `AppStrings`.
 - Added safe between-file batch cancellation and collision-safe optional external-folder copies with unit-tested filesystem behavior.
 - Validated revision `3fa56d26fb6cb64ccddf2b71e7b8c677aa4aa69b` in run `31774726146` across analyzer/tests and all five platform debug-build targets.
+
+
+### Direct multi-file original export continuation
+- Added resilient multi-file directory-copy results and collision-safe batch copying.
+- Added direct export of selected original recordings without transcoding.
+- Added mixed-success and duplicate-basename filesystem tests.
+- Validated revision `7c4702afcb9859f3507ac151f23372f96acec50a` in run `31775283791` across analyzer/tests and all five platform debug-build targets.

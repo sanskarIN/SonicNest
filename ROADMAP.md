@@ -103,3 +103,8 @@ Implemented: optional user-selected destination-folder copies, collision-safe de
 ## Localization migration status
 
 Primary Flutter presentation surfaces are centralized in the localization catalog and English remains the baseline locale. Remaining localization work is translation introduction, text-expansion testing, translation QA, and deciding how much backend diagnostic text should be localized versus retained as technical detail.
+
+
+## Direct export implementation status
+
+Selected original recordings can be copied directly to a chosen folder without transcoding. Collision-safe naming and per-file failure isolation are implemented and unit-tested. Remaining work is real-platform picker/permission/low-storage/large-batch validation.
