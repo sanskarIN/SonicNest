@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:ffmpeg_kit_flutter_new_audio/ffmpeg_kit.dart';
+import 'package:ffmpeg_kit_flutter_new_audio/ffprobe_kit.dart';
 import 'package:ffmpeg_kit_flutter_new_audio/return_code.dart';
 
 import '../core/constants.dart';
@@ -31,6 +32,19 @@ class AudioProcessor {
           ? output!.trim()
           : 'FFmpeg processing failed.');
     }
+  }
+
+  Future<Duration> probeDuration(String inputPath) async {
+    final session = await FFprobeKit.getMediaInformation(inputPath);
+    final information = await session.getMediaInformation();
+    final seconds = double.tryParse(information?.getDuration() ?? '');
+    if (seconds == null || !seconds.isFinite || seconds < 0) {
+      final output = await session.getOutput();
+      throw AudioProcessingException(output?.trim().isNotEmpty == true
+          ? output!.trim()
+          : 'Could not determine audio duration.');
+    }
+    return Duration(milliseconds: (seconds * 1000).round());
   }
 
   String _codecArgs(RecordingFormat format, int bitRate) => switch (format) {
