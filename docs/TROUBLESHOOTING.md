@@ -291,12 +291,72 @@ The repository release-candidate workflow intentionally avoids maintainer produc
 - iOS no-codesign output is not an App Store installable package;
 - macOS output is not a public notarized package;
 - Windows output is not a finalized signed installer;
-- Linux output is not a selected distribution package;
+- Linux now includes a structurally verified Debian `.deb`, but that does not make it approved for public distribution before real installation/audio/accessibility/visual QA and the final distribution/signing policy are complete;
 - Android output is not evidence that Play production signing/review gates are complete.
 
 See `docs/UNSIGNED_ARTIFACTS.md` and `docs/RELEASING.md`.
 
-## 24. GitHub Actions build passes but the app fails on hardware
+## 24. Debian package build cannot find a Linux bundle
+
+`tool/build_linux_deb.sh` packages an already-built Flutter Linux bundle. It does not compile Flutter itself.
+
+Build in this order:
+
+```bash
+flutter config --enable-linux-desktop
+bash tool/bootstrap_platforms.sh
+flutter pub get
+dart tool/generate_brand_assets_v2.dart
+flutter build linux --release
+bash tool/build_linux_deb.sh release
+bash tool/verify_linux_deb.sh
+```
+
+If the builder reports zero or multiple bundles, remove stale/conflicting build output and rebuild the intended mode. The builder intentionally requires exactly one `build/linux/*/<mode>/bundle` directory so it cannot silently package the wrong architecture/build mode.
+
+## 25. Debian package installs but SonicNest is missing from the application menu
+
+Check the package payload first:
+
+```bash
+dpkg-deb --contents build/linux-package/sonicnest_0.1.0_amd64.deb
+```
+
+The package should include:
+
+- `/usr/share/applications/sonicnest.desktop`;
+- `/usr/share/icons/hicolor/512x512/apps/sonicnest.png`;
+- `/usr/share/metainfo/io.github.sanskarIN.SonicNest.metainfo.xml`;
+- `/opt/sonicnest/sonic_nest`.
+
+Then verify the installed desktop file and icon exist. Desktop environments can cache application/menu/icon metadata, so log out/in or refresh the desktop environment's normal application cache if needed. Do not rewrite package-owned files manually and then treat that machine as valid release evidence; fix the repository package metadata and rebuild instead.
+
+## 26. Debian package checksum does not match
+
+Do not install or publish an artifact with an unexplained checksum mismatch.
+
+`tool/build_linux_deb.sh` writes a `.sha256` file beside the package. `tool/verify_linux_deb.sh` compares the recorded digest with the actual `.deb` bytes.
+
+If a downloaded release-candidate artifact differs from the checksum recorded in the same workflow/evidence record, discard that copy and investigate the artifact source rather than bypassing verification.
+
+## 27. Debian package installs but recording fails
+
+A structurally valid package does not prove microphone routing works on every Linux audio stack.
+
+Record:
+
+- distribution and version;
+- desktop environment;
+- PulseAudio/PipeWire setup where known;
+- microphone/input hardware;
+- selected SonicNest format/preset;
+- whether the same microphone works in OS sound settings;
+- exact `.deb` filename and SHA-256;
+- error/log from the same installed candidate.
+
+Compare with a built-in microphone and a simple format such as WAV/M4A where appropriate. Keep this as physical-system QA evidence; do not mark the automated package gate as failed merely because a device-specific audio path needs diagnosis.
+
+## 28. GitHub Actions build passes but the app fails on hardware
 
 Compilation is necessary but not sufficient for a recorder.
 
@@ -314,7 +374,7 @@ Create a **Device / Release QA report** using the repository issue form and incl
 
 Do not upload tokens, signing credentials, private certificates, personal recordings, device serial numbers, or other sensitive information.
 
-## 25. Before reporting a bug
+## 29. Before reporting a bug
 
 Check:
 
