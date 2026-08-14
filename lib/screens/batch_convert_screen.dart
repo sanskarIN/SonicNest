@@ -17,6 +17,7 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
   final Set<String> _selectedIds = <String>{};
   RecordingFormat _targetFormat = RecordingFormat.mp3;
   bool _processing = false;
+  bool _stopRequested = false;
   int _completed = 0;
   int _total = 0;
   String? _status;
@@ -110,22 +111,41 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
                                   },
                           ),
                           const SizedBox(height: 14),
-                          FilledButton.icon(
-                            onPressed: _processing || selected.isEmpty
-                                ? null
-                                : () => _convert(selected),
-                            icon: const Icon(Icons.multiple_stop_outlined),
-                            label: Text(
-                              'Convert ${selected.length} selected',
+                          if (_processing)
+                            OutlinedButton.icon(
+                              onPressed: _stopRequested
+                                  ? null
+                                  : () {
+                                      setState(() {
+                                        _stopRequested = true;
+                                        _status =
+                                            'Stop requested. The current file will finish safely.';
+                                      });
+                                    },
+                              icon: const Icon(Icons.stop_circle_outlined),
+                              label: Text(
+                                _stopRequested
+                                    ? 'Stopping after current file…'
+                                    : 'Stop after current file',
+                              ),
+                            )
+                          else
+                            FilledButton.icon(
+                              onPressed: selected.isEmpty
+                                  ? null
+                                  : () => _convert(selected),
+                              icon: const Icon(Icons.multiple_stop_outlined),
+                              label: Text(
+                                'Convert ${selected.length} selected',
+                              ),
                             ),
-                          ),
                           if (_processing || _status != null) ...[
                             const SizedBox(height: 14),
                             if (_processing)
                               LinearProgressIndicator(value: progress),
                             const SizedBox(height: 8),
                             Text(
-                              _processing
+                              _processing && !_stopRequested
                                   ? 'Converted $_completed of $_total'
                                   : _status!,
                             ),
@@ -170,7 +190,8 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
                                 '${entry.format.label} • '
                                 '${entry.sampleRate > 0 ? '${entry.sampleRate} Hz' : 'rate unknown'}',
                               ),
-                              secondary: const Icon(Icons.audio_file_outlined),
+                              secondary:
+                                  const Icon(Icons.audio_file_outlined),
                               controlAffinity: ListTileControlAffinity.leading,
                             );
                           },
@@ -191,6 +212,7 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
     final format = _targetFormat;
     setState(() {
       _processing = true;
+      _stopRequested = false;
       _completed = 0;
       _total = entries.length;
       _status = null;
@@ -198,7 +220,14 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
 
     final failures = <String>[];
     var successes = 0;
+    var stopped = false;
+
     for (final entry in entries) {
+      if (_stopRequested) {
+        stopped = true;
+        break;
+      }
+
       String? output;
       try {
         final title = '${entry.title} ${format.label}';
@@ -233,17 +262,30 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
           setState(() => _completed++);
         }
       }
+
+      if (_stopRequested) {
+        stopped = true;
+        break;
+      }
     }
 
     if (!mounted) {
       return;
     }
+
+    final failureText = failures.isEmpty
+        ? ''
+        : ' ${failures.length} failed: ${failures.take(2).join(' | ')}';
     setState(() {
       _processing = false;
-      _status = failures.isEmpty
-          ? '$successes converted copies created.'
-          : '$successes converted; ${failures.length} failed. '
-              '${failures.take(2).join(' | ')}';
+      _stopRequested = false;
+      _status = stopped
+          ? 'Stopped after $_completed of $_total. '
+              '$successes converted.$failureText'
+          : failures.isEmpty
+              ? '$successes converted copies created.'
+              : '$successes converted; ${failures.length} failed. '
+                  '${failures.take(2).join(' | ')}';
       _selectedIds.clear();
     });
   }
