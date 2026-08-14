@@ -10,23 +10,36 @@
 
 ## Status
 
-Current development version: **0.1.0**. The repository is structured as a production project with automated analysis/tests, Android/Linux/Windows/macOS/iOS build validation workflows, open-source documentation, continuation state, and reproducible platform bootstrap tooling.
+Current development version: **0.1.0**. The repository is structured as a production project with automated analysis/tests, Android/Linux/Windows/macOS/iOS build validation workflows, open-source documentation, continuation state, reproducible platform bootstrap tooling, and explicit manual release gates. This is still a development preview until the physical-device and signed-release checklist is complete.
 
 ## Major features
 
-- Voice and general sound recording with start, pause, resume, stop, cancel, safe cleanup, and recoverable error handling.
+- Voice and general sound recording with start, configurable/cancellable countdown, pause, resume, stop, cancel, safe cleanup, and recoverable error handling.
 - M4A/AAC, WAV, FLAC, Opus, MP3, OGG/Vorbis, and raw AAC output/export paths where the runtime codec stack supports them.
 - Speech, meeting, lecture, interview, podcast, music, high-quality, lossless, small-file, and custom presets.
 - Bitrate, sample rate, mono/stereo, automatic gain, echo cancellation, and noise suppression settings where the platform honors them.
+- Smart filename templates with prefix, suffix, category, date/time, individual date/time fields, and sequence tokens.
+- Optional keep-screen-awake behavior during active recording, with cleanup after stop/cancel/failure.
 - Live amplitude waveform, clipping warning, recording timer, markers/bookmarks, and input-device-aware recording services.
 - Persisted waveform envelopes for recorded, imported, and processed media.
-- Searchable library with favorites, pinned items, tags, folders, trash/restore, rename, duplicate, import, export, share, sorting, filtering, and multi-selection bulk actions.
-- Integrated player with seek, jump controls, volume, speed, repeat, bookmarks, and silence-skip support where available.
+- Searchable library with favorites, pinned items, tags, folders, trash/restore, rename, duplicate, import, export, share, sorting, format/folder/tag/date filtering, and multi-selection bulk actions.
+- Managed storage statistics for recordings, Trash, and temporary processing files, plus guarded temporary-file cleanup.
+- Integrated player with seek, jump controls, volume, speed, repeat-one, previous/next recording navigation, A-B selection looping, bookmarks, and silence-skip support where available.
 - Android, iOS, and macOS media-session metadata plus notification/lock-screen playback integration using `just_audio_background` and tagged media sources.
-- Non-destructive FFmpeg-backed editing: trim, split, merge, normalize, fades, silence removal, format conversion, draggable selection handles, selection undo/redo, and export presets.
-- Light, dark, and system themes; responsive phone/tablet/desktop navigation; keyboard navigation shortcuts.
+- Non-destructive FFmpeg-backed editing: keep selection, cut selection, split, merge, normalize, fades, silence removal/insertion, gain changes, basic noise cleanup, compressor, limiter, high-pass/low-pass filters, format conversion, draggable selection handles, selection undo/redo, and export presets.
+- Branded startup UI with startup-error recovery.
+- Localization-ready presentation layer, currently shipping English while remaining hard-coded presentation strings are migrated before additional translations.
+- Light, dark, and system themes; responsive phone/tablet/desktop navigation; reduced-motion preference; keyboard navigation and recorder/player shortcuts.
 - Offline-first local metadata and audio storage. No hidden upload, tracking, or analytics.
 - Android foreground recording-service integration through reproducible platform overrides.
+
+## Desktop shortcuts
+
+- `Ctrl+1` through `Ctrl+5`: Home, Recorder, Library, Settings, About.
+- `F9`: start/stop recording, or cancel an active countdown.
+- `F10`: pause/resume recording.
+- `Ctrl+Alt+P`: play/pause the loaded recording.
+- `Ctrl+Alt+Left` / `Ctrl+Alt+Right`: jump backward/forward by the configured interval.
 
 ## Supported platforms
 
@@ -63,11 +76,11 @@ flutter analyze --no-fatal-infos
 flutter test
 ```
 
-GitHub Actions additionally compiles representative debug builds for Android, Linux, Windows, macOS, and unsigned iOS host validation. Hardware-dependent recorder, interruption, background, and lock-screen behavior still requires real target devices.
+GitHub Actions additionally compiles representative debug builds for Android, Linux, Windows, macOS, and unsigned iOS host validation. Hardware-dependent recorder, interruption, background, routing, screen-wake, media-button, and lock-screen behavior still requires real target devices.
 
 ## Architecture
 
-SonicNest separates models, services, controllers, presentation, reusable widgets, and platform configuration. See `docs/ARCHITECTURE.md`.
+SonicNest separates models, services, controllers, presentation, reusable widgets, localization scaffolding, and platform configuration. See `docs/ARCHITECTURE.md`.
 
 ## Privacy
 
@@ -77,9 +90,9 @@ Recordings remain on-device by default. SonicNest does not upload microphone dat
 
 Native recording uses platform encoders through `record`. Formats requiring transcoding use an audio-focused FFmpeg package. Capabilities vary by platform/device, so SonicNest checks recorder support and uses fallback/error behavior instead of claiming unsupported combinations. See `docs/CODECS.md`.
 
-## Building and validation
+## Building, QA, and releases
 
-See `docs/BUILDING.md` for platform bootstrap commands, CI coverage, and signing boundaries. See `docs/QA_CHECKLIST.md` for the manual hardware/release checklist.
+See `docs/BUILDING.md` for platform bootstrap commands, CI coverage, and signing boundaries. See `docs/QA_CHECKLIST.md` for the full hardware/release checklist, `docs/RELEASING.md` for the release procedure, `RELEASE_NOTES.md` for the development-preview notes, and `TODO.md` for evidence-based remaining gates.
 
 ## Contributing
 
