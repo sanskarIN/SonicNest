@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../controllers/app_controller.dart';
@@ -15,19 +17,27 @@ class PlayerScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final player = controller.player;
-    final duration = player.duration > Duration.zero ? player.duration : entry.duration;
+    final duration =
+        player.duration > Duration.zero ? player.duration : entry.duration;
     final position = player.position > duration ? duration : player.position;
-    final maxMs = duration.inMilliseconds <= 0 ? 1.0 : duration.inMilliseconds.toDouble();
+    final maxMs = duration.inMilliseconds <= 0
+        ? 1.0
+        : duration.inMilliseconds.toDouble();
     final valueMs = position.inMilliseconds.clamp(0, maxMs.toInt()).toDouble();
+    final adjacent = _adjacentState();
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Now Playing'),
         actions: [
           IconButton(
-            tooltip: entry.favorite ? 'Remove from favorites' : 'Add to favorites',
+            tooltip: entry.favorite
+                ? 'Remove from favorites'
+                : 'Add to favorites',
             onPressed: () => controller.toggleFavorite(entry),
-            icon: Icon(entry.favorite ? Icons.favorite : Icons.favorite_border),
+            icon: Icon(
+              entry.favorite ? Icons.favorite : Icons.favorite_border,
+            ),
           ),
           IconButton(
             tooltip: 'Share',
@@ -48,7 +58,10 @@ class PlayerScreen extends StatelessWidget {
                 Text(
                   entry.title,
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+                  style: Theme.of(context)
+                      .textTheme
+                      .headlineSmall
+                      ?.copyWith(fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 6),
                 Text(
@@ -61,12 +74,23 @@ class PlayerScreen extends StatelessWidget {
                   samples: entry.waveform,
                   height: 112,
                   progress: maxMs <= 1 ? 0 : valueMs / maxMs,
+                  selection: player.hasSelectionLoop
+                      ? RangeValues(
+                          (player.selectionLoopStart!.inMilliseconds / maxMs)
+                              .clamp(0.0, 1.0)
+                              .toDouble(),
+                          (player.selectionLoopEnd!.inMilliseconds / maxMs)
+                              .clamp(0.0, 1.0)
+                              .toDouble(),
+                        )
+                      : null,
                 ),
                 Slider(
                   value: valueMs,
                   min: 0,
                   max: maxMs,
-                  onChanged: (value) => player.seek(Duration(milliseconds: value.round())),
+                  onChanged: (value) =>
+                      player.seek(Duration(milliseconds: value.round())),
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -76,15 +100,29 @@ class PlayerScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 12,
+                  runSpacing: 12,
                   children: [
                     IconButton.filledTonal(
-                      tooltip: 'Jump back ${controller.settings.skipIntervalSeconds} seconds',
-                      onPressed: () => player.jump(Duration(seconds: -controller.settings.skipIntervalSeconds)),
+                      tooltip: 'Previous recording',
+                      onPressed: adjacent.hasPrevious
+                          ? () => _openRelative(-1)
+                          : null,
+                      icon: const Icon(Icons.skip_previous_rounded),
+                    ),
+                    IconButton.filledTonal(
+                      tooltip:
+                          'Jump back ${controller.settings.skipIntervalSeconds} seconds',
+                      onPressed: () => player.jump(
+                        Duration(
+                          seconds: -controller.settings.skipIntervalSeconds,
+                        ),
+                      ),
                       icon: const Icon(Icons.replay_10),
                     ),
-                    const SizedBox(width: 18),
                     FilledButton.tonalIcon(
                       style: FilledButton.styleFrom(
                         minimumSize: const Size(108, 62),
@@ -92,15 +130,32 @@ class PlayerScreen extends StatelessWidget {
                       ),
                       onPressed: player.isLoading
                           ? null
-                          : () => player.isPlaying ? player.pause() : player.play(),
-                      icon: Icon(player.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded, size: 34),
+                          : () => player.isPlaying
+                              ? player.pause()
+                              : player.play(),
+                      icon: Icon(
+                        player.isPlaying
+                            ? Icons.pause_rounded
+                            : Icons.play_arrow_rounded,
+                        size: 34,
+                      ),
                       label: Text(player.isPlaying ? 'Pause' : 'Play'),
                     ),
-                    const SizedBox(width: 18),
                     IconButton.filledTonal(
-                      tooltip: 'Jump forward ${controller.settings.skipIntervalSeconds} seconds',
-                      onPressed: () => player.jump(Duration(seconds: controller.settings.skipIntervalSeconds)),
+                      tooltip:
+                          'Jump forward ${controller.settings.skipIntervalSeconds} seconds',
+                      onPressed: () => player.jump(
+                        Duration(
+                          seconds: controller.settings.skipIntervalSeconds,
+                        ),
+                      ),
                       icon: const Icon(Icons.forward_10),
+                    ),
+                    IconButton.filledTonal(
+                      tooltip: 'Next recording',
+                      onPressed:
+                          adjacent.hasNext ? () => _openRelative(1) : null,
+                      icon: const Icon(Icons.skip_next_rounded),
                     ),
                   ],
                 ),
@@ -117,6 +172,26 @@ class PlayerScreen extends StatelessWidget {
                       onSelected: player.setLooping,
                       avatar: const Icon(Icons.repeat, size: 18),
                     ),
+                    ActionChip(
+                      avatar: Icon(
+                        player.hasSelectionLoop
+                            ? Icons.repeat_on_rounded
+                            : Icons.repeat_one_on_outlined,
+                        size: 18,
+                      ),
+                      label: Text(
+                        player.hasSelectionLoop
+                            ? '${formatDuration(player.selectionLoopStart!)}–${formatDuration(player.selectionLoopEnd!)}'
+                            : 'A–B loop',
+                      ),
+                      onPressed: () => _configureSelectionLoop(context, duration),
+                    ),
+                    if (player.hasSelectionLoop)
+                      ActionChip(
+                        avatar: const Icon(Icons.close, size: 18),
+                        label: const Text('Clear loop'),
+                        onPressed: player.clearSelectionLoop,
+                      ),
                     FilterChip(
                       label: const Text('Skip silence'),
                       selected: player.skipSilence,
@@ -128,7 +203,9 @@ class PlayerScreen extends StatelessWidget {
                             return;
                           }
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(error.message ?? error.toString())),
+                            SnackBar(
+                              content: Text(error.message ?? error.toString()),
+                            ),
                           );
                         }
                       },
@@ -153,7 +230,10 @@ class PlayerScreen extends StatelessWidget {
                   const SizedBox(height: 20),
                   Text(
                     'Bookmarks',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleLarge
+                        ?.copyWith(fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 8),
                   ...entry.markers.map(
@@ -161,8 +241,14 @@ class PlayerScreen extends StatelessWidget {
                       leading: const Icon(Icons.bookmark_outline),
                       title: Text(marker.label),
                       subtitle: marker.note.isEmpty ? null : Text(marker.note),
-                      trailing: Text(formatDuration(Duration(milliseconds: marker.positionMs))),
-                      onTap: () => player.seek(Duration(milliseconds: marker.positionMs)),
+                      trailing: Text(
+                        formatDuration(
+                          Duration(milliseconds: marker.positionMs),
+                        ),
+                      ),
+                      onTap: () => player.seek(
+                        Duration(milliseconds: marker.positionMs),
+                      ),
                     ),
                   ),
                 ],
@@ -171,6 +257,103 @@ class PlayerScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  ({bool hasPrevious, bool hasNext, int index, List<RecordingEntry> entries})
+      _adjacentState() {
+    final entries = controller.recordings
+        .where((candidate) => !candidate.isTrashed)
+        .toList(growable: false)
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    final index = entries.indexWhere((candidate) => candidate.id == entry.id);
+    return (
+      hasPrevious: index > 0,
+      hasNext: index >= 0 && index < entries.length - 1,
+      index: index,
+      entries: entries,
+    );
+  }
+
+  Future<void> _openRelative(int direction) async {
+    final adjacent = _adjacentState();
+    final targetIndex = adjacent.index + direction;
+    if (adjacent.index < 0 ||
+        targetIndex < 0 ||
+        targetIndex >= adjacent.entries.length) {
+      return;
+    }
+    await controller.openRecording(adjacent.entries[targetIndex]);
+  }
+
+  Future<void> _configureSelectionLoop(
+    BuildContext context,
+    Duration duration,
+  ) async {
+    if (duration <= const Duration(milliseconds: 400)) {
+      return;
+    }
+    final maxMs = duration.inMilliseconds.toDouble();
+    final player = controller.player;
+    final current = player.position.inMilliseconds.clamp(0, duration.inMilliseconds);
+    final defaultStart = player.hasSelectionLoop
+        ? player.selectionLoopStart!.inMilliseconds.toDouble()
+        : math.max(0, current - 5000).toDouble();
+    final defaultEnd = player.hasSelectionLoop
+        ? player.selectionLoopEnd!.inMilliseconds.toDouble()
+        : math.min(duration.inMilliseconds, current + 5000).toDouble();
+    var values = RangeValues(
+      defaultStart,
+      math.max(defaultStart + 200, defaultEnd).clamp(0, maxMs).toDouble(),
+    );
+
+    final selection = await showDialog<RangeValues>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: const Text('A–B loop'),
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '${formatDuration(Duration(milliseconds: values.start.round()))} – '
+                  '${formatDuration(Duration(milliseconds: values.end.round()))}',
+                ),
+                RangeSlider(
+                  values: values,
+                  min: 0,
+                  max: maxMs,
+                  divisions: math.min(1000, math.max(1, duration.inMilliseconds ~/ 100)),
+                  onChanged: (next) {
+                    if (next.end - next.start >= 200) {
+                      setDialogState(() => values = next);
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, values),
+              child: const Text('Loop selection'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (selection == null) {
+      return;
+    }
+    await player.setSelectionLoop(
+      Duration(milliseconds: selection.start.round()),
+      Duration(milliseconds: selection.end.round()),
     );
   }
 }
@@ -230,7 +413,8 @@ class _SpeedMenu extends StatelessWidget {
         label: Text(
           '${controller.player.speed.toStringAsFixed(controller.player.speed % 1 == 0 ? 0 : 2)}×',
         ),
-        onPressed: menuController.isOpen ? menuController.close : menuController.open,
+        onPressed:
+            menuController.isOpen ? menuController.close : menuController.open,
       ),
       menuChildren: speeds
           .map(
