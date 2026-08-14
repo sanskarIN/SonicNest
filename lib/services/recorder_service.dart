@@ -3,11 +3,10 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
-import 'package:intl/intl.dart';
 import 'package:record/record.dart';
 
 import '../core/constants.dart';
-import '../core/file_name.dart';
+import '../core/naming_template.dart';
 import '../models/recording_entry.dart';
 import '../models/recording_settings.dart';
 import 'audio_processor.dart';
@@ -81,10 +80,16 @@ class RecorderService extends ChangeNotifier {
     notifyListeners();
   }
 
-  String _autoTitle(RecordingSettings settings) {
-    final now = DateTime.now();
-    final stamp = DateFormat('yyyy-MM-dd_HH-mm-ss').format(now);
-    return '${sanitizeFileStem(settings.namingPrefix)}_$stamp';
+  Future<String> _autoTitle(RecordingSettings settings) async {
+    final sequence = await _storage.nextRecordingSequence();
+    return renderRecordingName(
+      template: settings.namingTemplate,
+      timestamp: DateTime.now(),
+      sequence: sequence,
+      prefix: settings.namingPrefix,
+      suffix: settings.namingSuffix,
+      category: settings.namingCategory,
+    );
   }
 
   Future<void> start(RecordingSettings settings) async {
@@ -100,7 +105,7 @@ class RecorderService extends ChangeNotifier {
       }
 
       _settings = settings;
-      _title = _autoTitle(settings);
+      _title = await _autoTitle(settings);
       _waveform.clear();
       _markers.clear();
       peakAmplitude = 0;
