@@ -497,7 +497,6 @@ Focused commits:
 
 - `feat: add selection loop playback support`
 - `feat: add previous next and A-B loop playback controls`
-
 A-B timing and OS-level media-session behavior remain physical-device QA items.
 
 ## Editor expansion
@@ -1026,3 +1025,286 @@ Automated resource generation and compilation prove structural validity, not vis
 - Real screenshots and store listing assets from tested release candidates.
 
 The project remains a **development preview** until the broader hardware, accessibility, stress, signing, packaging, and store-release gates are completed with evidence.
+
+
+---
+
+# Linux Debian packaging continuation — 2026-08-14
+
+This section records the complete repository-owned Linux packaging continuation. All earlier `what_changed.md` history above is preserved unchanged. The project remains a development preview because package structure can be automated, while real-system audio, accessibility, visual, long-duration, signing, and distribution approval require evidence outside repository-only CI.
+
+## Debian package selected as the initial Linux distribution format
+
+Debian `.deb` is now the initial repository-supported Linux installation package for SonicNest. This resolves the previous repository-level packaging-format decision without pretending that a public distribution channel, repository signing policy, or real-system installation QA has already been completed.
+
+The package is produced from the Flutter Linux bundle rather than by committing generated Linux host scaffolding or binary package output.
+
+Implemented package layout:
+
+- `/opt/sonicnest/` — complete Flutter Linux bundle.
+- `/usr/share/applications/sonicnest.desktop` — freedesktop launcher entry.
+- `/usr/share/icons/hicolor/512x512/apps/sonicnest.png` — deterministic generated SonicNest icon.
+- `/usr/share/metainfo/io.github.sanskarIN.SonicNest.metainfo.xml` — AppStream metadata.
+- `/usr/share/doc/sonicnest/LICENSE` — Apache-2.0 project license.
+- `/usr/share/doc/sonicnest/NOTICE` — project notices.
+
+The packaged launcher executes `/opt/sonicnest/sonic_nest` and resolves the icon through the freedesktop icon name `sonicnest`.
+
+## Linux package source files
+
+Added and maintained:
+
+- `packaging/linux/debian/sonicnest.desktop`
+- `packaging/linux/debian/io.github.sanskarIN.SonicNest.metainfo.xml`
+- `tool/build_linux_deb.sh`
+- `tool/verify_linux_deb.sh`
+- `.github/workflows/linux-package.yml`
+- `docs/LINUX_PACKAGING.md`
+
+The AppStream metadata identifies the application as `io.github.sanskarIN.SonicNest`, uses the valid lowercase developer identifier `io.github.sanskarin`, exposes `sonicnest.desktop` as the launchable, declares `sonic_nest` as the provided binary, records Apache-2.0 as the project license, and includes an OARS 1.1 content-rating element.
+
+The desktop entry uses the final validated category set `AudioVideo;Recorder;` to avoid duplicate main-menu category warnings.
+
+## Deterministic Debian package builder
+
+`tool/build_linux_deb.sh` now:
+
+- accepts `debug`, `profile`, or `release` build modes, defaulting to release;
+- requires `dpkg-deb`;
+- requires the deterministic SonicNest brand image generated from repository source;
+- requires exactly one matching `build/linux/*/<mode>/bundle` directory so it cannot silently package the wrong build;
+- requires the bundled `sonic_nest` executable;
+- derives the Debian package version from `pubspec.yaml`, removing Flutter `+build` metadata by default;
+- derives architecture from `dpkg --print-architecture` unless an explicit controlled override is provided;
+- stages the Flutter bundle, desktop entry, AppStream metadata, hicolor icon, LICENSE, and NOTICE;
+- writes Debian control metadata including installed size, maintainer, homepage, and runtime dependencies;
+- builds with `dpkg-deb --root-owner-group --build`;
+- writes a SHA-256 checksum beside the generated `.deb`.
+
+The declared package dependencies currently include:
+
+- `libc6`
+- `libgtk-3-0`
+- `libstdc++6`
+- `libjson-glib-1.0-0`
+- `ffmpeg`
+- `pulseaudio-utils`
+
+A bundle-discovery depth mistake found during implementation was corrected in a separate focused commit before the final package validation.
+
+## Debian package verifier
+
+`tool/verify_linux_deb.sh` extracts the package and verifies repository-owned structural invariants:
+
+- Debian control file exists and identifies package `sonicnest`.
+- Version and architecture fields exist.
+- `/opt/sonicnest/sonic_nest` exists and remains executable.
+- the SonicNest hicolor icon exists and is non-empty.
+- the desktop entry exists and points to `/opt/sonicnest/sonic_nest` with `Icon=sonicnest`.
+- the AppStream application ID and desktop launchable identity are present.
+- `desktop-file-validate` runs when available.
+- `appstreamcli validate --no-net` runs when available.
+- the recorded package SHA-256 is compared with the actual `.deb` bytes.
+
+The first verifier implementation exposed a checksum-path bug because the checksum file recorded a path that was then checked from a different working directory. That root cause was corrected so verification compares the expected digest directly with the actual package bytes and no longer depends on the caller's working directory.
+
+## Dedicated Linux package CI
+
+Added `.github/workflows/linux-package.yml` with a release-mode package validation job that:
+
+- checks out the repository;
+- installs Flutter stable;
+- installs Linux build, audio, desktop-file, AppStream, and package validation dependencies;
+- enables Flutter Linux desktop;
+- regenerates platform hosts;
+- resolves dependencies;
+- regenerates deterministic SonicNest branding;
+- builds the Flutter Linux release bundle;
+- builds the Debian package;
+- verifies the Debian package;
+- prints package metadata and contents for inspection;
+- uploads the `.deb` and checksum as a short-retention CI artifact.
+
+The workflow uses read-only repository contents permission and path filtering so unrelated documentation changes do not unnecessarily rebuild the Linux package.
+
+## Release-candidate integration
+
+`.github/workflows/release-candidate.yml` now builds and verifies the Debian `.deb` in its Linux release-candidate job in addition to the raw Linux bundle archive.
+
+The release-candidate output continues to include explicit warning text. A structurally verified `.deb` is not presented as approved for public distribution until real-machine audio, accessibility, long-duration, low-storage, visual, installation, upgrade/uninstall, signing, and distribution-policy gates are complete.
+
+## Repository integrity hardening
+
+`tool/repository_audit.py` was expanded to require the Linux packaging source files and workflows and to protect package invariants including:
+
+- desktop launcher identity, executable path, icon name, terminal mode, and validated menu category set;
+- AppStream application ID, lowercase developer ID, desktop launchable, binary, Apache-2.0 license, and OARS content rating;
+- package builder use of `dpkg-deb`, applications/icons/metainfo destinations, and checksum generation;
+- Linux package workflow release build, package builder, package verifier, artifact upload, and read-only contents permission;
+- release-candidate workflow inclusion of Debian package construction and verification.
+
+The credential-material audit initially matched its own embedded private-key detector signature. Only the audit source itself is now excluded from that signature scan, while every other tracked text file remains scanned. Repository integrity returned to green after that correction.
+
+## CI failure/fix chronology
+
+The package path was validated by allowing CI to expose real structural problems and fixing the causes rather than weakening the gates.
+
+### Initial package workflow
+
+Run `31782740611`:
+
+- Flutter Linux release build: SUCCESS.
+- Debian package construction: SUCCESS.
+- Package verification reached the checksum step and failed because of the working-directory-dependent checksum path.
+
+Focused fix:
+
+- commit `c0381eb59c34b0dc965784d74730615eb95bfcbb` — checksum verification made independent of the current working directory.
+
+A separate desktop-file cleanup removed duplicate menu categories before the first complete green package run.
+
+### First complete green package validation
+
+Run `31783018282` on source `dd31bf7800becd09424309cc99e42d324f4f8f8e`:
+
+- Flutter Linux release build: SUCCESS.
+- Debian package construction: SUCCESS.
+- Package verification: SUCCESS.
+- desktop-file validation: SUCCESS.
+- AppStream validation: SUCCESS.
+- package metadata/content inspection: SUCCESS.
+- checksum verification: SUCCESS.
+- artifact upload: SUCCESS.
+
+This established the first complete green Debian package path.
+
+### Repository-audit correction
+
+Repository integrity run `31783107110` then exposed the audit self-signature false positive. The audit was corrected in focused commit `114fd4fe638b9d05af7919b9c850ff7ed45dfaf6` so only its own detector source is excluded from credential-signature scanning.
+
+Repository audit run `31783355163` subsequently completed successfully.
+
+### AppStream metadata hardening
+
+A later metadata modernization intentionally reran strict AppStream validation. Run `31783467780` successfully built the release bundle and `.deb` but rejected the mixed-case developer identifier:
+
+- invalid developer ID observed: `io.github.sanskarIN`.
+
+The developer identifier was corrected to the valid lowercase reverse-domain identity `io.github.sanskarin` in source revision `f2c773e1e03753ec62b9e4229a3f086871a26f29`.
+
+### Latest exact Linux package validation
+
+Linux Package CI run `31783749267` validated source revision `f2c773e1e03753ec62b9e4229a3f086871a26f29` and completed the entire job successfully:
+
+- Linux build dependencies: SUCCESS.
+- Flutter Linux desktop enablement: SUCCESS.
+- host-project bootstrap: SUCCESS.
+- dependency resolution: SUCCESS.
+- deterministic branding generation: SUCCESS.
+- Flutter Linux release bundle: SUCCESS.
+- Debian `.deb` construction: SUCCESS.
+- package payload verification: SUCCESS.
+- desktop-file validation: SUCCESS.
+- AppStream metadata validation: SUCCESS.
+- checksum verification: SUCCESS.
+- package metadata/content inspection: SUCCESS.
+- package artifact upload: SUCCESS.
+
+This is the latest exact automated validation evidence for the Linux package source. Documentation synchronization commits made afterward do not change the package inputs and therefore do not replace the validated package source revision.
+
+## Documentation synchronized in this continuation
+
+Linux package implementation and release boundaries are now documented across:
+
+- `README.md`
+- `CONTRIBUTING.md`
+- `CHANGELOG.md`
+- `ROADMAP.md`
+- `PROJECT_STATE.md`
+- `RELEASE_NOTES.md`
+- `TODO.md`
+- `docs/README.md`
+- `docs/BUILDING.md`
+- `docs/BRANDING.md`
+- `docs/LINUX_PACKAGING.md`
+- `docs/QA_CHECKLIST.md`
+- `docs/RELEASING.md`
+- `docs/RELEASE_EVIDENCE_TEMPLATE.md`
+- `docs/TROUBLESHOOTING.md`
+- `docs/UNSIGNED_ARTIFACTS.md`
+- `what_changed.md`
+
+`CONTRIBUTING.md` now requires packaging changes to use the deterministic build/verify path and explicitly prohibits weakening structural validation simply to silence an error.
+
+`docs/QA_CHECKLIST.md` now distinguishes repository implementation/automation evidence from real Debian/Ubuntu-family install, launch, microphone, desktop-icon, upgrade, and uninstall evidence.
+
+`docs/RELEASE_EVIDENCE_TEMPLATE.md` now has dedicated fields for Linux package workflow/run, `.deb` checksum, structural verification, exact distribution/desktop/architecture, fresh install, menu/direct launch, microphone, playback/import/export, AppStream behavior, upgrade, and uninstall observations.
+
+`docs/TROUBLESHOOTING.md` now covers missing Linux bundle discovery, missing application-menu integration, package checksum mismatch, and microphone failure from an installed `.deb` without confusing those physical-system failures with automated package-structure results.
+
+## Focused commits created during this continuation
+
+The work was deliberately divided into many commits instead of one large change. Commit subjects included:
+
+- `packaging: add Linux desktop entry`
+- `packaging: add Linux AppStream metadata`
+- `build: add deterministic Debian package builder`
+- `fix: locate generated Linux bundle correctly`
+- `build: add Debian package verifier`
+- `docs: add Linux Debian packaging guide`
+- `ci: add Linux Debian package validation workflow`
+- `ci: add Debian package to release candidates`
+- `docs: index Linux packaging documentation`
+- `docs: document Debian build and verification commands`
+- `docs: integrate Debian packaging into release procedure`
+- `ci: audit Linux packaging invariants`
+- `docs: mark Linux package integration implemented`
+- `fix: verify Debian checksum independent of working directory`
+- `packaging: remove duplicate Linux menu categories`
+- `docs: advance roadmap with Debian packaging`
+- `docs: connect Linux brand assets to Debian packaging`
+- `docs: describe Debian release-candidate artifacts`
+- `fix: avoid repository audit self-matching signatures`
+- `docs: synchronize project state with Debian package validation`
+- `docs: record Linux Debian packaging in changelog`
+- `docs: add Debian evidence fields to release template`
+- `packaging: modernize Linux AppStream metadata`
+- `fix: use valid AppStream developer identifier`
+- `docs: expand Debian package QA gates`
+- `docs: add Linux package troubleshooting`
+- `docs: align contributing workflow with Linux packaging`
+- `ci: lock validated Linux metadata invariants`
+- `docs: record latest Linux package validation`
+- `docs: synchronize project state with latest Debian validation`
+- `docs: add latest Debian validation to release notes`
+- `docs: update Debian package QA evidence`
+- this additive continuation-ledger commit.
+
+## Remaining evidence-dependent work after the Debian packaging continuation
+
+Repository-owned Debian package construction and structural validation are implemented. The following remain intentionally incomplete because they require real systems, hardware, long-running tests, or maintainer-owned release credentials:
+
+- install the exact candidate `.deb` on representative Debian-family and Ubuntu-family systems;
+- verify the candidate SHA-256 before installation;
+- verify application-menu/launcher startup and direct `/opt/sonicnest/sonic_nest` startup;
+- verify launcher, menu, task-switcher, scaling, and AppStream icon/identity behavior on real desktop environments;
+- verify microphone permission/capture and built-in/wired/USB/Bluetooth routing where available;
+- verify playback, import, export, conversion, and editor behavior from the installed package;
+- verify package upgrade behavior from a prior compatible candidate;
+- verify uninstall removes package-owned application files/desktop integration without silently deleting user recording-library data;
+- run TalkBack/VoiceOver/Narrator/Linux accessibility-tool audits on appropriate targets;
+- run low-storage, malformed-media, large-library, large-batch, 30-minute, and multi-hour tests;
+- complete real native-icon/launch visual review and capture screenshots from exact tested candidates;
+- decide the public Linux distribution channel;
+- decide and configure any Debian repository/package signing policy in the maintainer's secure environment;
+- complete Android/Apple/Windows signing/notarization/store release gates with maintainer-owned credentials.
+
+These items remain unchecked in `TODO.md` and `docs/QA_CHECKLIST.md` where applicable. No repository-only build result is used to claim physical-device or stable-release approval.
+
+## Exact continuation point after Linux packaging
+
+SonicNest now has a repository-supported, deterministic Debian `.deb` package path with native icon integration, desktop/AppStream metadata, SHA-256 verification, dedicated CI, release-candidate integration, repository-audit invariants, troubleshooting, contribution rules, release evidence fields, and synchronized project documentation.
+
+The latest package source validation is revision `f2c773e1e03753ec62b9e4229a3f086871a26f29`, Linux Package CI run `31783749267`, with the complete release-build/package/verify/inspect/upload job green.
+
+The next legitimate work is evidence-driven: install/test the package on representative real Linux systems, continue the broader physical-device/audio/accessibility/stress QA matrix, fix reproducible defects found there, and only then prepare signed/public distribution artifacts. The repository must continue to be classified as a **development preview** until those gates are completed with real evidence.
