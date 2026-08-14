@@ -13,7 +13,8 @@ if [[ ! -d android || ! -d ios || ! -d macos || ! -d linux || ! -d windows ]]; t
   flutter create . \
     --project-name sonic_nest \
     --org in.sanskar \
-    --platforms=android,ios,macos,linux,windows
+    --platforms=android,ios,macos,linux,windows \
+    --no-pub
 fi
 
 cp tool/platform_overrides/android/app/src/main/AndroidManifest.xml android/app/src/main/AndroidManifest.xml
