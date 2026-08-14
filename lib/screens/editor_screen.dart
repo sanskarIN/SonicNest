@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../controllers/app_controller.dart';
 import '../core/formatters.dart';
 import '../models/recording_entry.dart';
+import '../models/recording_settings.dart';
 import '../widgets/waveform_view.dart';
 
 class EditorScreen extends StatefulWidget {
@@ -19,6 +20,10 @@ class EditorScreen extends StatefulWidget {
 
 class _EditorScreenState extends State<EditorScreen> {
   late RangeValues _trimRange;
+  late RecordingFormat _exportFormat;
+  final List<RangeValues> _undoRanges = <RangeValues>[];
+  final List<RangeValues> _redoRanges = <RangeValues>[];
+  RangeValues? _interactionStart;
   bool _processing = false;
   String? _status;
 
@@ -30,6 +35,7 @@ class _EditorScreenState extends State<EditorScreen> {
     super.initState();
     final maxMs = math.max(1, entry.durationMs).toDouble();
     _trimRange = RangeValues(0, maxMs);
+    _exportFormat = entry.format;
   }
 
   @override
@@ -37,8 +43,31 @@ class _EditorScreenState extends State<EditorScreen> {
     final maxMs = math.max(1, entry.durationMs).toDouble();
     final start = Duration(milliseconds: _trimRange.start.round());
     final end = Duration(milliseconds: _trimRange.end.round());
+    final normalizedSelection = RangeValues(
+      (_trimRange.start / maxMs).clamp(0.0, 1.0).toDouble(),
+      (_trimRange.end / maxMs).clamp(0.0, 1.0).toDouble(),
+    );
     return Scaffold(
-      appBar: AppBar(title: const Text('Audio Editor')),
+      appBar: AppBar(
+        title: const Text('Audio Editor'),
+        actions: [
+          IconButton(
+            tooltip: 'Undo selection change',
+            onPressed: _processing || _undoRanges.isEmpty ? null : _undoSelection,
+            icon: const Icon(Icons.undo),
+          ),
+          IconButton(
+            tooltip: 'Redo selection change',
+            onPressed: _processing || _redoRanges.isEmpty ? null : _redoSelection,
+            icon: const Icon(Icons.redo),
+          ),
+          IconButton(
+            tooltip: 'Reset selection',
+            onPressed: _processing ? null : _resetSelection,
+            icon: const Icon(Icons.restart_alt),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -46,9 +75,17 @@ class _EditorScreenState extends State<EditorScreen> {
             child: ListView(
               padding: const EdgeInsets.all(24),
               children: [
-                Text(entry.title, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
+                Text(
+                  entry.title,
+                  style: Theme.of(context)
+                      .textTheme
+                      .headlineSmall
+                      ?.copyWith(fontWeight: FontWeight.w800),
+                ),
                 const SizedBox(height: 6),
-                const Text('Edits are exported as new files. Your original recording is never overwritten.'),
+                const Text(
+                  'Edits are exported as new files. Your original recording is never overwritten.',
+                ),
                 const SizedBox(height: 24),
                 Card(
                   child: Padding(
@@ -56,26 +93,62 @@ class _EditorScreenState extends State<EditorScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Trim', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+                        Text(
+                          'Trim',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          'Drag either handle directly on the waveform or use the range slider.',
+                        ),
                         const SizedBox(height: 16),
-                        WaveformView(samples: entry.waveform, height: 108),
+                        WaveformView(
+                          samples: entry.waveform,
+                          height: 120,
+                          selection: normalizedSelection,
+                          onSelectionChangeStart: _beginRangeEdit,
+                          onSelectionChanged: (values) {
+                            setState(() {
+                              _trimRange = RangeValues(
+                                values.start * maxMs,
+                                values.end * maxMs,
+                              );
+                            });
+                          },
+                          onSelectionChangeEnd: (_) => _finishRangeEdit(),
+                        ),
                         RangeSlider(
                           values: _trimRange,
                           min: 0,
                           max: maxMs,
-                          divisions: math.min(1000, math.max(1, entry.durationMs ~/ 100)).toInt(),
-                          labels: RangeLabels(formatDuration(start), formatDuration(end)),
-                          onChanged: _processing ? null : (value) => setState(() => _trimRange = value),
+                          divisions: math
+                              .min(1000, math.max(1, entry.durationMs ~/ 100))
+                              .toInt(),
+                          labels: RangeLabels(
+                            formatDuration(start),
+                            formatDuration(end),
+                          ),
+                          onChangeStart: _processing ? null : (_) => _beginRangeEdit(),
+                          onChanged: _processing
+                              ? null
+                              : (value) => setState(() => _trimRange = value),
+                          onChangeEnd: _processing ? null : (_) => _finishRangeEdit(),
                         ),
                         Row(
                           children: [
-                            Expanded(child: Text('Start ${formatDuration(start)}')),
+                            Expanded(
+                              child: Text('Start ${formatDuration(start)}'),
+                            ),
                             Text('End ${formatDuration(end)}'),
                           ],
                         ),
                         const SizedBox(height: 12),
                         FilledButton.icon(
-                          onPressed: _processing || end - start < const Duration(milliseconds: 200)
+                          onPressed: _processing ||
+                                  end - start < const Duration(milliseconds: 200)
                               ? null
                               : () => _runTrim(start, end),
                           icon: const Icon(Icons.content_cut),
@@ -92,7 +165,13 @@ class _EditorScreenState extends State<EditorScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Quick processing', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+                        Text(
+                          'Quick processing',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
                         const SizedBox(height: 14),
                         Wrap(
                           spacing: 10,
@@ -131,24 +210,96 @@ class _EditorScreenState extends State<EditorScreen> {
                 ),
                 const SizedBox(height: 16),
                 Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Export preset',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          'Create a converted copy in a common recording format.',
+                        ),
+                        const SizedBox(height: 14),
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            DropdownMenu<RecordingFormat>(
+                              initialSelection: _exportFormat,
+                              label: const Text('Format'),
+                              onSelected: _processing
+                                  ? null
+                                  : (value) {
+                                      if (value != null) {
+                                        setState(() => _exportFormat = value);
+                                      }
+                                    },
+                              dropdownMenuEntries: RecordingFormat.values
+                                  .map(
+                                    (format) => DropdownMenuEntry(
+                                      value: format,
+                                      label: format.label,
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
+                            FilledButton.tonalIcon(
+                              onPressed: _processing ? null : _exportPreset,
+                              icon: const Icon(Icons.audio_file_outlined),
+                              label: Text('Export ${_exportFormat.label} copy'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Card(
                   child: ListTile(
                     leading: IconButton.filledTonal(
-                      tooltip: controller.player.isPlaying ? 'Pause preview' : 'Play preview',
-                      onPressed: () => controller.player.isPlaying ? controller.player.pause() : controller.player.play(),
-                      icon: Icon(controller.player.isPlaying ? Icons.pause : Icons.play_arrow),
+                      tooltip: controller.player.isPlaying
+                          ? 'Pause preview'
+                          : 'Play preview',
+                      onPressed: () => controller.player.isPlaying
+                          ? controller.player.pause()
+                          : controller.player.play(),
+                      icon: Icon(
+                        controller.player.isPlaying
+                            ? Icons.pause
+                            : Icons.play_arrow,
+                      ),
                     ),
                     title: const Text('Preview original'),
-                    subtitle: Text('${formatDuration(controller.player.position)} / ${formatDuration(controller.player.duration)}'),
+                    subtitle: Text(
+                      '${formatDuration(controller.player.position)} / '
+                      '${formatDuration(controller.player.duration)}',
+                    ),
                     trailing: SizedBox(
                       width: 140,
                       child: Slider(
                         value: controller.player.duration.inMilliseconds <= 0
                             ? 0
                             : controller.player.position.inMilliseconds
-                                .clamp(0, controller.player.duration.inMilliseconds)
+                                .clamp(
+                                  0,
+                                  controller.player.duration.inMilliseconds,
+                                )
                                 .toDouble(),
-                        max: math.max(1, controller.player.duration.inMilliseconds).toDouble(),
-                        onChanged: (value) => controller.player.seek(Duration(milliseconds: value.round())),
+                        max: math
+                            .max(1, controller.player.duration.inMilliseconds)
+                            .toDouble(),
+                        onChanged: (value) => controller.player.seek(
+                          Duration(milliseconds: value.round()),
+                        ),
                       ),
                     ),
                   ),
@@ -158,9 +309,15 @@ class _EditorScreenState extends State<EditorScreen> {
                   Card(
                     child: ListTile(
                       leading: _processing
-                          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 3))
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(strokeWidth: 3),
+                            )
                           : const Icon(Icons.check_circle_outline),
-                      title: Text(_processing ? 'Processing audio' : 'Editor status'),
+                      title: Text(
+                        _processing ? 'Processing audio' : 'Editor status',
+                      ),
                       subtitle: _status == null ? null : Text(_status!),
                     ),
                   ),
@@ -173,6 +330,50 @@ class _EditorScreenState extends State<EditorScreen> {
     );
   }
 
+  void _beginRangeEdit() {
+    _interactionStart ??= _trimRange;
+  }
+
+  void _finishRangeEdit() {
+    final before = _interactionStart;
+    _interactionStart = null;
+    if (before == null || _sameRange(before, _trimRange)) return;
+    setState(() {
+      _undoRanges.add(before);
+      if (_undoRanges.length > 50) _undoRanges.removeAt(0);
+      _redoRanges.clear();
+    });
+  }
+
+  bool _sameRange(RangeValues a, RangeValues b) =>
+      (a.start - b.start).abs() < .5 && (a.end - b.end).abs() < .5;
+
+  void _undoSelection() {
+    if (_undoRanges.isEmpty) return;
+    setState(() {
+      _redoRanges.add(_trimRange);
+      _trimRange = _undoRanges.removeLast();
+    });
+  }
+
+  void _redoSelection() {
+    if (_redoRanges.isEmpty) return;
+    setState(() {
+      _undoRanges.add(_trimRange);
+      _trimRange = _redoRanges.removeLast();
+    });
+  }
+
+  void _resetSelection() {
+    final full = RangeValues(0, math.max(1, entry.durationMs).toDouble());
+    if (_sameRange(full, _trimRange)) return;
+    setState(() {
+      _undoRanges.add(_trimRange);
+      _redoRanges.clear();
+      _trimRange = full;
+    });
+  }
+
   Future<void> _runTrim(Duration start, Duration end) async {
     await _run('Trimmed copy created.', () async {
       final output = await controller.processor.trim(
@@ -183,7 +384,12 @@ class _EditorScreenState extends State<EditorScreen> {
         end: end,
         bitRate: _bitRate,
       );
-      await controller.addProcessedFile(output, title: '${entry.title} Trimmed', format: entry.format, markers: _markersInside(start, end));
+      await controller.addProcessedFile(
+        output,
+        title: '${entry.title} Trimmed',
+        format: entry.format,
+        markers: _markersInside(start, end),
+      );
     });
   }
 
@@ -195,7 +401,12 @@ class _EditorScreenState extends State<EditorScreen> {
         format: entry.format,
         bitRate: _bitRate,
       );
-      await controller.addProcessedFile(output, title: '${entry.title} Normalized', format: entry.format, markers: entry.markers);
+      await controller.addProcessedFile(
+        output,
+        title: '${entry.title} Normalized',
+        format: entry.format,
+        markers: entry.markers,
+      );
     });
   }
 
@@ -207,13 +418,19 @@ class _EditorScreenState extends State<EditorScreen> {
         format: entry.format,
         bitRate: _bitRate,
       );
-      await controller.addProcessedFile(output, title: '${entry.title} Silence Cleaned', format: entry.format);
+      await controller.addProcessedFile(
+        output,
+        title: '${entry.title} Silence Cleaned',
+        format: entry.format,
+      );
     });
   }
 
   Future<void> _fade() async {
     final duration = entry.duration;
-    final outStart = duration > const Duration(seconds: 2) ? duration - const Duration(seconds: 1) : duration * .5;
+    final outStart = duration > const Duration(seconds: 2)
+        ? duration - const Duration(seconds: 1)
+        : duration * .5;
     await _run('Faded copy created.', () async {
       final output = await controller.processor.fade(
         inputPath: entry.filePath,
@@ -222,7 +439,12 @@ class _EditorScreenState extends State<EditorScreen> {
         bitRate: _bitRate,
         fadeOutStart: outStart,
       );
-      await controller.addProcessedFile(output, title: '${entry.title} Faded', format: entry.format, markers: entry.markers);
+      await controller.addProcessedFile(
+        output,
+        title: '${entry.title} Faded',
+        format: entry.format,
+        markers: entry.markers,
+      );
     });
   }
 
@@ -243,8 +465,16 @@ class _EditorScreenState extends State<EditorScreen> {
         at: at,
         bitRate: _bitRate,
       );
-      await controller.addProcessedFile(outputs[0], title: '${entry.title} Part 1', format: entry.format);
-      await controller.addProcessedFile(outputs[1], title: '${entry.title} Part 2', format: entry.format);
+      await controller.addProcessedFile(
+        outputs[0],
+        title: '${entry.title} Part 1',
+        format: entry.format,
+      );
+      await controller.addProcessedFile(
+        outputs[1],
+        title: '${entry.title} Part 2',
+        format: entry.format,
+      );
     });
   }
 
@@ -258,16 +488,56 @@ class _EditorScreenState extends State<EditorScreen> {
         format: entry.format,
         bitRate: _bitRate,
       );
-      await controller.addProcessedFile(output, title: '${entry.title} Merged', format: entry.format);
+      await controller.addProcessedFile(
+        output,
+        title: '${entry.title} Merged',
+        format: entry.format,
+      );
     });
   }
 
-  int get _bitRate => entry.bitRate > 0 ? entry.bitRate : controller.settings.recording.bitRate;
+  Future<void> _exportPreset() async {
+    final format = _exportFormat;
+    await _run('${format.label} copy created.', () async {
+      final title = '${entry.title} ${format.label}';
+      final output = await controller.processor.transcode(
+        inputPath: entry.filePath,
+        outputTitle: title,
+        format: format,
+        bitRate: _bitRate,
+        sampleRate: entry.sampleRate > 0
+            ? entry.sampleRate
+            : controller.settings.recording.sampleRate,
+        channels: entry.channels > 0
+            ? entry.channels
+            : controller.settings.recording.channels,
+      );
+      await controller.addProcessedFile(
+        output,
+        title: title,
+        format: format,
+        markers: entry.markers,
+      );
+    });
+  }
+
+  int get _bitRate =>
+      entry.bitRate > 0 ? entry.bitRate : controller.settings.recording.bitRate;
 
   List<RecordingMarker> _markersInside(Duration start, Duration end) {
     return entry.markers
-        .where((marker) => marker.positionMs >= start.inMilliseconds && marker.positionMs <= end.inMilliseconds)
-        .map((marker) => RecordingMarker(positionMs: marker.positionMs - start.inMilliseconds, label: marker.label, note: marker.note))
+        .where(
+          (marker) =>
+              marker.positionMs >= start.inMilliseconds &&
+              marker.positionMs <= end.inMilliseconds,
+        )
+        .map(
+          (marker) => RecordingMarker(
+            positionMs: marker.positionMs - start.inMilliseconds,
+            label: marker.label,
+            note: marker.note,
+          ),
+        )
         .toList();
   }
 
@@ -281,7 +551,9 @@ class _EditorScreenState extends State<EditorScreen> {
       await action();
       if (!mounted) return;
       setState(() => _status = success);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(success)),
+      );
     } catch (error) {
       if (!mounted) return;
       setState(() => _status = 'Processing failed: $error');
