@@ -23,6 +23,8 @@ Current development version: **0.1.0**. The repository is structured as a produc
 - Live amplitude waveform, clipping warning, recording timer, markers/bookmarks, and input-device-aware recording services.
 - Persisted waveform envelopes for recorded, imported, and processed media.
 - Searchable library with favorites, pinned items, tags, folders, trash/restore, rename, duplicate, import, export, share, sorting, format/folder/tag/date filtering, and multi-selection bulk actions.
+- Multi-file import isolates copy/probe/waveform failures so a corrupt or missing selected audio file is cleaned up and does not prevent later valid selections from being imported.
+- Local metadata decoding tolerates damaged optional fields and malformed individual records, preserves structurally corrupt metadata for diagnostics, and can recover a valid `.bak` left by an interrupted metadata replacement.
 - Batch tools can convert several recordings or copy selected originals directly to a user-selected folder with collision-safe naming.
 - Desktop secondary/right-click access to the same complete recording action surface used by touch/menu workflows.
 - Multi-recording batch format conversion with target-format selection, progress, per-file failure isolation, preserved source files, retained markers, and successful-output registration in the library.
@@ -31,7 +33,7 @@ Current development version: **0.1.0**. The repository is structured as a produc
 - Android, iOS, and macOS media-session metadata plus notification/lock-screen playback integration using `just_audio_background` and tagged media sources.
 - Non-destructive FFmpeg-backed editing: keep selection, cut selection, split, merge, normalize, fades, silence removal/insertion, gain changes, basic noise cleanup, compressor, limiter, high-pass/low-pass filters, format conversion, draggable selection handles, selection undo/redo, and export presets.
 - Native launcher/splash branding generated reproducibly from project-controlled SonicNest mark geometry, plus branded Flutter startup UI with startup-error recovery.
-- Debian `.deb` packaging for Linux with desktop entry, AppStream metadata, generated SonicNest icon integration, package checksums, and structural CI verification.
+- Debian `.deb` packaging for Linux with desktop entry, AppStream metadata, generated SonicNest icon integration, package checksums, structural verification, hosted-runner installation/startup smoke, and uninstall cleanup verification.
 - Localization-ready presentation layer with primary Flutter surfaces centralized in the localization catalog; English is currently the shipped locale.
 - Light, dark, and system themes; responsive phone/tablet/desktop navigation; reduced-motion preference; keyboard navigation and recorder/player shortcuts.
 - Offline-first local metadata and audio storage. No hidden upload, tracking, or analytics.
@@ -90,7 +92,7 @@ flutter analyze --no-fatal-infos
 flutter test
 ```
 
-GitHub Actions additionally compiles representative debug builds for Android, Linux, Windows, macOS, and unsigned iOS host validation. A dedicated Linux package workflow builds a release-mode Linux bundle, creates a Debian package, verifies its payload/metadata/icon/checksum structure, and publishes a short-retention validation artifact. Hardware-dependent recorder, interruption, background, routing, screen-wake, media-button, batch-performance, native-brand visual inspection, Linux installation, and lock-screen behavior still requires real target devices.
+GitHub Actions additionally compiles representative debug builds for Android, Linux, Windows, macOS, and unsigned iOS host validation. A dedicated Linux package workflow builds a release-mode Linux bundle, creates a Debian package, verifies its payload/metadata/icon/checksum structure, installs it through the package manager, smoke-starts the installed application under a bounded virtual display, removes the package, verifies package-owned integration cleanup, and publishes a short-retention validation artifact. Hardware-dependent recorder, interruption, background, routing, screen-wake, media-button, batch-performance, native-brand visual inspection, representative Linux installation, and lock-screen behavior still requires real target devices.
 
 The current batch-conversion/right-click source revision `985f2dd1500a03b0b65ee58b142cf31f545b0cc5` passed analyzer and unit tests plus Android, Linux, Windows, macOS, and unsigned iOS debug builds in GitHub Actions. This automated result does not replace the physical-device release checklist.
 
@@ -122,9 +124,9 @@ Recordings remain on-device by default. SonicNest does not upload microphone dat
 
 Native recording uses platform encoders through `record`. Formats requiring transcoding use an audio-focused FFmpeg package. Capabilities vary by platform/device, so SonicNest checks recorder support and uses fallback/error behavior instead of claiming unsupported combinations. See `docs/CODECS.md`.
 
-## Building, branding, packaging, QA, and releases
+## Building, metadata integrity, branding, packaging, QA, and releases
 
-See `docs/BUILDING.md` for platform bootstrap/build commands, `docs/BRANDING.md` for deterministic native icon/splash generation, `docs/LINUX_PACKAGING.md` for Debian packaging, `docs/QA_CHECKLIST.md` for the full hardware/release checklist, `docs/RELEASING.md` for the release procedure, `RELEASE_NOTES.md` for the development-preview notes, and `TODO.md` for evidence-based remaining gates.
+See `docs/BUILDING.md` for platform bootstrap/build commands, `docs/METADATA_INTEGRITY.md` for local-library corruption isolation and interrupted-save recovery, `docs/BRANDING.md` for deterministic native icon/splash generation, `docs/LINUX_PACKAGING.md` for Debian packaging, `docs/QA_CHECKLIST.md` for the full hardware/release checklist, `docs/RELEASING.md` for the release procedure, `RELEASE_NOTES.md` for the development-preview notes, and `TODO.md` for evidence-based remaining gates.
 
 ## Contributing
 
