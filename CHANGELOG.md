@@ -27,7 +27,11 @@ All notable project changes are documented here.
 - English localization-ready presentation layer and delegates for future translation work.
 - Additional desktop recorder/player shortcuts: F9, F10, Ctrl+Alt+P, and Ctrl+Alt+Arrow jump controls.
 - Multi-recording batch format conversion with target-format selection, progress reporting, per-file failure isolation, preserved originals, marker retention, and library registration of successful outputs.
+- Direct multi-file original export to a user-selected directory with collision-safe naming and per-file failure isolation.
 - Desktop secondary/right-click access to the existing complete recording action surface.
+- Deterministic SonicNest native brand raster generation from repository-controlled mark geometry.
+- Reproducible Android/iOS native splash generation and Android/iOS/macOS/Windows launcher-icon generation.
+- Bash and PowerShell native-brand application commands plus dedicated branding documentation.
 - `docs/RELEASING.md`, `RELEASE_NOTES.md`, and `TODO.md` for evidence-based release management.
 - Expanded manual QA matrix covering recorder lifecycle, codec fallback, smart naming, A-B looping, storage, editor processing, accessibility, localization readiness, stress testing, and signing/release boundaries.
 
@@ -42,8 +46,9 @@ All notable project changes are documented here.
 - Player loop handling now keeps repeat-one and A-B selection modes mutually consistent.
 - Settings storage cleanup now routes through a public controller operation rather than presentation-layer notifier access.
 - FFprobe media-information access was aligned with the current package API to remove redundant `await` calls.
-- The previously planned multi-file conversion capability is now implemented as a sequential non-destructive batch workflow; direct batch export to a user-selected external destination remains optional future work.
+- Multi-file conversion and direct original-file export are implemented as sequential, non-destructive workflows; remaining work is real-platform picker, low-storage, large-batch, and failure-recovery validation.
 - Recording tiles now expose the same action surface through secondary/right-click without removing touch/long-press behavior.
+- Permanent Android/Windows/Apple workflows now regenerate native SonicNest brand resources before compiling representative debug builds.
 
 ### Fixed
 - Android namespace generation that previously used the reserved/invalid `in` prefix.
@@ -55,11 +60,13 @@ All notable project changes are documented here.
 - Localization delegate import required for the Cupertino fallback delegate.
 - Record keyboard shortcut behavior during an active countdown.
 - Screen-wake cleanup after stop, cancel, recorder failure, and service disposal.
+- Superseded first-pass native raster generator removed so one type-safe deterministic implementation remains canonical.
 
 ### Validation
 - Source revision `985f2dd1500a03b0b65ee58b142cf31f545b0cc5` is green in core Flutter CI run `31772136038`: formatting, analyzer, unit tests, Android debug APK, and Linux debug build all succeeded.
 - The same source revision is green in Windows run `31772135970` and Apple run `31772136081` for Windows debug, macOS debug, and unsigned iOS debug builds.
-- The continuation intentionally does not convert physical-device microphone/background/interruption/routing/screen-wake/media-button/batch-performance checks into false automated claims.
+- Native branding source revision `40c4a758debef136c2d8c977c321446cca2697cd` is green in core run `31776174696`, Windows run `31776174725`, and Apple run `31776174715`; deterministic branding generation, analyzer/tests, Android/Linux/Windows/macOS debug builds, and unsigned iOS debug build all succeeded.
+- The continuation intentionally does not convert physical-device microphone/background/interruption/routing/screen-wake/media-button/batch-performance/native-brand visual inspection checks into false automated claims.
 - Exact newest workflow/run results are also recorded in `what_changed.md` and `PROJECT_STATE.md`.
 
 ## [0.1.0] - 2026-08-14
@@ -67,14 +74,12 @@ All notable project changes are documented here.
 ### Added
 - Initial SonicNest repository license and project foundation.
 
-
 ### External batch export continuation
 - Added optional user-selected external-folder copies after successful managed batch conversions.
 - Added collision-safe destination naming without overwriting existing files.
 - Added safe stop-after-current cancellation between batch items.
 - Kept conversion and external-copy failures independently reported so a destination-copy failure does not invalidate a successful managed conversion.
 - Validated revision `54b727db6dd887fb0b2df2d36cabb2cd78671d7a` with analyzer/tests and Android, Linux, Windows, macOS, and unsigned iOS debug builds in run `31773250023`.
-
 
 ### Localization and library hardening continuation
 - Routed primary application screens and reusable recording controls through the localization catalog.
@@ -84,9 +89,15 @@ All notable project changes are documented here.
 - Added safe between-file batch cancellation and collision-safe optional external-folder copies with unit-tested filesystem behavior.
 - Validated revision `3fa56d26fb6cb64ccddf2b71e7b8c677aa4aa69b` in run `31774726146` across analyzer/tests and all five platform debug-build targets.
 
-
 ### Direct multi-file original export continuation
 - Added resilient multi-file directory-copy results and collision-safe batch copying.
 - Added direct export of selected original recordings without transcoding.
 - Added mixed-success and duplicate-basename filesystem tests.
 - Validated revision `7c4702afcb9859f3507ac151f23372f96acec50a` in run `31775283791` across analyzer/tests and all five platform debug-build targets.
+
+### Native launcher and splash branding continuation
+- Added one canonical pure-Dart deterministic native brand raster generator.
+- Added reproducible Bash/PowerShell application of Android/iOS native splash resources and Android/iOS/macOS/Windows launcher/application icons.
+- Integrated brand generation into permanent core, Windows, and Apple build workflows.
+- Added `docs/BRANDING.md` and updated build/quick-start guidance.
+- Validated native branding source revision `40c4a758debef136c2d8c977c321446cca2697cd` in core run `31776174696`, Windows run `31776174725`, and Apple run `31776174715`.
