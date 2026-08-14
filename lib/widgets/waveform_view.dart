@@ -11,6 +11,8 @@ class WaveformView extends StatefulWidget {
     this.compact = false,
     this.selection,
     this.onSelectionChanged,
+    this.onSelectionChangeStart,
+    this.onSelectionChangeEnd,
   });
 
   final List<double> samples;
@@ -19,6 +21,8 @@ class WaveformView extends StatefulWidget {
   final bool compact;
   final RangeValues? selection;
   final ValueChanged<RangeValues>? onSelectionChanged;
+  final VoidCallback? onSelectionChangeStart;
+  final ValueChanged<RangeValues>? onSelectionChangeEnd;
 
   @override
   State<WaveformView> createState() => _WaveformViewState();
@@ -47,8 +51,8 @@ class _WaveformViewState extends State<WaveformView> {
               onPanUpdate: interactive
                   ? (details) => _updateSelectionDrag(details.localPosition.dx, width)
                   : null,
-              onPanEnd: interactive ? (_) => _draggingStart = null : null,
-              onPanCancel: interactive ? () => _draggingStart = null : null,
+              onPanEnd: interactive ? (_) => _finishSelectionDrag() : null,
+              onPanCancel: interactive ? _cancelSelectionDrag : null,
               child: CustomPaint(
                 painter: _WaveformPainter(
                   samples: widget.samples,
@@ -71,6 +75,7 @@ class _WaveformViewState extends State<WaveformView> {
   void _startSelectionDrag(double dx, double width) {
     final selection = widget.selection!;
     final position = (dx / width).clamp(0.0, 1.0).toDouble();
+    widget.onSelectionChangeStart?.call();
     _draggingStart = (position - selection.start).abs() <=
         (position - selection.end).abs();
     _updateSelection(position);
@@ -78,6 +83,16 @@ class _WaveformViewState extends State<WaveformView> {
 
   void _updateSelectionDrag(double dx, double width) {
     _updateSelection((dx / width).clamp(0.0, 1.0).toDouble());
+  }
+
+  void _finishSelectionDrag() {
+    _draggingStart = null;
+    final selection = widget.selection;
+    if (selection != null) widget.onSelectionChangeEnd?.call(selection);
+  }
+
+  void _cancelSelectionDrag() {
+    _draggingStart = null;
   }
 
   void _updateSelection(double position) {
