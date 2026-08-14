@@ -11,6 +11,16 @@ class PlayerService extends ChangeNotifier {
   PlayerService() {
     _subscriptions.add(_player.positionStream.listen((value) {
       position = value;
+      final start = selectionLoopStart;
+      final end = selectionLoopEnd;
+      if (_player.playing &&
+          start != null &&
+          end != null &&
+          end > start &&
+          value >= end) {
+        unawaited(_player.seek(start));
+        position = start;
+      }
       notifyListeners();
     }));
     _subscriptions.add(_player.durationStream.listen((value) {
@@ -22,7 +32,8 @@ class PlayerService extends ChangeNotifier {
       isLoading = value.processingState == ProcessingState.loading ||
           value.processingState == ProcessingState.buffering;
       if (value.processingState == ProcessingState.completed &&
-          _player.loopMode == LoopMode.off) {
+          _player.loopMode == LoopMode.off &&
+          !hasSelectionLoop) {
         isPlaying = false;
       }
       notifyListeners();
@@ -42,11 +53,15 @@ class PlayerService extends ChangeNotifier {
   bool isPlaying = false;
   bool isLoading = false;
   String? lastError;
+  Duration? selectionLoopStart;
+  Duration? selectionLoopEnd;
 
   double get speed => _player.speed;
   double get volume => _player.volume;
   bool get looping => _player.loopMode == LoopMode.one;
   bool get skipSilence => _player.skipSilenceEnabled;
+  bool get hasSelectionLoop =>
+      selectionLoopStart != null && selectionLoopEnd != null;
 
   Future<Duration> probeDuration(String path) async {
     final session = await FFprobeKit.getMediaInformation(path);
@@ -67,6 +82,7 @@ class PlayerService extends ChangeNotifier {
       throw const FileSystemException('Audio file does not exist.');
     }
     lastError = null;
+    clearSelectionLoop(notify: false);
     final title = p.basenameWithoutExtension(path);
     await _player.setAudioSource(
       AudioSource.uri(
@@ -116,8 +132,38 @@ class PlayerService extends ChangeNotifier {
   }
 
   Future<void> setLooping(bool enabled) async {
+    if (enabled) {
+      clearSelectionLoop(notify: false);
+    }
     await _player.setLoopMode(enabled ? LoopMode.one : LoopMode.off);
     notifyListeners();
+  }
+
+  Future<void> setSelectionLoop(Duration start, Duration end) async {
+    if (start.isNegative || end <= start) {
+      throw ArgumentError('Loop end must be after loop start.');
+    }
+    final max = duration > Duration.zero ? duration : end;
+    final boundedStart = start > max ? max : start;
+    final boundedEnd = end > max ? max : end;
+    if (boundedEnd <= boundedStart) {
+      throw ArgumentError('Loop selection is outside the loaded audio.');
+    }
+    await _player.setLoopMode(LoopMode.off);
+    selectionLoopStart = boundedStart;
+    selectionLoopEnd = boundedEnd;
+    if (position < boundedStart || position >= boundedEnd) {
+      await _player.seek(boundedStart);
+    }
+    notifyListeners();
+  }
+
+  void clearSelectionLoop({bool notify = true}) {
+    selectionLoopStart = null;
+    selectionLoopEnd = null;
+    if (notify) {
+      notifyListeners();
+    }
   }
 
   Future<void> setSkipSilence(bool enabled) async {
