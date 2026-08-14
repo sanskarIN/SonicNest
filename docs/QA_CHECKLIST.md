@@ -13,6 +13,25 @@ Do not mark SonicNest release-ready until these checks have been executed on rep
 - [ ] macOS debug build succeeds.
 - [ ] unsigned iOS debug build succeeds.
 
+These generic checkboxes are intended to be executed again for the exact release-candidate revision. Current repository evidence for the metadata/import reliability continuation is recorded separately below so one historical CI run is not mistaken for final-release approval.
+
+### Repository reliability automation evidence
+
+- [x] Malformed optional recording metadata is covered by tolerant decoder regression tests.
+- [x] Malformed individual metadata records are isolated while valid neighboring entries remain loadable.
+- [x] Structurally invalid metadata documents are preserved to timestamped diagnostic copies.
+- [x] Interrupted replacement recovery from a valid `recordings.json.bak` is covered by filesystem tests.
+- [x] Corrupt-primary fallback to a valid backup is covered while preserving the corrupt primary for diagnosis.
+- [x] A deterministic 3,000-entry metadata save/load filesystem round-trip is covered by the test suite.
+- [x] Audio import copy failure is isolated without deleting an unrelated managed path.
+- [x] Audio import probe/waveform failures remove the copied managed file.
+- [x] Multi-file import controller logic continues after isolated malformed/missing audio failures while metadata-persistence failure remains fail-fast.
+- [x] Core Flutter CI run `31807193932` validated source `a88aeadadda017b0aced4dbc25c8426a27364b77`: formatting, analyzer, unit tests, Android debug APK, and Linux debug build all succeeded.
+- [x] Windows run `31807141053` and Apple run `31807141166` validated import-controller source `3bf63e69186a7a538f7d0587f3d361e00c2e29e9` across Windows, macOS, and unsigned-iOS debug builds.
+- [x] Repository Integrity Audit run `31807662729` validated the cleaned permanent workflow set and workflow allowlist/read-only invariant.
+
+The automated entries above do **not** complete the unchecked real malformed-media corpus, low-storage, permission-failure, abrupt-interruption, large-library UI/performance, accessibility, or physical-device gates later in this checklist.
+
 ## Startup and migration
 
 - [ ] Fresh install opens through the SonicNest branded startup experience.
@@ -263,9 +282,21 @@ Verify on each target platform which settings are honored by the native recorder
 - [ ] Begin recording with low free storage.
 - [ ] Exhaust storage during a long recording in a controlled test environment.
 - [ ] Fail an editor/export operation due to storage limits.
-- [ ] Attempt import from an inaccessible/deleted source.
-- [ ] Verify metadata is not persisted for a file that was never successfully created.
+- [ ] Attempt import from an inaccessible/deleted source on each maintained target platform.
+- [ ] Verify metadata is not persisted for a file that was never successfully created under a real filesystem failure.
 - [ ] Verify the app can recover after storage is made available again.
+- [ ] Exercise an interrupted metadata replacement under controlled real filesystem/process interruption and verify the recovery record.
+
+## Malformed-media import corpus
+
+- [ ] Import privacy-safe truncated audio files on Android.
+- [ ] Import privacy-safe truncated audio files on iOS.
+- [ ] Import privacy-safe truncated audio files on macOS.
+- [ ] Import privacy-safe truncated audio files on Windows.
+- [ ] Import privacy-safe truncated audio files on Linux.
+- [ ] Include mislabeled extensions, unsupported codec/container combinations, zero-byte files, and probe failures where safe to reproduce.
+- [ ] Select malformed and valid files together and verify later valid files continue after isolated failures on each target platform.
+- [ ] Verify failed managed copies are cleaned and no false Library entries remain.
 
 ## Soak and performance
 
@@ -275,7 +306,8 @@ Verify on each target platform which settings are honored by the native recorder
 - [ ] Repeated pause/resume cycle stress test.
 - [ ] Large waveform extraction.
 - [ ] Hundreds of recordings library behavior.
-- [ ] Thousands of metadata entries library behavior.
+- [ ] Thousands of metadata entries library UI behavior and startup latency.
+- [ ] Thousands-entry Library memory/scroll/search/filter profiling.
 - [ ] Long-audio seeking and editor operations do not exhibit uncontrolled memory growth.
 
 ## Privacy and release
@@ -368,7 +400,8 @@ Repository implementation/automation evidence:
 - [x] The deterministic SonicNest icon is installed into the hicolor icon hierarchy and referenced by the packaged desktop entry.
 - [x] AppStream metadata is installed by the Debian package builder.
 - [x] Package verification checks control metadata, executable permissions, desktop entry, AppStream metadata, icon presence, and SHA-256 integrity.
-- [x] Linux Package CI run `31783749267` validated source `f2c773e59b27a2aaac77e0590e20441ed7eba03f` and built/structurally verified `sonicnest_0.1.0_amd64.deb` successfully.
+- [x] Historical Linux Package CI run `31783749267` validated source `f2c773e59b27a2aaac77e0590e20441ed7eba03f` through structural package verification.
+- [x] Linux Package CI run `31785105648` validated source `a07468b4b7c14a76b9bce537bbe0455e4539e6bf` through release build, `.deb` construction, structural verification, package-manager installation, installed-payload validation, bounded virtual-display startup smoke, package-manager removal, uninstall cleanup verification, and artifact upload.
 
 Real-system/release-candidate review:
 
