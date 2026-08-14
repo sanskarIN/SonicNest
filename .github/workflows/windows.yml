@@ -6,6 +6,7 @@ on:
     paths:
       - 'lib/**'
       - 'windows/**'
+      - 'assets/**'
       - 'pubspec.yaml'
       - 'tool/**'
       - '.github/workflows/windows.yml'
@@ -14,6 +15,7 @@ on:
     paths:
       - 'lib/**'
       - 'windows/**'
+      - 'assets/**'
       - 'pubspec.yaml'
       - 'tool/**'
       - '.github/workflows/windows.yml'
@@ -44,5 +46,8 @@ jobs:
         run: ./tool/bootstrap_platforms.ps1
       - name: Resolve dependencies
         run: flutter pub get
+      - name: Apply SonicNest native branding
+        shell: pwsh
+        run: ./tool/apply_branding.ps1
       - name: Build Windows debug application
         run: flutter build windows --debug
