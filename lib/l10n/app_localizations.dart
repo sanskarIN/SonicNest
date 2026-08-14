@@ -30,6 +30,26 @@ class AppLocalizations {
   String get moreFilters => 'More filters';
   String get filtersActive => 'Filters active';
 
+  String get welcomeToSonicNest => 'Welcome to SonicNest';
+  String get homeDescription =>
+      'Capture voice and sound privately, then organize and edit it locally.';
+  String get recordings => 'Recordings';
+  String get recordedAudio => 'Recorded audio';
+  String get localStorage => 'Local storage';
+  String get quickRecord => 'Quick Record';
+  String get quickRecordHint =>
+      'Open the recorder with your current quality preset.';
+  String get batchConvertHomeHint =>
+      'Create converted copies of several saved recordings in one operation.';
+  String get open => 'Open';
+  String get recentRecordings => 'Recent recordings';
+  String get viewAll => 'View all';
+  String get recordingsWillAppearHere => 'Your recordings will appear here.';
+  String get useQuickRecordOrImport =>
+      'Use Quick Record or import audio from the Library.';
+  String get play => 'Play';
+  String get pause => 'Pause';
+
   String get batchConvert => 'Batch Convert';
   String get selectAll => 'Select all';
   String get clearAll => 'Clear all';
