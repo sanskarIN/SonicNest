@@ -48,9 +48,10 @@ Completed:
 - High-pass and low-pass filters.
 - Bookmark-position adjustment for cut and inserted-silence copies.
 - Multi-recording batch format conversion with per-file progress/failure handling and preserved source recordings.
+- Direct multi-file original export to a user-selected destination with collision-safe naming and per-file failure isolation.
 
 Remaining:
-- Evaluate direct multi-file export to a user-selected external destination after real-world batch conversion and storage testing.
+- Profile multi-file conversion and direct export with large real-world libraries, low-storage conditions, permission loss, and destination disappearance.
 - Tune advanced processing presets against representative voice/music recordings instead of changing filter defaults without listening tests.
 
 ## v0.4.x — Accessibility, localization, and performance
@@ -58,15 +59,15 @@ Remaining:
 Completed/in progress:
 - Responsive Material 3 layouts, semantics, reduced-motion preference, and keyboard navigation are implemented.
 - Branded Flutter startup experience and recoverable startup state are implemented.
-- Localization-ready application delegate/layer is established with English as the currently supported locale.
+- Primary Flutter presentation surfaces are centralized in the localization catalog; English is the currently supported locale.
 
 Remaining:
-- Migrate remaining hard-coded presentation strings before introducing additional languages.
+- Decide whether backend diagnostic/error details should be translated or intentionally retained as technical text before non-English releases.
+- Add additional locales only with translation review, text-expansion testing, and translation QA.
 - Complete screen-reader audits with VoiceOver, TalkBack, Narrator, and desktop accessibility tooling.
 - Profile multi-hour recordings and libraries with thousands of entries.
 - Measure memory/CPU/storage behavior on low-resource devices.
-- Profile large batch conversions for throughput, storage pressure, cancellation expectations, and recovery behavior.
-- Validate text expansion and large-font layouts before adding translated locales.
+- Profile large batch conversions and exports for throughput, storage pressure, cancellation expectations, and recovery behavior.
 
 ## v0.5.x — Cross-platform release hardening
 
@@ -74,16 +75,21 @@ Completed/in progress:
 - Reproducible Bash and PowerShell platform bootstrapping.
 - Android/Linux/Windows/macOS/unsigned-iOS automated build workflows.
 - Detailed manual QA checklist, release procedure, preview release notes, and evidence-based remaining-work file.
-- Current batch-conversion/right-click source revision validated by analyzer/tests plus Android, Linux, Windows, macOS, and unsigned iOS debug builds.
+- Deterministic native brand raster generation from repository-controlled SonicNest geometry.
+- Reproducible Android/iOS native splash resources and Android/iOS/macOS/Windows launcher/application icon generation.
+- Permanent Android/Windows/Apple workflows apply generated native branding before compiling representative debug builds.
+- Native branding source revision `40c4a758debef136c2d8c977c321446cca2697cd` validated by analyzer/tests plus Android, Linux, Windows, macOS, and unsigned iOS debug builds.
 
 Remaining:
 - Keep Android/Linux/Windows/macOS/iOS build workflows green for the final source revision.
 - Validate microphone input switching and codec availability on each supported OS.
 - Verify background/lock-screen/interruption behavior against each platform's current policies.
-- Validate countdown, screen-wake, A-B loop, media buttons, batch conversion, desktop secondary-click interaction, and advanced editor outputs on physical target hardware.
+- Validate countdown, screen-wake, A-B loop, media buttons, batch conversion/export, desktop secondary-click interaction, and advanced editor outputs on physical target hardware.
+- Visually inspect generated Android/iOS/macOS/Windows native icons and Android/iOS launch/splash resources on real release candidates.
+- Choose a Linux package/distribution target and integrate the generated SonicNest icon into its desktop/package metadata.
 - Prepare reproducible release-build checks before signing is introduced.
 - Keep dependency/API compatibility pinned and documented when upstream plugins introduce breaking API or native-registration changes.
-- Capture real screenshots and review final native icon/launch assets from tested release candidates.
+- Capture real screenshots from tested release candidates.
 
 ## v1.0.0 — Stable release
 
@@ -94,17 +100,14 @@ Remaining:
 - Release notes and checksums published for distributable artifacts where applicable.
 - Stable tag created only from the exact tested and signed source revision.
 
-
 ## External batch export status
 
-Implemented: optional user-selected destination-folder copies, collision-safe destination names, independent external-copy failure reporting, and stop-after-current cancellation between files. Remaining work is physical/per-platform validation, low-storage/large-batch testing, and deciding whether any richer destination/export workflow is justified by real use.
-
+Implemented: optional user-selected destination-folder copies, collision-safe destination names, independent external-copy failure reporting, stop-after-current cancellation between converted files, and direct original-file multi-export without transcoding. Remaining work is physical/per-platform validation, low-storage/large-batch testing, and destination-permission/revocation testing.
 
 ## Localization migration status
 
 Primary Flutter presentation surfaces are centralized in the localization catalog and English remains the baseline locale. Remaining localization work is translation introduction, text-expansion testing, translation QA, and deciding how much backend diagnostic text should be localized versus retained as technical detail.
 
+## Native branding status
 
-## Direct export implementation status
-
-Selected original recordings can be copied directly to a chosen folder without transcoding. Collision-safe naming and per-file failure isolation are implemented and unit-tested. Remaining work is real-platform picker/permission/low-storage/large-batch validation.
+Implemented: deterministic brand source generation, Android adaptive/monochrome/full launcher inputs, Android/iOS native splash resources, and Android/iOS/macOS/Windows icon generation integrated into build workflows. Remaining work is real OS-level visual inspection, signed/release launch-screen review, real screenshots, and Linux package-format icon integration.
