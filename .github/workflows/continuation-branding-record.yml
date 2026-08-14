@@ -1,0 +1,47 @@
+name: Record validated native branding continuation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/continuation-branding-record.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Append validated branding state
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          what = Path('what_changed.md')
+          text = what.read_text(encoding='utf-8')
+          marker = '# Native launcher and splash branding continuation'
+          if marker not in text:
+              text += '''\n\n---\n\n# Native launcher and splash branding continuation\n\nThis continuation replaces generated Flutter-default native artwork with a reproducible SonicNest-controlled branding pipeline while keeping visual release approval as an evidence-dependent manual gate.\n\n## Deterministic native brand source\n\n- Added `tool/generate_brand_assets_v2.dart` as the single canonical raster generator.\n- The generator is pure Dart and reproduces SonicNest's gradient, microphone/stand mark, and sound bars from repository-controlled geometry.\n- It deterministically writes `assets/generated/sonicnest_icon.png`, `assets/generated/sonicnest_icon_foreground.png`, and `assets/generated/sonicnest_splash.png`.\n- Generated PNGs are ignored by Git because the generator is the source of truth.\n- A superseded first-pass raster generator was removed so the repository has only one branding implementation.\n\n## Native launcher and splash generation\n\n- Added reproducible Bash branding via `tool/apply_branding.sh`.\n- Added reproducible Windows PowerShell branding via `tool/apply_branding.ps1`.\n- Both paths run the deterministic raster generator and then apply native launcher/splash resources through the configured Flutter tooling.\n- Android launcher resources include full, adaptive-foreground, and monochrome/themed-icon source paths.\n- Android native splash resources include Android 12+ configuration and dark/light launch colors.\n- iOS launcher icons and native splash resources are generated from the SonicNest brand source.\n- macOS application icon resources are generated from the SonicNest brand source.\n- Windows application icon resources are generated from the SonicNest brand source.\n- Linux receives deterministic brand source PNG generation, while final desktop-entry/package icon integration remains tied to the distribution format selected later.\n\n## Build integration\n\n- `pubspec.yaml` now contains the launcher-icon and native-splash configuration.\n- `.github/workflows/ci.yml` generates deterministic brand source images during validation and applies native branding before Android compilation.\n- `.github/workflows/windows.yml` applies SonicNest native branding before the Windows debug build.\n- `.github/workflows/macos.yml` applies SonicNest native branding before macOS and unsigned-iOS debug builds.\n- `docs/BUILDING.md` and `docs/BRANDING.md` document reproducible generation and the visual-QA boundary.\n- README quick-start commands now include the native-brand application step.\n\n## Exact automated validation\n\nValidated source revision: `40c4a758debef136c2d8c977c321446cca2697cd`\n\nCore Flutter CI run `31776174696`:\n- deterministic brand image generation: SUCCESS\n- Dart formatting: SUCCESS\n- Flutter static analysis: SUCCESS\n- unit tests: SUCCESS\n- Android native branding generation: SUCCESS\n- Android debug APK: SUCCESS\n- Linux deterministic brand source generation: SUCCESS\n- Linux debug build: SUCCESS\n\nWindows run `31776174725`:\n- Windows native branding generation: SUCCESS\n- Windows debug build: SUCCESS\n\nApple run `31776174715`:\n- macOS native branding generation: SUCCESS\n- macOS debug build: SUCCESS\n- iOS native branding/splash generation: SUCCESS\n- unsigned iOS debug build: SUCCESS\n\n## Evidence-dependent branding gates that remain\n\nAutomated resource generation and compilation prove structural validity, not visual release approval. The following remain intentionally unchecked until real release-candidate evidence exists:\n\n- Android legacy/adaptive/themed icon crop and mask review on real launchers.\n- iOS/macOS icon inspection at small and large OS-rendered sizes.\n- Windows Explorer/taskbar/Start/shortcut/final package icon inspection.\n- Signed/release Android and iOS launch/splash inspection, including dark mode.\n- Linux package/desktop-entry icon integration after choosing a distribution format.\n- Real screenshots and store listing assets from tested release candidates.\n\nThe project remains a **development preview** until the broader hardware, accessibility, stress, signing, packaging, and store-release gates are completed with evidence.\n'''
+              what.write_text(text, encoding='utf-8')
+
+          state = Path('PROJECT_STATE.md')
+          stext = state.read_text(encoding='utf-8')
+          marker = '## Latest exact validation — deterministic native branding'
+          if marker not in stext:
+              stext += '''\n\n## Latest exact validation — deterministic native branding\n\n- Validated source revision: `40c4a758debef136c2d8c977c321446cca2697cd`\n- Core run `31776174696`: brand source generation, analyzer, tests, Android branded APK, and Linux build **SUCCESS**.\n- Windows run `31776174725`: native branding generation and Windows debug build **SUCCESS**.\n- Apple run `31776174715`: native branding generation plus macOS and unsigned-iOS debug builds **SUCCESS**.\n- Android/iOS native splash generation and Android/iOS/macOS/Windows launcher-icon generation are repository-automatable and implemented.\n- Linux final package icon integration and all OS-level visual inspection remain manual/release-distribution gates.\n- Release classification remains **development preview**.\n'''
+              state.write_text(stext, encoding='utf-8')
+          PY
+      - name: Remove one-shot recorder
+        run: git rm .github/workflows/continuation-branding-record.yml
+      - name: Commit continuation record
+        run: |
+          git config user.name 'Sanskar'
+          git config user.email 'sanskarin@outlook.in'
+          git add what_changed.md PROJECT_STATE.md
+          git commit -m 'docs: record validated native branding continuation'
+          git push origin HEAD:main
