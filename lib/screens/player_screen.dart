@@ -52,7 +52,7 @@ class PlayerScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '${entry.format.label} • ${formatBytes(entry.sizeBytes)}',
+                  '${_formatLabel(entry.format)} • ${formatBytes(entry.sizeBytes)}',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
@@ -124,8 +124,12 @@ class PlayerScreen extends StatelessWidget {
                         try {
                           await player.setSkipSilence(value);
                         } on UnsupportedError catch (error) {
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message ?? error.toString())));
+                          if (!context.mounted) {
+                            return;
+                          }
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(error.message ?? error.toString())),
+                          );
                         }
                       },
                       avatar: const Icon(Icons.fast_forward_outlined, size: 18),
@@ -147,7 +151,10 @@ class PlayerScreen extends StatelessWidget {
                 ),
                 if (entry.markers.isNotEmpty) ...[
                   const SizedBox(height: 20),
-                  Text('Bookmarks', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+                  Text(
+                    'Bookmarks',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                  ),
                   const SizedBox(height: 8),
                   ...entry.markers.map(
                     (marker) => ListTile(
@@ -167,6 +174,16 @@ class PlayerScreen extends StatelessWidget {
     );
   }
 }
+
+String _formatLabel(RecordingFormat format) => switch (format) {
+      RecordingFormat.m4a => 'M4A / AAC',
+      RecordingFormat.wav => 'WAV',
+      RecordingFormat.flac => 'FLAC',
+      RecordingFormat.opus => 'Opus',
+      RecordingFormat.mp3 => 'MP3',
+      RecordingFormat.ogg => 'OGG / Vorbis',
+      RecordingFormat.aac => 'AAC',
+    };
 
 class _Artwork extends StatelessWidget {
   const _Artwork({required this.entry, required this.isPlaying});
@@ -210,14 +227,18 @@ class _SpeedMenu extends StatelessWidget {
     return MenuAnchor(
       builder: (context, menuController, child) => ActionChip(
         avatar: const Icon(Icons.speed, size: 18),
-        label: Text('${controller.player.speed.toStringAsFixed(controller.player.speed % 1 == 0 ? 0 : 2)}×'),
+        label: Text(
+          '${controller.player.speed.toStringAsFixed(controller.player.speed % 1 == 0 ? 0 : 2)}×',
+        ),
         onPressed: menuController.isOpen ? menuController.close : menuController.open,
       ),
       menuChildren: speeds
           .map(
             (speed) => MenuItemButton(
               onPressed: () => controller.player.setSpeed(speed),
-              leadingIcon: controller.player.speed == speed ? const Icon(Icons.check) : const SizedBox(width: 24),
+              leadingIcon: controller.player.speed == speed
+                  ? const Icon(Icons.check)
+                  : const SizedBox(width: 24),
               child: Text('$speed×'),
             ),
           )
