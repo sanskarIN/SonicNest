@@ -14,6 +14,7 @@ macOS/Linux/Git Bash:
 ```bash
 bash tool/bootstrap_platforms.sh
 flutter pub get
+bash tool/apply_branding.sh
 ```
 
 Windows PowerShell:
@@ -21,9 +22,12 @@ Windows PowerShell:
 ```powershell
 ./tool/bootstrap_platforms.ps1
 flutter pub get
+./tool/apply_branding.ps1
 ```
 
 The bootstrap scripts generate Flutter host projects with the application organization `io.github.sanskarin`, then apply SonicNest-specific Android, Apple, Linux, and Windows adjustments. Re-run the appropriate bootstrap script after switching to a materially different Flutter SDK.
+
+`tool/apply_branding.sh` and `tool/apply_branding.ps1` generate the raster source images from `tool/generate_brand_assets_v2.dart`, then apply launcher icons and native Android/iOS splash resources. Generated PNG source images are intentionally ignored by Git because they are reproducible from code. See `docs/BRANDING.md`.
 
 ## Manual platform generation
 
@@ -40,10 +44,18 @@ After generation, apply the Android files under `tool/platform_overrides/` and r
 python tool/patch_generated_platforms.py
 ```
 
+Then generate/apply native branding:
+
+```bash
+dart tool/generate_brand_assets_v2.dart
+dart run flutter_launcher_icons
+dart run flutter_native_splash:create
+```
+
 ## Verify Dart and Flutter code
 
 ```bash
-dart format lib test
+dart format lib test tool/generate_brand_assets_v2.dart
 flutter analyze --no-fatal-infos
 flutter test
 ```
@@ -55,6 +67,7 @@ The repository CI treats analyzer errors/warnings as failures while allowing inf
 Android/Linux:
 
 ```bash
+bash tool/apply_branding.sh
 flutter build apk --debug
 flutter build linux --debug
 ```
@@ -62,12 +75,14 @@ flutter build linux --debug
 Windows:
 
 ```powershell
+./tool/apply_branding.ps1
 flutter build windows --debug
 ```
 
 Apple targets on macOS:
 
 ```bash
+bash tool/apply_branding.sh
 flutter build macos --debug
 flutter build ios --debug --no-codesign
 ```
@@ -76,8 +91,8 @@ Only run build targets supported by the host OS. Signing, provisioning profiles,
 
 ## CI coverage
 
-- `.github/workflows/ci.yml`: analyzer, unit tests, Android debug APK, Linux debug build.
-- `.github/workflows/windows.yml`: Windows debug desktop build.
-- `.github/workflows/macos.yml`: macOS debug build and iOS no-codesign debug build.
+- `.github/workflows/ci.yml`: deterministic brand image generation, analyzer, unit tests, branded Android debug APK, Linux debug build.
+- `.github/workflows/windows.yml`: branded Windows debug desktop build.
+- `.github/workflows/macos.yml`: branded macOS debug build and branded iOS no-codesign debug build.
 
-CI build success confirms compilation on GitHub-hosted runners; microphone hardware, audio routing, lock-screen/background behavior, device interruptions, long-duration recording, and store signing still require target-device validation.
+CI build success confirms compilation on GitHub-hosted runners; microphone hardware, audio routing, lock-screen/background behavior, device interruptions, real icon/launch visual inspection, long-duration recording, and store signing still require target-device validation.
