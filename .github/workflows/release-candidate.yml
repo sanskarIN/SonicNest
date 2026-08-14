@@ -65,34 +65,47 @@ jobs:
           retention-days: 7
 
   linux:
-    name: Linux release-mode artifact
+    name: Linux release-mode artifacts
     needs: preflight
     runs-on: ubuntu-latest
-    timeout-minutes: 50
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
-      - name: Install Linux build dependencies
-        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev ffmpeg pulseaudio-utils libjson-glib-dev
+      - name: Install Linux build and package dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev \
+            ffmpeg pulseaudio-utils libjson-glib-dev \
+            desktop-file-utils appstream
       - run: flutter config --enable-linux-desktop
       - run: bash tool/bootstrap_platforms.sh
       - run: flutter pub get
       - run: dart tool/generate_brand_assets_v2.dart
       - run: flutter build linux --release
-      - name: Package release-mode bundle
+      - name: Build and verify Debian package
         run: |
-          mkdir -p build/release-candidate/linux
-          tar -C build/linux/x64/release -czf build/release-candidate/linux/sonicnest-linux-release-unsigned.tar.gz bundle
-          cat > build/release-candidate/linux/RELEASE_CANDIDATE_WARNING.txt <<'TXT'
-          SonicNest release-candidate validation artifact.
-          This tarball is not a finalized Linux package and is not approved for public distribution.
-          A Linux package/distribution target, desktop-entry icon integration, signing policy, and real-platform QA remain release gates.
+          bash tool/build_linux_deb.sh release
+          bash tool/verify_linux_deb.sh
+      - name: Package release-mode artifacts
+        run: |
+          set -euo pipefail
+          OUT=build/release-candidate/linux
+          mkdir -p "$OUT"
+          tar -C build/linux/x64/release -czf "$OUT/sonicnest-linux-release-unsigned.tar.gz" bundle
+          DEB="$(find build/linux-package -maxdepth 1 -type f -name 'sonicnest_*.deb' -print -quit)"
+          test -n "$DEB"
+          cp "$DEB" "$OUT/"
+          cat > "$OUT/RELEASE_CANDIDATE_WARNING.txt" <<'TXT'
+          SonicNest release-candidate validation artifacts.
+          Debian .deb is the selected initial Linux installation format and this package has passed repository structural validation.
+          These artifacts are still not approved for public distribution until real-machine audio, accessibility, long-duration, low-storage, final visual, and release-policy gates are complete.
           TXT
-          cd build/release-candidate/linux
-          sha256sum sonicnest-linux-release-unsigned.tar.gz > SHA256SUMS.txt
+          (cd "$OUT" && sha256sum sonicnest-linux-release-unsigned.tar.gz sonicnest_*.deb > SHA256SUMS.txt)
       - uses: actions/upload-artifact@v4
         with:
           name: sonicnest-linux-release-candidate
