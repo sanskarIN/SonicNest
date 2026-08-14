@@ -4,17 +4,19 @@ import 'package:url_launcher/url_launcher.dart';
 
 class ExternalActions {
   Future<List<String>> pickAudioFiles() async {
-    final result = await FilePicker.pickFiles(
+    final result = await FilePicker.platform.pickFiles(
       allowMultiple: true,
       type: FileType.custom,
       allowedExtensions: const ['m4a', 'wav', 'flac', 'opus', 'mp3', 'ogg', 'aac'],
     );
-    if (result == null) return [];
+    if (result == null) {
+      return [];
+    }
     return result.files.map((file) => file.path).whereType<String>().toList();
   }
 
   Future<String?> pickSingleAudioFile() async {
-    final result = await FilePicker.pickFiles(
+    final result = await FilePicker.platform.pickFiles(
       allowMultiple: false,
       type: FileType.custom,
       allowedExtensions: const ['m4a', 'wav', 'flac', 'opus', 'mp3', 'ogg', 'aac'],
@@ -23,7 +25,7 @@ class ExternalActions {
   }
 
   Future<String?> chooseExportPath(String fileName) {
-    return FilePicker.saveFile(
+    return FilePicker.platform.saveFile(
       dialogTitle: 'Export recording',
       fileName: fileName,
     );
@@ -33,7 +35,9 @@ class ExternalActions {
       shareFiles([path], text: text);
 
   Future<void> shareFiles(List<String> paths, {String? text}) async {
-    if (paths.isEmpty) return;
+    if (paths.isEmpty) {
+      return;
+    }
     await SharePlus.instance.share(
       ShareParams(
         files: paths.map(XFile.new).toList(growable: false),
