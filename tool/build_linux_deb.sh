@@ -23,7 +23,7 @@ if [[ ! -f assets/generated/sonicnest_icon.png ]]; then
   exit 2
 fi
 
-mapfile -t BUNDLES < <(find build/linux -mindepth 4 -maxdepth 4 -type d -path "*/${BUILD_MODE}/bundle" -print 2>/dev/null | sort)
+mapfile -t BUNDLES < <(find build/linux -mindepth 3 -maxdepth 3 -type d -path "*/${BUILD_MODE}/bundle" -print 2>/dev/null | sort)
 if [[ ${#BUNDLES[@]} -ne 1 ]]; then
   echo "Expected exactly one Linux ${BUILD_MODE} bundle under build/linux/*/${BUILD_MODE}/bundle; found ${#BUNDLES[@]}." >&2
   exit 2
@@ -93,7 +93,7 @@ Description: Privacy-first cross-platform sound and voice recorder
 EOF
 
 mkdir -p "$OUT_DIR"
-rm -f "$PACKAGE_PATH"
+rm -f "$PACKAGE_PATH" "$PACKAGE_PATH.sha256"
 dpkg-deb --root-owner-group --build "$STAGE" "$PACKAGE_PATH"
 sha256sum "$PACKAGE_PATH" > "$PACKAGE_PATH.sha256"
 
