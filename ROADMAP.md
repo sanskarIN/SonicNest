@@ -17,9 +17,11 @@ Completed:
 - Persist generated waveform envelopes for imported and processed media.
 - Add multi-selection bulk favorite, pin, share, trash, restore, and permanent-delete operations.
 - Add desktop keyboard navigation shortcuts.
+- Integrate Android, iOS, and macOS media-session metadata and notification/lock-screen playback controls through `just_audio_background` and tagged `MediaItem` audio sources.
 
 Remaining:
-- Expand media-session/lock-screen controls per platform.
+- Verify Android, iOS, and macOS media-session behavior on physical devices, including pause/resume, lock-screen transport controls, interruptions, and metadata refresh.
+- Evaluate dedicated Windows and Linux system media-session integration where maintained platform support is available and useful.
 - Add richer desktop right-click/context-menu affordances where they improve native ergonomics.
 
 ## v0.3.x — Editor expansion
@@ -48,6 +50,7 @@ Remaining:
 - Validate microphone input switching and codec availability on each supported OS.
 - Verify background/lock-screen/interruption behavior against each platform's current policies.
 - Prepare reproducible unsigned release-build checks before signing is introduced.
+- Keep dependency/API compatibility pinned and documented when upstream plugins introduce breaking API or native-registration changes.
 
 ## v1.0.0 — Stable release
 
