@@ -71,7 +71,7 @@ SonicNest is an offline-first cross-platform sound and voice recorder built with
 - Dedicated Linux package CI builds a release-mode Flutter bundle, creates the Debian package, validates its executable/metadata/icon/checksum structure, and publishes a short-retention validation artifact.
 - Manual release-candidate automation includes the Linux `.deb` alongside the raw Linux bundle archive without treating either as public-release approval.
 - Native-branding source revision `40c4a758debef136c2d8c977c321446cca2697cd` passed deterministic branding generation, analyzer/unit tests, Android and Linux core builds in run `31776174696`, Windows debug build in run `31776174725`, and macOS/unsigned-iOS debug builds in run `31776174715`.
-- Linux Debian package source revision `f2c773e1e03753ec62b9e4229a3f086871a26f29` passed release Linux compilation, Debian package construction, package verification, desktop/AppStream validation, checksum verification, package inspection, and artifact upload in run `31783749267`.
+- Linux Debian package source revision `f2c773e59b27a2aaac77e0590e20441ed7eba03f` passed release Linux compilation, Debian package construction, package verification, desktop/AppStream validation, checksum verification, package inspection, and artifact upload in run `31783749267`.
 - Apache-2.0 license, contribution/security/privacy/support documentation, architecture/build/branding/codec/Linux-packaging/QA documentation, and release procedure.
 
 ## Before v1.0.0
@@ -99,5 +99,5 @@ This preview must not be treated as a stable public recorder release until the p
 - The package installs the complete Flutter bundle under `/opt/sonicnest`, a freedesktop desktop entry, the generated SonicNest icon in the hicolor icon hierarchy, AppStream metadata, LICENSE, and NOTICE.
 - Package construction derives the release version from `pubspec.yaml`, preserves architecture metadata, and writes a SHA-256 checksum beside the `.deb`.
 - A dedicated verifier checks package control metadata, executable permissions, desktop launcher identity, AppStream identity, icon presence, and checksum integrity, with `desktop-file-validate` and `appstreamcli` validation when available.
-- The latest structurally validated package source is `f2c773e1e03753ec62b9e4229a3f086871a26f29` from Linux Package CI run `31783749267`.
+- The latest structurally validated package source is `f2c773e59b27a2aaac77e0590e20441ed7eba03f` from Linux Package CI run `31783749267`.
 - Stable Linux release approval still requires representative real-system installation, launch, microphone/routing, accessibility, long-duration/low-storage, icon visual, uninstall, and distribution/signing-policy evidence.
