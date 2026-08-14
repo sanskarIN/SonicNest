@@ -4,7 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 class ExternalActions {
   Future<List<String>> pickAudioFiles() async {
-    final result = await FilePicker.pickFiles(
+    final result = await FilePicker.platform.pickFiles(
       allowMultiple: true,
       type: FileType.custom,
       allowedExtensions: const ['m4a', 'wav', 'flac', 'opus', 'mp3', 'ogg', 'aac'],
@@ -16,7 +16,7 @@ class ExternalActions {
   }
 
   Future<String?> pickSingleAudioFile() async {
-    final result = await FilePicker.pickFiles(
+    final result = await FilePicker.platform.pickFiles(
       allowMultiple: false,
       type: FileType.custom,
       allowedExtensions: const ['m4a', 'wav', 'flac', 'opus', 'mp3', 'ogg', 'aac'],
@@ -25,7 +25,7 @@ class ExternalActions {
   }
 
   Future<String?> chooseExportPath(String fileName) {
-    return FilePicker.saveFile(
+    return FilePicker.platform.saveFile(
       dialogTitle: 'Export recording',
       fileName: fileName,
     );
