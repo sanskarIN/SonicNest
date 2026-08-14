@@ -50,6 +50,7 @@ REQUIRED_FILES = (
     "tool/generate_brand_assets_v2.dart",
     "tool/build_linux_deb.sh",
     "tool/verify_linux_deb.sh",
+    "tool/smoke_test_installed_linux_deb.sh",
     ".github/workflows/ci.yml",
     ".github/workflows/linux-package.yml",
     ".github/workflows/windows.yml",
@@ -251,6 +252,23 @@ def audit() -> list[str]:
                     f"build_linux_deb.sh is missing required packaging invariant: {fragment}"
                 )
 
+    installed_smoke = ROOT / "tool/smoke_test_installed_linux_deb.sh"
+    if installed_smoke.exists():
+        smoke_text = installed_smoke.read_text(encoding="utf-8", errors="ignore")
+        for fragment in (
+            "dpkg-query",
+            "/opt/sonicnest/sonic_nest",
+            "desktop-file-validate",
+            "appstreamcli validate --no-net",
+            "xvfb-run",
+            "timeout 8s",
+        ):
+            if fragment not in smoke_text:
+                errors.append(
+                    "smoke_test_installed_linux_deb.sh is missing required install-smoke invariant: "
+                    f"{fragment}"
+                )
+
     release_workflow = ROOT / ".github/workflows/release-candidate.yml"
     if release_workflow.exists():
         workflow_text = release_workflow.read_text(encoding="utf-8", errors="ignore")
@@ -281,6 +299,9 @@ def audit() -> list[str]:
             "flutter build linux --release",
             "tool/build_linux_deb.sh release",
             "tool/verify_linux_deb.sh",
+            "sudo apt-get install -y \"./$PACKAGE\"",
+            "tool/smoke_test_installed_linux_deb.sh",
+            "sudo apt-get remove -y sonicnest",
             "actions/upload-artifact@v4",
             "contents: read",
         ):
