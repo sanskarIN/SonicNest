@@ -23,7 +23,7 @@ This file intentionally contains only work that is still incomplete, requires ph
 
 ## Reliability and stress validation
 
-Repository automation now provides deterministic baselines for malformed metadata decoding, non-finite/negative numeric normalization, bounded waveform recovery, duplicate ID/path isolation, structural metadata corruption preservation, interrupted `.bak` recovery, corrupt-store reset, a 3,000-entry metadata save/load round-trip, managed-path mutation guards, persistence rollback for library mutations, supported-file discovery, orphaned managed-audio reconstruction, isolated import copy/probe/waveform failures, entity-safe managed/external filename collisions, and deterministic batch-conversion failure/stop behavior. The checks below intentionally remain incomplete because they require real filesystems, media corpora, devices, UI/performance profiling, abrupt process/device interruption, or sustained workloads rather than synthetic regression coverage alone.
+Repository automation now provides deterministic baselines for malformed metadata decoding, non-finite/negative numeric normalization, bounded waveform recovery, duplicate ID/path isolation, structural metadata corruption preservation, interrupted `.bak` recovery, corrupt-store reset, a 3,000-entry metadata save/load round-trip, managed-path mutation guards, persistence rollback for library mutations, supported-file discovery, orphaned managed-audio reconstruction, isolated import copy/probe/waveform failures, entity-safe managed/external filename collisions, deterministic batch-conversion failure/stop behavior, Linux package install/startup smoke, and Windows portable-package structure/startup smoke. The checks below intentionally remain incomplete because they require real filesystems, media corpora, devices, UI/performance profiling, abrupt process/device interruption, or sustained workloads rather than synthetic/hosted regression coverage alone.
 
 - [ ] Low-storage recording and export failure tests.
 - [ ] Disk/file permission failure recovery tests.
@@ -67,6 +67,7 @@ Repository automation now provides deterministic baselines for malformed metadat
 - [x] Integrate launcher-icon generation for Android, iOS, macOS, and Windows build workflows.
 - [x] Select Debian `.deb` as the initial Linux installation format and integrate the deterministic SonicNest icon with its desktop entry and AppStream package metadata.
 - [x] Select a versioned x64 portable ZIP as the initial repository-supported Windows package format and add deterministic package build/verification plus hosted unsigned validation artifacts. See `docs/WINDOWS_PACKAGING.md`.
+- [x] Add a bounded hosted Windows portable startup smoke after extraction. This is packaging/startup evidence only and does not close real microphone/routing/accessibility/branding gates.
 - [ ] Visually review generated Android launcher icons across legacy/adaptive/themed masks on real devices.
 - [ ] Visually review generated iOS and macOS icons at small/large OS sizes on real Apple hardware.
 - [ ] Visually review generated Windows icon in Explorer, taskbar, Start, shortcuts, and extracted portable-package surfaces.
@@ -77,10 +78,12 @@ Repository automation now provides deterministic baselines for malformed metadat
 
 ## Signing and distribution
 
-- [ ] Configure private Android upload/release signing outside the repository.
-- [ ] Configure Apple certificates/provisioning/notarization outside the repository.
+- [x] Decide Android signing/distribution policy: Google Play is the initial public Android channel, using Play App Signing with a separate maintainer-controlled upload key. See `docs/ANDROID_DISTRIBUTION_POLICY.md`.
+- [ ] Provision/configure the actual Android Play Console/App Signing/upload-key credentials outside the repository and produce the protected signed upload candidate.
+- [x] Decide Apple distribution policy: iOS uses TestFlight/App Store; macOS initially uses signed/notarized GitHub Releases. See `docs/APPLE_DISTRIBUTION_POLICY.md`.
+- [ ] Configure actual Apple certificates/provisioning/App Store Connect/notarization credentials in the maintainer's protected release environment.
 - [x] Decide Windows public signing policy: stable public Windows distributables should use maintainer-controlled Authenticode signing; unsigned CI/development artifacts remain clearly labeled. See `docs/WINDOWS_SIGNING_POLICY.md`.
-- [x] Decide the initial Windows package format: versioned x64 portable ZIP, built from the complete Flutter release bundle. See `docs/WINDOWS_PACKAGING.md`.
+- [x] Decide the initial Windows package format and public channel: versioned x64 portable ZIP through GitHub Releases, built from the complete Flutter release bundle. See `docs/WINDOWS_PACKAGING.md`.
 - [ ] Provision/configure the actual Windows signing certificate or secure signing service and apply it to the final public portable package in a protected release environment outside the repository.
 - [x] Select Debian `.deb` as the initial repository-supported Linux package target.
 - [x] Decide the public Linux distribution channel and repository/package signing policy. Initial channel: GitHub Releases with verified `.deb` + SHA-256 checksum; no initial APT repository. See `docs/LINUX_DISTRIBUTION_POLICY.md`.
