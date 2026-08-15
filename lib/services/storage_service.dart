@@ -26,13 +26,25 @@ class StorageStats {
 }
 
 class StorageService {
+  StorageService({
+    Future<Directory> Function()? documentsDirectoryProvider,
+    Future<Directory> Function()? temporaryDirectoryProvider,
+  }) : _documentsDirectoryProvider =
+           documentsDirectoryProvider ?? getApplicationDocumentsDirectory,
+       _temporaryDirectoryProvider =
+           temporaryDirectoryProvider ?? getTemporaryDirectory;
+
+  final Future<Directory> Function() _documentsDirectoryProvider;
+  final Future<Directory> Function() _temporaryDirectoryProvider;
+
   Directory? _root;
+  Directory? _temporaryRoot;
 
   Future<Directory> get root async {
     if (_root != null) {
       return _root!;
     }
-    final base = await getApplicationDocumentsDirectory();
+    final base = await _documentsDirectoryProvider();
     final directory = Directory(p.join(base.path, 'SonicNest'));
     if (!await directory.exists()) {
       await directory.create(recursive: true);
@@ -58,11 +70,15 @@ class StorageService {
   }
 
   Future<Directory> get tempDirectory async {
-    final base = await getTemporaryDirectory();
+    if (_temporaryRoot != null) {
+      return _temporaryRoot!;
+    }
+    final base = await _temporaryDirectoryProvider();
     final directory = Directory(p.join(base.path, 'SonicNest'));
     if (!await directory.exists()) {
       await directory.create(recursive: true);
     }
+    _temporaryRoot = directory;
     return directory;
   }
 
@@ -159,28 +175,66 @@ class StorageService {
     return await file.exists() ? file.length() : 0;
   }
 
+  Future<bool> isManagedAudioPath(String path, {bool includeTrash = true}) async {
+    if (_isWithin(path, (await recordingsDirectory).path)) {
+      return true;
+    }
+    return includeTrash && _isWithin(path, (await trashDirectory).path);
+  }
+
   Future<String> renameAudio(String currentPath, String newTitle) async {
+    await _requireWithin(
+      currentPath,
+      await recordingsDirectory,
+      'Rename',
+    );
     final extension = p.extension(currentPath).replaceFirst('.', '');
     final target = await uniqueRecordingPath(newTitle, extension);
     return (await File(currentPath).rename(target)).path;
   }
 
   Future<String> duplicateAudio(String sourcePath, String newTitle) async {
+    if (!await isManagedAudioPath(sourcePath)) {
+      throw FileSystemException(
+        'Duplicate refused a path outside SonicNest managed audio storage.',
+        sourcePath,
+      );
+    }
     final extension = p.extension(sourcePath).replaceFirst('.', '');
     final target = await uniqueRecordingPath(newTitle, extension);
     return (await File(sourcePath).copy(target)).path;
   }
 
   Future<String> moveToTrash(String sourcePath, String title) async {
+    await _requireWithin(
+      sourcePath,
+      await recordingsDirectory,
+      'Move to Trash',
+    );
     final extension = p.extension(sourcePath).replaceFirst('.', '');
     final target = await uniqueTrashPath(title, extension);
     return (await File(sourcePath).rename(target)).path;
   }
 
   Future<String> restoreFromTrash(String sourcePath, String title) async {
+    await _requireWithin(
+      sourcePath,
+      await trashDirectory,
+      'Restore',
+    );
     final extension = p.extension(sourcePath).replaceFirst('.', '');
     final target = await uniqueRecordingPath(title, extension);
     return (await File(sourcePath).rename(target)).path;
+  }
+
+  Future<void> deleteManagedAudioIfExists(String path) async {
+    if (!await isManagedAudioPath(path)) {
+      throw FileSystemException(
+        'Delete refused a path outside SonicNest managed audio storage.',
+        path,
+      );
+    }
+    await deleteIfExists(path);
   }
 
   Future<void> deleteIfExists(String path) async {
@@ -206,5 +260,25 @@ class StorageService {
     final title = p.basenameWithoutExtension(source.path);
     final target = await uniqueRecordingPath(title, extension);
     return (await source.copy(target)).path;
+  }
+
+  Future<void> _requireWithin(
+    String path,
+    Directory directory,
+    String operation,
+  ) async {
+    if (_isWithin(path, directory.path)) {
+      return;
+    }
+    throw FileSystemException(
+      '$operation refused a path outside SonicNest managed audio storage.',
+      path,
+    );
+  }
+
+  bool _isWithin(String candidate, String directory) {
+    final normalizedDirectory = p.normalize(p.absolute(directory));
+    final normalizedCandidate = p.normalize(p.absolute(candidate));
+    return p.isWithin(normalizedDirectory, normalizedCandidate);
   }
 }
