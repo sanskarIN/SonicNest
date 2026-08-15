@@ -1441,3 +1441,243 @@ The deterministic repository gates do not substitute for the remaining real-worl
 The 3,000-entry regression test proves metadata persistence integrity only; it does not prove real UI performance. Controlled import test doubles prove failure-isolation logic only; they do not prove every malformed real-world codec/container case.
 
 SonicNest therefore remains a **development preview** until the evidence-dependent release gates in `TODO.md`, `docs/QA_CHECKLIST.md`, and `docs/RELEASING.md` are complete.
+
+
+---
+
+# Managed storage, transaction, and orphan-recovery hardening — 2026-08-15
+
+This continuation builds directly on the metadata/import reliability work above. It preserves the existing project history and concentrates on repository-testable failure modes that can otherwise split local audio files from the JSON library index. Physical-device, real-filesystem interruption, accessibility, and signing gates remain evidence-dependent and are not marked complete.
+
+## Managed audio mutation boundary
+
+`StorageService` now applies a strict managed-storage boundary before path-changing or destructive recording-library operations.
+
+Implemented safeguards:
+
+- normalized absolute path checks for SonicNest-managed `Recordings` and `.trash` directories;
+- rename rejects a source outside active managed recordings;
+- move-to-Trash rejects a source outside active managed recordings;
+- restore rejects a source outside managed Trash;
+- duplicate rejects a source outside SonicNest managed audio storage;
+- permanent-delete helper rejects paths outside managed recording/Trash storage;
+- external files remain untouched when a tampered/out-of-bound metadata path reaches these methods;
+- document/temp directory providers are injectable for deterministic filesystem tests.
+
+Focused commits:
+
+- `472ef2d0aa1903858473a31b2d2596d8ef55a769` — `fix: guard managed audio storage mutations`.
+- `ac1fbe8a160fba985df6aca396696b1d7d7f8355` — `test: cover managed storage path guards`.
+
+The managed-path checks are an application safety boundary. They do not claim that SonicNest is a hostile-code filesystem sandbox; operating-system permissions and real filesystem semantics remain part of release security.
+
+## Corrupted numeric and waveform metadata normalization
+
+Recording metadata decoding now treats unsafe numeric values as damaged metadata rather than allowing negative, non-finite, or out-of-range values to leak into library behavior.
+
+Implemented normalization:
+
+- negative/non-finite duration becomes a safe fallback;
+- negative/non-finite file size becomes a safe fallback;
+- negative/non-finite bitrate and sample rate become safe fallbacks;
+- negative/non-finite marker positions become safe fallbacks;
+- `channels: 0` remains valid as the existing unknown imported-media state;
+- negative/non-finite channel counts fall back safely;
+- non-finite waveform samples are removed;
+- recovered waveform samples are bounded to `0.0..1.0`.
+
+Focused commits:
+
+- `7400aaf81502069f53395f767b44f1b66c5485de` — `fix: normalize corrupted numeric recording metadata`.
+- `e51a16cd9fd9edf9fe42fc1470596c8c3d5614f7` — `test: cover corrupt numeric metadata normalization`.
+- `1625362496d0f2d5cb4fd84bfa80fa1be195d56b` — `fix: preserve unknown channel metadata safely`.
+- `b596e1afea0b1bec48ce36eae420f33633c80fb0` — `test: preserve unknown channels and bounded waveforms`.
+
+## Corrupt-store reset and duplicate isolation
+
+`MetadataStore` now handles the no-valid-primary/no-valid-backup case without leaving a corrupt primary active indefinitely.
+
+Startup behavior now includes:
+
+- preserve corrupt primary/backup documents to collision-safe timestamped diagnostic files;
+- recover a valid backup when available;
+- if no valid source remains, write a structurally valid empty metadata document after preserving diagnostics;
+- avoid creating the same corrupt-primary diagnostic copy again on every subsequent startup;
+- keep only the first valid entry when duplicate recording IDs are present;
+- keep only the first valid entry when duplicate normalized file paths are present;
+- retain per-record malformed-object isolation from the prior continuation.
+
+Focused commits:
+
+- `3c7a2b1b0f8d663a7940d6ca11cfeec81b2e5a69` — `fix: harden metadata recovery and duplicate isolation`.
+- `7a8d98302652731ef8cf0990642f1793f320bd8b` — `test: cover metadata duplicate and reset recovery`.
+
+## Persistence-safe library mutations
+
+`AppController` now treats metadata persistence as part of the filesystem operation instead of assuming a successful file move automatically means a successful library mutation.
+
+Implemented behavior:
+
+- processed-output registration restores the previous selection and removes an unregistered generated output if metadata persistence fails;
+- rename moves the audio file back to its original path if the updated metadata cannot be persisted;
+- single-entry metadata updates restore the previous in-memory recording/selection after a persistence failure;
+- batch metadata updates restore the previous in-memory library/selection after a persistence failure;
+- move-to-Trash rolls the file back when metadata persistence fails;
+- restore rolls the file back when metadata persistence fails;
+- settings changes restore the previous in-memory settings when persistence fails;
+- permanent deletion persists metadata removal before deleting the managed file, deliberately preferring a recoverable orphan over irreversible loss if a process stops between those steps;
+- if the managed file deletion fails while the file still exists, the removed metadata entry is restored and persisted again;
+- rollback failure paths surface explicit state errors rather than silently pretending the operation completed consistently.
+
+Focused commit:
+
+- `f7756ae091febed7e5f08eb65a81e777e3706aa4` — `fix: make library mutations persistence-safe`.
+
+Bulk filesystem operations can still complete some earlier items before a later item encounters a genuine filesystem failure; the invariant is per-item consistency and data preservation, not an unsupported claim of a multi-file ACID transaction.
+
+## Managed-file discovery
+
+`StorageService` now exposes the repository-owned recording files that are eligible for crash/orphan recovery.
+
+The discovery path:
+
+- scans only the top level of the managed `Recordings` directory;
+- does not recurse into arbitrary nested directories;
+- accepts only represented audio extensions: M4A, WAV, FLAC, Opus, MP3, OGG, and AAC;
+- ignores unrelated files;
+- returns deterministic sorted results;
+- reuses the same supported-extension set for managed imports.
+
+Focused commits:
+
+- `9bb0dc8162ac914b30e18c37ae42b7349a016d5b` — `feat: expose recoverable managed recording files`.
+- `7b2a34d20db98f6feb5129b754d96faa8861541a` — `test: cover recoverable managed file discovery`.
+
+## Orphaned managed-audio recovery
+
+Added `lib/services/library_recovery_service.dart` and wired it into application startup after metadata/path reconciliation.
+
+The recovery service:
+
+- compares normalized managed recording paths with the loaded metadata index;
+- ignores managed audio already represented by metadata;
+- derives the recording format from the managed file extension;
+- captures filesystem size and modification time;
+- best-effort probes duration;
+- best-effort extracts a waveform envelope;
+- still reconstructs a library entry when duration probing or waveform extraction fails, so a preserved damaged/partial file remains visible for inspection/export/deletion instead of becoming a hidden orphan;
+- assigns a new unique metadata ID;
+- preserves unknown bitrate/sample-rate/channel metadata as zero rather than inventing technical properties;
+- tags reconstructed entries `Recovered` and records the recovery reason in notes;
+- persists recovered entries through the normal metadata transaction.
+
+This closes an important data-preservation loop: if managed audio was successfully written but the process stopped before its metadata could be safely registered, the next startup can reconstruct the missing index entry. It also allows supported managed recordings to reappear after an unrecoverable metadata document has been preserved and reset.
+
+Focused commits:
+
+- `116a2fb419266f872e0b268af30b7c6570a83559` — `feat: add managed library orphan recovery service`.
+- `59aedbe2b3db376490c42c9b5442d2769c22277a` — `test: cover managed orphan recording recovery`.
+- `f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe` — `feat: recover orphaned managed audio at startup`.
+
+## New deterministic regression coverage
+
+The continuation added/expanded direct filesystem and model tests for:
+
+- managed rename/Trash/restore staying inside SonicNest storage;
+- external-path mutation rejection;
+- permanent-delete protection for unrelated external files;
+- collision-safe recording allocation;
+- supported top-level managed-file discovery;
+- negative/non-finite numeric metadata normalization;
+- zero/unknown imported channel metadata preservation;
+- finite/bounded waveform metadata recovery;
+- corrupt metadata reset after diagnostic preservation;
+- prevention of repeated corrupt-primary diagnostic copies after a successful reset;
+- duplicate ID isolation;
+- duplicate file-path isolation;
+- preservation of both corrupt primary and corrupt backup before reset;
+- orphan recording reconstruction;
+- known-entry deduplication during orphan scanning;
+- damaged-media orphan recovery when probe/waveform operations fail;
+- recovery for every represented recording format;
+- the pre-existing 3,000-entry metadata filesystem round-trip.
+
+## Documentation synchronized in this continuation
+
+Updated repository documentation now includes the new managed-storage and recovery invariants:
+
+- `docs/METADATA_INTEGRITY.md` documents corruption normalization, duplicate isolation, managed-path reconciliation, orphan recovery, and persistence-safe mutation behavior;
+- `SECURITY.md` documents the managed audio mutation boundary and limits of that boundary;
+- `README.md` surfaces orphan recovery, path guards, and persistence rollback behavior without changing the development-preview classification;
+- `TODO.md` narrows remaining reliability work to real filesystem/device/corpus/stress evidence rather than already-covered deterministic logic;
+- `CHANGELOG.md` records the new reliability implementation and its exact validation state;
+- `what_changed.md` preserves all prior continuation history and appends this full continuation record.
+
+Focused documentation commits created so far in this continuation:
+
+- `40f02323779132b9a8e111ea01b7f3beb442ffb8` — `docs: document managed library recovery hardening`.
+- `338eb3219eb77a862d338e701f5ad4d9401bd539` — `docs: document managed audio mutation boundary`.
+- `610a72e32ca6bddcde448a9b4e7424a89e051c8a` — `docs: surface managed library recovery safeguards`.
+- `648a73dcee806687d8cba71ea1b1567ddeac0058` — `docs: narrow remaining reliability work to evidence gates`.
+- `b5ae1f5a4f99d765ada329d89be613db75d3b97f` — `docs: record managed library recovery hardening`.
+- this additive `what_changed.md` continuation commit.
+
+## Exact automated validation state at this ledger update
+
+The application-source revision under final validation is:
+
+- `f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe` — `feat: recover orphaned managed audio at startup`.
+
+Core Flutter CI run `31867130926` has completed successfully for:
+
+- host generation;
+- dependency resolution;
+- deterministic branding source generation;
+- Dart formatting;
+- Flutter static analysis;
+- the complete unit-test suite including the new storage/metadata/orphan regressions;
+- Linux debug build.
+
+At the moment of this ledger append, the Android debug-build job in that exact core run is still compiling and is therefore **not** pre-claimed as successful.
+
+Cross-platform validation on the same source revision:
+
+- Windows run `31867130920`: Windows debug build **SUCCESS**;
+- Apple run `31867130998`: macOS debug build **SUCCESS** and unsigned-iOS debug build **SUCCESS**.
+
+Linux Package CI run `31867130938` on the same source revision is **SUCCESS** for:
+
+- Flutter Linux release build;
+- Debian `.deb` construction;
+- package verification;
+- package metadata inspection;
+- package-manager installation;
+- installed-package virtual-display startup smoke;
+- package-manager uninstall;
+- artifact upload.
+
+Intermediate workflow runs cancelled by newer source commits during this continuation are concurrency replacements, not source failure evidence. Only the final-source workflow results above are used as the exact continuation evidence.
+
+## Evidence-dependent work intentionally left open after this continuation
+
+The following work cannot be truthfully completed through repository-only automation and remains unchecked:
+
+- low-storage recording/import/export/editor failure behavior on real systems;
+- permission revocation and filesystem error recovery on representative target systems;
+- abrupt process/device/power interruption during real metadata/audio writes and verification of the resulting recovery behavior;
+- real playable, partially written, and damaged managed-audio orphan recovery on every maintained platform;
+- privacy-safe malformed real-media corpus testing;
+- real large-library startup/search/filter/scroll/memory profiling;
+- long-duration recording and editor/playback soak testing;
+- microphone permission, routing, background, interruption, Bluetooth/wired/USB behavior;
+- real media-session and media-button behavior;
+- accessibility audits;
+- real native-brand visual inspection and screenshots;
+- representative Debian/Ubuntu package installation/upgrade/audio-routing/accessibility/visual evidence;
+- maintainer-owned signing, provisioning, notarization, store dashboards, and public distribution approval.
+
+The project remains a **development preview**. Repository regression tests and hosted builds materially reduce known software risk, but they do not constitute physical-device or stable-release evidence.
+
+## Exact continuation point
+
+Do not reimplement the storage guard, corrupt-store reset, duplicate metadata isolation, transaction rollback behavior, or orphan recovery in the next continuation. Start by checking the final Android result for source `f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe`; if it succeeds, synchronize that exact result into project-state/release evidence documentation. After that, further legitimate work is evidence-driven unless a new reproducible repository defect is identified.
