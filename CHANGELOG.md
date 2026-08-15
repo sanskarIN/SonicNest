@@ -5,6 +5,11 @@ All notable project changes are documented here.
 ## [Unreleased]
 
 ### Added
+- Exact hosted release-candidate evidence record in `docs/AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md`, including per-platform inner artifact SHA-256 values, workflow artifact digests, Android Debug-certificate fingerprints, Windows portable startup-smoke evidence, and explicit stable-release boundaries.
+- Android hosted release-candidate verifier that checks package identity and classifies the generated Android Debug certificate as **NON-PRODUCTION** before APK/AAB artifact publication.
+- Versioned Windows x64 portable ZIP builder, structural verifier, package metadata/checksum output, and bounded extracted-package startup smoke shared by permanent Windows CI and the release-candidate workflow.
+- `docs/ANDROID_DISTRIBUTION_POLICY.md` selecting Google Play with Play App Signing and a separate maintainer-controlled upload key as the initial Android public distribution model.
+- `docs/APPLE_DISTRIBUTION_POLICY.md` selecting TestFlight/App Store for iOS and signed/notarized GitHub Releases as the initial macOS public distribution model.
 - Source-controlled cross-platform distribution listing and privacy declaration draft in `docs/STORE_LISTING.md`.
 - Windows public Authenticode signing policy in `docs/WINDOWS_SIGNING_POLICY.md`, while private credential/service configuration remains outside the repository.
 - `BatchConversionService` as the production sequential batch execution boundary with deterministic per-file conversion/export failure isolation and stop-after-current behavior.
@@ -53,8 +58,12 @@ All notable project changes are documented here.
 - Expanded manual QA matrix covering recorder lifecycle, codec fallback, smart naming, A-B looping, storage, editor processing, accessibility, localization readiness, stress testing, packaging, and signing/release boundaries.
 
 ### Changed
+- The release-candidate workflow now produces Android release-mode **non-production** APK/AAB artifacts with explicit signing-state evidence instead of inaccurately describing Debug-certificate output as unsigned.
+- The release-candidate workflow and permanent Windows CI use the same portable-package builder/verifier and extracted startup-smoke helper so packaging behavior cannot drift between paths.
+- Repository integrity checks now detect both `.yml` and `.yaml` workflow files and reject permanent workflow write scopes, including scalar `permissions: write-all`.
+- The automated release evidence file is indexed from `docs/README.md` and required by repository integrity checks.
 - Canonical Dart formatter output is now committed; core CI and release preflight use a non-mutating `dart format --output=none --set-exit-if-changed` enforcement gate.
-- Release guidance now requires candidate-specific review of the store/privacy draft and aligns stable Windows distribution with the Authenticode policy.
+- Release guidance now requires candidate-specific review of the store/privacy draft and aligns Android, Apple, Windows, and Linux public distribution with their documented protected signing/channel policies.
 - Managed audio authority now requires a supported extension and a regular file inspected without following symbolic links; path text inside `Recordings`/`.trash` alone is insufficient.
 - Recording/Trash storage totals and automatic recording sequence counting now use the same supported top-level regular-audio definition as recovery.
 - External export collision detection now treats files, directories, symbolic links, broken links, and uninspectable destination paths as occupied.
@@ -77,13 +86,17 @@ All notable project changes are documented here.
 - Recording tiles now expose the same action surface through secondary/right-click without removing touch/long-press behavior.
 - Permanent Android/Windows/Apple workflows now regenerate native SonicNest brand resources before compiling representative debug builds.
 - Release hardening now treats Debian package construction, structural verification, package-manager installation, installed GUI startup smoke, and uninstall cleanup as automated Linux gates while retaining representative-system microphone, accessibility, visual, upgrade, signing, and distribution evidence as manual gates.
-- Repository integrity policy now allowlists maintained permanent workflows and rejects leftover temporary/one-shot workflow files or permanent workflows requesting `contents: write`.
+- Repository integrity policy now allowlists maintained permanent workflows and rejects leftover temporary/one-shot workflow files or permanent workflows requesting write permissions.
 - Metadata decoding now normalizes negative/non-finite numeric values, bounds recovered waveform samples, preserves `channels: 0` as the unknown imported-media state, and isolates duplicate recording IDs or normalized file paths after the first valid entry.
 - Failed/corrupt metadata recovery now preserves diagnostic copies and writes a clean valid empty store when no valid primary/backup exists, preventing the same corrupt primary from being copied on every startup.
 - Controller library mutations now restore in-memory state and roll moved files back when metadata persistence fails; permanent deletion persists metadata before managed-file deletion so an interruption prefers a recoverable orphan over irreversible data loss.
 - Startup reconciliation now accepts only existing files inside SonicNest-managed recording/Trash storage before orphan recovery reconstructs missing managed recording entries.
 
 ### Fixed
+- Android hosted release-candidate signing state is no longer mislabeled as unsigned; package verification records the actual Android Debug certificate and explicitly marks the artifacts non-production.
+- Windows portable validation now includes a bounded launch of the fully extracted package rather than relying only on archive structure.
+- Repository workflow allowlisting can no longer be bypassed by committing an unapproved `.yaml` workflow instead of `.yml`.
+- Repository workflow permission checks now reject `permissions: write-all` and write scopes with flexible whitespace/casing.
 - Controller recovery tests no longer instantiate the native recorder backend merely by constructing/disposal of a recorder service.
 - The stopped-recording metadata-persistence rollback test now creates its completed file after startup so it tests stop-time failure rather than being correctly consumed by startup orphan recovery.
 - Generated batch-output cleanup now checks managed-audio authority before deletion, preventing cleanup from deleting an external caller path.
@@ -115,11 +128,18 @@ All notable project changes are documented here.
 - Obsolete temporary/one-shot write-enabled continuation workflows were removed from `main`.
 
 ### Validation
+- Final hosted release-candidate source revision `048870ec8dc26a16e2451310460d3e03c9084dc7` passed Release Candidate Validation run `31873121457` across Source preflight, Android release-mode non-production APK/AAB build and signing-state verification, Linux release bundle + Debian package, Windows release portable build/verify/extracted startup smoke, macOS release archive, and iOS release no-codesign archive.
+- Android candidate hashes: APK `1fe7ea48d771209f4bfea097fc7d9e723cff00411b2541ee848e7ec20d6c271e`; AAB `ecaf9842980b17af06f3b3f90898d286a3b38ebf0b15259271af2f07dab72f4f`; Android Debug certificate SHA-256 `ccbfe6b04e1859cf9064c9e5a2c8f9fe1d73be92e6ef1454142b9d2fbfff89e1`.
+- Linux candidate hashes: raw release bundle `a5fe64b440bf19b1b8a74e5a5ff875e645c2da7661bd8492e1a910160de179f8`; Debian `.deb` `414f11ad877c7c51861a14817cd3900d2bb77d3b49ea949d601e3686d5346498`.
+- Windows portable candidate SHA-256: `60f5680548b0352d5230b6d40acc17a8b8b12d075b2ce1fd08c6209f565e3eb1`; permanent Windows Build run `31872928500` independently passed debug build, release portable build/verify, extracted startup smoke, and artifact publication.
+- macOS release archive SHA-256: `364c0d8f84c2779c45a36e13fd59d6bbcceebe03f62662a41dc4e2f9178d4af3`; iOS no-codesign archive SHA-256: `8d1209b94aa1aaff4369dff041ace9698bf4dcd5e0e6363a0fd470c50ee2e54d`.
+- Clean candidate-tree Repository Integrity Audit run `31873122160` passed on `048870ec8dc26a16e2451310460d3e03c9084dc7`.
+- Strengthened Repository Integrity Audit run `31874506476` passed on `64c121fa0e5c81531a3710b1d67b88fb3dfc93db` after `.yaml` recognition and write-all/write-scope hardening.
+- Exact workflow artifact digests and release-boundary notes are preserved in `docs/AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md`.
 - Formatter-clean source revision `4e0fbf16534a60e2d3209c5ec5f54d4982903f8c` passed core run `31870933447`: non-mutating format gate, static analysis, full unit suite, Android debug, and Linux debug all succeeded.
 - The same formatter-clean source revision passed Windows run `31870933908`, Apple run `31870933903` (macOS + unsigned iOS), and Linux Package CI run `31870933982` including package install/smoke/uninstall.
 - Core Flutter CI run `31870224720` is fully green on source/test revision `e47b290a7255f126cfcf1436444a90cc32d10823`: static analysis, all 87 unit tests, Android debug APK, and Linux debug build succeeded.
 - Windows run `31870087266`, Apple run `31870087249`, and Linux Package CI run `31870087317` are green on application-code revision `72797fa477b9d88e2138b7ddf1d0f845cdd549ca`, covering Windows debug, macOS debug, unsigned-iOS debug, and the verified Debian package path.
-- CI currently formats 30 of 54 checked-in Dart files before analysis/tests; this is tracked as an unresolved repository-hygiene item and is not claimed as formatter-clean source evidence.
 - Source revision `985f2dd1500a03b0b65ee58b142cf31f545b0cc5` is green in core Flutter CI run `31772136038`: formatting, analyzer, unit tests, Android debug APK, and Linux debug build all succeeded.
 - The same source revision is green in Windows run `31772135970` and Apple run `31772136081` for Windows debug, macOS debug, and unsigned iOS debug builds.
 - Native branding source revision `40c4a758debef136c2d8c977c321446cca2697cd` is green in core run `31776174696`, Windows run `31776174725`, and Apple run `31776174715`; deterministic branding generation, analyzer/tests, Android/Linux/Windows/macOS debug builds, and unsigned iOS debug build all succeeded.
@@ -134,7 +154,7 @@ All notable project changes are documented here.
 - Linux Package CI run `31867130938` is green on the same recovery-hardening source revision: Linux release build, Debian construction/verification, package-manager install, installed-package smoke, uninstall, and artifact upload succeeded.
 - Repository Integrity Audit run `31867543888` is green after recovery-hardening project-state/documentation synchronization and the permanent workflow invariants remained active.
 - The continuation intentionally does not convert representative-system microphone/background/interruption/routing/screen-wake/media-button/batch-performance/native-brand visual inspection/accessibility/upgrade/signing, real filesystem interruption, or malformed/partially written real-media checks into false automated claims.
-- Exact newest workflow/run results are also recorded in `what_changed.md` and `PROJECT_STATE.md`.
+- Exact newest workflow/run results are also recorded in `what_changed.md`, `PROJECT_STATE.md`, and `docs/AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md`.
 
 ## [0.1.0] - 2026-08-14
 
