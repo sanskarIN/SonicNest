@@ -510,3 +510,20 @@ Release evidence:
 - [ ] Record device/OS versions used for native-brand visual QA.
 - [ ] Confirm the signed/release package still contains the reviewed native resources.
 - [ ] Do not substitute generated mockups for real release-candidate screenshots.
+
+## Unified release-candidate provenance automation
+
+Repository implementation/automation evidence:
+
+- [x] `tool/build_release_candidate_manifest.py` requires Android, Linux, Windows, macOS, and iOS candidate evidence directories.
+- [x] The manifest builder re-verifies release payloads against each platform artifact's `SHA256SUMS.txt` and rejects malformed, missing, mismatched, path-escaping, or unchecksummed payload evidence.
+- [x] Android provenance requires expected package identity and explicit Android Debug certificate / NON-PRODUCTION signing-state markers.
+- [x] The manifest binds evidence to a full source Git SHA, application version, workflow run ID, and run attempt.
+- [x] Hosted development-preview provenance explicitly records `stableReleaseApproved: false` and preserves platform signing classifications.
+- [x] Repository Integrity Audit run `31876149473` passed Python compilation, repository invariants, **10/10** Python release-tool tests, Bash parsing, and PowerShell parsing.
+- [x] Release Candidate Validation run `31876035202` on source `b95d77c4b69c9798f1ecb48d5f69583c4e08de5c` passed all five platform jobs plus the final unified provenance job.
+- [x] `RELEASE_CANDIDATE_MANIFEST.json` SHA-256 `8a49759555cad26a60858025d82953ad0e3c3b429aa8138d67f7ef4f86d99b7e` was independently recomputed after artifact download and matched the workflow checksum record.
+- [x] Manifest workflow artifact digest is `sha256:5fa654434ba304e7b67945250f7c8f4bec14eacbc87effefa5cd2d620885baa3`.
+- [x] The narrow push trigger used solely for hosted provenance validation was removed; the maintained release-candidate workflow is manual `workflow_dispatch` only.
+
+These automated checks do **not** complete any physical-device, representative real-system, accessibility, long-duration/performance, visual-branding, private-signing/notarization, store-dashboard, or stable-release checkbox elsewhere in this document.
