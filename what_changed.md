@@ -863,7 +863,6 @@ Repository automation is green, but the following remain intentionally unclaimed
 
 The exact continuation point is now: repository-implementable smart naming, countdown, screen wake, advanced filtering, A-B playback, expanded non-destructive editor processing, localization scaffolding, media-session source integration, managed storage, desktop shortcuts, secondary-click recording actions, and multi-recording batch format conversion are implemented. Future work should be driven primarily by real device/desktop QA, large-batch/large-library performance, listening tests, localization completion, release assets, signing, packaging, and defects discovered from those evidence-producing checks.
 
-
 ---
 
 # Final validation for external batch export and safe cancellation
@@ -885,7 +884,6 @@ Exact validation evidence:
 The external copy is intentionally performed only after the managed SonicNest conversion/library registration succeeds. Destination-copy failure therefore does not roll back a valid managed-library output. Existing destination names are protected with collision-safe numbered filenames. Cancellation is observed between files so a running FFmpeg write is not intentionally terminated mid-file.
 
 Manual validation still required: directory-picker behavior and access persistence on real platforms, destination removal/revocation, low-storage external-copy behavior, very large batches, closing/navigating away during processing, and long-running stop-after-current behavior.
-
 
 ---
 
@@ -923,7 +921,6 @@ Exact automated validation:
 
 Release classification remains **development preview**. Physical microphone, routing, interruption/background, low-storage, accessibility, long-duration, large-library, real screenshot/icon, signing, notarization, packaging, and store-dashboard gates still require real evidence and remain unchecked.
 
-
 ---
 
 # Direct multi-file original export continuation
@@ -952,7 +949,6 @@ Exact automated validation:
 - unsigned iOS debug build: SUCCESS
 
 Physical directory-picker behavior, permission revocation, low-storage copies, and very large batch behavior remain manual evidence gates.
-
 
 ---
 
@@ -1025,7 +1021,6 @@ Automated resource generation and compilation prove structural validity, not vis
 - Real screenshots and store listing assets from tested release candidates.
 
 The project remains a **development preview** until the broader hardware, accessibility, stress, signing, packaging, and store-release gates are completed with evidence.
-
 
 ---
 
@@ -1309,7 +1304,6 @@ The latest package source validation is revision `f2c773e59b27a2aaac77e0590e2044
 
 The next legitimate work is evidence-driven: install/test the package on representative real Linux systems, continue the broader physical-device/audio/accessibility/stress QA matrix, fix reproducible defects found there, and only then prepare signed/public distribution artifacts. The repository must continue to be classified as a **development preview** until those gates are completed with real evidence.
 
-
 ---
 
 # Metadata integrity and resilient import continuation — 2026-08-14
@@ -1441,7 +1435,6 @@ The deterministic repository gates do not substitute for the remaining real-worl
 The 3,000-entry regression test proves metadata persistence integrity only; it does not prove real UI performance. Controlled import test doubles prove failure-isolation logic only; they do not prove every malformed real-world codec/container case.
 
 SonicNest therefore remains a **development preview** until the evidence-dependent release gates in `TODO.md`, `docs/QA_CHECKLIST.md`, and `docs/RELEASING.md` are complete.
-
 
 ---
 
@@ -1682,7 +1675,6 @@ The project remains a **development preview**. Repository regression tests and h
 
 Do not reimplement the storage guard, corrupt-store reset, duplicate metadata isolation, transaction rollback behavior, or orphan recovery in the next continuation. Start by checking the final Android result for source `f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe`; if it succeeds, synchronize that exact result into project-state/release evidence documentation. After that, further legitimate work is evidence-driven unless a new reproducible repository defect is identified.
 
-
 ## 2026-08-15 — Storage boundary, batch execution, release-policy, and validation continuation
 
 This section is additive. All earlier continuation history above remains intact.
@@ -1790,7 +1782,6 @@ Do not convert those unchecked gates to completed status from hosted unit/build 
 
 Do not reimplement the managed-path boundary, active/Trash orphan reconstruction, entity-aware collision rules, batch execution service, lazy recorder construction, Linux GitHub Releases policy, or diagnostic localization policy in the next continuation. The next repository-only task is the formatter-cleanup/enforcement item in `TODO.md`. After that, remaining work is primarily real-system evidence and maintainer-owned signing/release work unless a new reproducible repository defect is found.
 
-
 ## 2026-08-15 — Canonical formatting, distribution copy, Windows signing policy, and final automated validation
 
 This additive section supersedes the earlier temporary formatter-hygiene warning while preserving the full history above.
@@ -1839,3 +1830,144 @@ Formatter-clean source revision: `4e0fbf16534a60e2d3209c5ec5f54d4982903f8c`. The
 Repository-only implementation/policy work identified in this continuation is complete. Remaining unchecked items are intentionally evidence/credential dependent: physical microphone permissions/routing, interruptions/background/lock-screen behavior, low-storage and real permission/process/power-loss recovery, real partially written/damaged media, long-duration and large-library/batch profiling, accessibility audits, real branding/screenshots, representative Linux installation/audio/upgrade/desktop review, Android/Apple private signing, Windows Authenticode credential/service and final installer integration, signed candidate production, release checklist completion, and final `v1.0.0` approval.
 
 Do not mark those items complete from hosted CI alone.
+
+## 2026-08-15 — Final release-mode packaging, distribution policy, workflow security, and evidence continuation
+
+This section is additive and preserves every earlier continuation record above. It closes the repository-owned release-automation work that remained after formatter cleanup without turning hosted build/package results into physical-device or stable-release approval.
+
+### Windows portable package format and shared validation path
+
+- The initial repository-supported Windows package format is now a versioned x64 portable ZIP built from the complete Flutter release runner bundle.
+- `tool/build_windows_portable.ps1` creates the portable archive, validates required runner/data payload, rejects sensitive/signing-material patterns from the package input, writes package metadata, and records SHA-256 output.
+- `tool/verify_windows_portable.ps1` extracts the package and verifies `sonic_nest.exe`, `flutter_windows.dll`, Flutter data/assets, checksum metadata, and optional Authenticode status.
+- `tool/smoke_test_windows_portable.ps1` extracts the package and performs a bounded startup smoke against the packaged executable rather than a copied standalone binary.
+- Permanent Windows CI and the manual release-candidate workflow use the same builder/verifier/startup-smoke helpers so the two package paths cannot silently drift.
+- The initial public Windows channel remains GitHub Releases; stable public Windows binaries require final maintainer-owned Authenticode signing and post-signing checksum generation.
+
+Permanent Windows Build run `31872928500` independently passed Windows debug compilation plus release build, portable ZIP construction, structural verification, extracted-package startup smoke, warning/checksum metadata generation, and artifact publication.
+
+### Android non-production release-candidate classification
+
+The hosted Android release build produced signed APK/AAB bytes, so describing them as unsigned would have been inaccurate. The release-candidate path was corrected to inspect and record the actual signing state.
+
+- Added `tool/verify_android_nonproduction_candidate.sh`.
+- The verifier confirms package identity `io.github.sanskarin.sonic_nest` and application label `SonicNest`.
+- It verifies APK signatures with Android tooling and checks the AAB signature before upload.
+- It requires the hosted certificate to be the generated Android Debug identity and writes `ANDROID_SIGNING_STATE.txt`.
+- Release-candidate filenames now use `nonproduction` rather than `unsigned` for Android.
+- Hosted Android artifacts are explicitly **NON-PRODUCTION** and are not substitutes for the protected Google Play upload-key/Play App Signing candidate.
+
+Final hosted Android certificate evidence:
+
+- DN: `C=US, O=Android, CN=Android Debug`
+- SHA-256: `ccbfe6b04e1859cf9064c9e5a2c8f9fe1d73be92e6ef1454142b9d2fbfff89e1`
+- SHA-1: `fc13d257c05e8fcb704723cec1bd9aa6d5663e29`
+
+### Android and Apple distribution policies
+
+Repository-side channel/signing decisions are now explicit rather than left as ambiguous release work:
+
+- `docs/ANDROID_DISTRIBUTION_POLICY.md` selects Google Play as the initial Android public channel, Play App Signing as the production signing model, and a separate maintainer-controlled upload key outside the repository.
+- `docs/APPLE_DISTRIBUTION_POLICY.md` selects TestFlight/App Store for iOS and signed/notarized GitHub Releases as the initial macOS public channel.
+- Hosted macOS and iOS release-mode artifacts remain unsigned/no-codesign validation evidence only.
+- Actual Android upload-key/Play Console, Apple provisioning/signing/notarization/App Store Connect, and Windows Authenticode credentials remain maintainer-owned and outside the repository.
+
+### Full clean cross-platform release-candidate validation
+
+A clean source revision was frozen and validated without changing it underneath the matrix:
+
+- Candidate source SHA: `048870ec8dc26a16e2451310460d3e03c9084dc7`
+- Release Candidate Validation run: `31873121457`
+- Source preflight: **SUCCESS**
+- Android release-mode non-production APK/AAB build: **SUCCESS**
+- Android package/signing-state verification: **SUCCESS**
+- Linux release bundle and Debian package build/verification: **SUCCESS**
+- Windows release portable build/verification/extracted startup smoke: **SUCCESS**
+- macOS release-mode archive: **SUCCESS**
+- iOS release-mode no-codesign archive: **SUCCESS**
+
+Exact inner artifact SHA-256 values:
+
+- Android APK: `1fe7ea48d771209f4bfea097fc7d9e723cff00411b2541ee848e7ec20d6c271e`
+- Android AAB: `ecaf9842980b17af06f3b3f90898d286a3b38ebf0b15259271af2f07dab72f4f`
+- Linux raw release bundle: `a5fe64b440bf19b1b8a74e5a5ff875e645c2da7661bd8492e1a910160de179f8`
+- Linux Debian `.deb`: `414f11ad877c7c51861a14817cd3900d2bb77d3b49ea949d601e3686d5346498`
+- Windows portable ZIP: `60f5680548b0352d5230b6d40acc17a8b8b12d075b2ce1fd08c6209f565e3eb1`
+- macOS release archive: `364c0d8f84c2779c45a36e13fd59d6bbcceebe03f62662a41dc4e2f9178d4af3`
+- iOS no-codesign archive: `8d1209b94aa1aaff4369dff041ace9698bf4dcd5e0e6363a0fd470c50ee2e54d`
+
+Workflow artifact digests:
+
+- Android: `sha256:05581adf264aa0c425edc27afbd9ae174a219599c460bc94ea8400e3c70929f7`
+- Linux: `sha256:8e129ff08c559ec684d78d509c5311281f2239f58ba6d9b4954fd0d9e34c84ab`
+- Windows: `sha256:895f74a0decba44ddd104bd2eb148fda059be656fd2edff0cb9f77cfe296c271`
+- macOS: `sha256:c7972d5fb532bd253be3503f1596212c96767279778716bc2301dc95e517e4e3`
+- iOS: `sha256:c9a61440a727202ac763a927b79486120a85d4674e919d4f255f67fe5cd497ea`
+
+These exact values are preserved in `docs/AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md` so workflow retention/expiration does not erase the evidence record.
+
+### Repository integrity hardening
+
+`tool/repository_audit.py` was strengthened beyond its earlier workflow guard:
+
+- tracked workflow discovery now includes both `.yml` and `.yaml` files;
+- unapproved workflows under either extension fail the audit;
+- permanent workflow write scopes are rejected with whitespace/case-tolerant matching;
+- scalar `permissions: write-all` is explicitly rejected;
+- the Android non-production verifier, Windows package builder/verifier/startup smoke, Android/Apple/Windows policy documents, and exact automated evidence record are required repository invariants;
+- Bash and PowerShell helper parsing remains part of the maintained audit workflow.
+
+Validation:
+
+- Clean candidate-tree Repository Integrity Audit run `31873122160` on `048870ec8dc26a16e2451310460d3e03c9084dc7`: **SUCCESS**.
+- Strengthened audit commit `64c121fa0e5c81531a3710b1d67b88fb3dfc93db` — `chore: close workflow audit extension and write-all gaps`.
+- Strengthened Repository Integrity Audit run `31874506476`: **SUCCESS**.
+
+### Exact evidence/documentation commits in this continuation
+
+Focused commits include:
+
+- `64c121fa0e5c81531a3710b1d67b88fb3dfc93db` — `chore: close workflow audit extension and write-all gaps`.
+- `9bde66ff9bb7763131d5b09cfb73d0aad4da06b1` — `docs: add exact automated release candidate evidence`.
+- `7a9dae274295598cc6aed2dc37f0e59cc2512e3d` — `docs: index exact automated release evidence`.
+- `6e10651f04976fd9b555b0b47ddba3dbe9166754` — `chore: require automated release evidence record`.
+- `09044264b3572d42d931ecec21eb28b83e8a4c50` — `docs: synchronize project state with release candidate evidence`.
+- `a4add5eb47eb8ddb808d3da6e00b33914f5bc9b8` — `docs: close repository-owned release automation tasks`.
+- `841a788872ec9ecf40ab2e338808cf1ac3a61154` — `docs: record final automated release candidate validation`.
+- `ae0cf577bdae0c0f618f8733056974cc624677fb` — `docs: add final hosted release candidate evidence`.
+- `d366a5476ce5277117f060641659a628b4fe9c07` — `docs: add exact cross-platform release QA evidence`.
+- this additive `what_changed.md` commit follows the documentation synchronization above.
+
+### Current repository-owned completion boundary
+
+No additional repository-only release-automation gap is currently identified. The maintained source now has:
+
+- formatter-clean source-quality validation;
+- cross-platform release-mode hosted artifact generation;
+- Android non-production signing-state verification;
+- Linux Debian package validation;
+- Windows portable package build/verify/startup-smoke validation;
+- macOS release-mode validation;
+- iOS release-mode no-codesign validation;
+- explicit Android, Apple, Windows, and Linux public-channel/signing policies;
+- exact candidate hashes/digests preserved in source control;
+- permanent workflow allowlisting and read-only workflow enforcement.
+
+The remaining work is intentionally not converted into repository-complete status because it requires evidence that hosted automation cannot truthfully provide:
+
+- physical Android/iOS/macOS/Windows/Linux microphone permission/capture/routing tests;
+- built-in, wired, USB, Bluetooth, and external-interface input behavior;
+- call/alarm/audio-focus interruption, background, lock-screen, and media-button behavior;
+- real low-storage, filesystem permission, process-kill, device/power-loss, malformed-media, partially written-media, and orphan-recovery scenarios;
+- 30-minute and multi-hour recording soak tests;
+- real large-library, long-audio, large-batch, and low-resource performance profiling;
+- TalkBack, VoiceOver, Narrator, Linux accessibility-tool, large-text, keyboard-only, and reduced-motion audits;
+- native launcher/splash/desktop visual review and real screenshots from exact tested candidates;
+- representative Debian/Ubuntu install/upgrade/audio/desktop/uninstall evidence;
+- representative Windows portable microphone/routing/accessibility/branding/cleanup evidence;
+- protected Android Play upload-key/App Signing production candidate;
+- Apple provisioning, protected signing, notarization, TestFlight/App Store Connect validation;
+- Windows Authenticode signing/trust verification on the exact final public package;
+- final stable-release checklist approval and `v1.0.0` tag.
+
+SonicNest therefore remains a **development preview**. The next continuation should not reimplement the closed release automation; it should consume real-system/maintainer evidence or fix a newly reproducible repository defect.
