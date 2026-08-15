@@ -21,9 +21,9 @@ This file intentionally contains only work that is still incomplete, requires ph
 - [x] Record exact inner artifact SHA-256 values and workflow artifact digests for the final hosted candidate in `docs/AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md`.
 - [x] Implement `tool/build_release_candidate_manifest.py` so one machine-readable JSON manifest re-verifies all five platform checksum records, binds artifact evidence to the full source SHA and workflow run/attempt, preserves platform signing classifications, and explicitly records `stableReleaseApproved: false`.
 - [x] Add unit and repository-integration regression coverage for the unified candidate manifest. Repository Integrity Audit run `31876149473` passed **10/10** Python release-tool tests.
-- [ ] Validate the new unified provenance-manifest job against one real hosted five-platform release-candidate run and record the resulting manifest checksum/artifact evidence. Active validation run: `31876035202` on source `b95d77c4b69c9798f1ecb48d5f69583c4e08de5c`.
+- [x] Validate the unified provenance-manifest job against a real hosted five-platform release-candidate run. Run `31876035202` on source `b95d77c4b69c9798f1ecb48d5f69583c4e08de5c` passed preflight, Android, Linux, Windows, macOS, iOS, and the final provenance job. Manifest JSON SHA-256: `8a49759555cad26a60858025d82953ad0e3c3b429aa8138d67f7ef4f86d99b7e`; manifest workflow-artifact digest: `sha256:5fa654434ba304e7b67945250f7c8f4bec14eacbc87effefa5cd2d620885baa3`.
 
-After the active provenance validation completes, no additional repository-only release-automation gap is currently identified. The remaining unchecked tasks below require real devices/systems, sustained workloads, representative media, accessibility tooling, private signing credentials, distribution-console access, or final release approval.
+No additional repository-only release-automation gap is currently identified. The remaining unchecked tasks below require real devices/systems, sustained workloads, representative media, accessibility tooling, private signing credentials, distribution-console access, or final release approval.
 
 ## Hardware and lifecycle validation
 
