@@ -39,6 +39,9 @@ All notable project changes are documented here.
 - `docs/METADATA_INTEGRITY.md` with local-library corruption isolation, interrupted-replacement recovery, diagnostic-copy, and large-library regression guidance.
 - Dedicated audio-import validation service plus deterministic copy/probe/waveform failure cleanup tests.
 - Metadata regression tests for malformed field decoding, invalid document structure, per-record isolation, interrupted `.bak` recovery, corrupt-primary fallback, and a 3,000-entry filesystem round-trip.
+- Managed-storage mutation guards for rename, duplicate, Trash, restore, and permanent delete so tampered metadata paths cannot direct destructive operations outside SonicNest-controlled audio storage.
+- Startup orphan-audio recovery that reconstructs library metadata for supported managed recording files missing from the JSON index, including best-effort recovery when media probing or waveform extraction fails.
+- Storage/recovery regression tests covering protected external paths, collision-safe allocation, recoverable-file discovery, orphan deduplication, damaged-media recovery, and every represented recording format.
 - `docs/RELEASING.md`, `RELEASE_NOTES.md`, and `TODO.md` for evidence-based release management.
 - Expanded manual QA matrix covering recorder lifecycle, codec fallback, smart naming, A-B looping, storage, editor processing, accessibility, localization readiness, stress testing, packaging, and signing/release boundaries.
 
@@ -59,6 +62,10 @@ All notable project changes are documented here.
 - Permanent Android/Windows/Apple workflows now regenerate native SonicNest brand resources before compiling representative debug builds.
 - Release hardening now treats Debian package construction, structural verification, package-manager installation, installed GUI startup smoke, and uninstall cleanup as automated Linux gates while retaining representative-system microphone, accessibility, visual, upgrade, signing, and distribution evidence as manual gates.
 - Repository integrity policy now allowlists maintained permanent workflows and rejects leftover temporary/one-shot workflow files or permanent workflows requesting `contents: write`.
+- Metadata decoding now normalizes negative/non-finite numeric values, bounds recovered waveform samples, preserves `channels: 0` as the unknown imported-media state, and isolates duplicate recording IDs or normalized file paths after the first valid entry.
+- Failed/corrupt metadata recovery now preserves diagnostic copies and writes a clean valid empty store when no valid primary/backup exists, preventing the same corrupt primary from being copied on every startup.
+- Controller library mutations now restore in-memory state and roll moved files back when metadata persistence fails; permanent deletion persists metadata before managed-file deletion so an interruption prefers a recoverable orphan over irreversible data loss.
+- Startup reconciliation now accepts only existing files inside SonicNest-managed recording/Trash storage before orphan recovery reconstructs missing managed recording entries.
 
 ### Fixed
 - Android namespace generation that previously used the reserved/invalid `in` prefix.
@@ -80,6 +87,10 @@ All notable project changes are documented here.
 - Structurally corrupt metadata is preserved to collision-safe timestamped diagnostic copies instead of being silently discarded.
 - An interrupted metadata replacement that leaves only `recordings.json.bak` can now restore that backup automatically.
 - A corrupt primary metadata document can now fall back to a valid backup after preserving the corrupt primary for diagnosis.
+- Corrupt primary/backup documents with no valid recovery source no longer remain as the active primary indefinitely after diagnostic preservation.
+- Duplicate recording IDs and duplicate normalized managed file paths no longer create multiple active metadata entries after load.
+- Out-of-bound metadata file paths no longer survive startup reconciliation or reach destructive managed-storage mutations.
+- Rename, Trash, restore, metadata-only edits, settings updates, processed-output registration, and permanent deletion now have explicit persistence rollback/data-preservation behavior instead of leaving avoidable file/index split states after a save failure.
 - Failed audio imports clean copied managed files after probe/waveform failures and no longer abort later selected files solely because one selected audio item is malformed.
 - Obsolete temporary/one-shot write-enabled continuation workflows were removed from `main`.
 
@@ -93,6 +104,8 @@ All notable project changes are documented here.
 - Windows run `31807141053` and Apple run `31807141166` are green on import-controller source revision `3bf63e69186a7a538f7d0587f3d361e00c2e29e9` for Windows debug, macOS debug, and unsigned iOS debug builds.
 - Core Flutter CI run `31807193932` is fully green on import-test revision `a88aeadadda017b0aced4dbc25c8426a27364b77`: formatting, analyzer, unit tests, Android debug APK, and Linux debug build all succeeded.
 - Repository Integrity Audit run `31807662729` is green on revision `c7b9c41a8afcf83ff03ae5a014c9968f2f09c5e4` with the cleaned permanent workflow set and workflow allowlist/read-only invariant active.
+- Recovery-hardening source revision `f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe` has passed formatting, static analysis, the complete unit-test suite, Linux debug compilation, macOS debug compilation, and unsigned-iOS debug compilation in its current workflow cycle; remaining concurrently running platform jobs are recorded only after completion rather than being pre-claimed.
+- Linux Package CI run `31867130938` is green on recovery-hardening source revision `f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe`: Linux release build, Debian construction/verification, package-manager install, installed-package smoke, uninstall, and artifact upload succeeded.
 - The continuation intentionally does not convert representative-system microphone/background/interruption/routing/screen-wake/media-button/batch-performance/native-brand visual inspection/accessibility/upgrade/signing or malformed-real-media corpus checks into false automated claims.
 - Exact newest workflow/run results are also recorded in `what_changed.md` and `PROJECT_STATE.md`.
 
