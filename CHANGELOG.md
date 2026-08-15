@@ -5,6 +5,8 @@ All notable project changes are documented here.
 ## [Unreleased]
 
 ### Added
+- Unified machine-readable release-candidate provenance manifest builder and final hosted aggregation job that re-verifies all five platform payload checksum records and binds them to the exact source SHA, application version, workflow run, and attempt.
+- Python regression coverage for release provenance tooling plus permanent repository-audit execution of the Python release-tool suite.
 - Exact hosted release-candidate evidence record in `docs/AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md`, including per-platform inner artifact SHA-256 values, workflow artifact digests, Android Debug-certificate fingerprints, Windows portable startup-smoke evidence, and explicit stable-release boundaries.
 - Android hosted release-candidate verifier that checks package identity and classifies the generated Android Debug certificate as **NON-PRODUCTION** before APK/AAB artifact publication.
 - Versioned Windows x64 portable ZIP builder, structural verifier, package metadata/checksum output, and bounded extracted-package startup smoke shared by permanent Windows CI and the release-candidate workflow.
@@ -58,6 +60,8 @@ All notable project changes are documented here.
 - Expanded manual QA matrix covering recorder lifecycle, codec fallback, smart naming, A-B looping, storage, editor processing, accessibility, localization readiness, stress testing, packaging, and signing/release boundaries.
 
 ### Changed
+- Release-candidate validation now publishes a checksummed `sonicnest-release-candidate-manifest` artifact only after Android, Linux, Windows, macOS, and iOS candidate jobs succeed.
+- Release evidence now preserves unified manifest/payload hashes, workflow artifact digests, platform signing classifications, and an explicit `stableReleaseApproved: false` boundary.
 - The release-candidate workflow now produces Android release-mode **non-production** APK/AAB artifacts with explicit signing-state evidence instead of inaccurately describing Debug-certificate output as unsigned.
 - The release-candidate workflow and permanent Windows CI use the same portable-package builder/verifier and extracted startup-smoke helper so packaging behavior cannot drift between paths.
 - Repository integrity checks now detect both `.yml` and `.yaml` workflow files and reject permanent workflow write scopes, including scalar `permissions: write-all`.
@@ -128,6 +132,9 @@ All notable project changes are documented here.
 - Obsolete temporary/one-shot write-enabled continuation workflows were removed from `main`.
 
 ### Validation
+- Provenance source `b95d77c4b69c9798f1ecb48d5f69583c4e08de5c` passed Release Candidate Validation run `31876035202`, including the final unified provenance job.
+- `RELEASE_CANDIDATE_MANIFEST.json` SHA-256 `8a49759555cad26a60858025d82953ad0e3c3b429aa8138d67f7ef4f86d99b7e` was independently recomputed after artifact download and matched exactly; manifest workflow artifact digest: `sha256:5fa654434ba304e7b67945250f7c8f4bec14eacbc87effefa5cd2d620885baa3`.
+- Repository Integrity Audit run `31876149473` passed Python compilation, repository invariants, all 10 Python release-tool tests, Bash syntax, and PowerShell syntax.
 - Final hosted release-candidate source revision `048870ec8dc26a16e2451310460d3e03c9084dc7` passed Release Candidate Validation run `31873121457` across Source preflight, Android release-mode non-production APK/AAB build and signing-state verification, Linux release bundle + Debian package, Windows release portable build/verify/extracted startup smoke, macOS release archive, and iOS release no-codesign archive.
 - Android candidate hashes: APK `1fe7ea48d771209f4bfea097fc7d9e723cff00411b2541ee848e7ec20d6c271e`; AAB `ecaf9842980b17af06f3b3f90898d286a3b38ebf0b15259271af2f07dab72f4f`; Android Debug certificate SHA-256 `ccbfe6b04e1859cf9064c9e5a2c8f9fe1d73be92e6ef1454142b9d2fbfff89e1`.
 - Linux candidate hashes: raw release bundle `a5fe64b440bf19b1b8a74e5a5ff875e645c2da7661bd8492e1a910160de179f8`; Debian `.deb` `414f11ad877c7c51861a14817cd3900d2bb77d3b49ea949d601e3686d5346498`.
