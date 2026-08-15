@@ -30,6 +30,8 @@ REQUIRED_FILES = (
     "what_changed.md",
     "pubspec.yaml",
     "analysis_options.yaml",
+    "docs/ANDROID_DISTRIBUTION_POLICY.md",
+    "docs/APPLE_DISTRIBUTION_POLICY.md",
     "docs/ARCHITECTURE.md",
     "docs/BATCH_CONVERSION.md",
     "docs/BUILDING.md",
@@ -63,6 +65,8 @@ REQUIRED_FILES = (
     "tool/smoke_test_installed_linux_deb.sh",
     "tool/build_windows_portable.ps1",
     "tool/verify_windows_portable.ps1",
+    "tool/smoke_test_windows_portable.ps1",
+    "tool/verify_android_nonproduction_candidate.sh",
     "tool/release_preflight.sh",
     "tool/release_preflight.ps1",
     ".github/workflows/ci.yml",
@@ -156,6 +160,24 @@ def is_text_candidate(path: Path) -> bool:
     return b"\x00" not in data
 
 
+def require_fragments(errors: list[str], path: Path, fragments: tuple[str, ...], label: str) -> None:
+    if not path.exists():
+        return
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    for fragment in fragments:
+        if fragment not in text:
+            errors.append(f"{label} is missing required invariant: {fragment}")
+
+
+def require_fragments_casefold(errors: list[str], path: Path, fragments: tuple[str, ...], label: str) -> None:
+    if not path.exists():
+        return
+    text = path.read_text(encoding="utf-8", errors="ignore").casefold()
+    for fragment in fragments:
+        if fragment.casefold() not in text:
+            errors.append(f"{label} is missing required policy marker: {fragment}")
+
+
 def audit() -> list[str]:
     errors: list[str] = []
 
@@ -226,8 +248,6 @@ def audit() -> list[str]:
             )
 
     for relative in tracked:
-        # The audit source contains the detector signatures by design. Skipping only
-        # this exact file prevents self-matches without exempting any other source.
         if relative == SELF_AUDIT_PATH:
             continue
         path = ROOT / relative
@@ -250,125 +270,128 @@ def audit() -> list[str]:
     if "Apache License" not in license_text or "Version 2.0" not in license_text:
         errors.append("LICENSE does not look like the expected Apache License 2.0 text.")
 
-    pubspec = (
-        (ROOT / "pubspec.yaml").read_text(encoding="utf-8", errors="ignore")
-        if (ROOT / "pubspec.yaml").exists()
-        else ""
+    require_fragments(
+        errors,
+        ROOT / "pubspec.yaml",
+        (
+            "name: sonic_nest",
+            "publish_to: 'none'",
+            "flutter_launcher_icons:",
+            "flutter_native_splash:",
+            "assets/generated/sonicnest_icon.png",
+        ),
+        "pubspec.yaml",
     )
-    required_pubspec_fragments = (
-        "name: sonic_nest",
-        "publish_to: 'none'",
-        "flutter_launcher_icons:",
-        "flutter_native_splash:",
-        "assets/generated/sonicnest_icon.png",
-    )
-    for fragment in required_pubspec_fragments:
-        if fragment not in pubspec:
-            errors.append(f"pubspec.yaml is missing required project invariant: {fragment}")
 
-    desktop_file = ROOT / "packaging/linux/debian/sonicnest.desktop"
-    if desktop_file.exists():
-        desktop_text = desktop_file.read_text(encoding="utf-8", errors="ignore")
-        for fragment in (
+    require_fragments(
+        errors,
+        ROOT / "packaging/linux/debian/sonicnest.desktop",
+        (
             "Type=Application",
             "Name=SonicNest",
             "Exec=/opt/sonicnest/sonic_nest",
             "Icon=sonicnest",
             "Terminal=false",
             "Categories=AudioVideo;Recorder;",
-        ):
-            if fragment not in desktop_text:
-                errors.append(
-                    f"sonicnest.desktop is missing required package invariant: {fragment}"
-                )
-
-    metainfo_file = (
-        ROOT / "packaging/linux/debian/io.github.sanskarIN.SonicNest.metainfo.xml"
+        ),
+        "sonicnest.desktop",
     )
-    if metainfo_file.exists():
-        metainfo_text = metainfo_file.read_text(encoding="utf-8", errors="ignore")
-        for fragment in (
+    require_fragments(
+        errors,
+        ROOT / "packaging/linux/debian/io.github.sanskarIN.SonicNest.metainfo.xml",
+        (
             "<id>io.github.sanskarIN.SonicNest</id>",
             '<developer id="io.github.sanskarin">',
             '<launchable type="desktop-id">sonicnest.desktop</launchable>',
             "<binary>sonic_nest</binary>",
             "<project_license>Apache-2.0</project_license>",
             '<content_rating type="oars-1.1" />',
-        ):
-            if fragment not in metainfo_text:
-                errors.append(
-                    "Linux AppStream metadata is missing required package invariant: "
-                    f"{fragment}"
-                )
+        ),
+        "Linux AppStream metadata",
+    )
 
-    linux_builder = ROOT / "tool/build_linux_deb.sh"
-    if linux_builder.exists():
-        builder_text = linux_builder.read_text(encoding="utf-8", errors="ignore")
-        for fragment in (
+    require_fragments(
+        errors,
+        ROOT / "tool/build_linux_deb.sh",
+        (
             "dpkg-deb --root-owner-group --build",
             "/usr/share/applications",
             "/usr/share/icons/hicolor/512x512/apps",
             "/usr/share/metainfo",
             "sha256sum",
-        ):
-            if fragment not in builder_text:
-                errors.append(
-                    f"build_linux_deb.sh is missing required packaging invariant: {fragment}"
-                )
-
-    installed_smoke = ROOT / "tool/smoke_test_installed_linux_deb.sh"
-    if installed_smoke.exists():
-        smoke_text = installed_smoke.read_text(encoding="utf-8", errors="ignore")
-        for fragment in (
+        ),
+        "build_linux_deb.sh",
+    )
+    require_fragments(
+        errors,
+        ROOT / "tool/smoke_test_installed_linux_deb.sh",
+        (
             "dpkg-query",
             "/opt/sonicnest/sonic_nest",
             "desktop-file-validate",
             "appstreamcli validate --no-net",
             "xvfb-run",
             "timeout 8s",
-        ):
-            if fragment not in smoke_text:
-                errors.append(
-                    "smoke_test_installed_linux_deb.sh is missing required install-smoke invariant: "
-                    f"{fragment}"
-                )
+        ),
+        "smoke_test_installed_linux_deb.sh",
+    )
 
-    windows_builder = ROOT / "tool/build_windows_portable.ps1"
-    if windows_builder.exists():
-        builder_text = windows_builder.read_text(encoding="utf-8", errors="ignore")
-        for fragment in (
+    require_fragments(
+        errors,
+        ROOT / "tool/build_windows_portable.ps1",
+        (
             "flutter_windows.dll",
             "data\\icudtl.dat",
             "data\\flutter_assets",
             "Compress-Archive",
             "Get-FileHash",
             "SHA256SUMS.txt",
-        ):
-            if fragment not in builder_text:
-                errors.append(
-                    f"build_windows_portable.ps1 is missing required packaging invariant: {fragment}"
-                )
-
-    windows_verifier = ROOT / "tool/verify_windows_portable.ps1"
-    if windows_verifier.exists():
-        verifier_text = windows_verifier.read_text(encoding="utf-8", errors="ignore")
-        for fragment in (
+        ),
+        "build_windows_portable.ps1",
+    )
+    require_fragments(
+        errors,
+        ROOT / "tool/verify_windows_portable.ps1",
+        (
             "Expand-Archive",
             "sonic_nest.exe",
             "flutter_windows.dll",
             "Get-AuthenticodeSignature",
             "RequireSignature",
             "SHA256SUMS.txt",
-        ):
-            if fragment not in verifier_text:
-                errors.append(
-                    f"verify_windows_portable.ps1 is missing required verification invariant: {fragment}"
-                )
+        ),
+        "verify_windows_portable.ps1",
+    )
+    require_fragments(
+        errors,
+        ROOT / "tool/smoke_test_windows_portable.ps1",
+        (
+            "Expand-Archive",
+            "Start-Process",
+            "sonic_nest.exe",
+            "StartupSeconds",
+            "Stop-Process",
+        ),
+        "smoke_test_windows_portable.ps1",
+    )
+    require_fragments(
+        errors,
+        ROOT / "tool/verify_android_nonproduction_candidate.sh",
+        (
+            "io.github.sanskarin.sonic_nest",
+            "CN=Android Debug",
+            "apksigner",
+            "jarsigner -verify",
+            "ANDROID_SIGNING_STATE.txt",
+            "NON-PRODUCTION",
+        ),
+        "verify_android_nonproduction_candidate.sh",
+    )
 
-    release_workflow = ROOT / ".github/workflows/release-candidate.yml"
-    if release_workflow.exists():
-        workflow_text = release_workflow.read_text(encoding="utf-8", errors="ignore")
-        for fragment in (
+    require_fragments(
+        errors,
+        ROOT / ".github/workflows/release-candidate.yml",
+        (
             "workflow_dispatch:",
             "RELEASE_CANDIDATE_WARNING.txt",
             "SHA256SUMS.txt",
@@ -376,23 +399,21 @@ def audit() -> list[str]:
             "contents: read",
             "tool/build_linux_deb.sh release",
             "tool/verify_linux_deb.sh",
-            "sonicnest-android-release-unsigned.apk",
+            "tool/verify_android_nonproduction_candidate.sh",
+            "sonicnest-android-release-nonproduction.apk",
+            "sonicnest-android-release-nonproduction.aab",
             "tool/build_windows_portable.ps1",
             "tool/verify_windows_portable.ps1",
+            "tool/smoke_test_windows_portable.ps1",
             "sonicnest-macos-release-unsigned.zip",
             "sonicnest-ios-release-unsigned.zip",
-        ):
-            if fragment not in workflow_text:
-                errors.append(
-                    f"release-candidate.yml is missing required safety/output marker: {fragment}"
-                )
-
-    linux_package_workflow = ROOT / ".github/workflows/linux-package.yml"
-    if linux_package_workflow.exists():
-        workflow_text = linux_package_workflow.read_text(
-            encoding="utf-8", errors="ignore"
-        )
-        for fragment in (
+        ),
+        "release-candidate.yml",
+    )
+    require_fragments(
+        errors,
+        ROOT / ".github/workflows/linux-package.yml",
+        (
             "flutter build linux --release",
             "tool/build_linux_deb.sh release",
             "tool/verify_linux_deb.sh",
@@ -401,58 +422,52 @@ def audit() -> list[str]:
             "sudo apt-get remove -y sonicnest",
             "actions/upload-artifact@v4",
             "contents: read",
-        ):
-            if fragment not in workflow_text:
-                errors.append(
-                    f"linux-package.yml is missing required validation marker: {fragment}"
-                )
-
-    windows_workflow = ROOT / ".github/workflows/windows.yml"
-    if windows_workflow.exists():
-        workflow_text = windows_workflow.read_text(encoding="utf-8", errors="ignore")
-        for fragment in (
+        ),
+        "linux-package.yml",
+    )
+    require_fragments(
+        errors,
+        ROOT / ".github/workflows/windows.yml",
+        (
             "flutter build windows --debug",
             "flutter build windows --release",
             "tool/build_windows_portable.ps1",
             "tool/verify_windows_portable.ps1",
+            "tool/smoke_test_windows_portable.ps1",
             "RELEASE_CANDIDATE_WARNING.txt",
             "actions/upload-artifact@v4",
             "contents: read",
-        ):
-            if fragment not in workflow_text:
-                errors.append(
-                    f"windows.yml is missing required Windows validation marker: {fragment}"
-                )
+        ),
+        "windows.yml",
+    )
 
     for relative in ("tool/release_preflight.sh", "tool/release_preflight.ps1"):
-        preflight_path = ROOT / relative
-        if preflight_path.exists():
-            preflight_text = preflight_path.read_text(encoding="utf-8", errors="ignore")
-            for fragment in (
+        require_fragments(
+            errors,
+            ROOT / relative,
+            (
                 "dart format --output=none --set-exit-if-changed",
                 "flutter analyze --no-fatal-infos",
                 "flutter test",
-            ):
-                if fragment not in preflight_text:
-                    errors.append(
-                        f"{relative} is missing required non-mutating validation marker: {fragment}"
-                    )
+            ),
+            relative,
+        )
 
-    ci_workflow = ROOT / ".github/workflows/ci.yml"
-    if ci_workflow.exists():
-        ci_text = ci_workflow.read_text(encoding="utf-8", errors="ignore")
-        for fragment in (
+    require_fragments(
+        errors,
+        ROOT / ".github/workflows/ci.yml",
+        (
             "dart format --output=none --set-exit-if-changed",
             "flutter analyze --no-fatal-infos",
             "flutter test",
-        ):
-            if fragment not in ci_text:
-                errors.append(f"ci.yml is missing required validation marker: {fragment}")
+        ),
+        "ci.yml",
+    )
 
-    store_listing = ROOT / "docs/STORE_LISTING.md"
-    if store_listing.exists():
-        listing_text = store_listing.read_text(encoding="utf-8", errors="ignore")
-        for fragment in (
+    require_fragments_casefold(
+        errors,
+        ROOT / "docs/STORE_LISTING.md",
+        (
             "SonicNest",
             "microphone",
             "privacy",
@@ -460,42 +475,57 @@ def audit() -> list[str]:
             "Apple App Store",
             "Microsoft",
             "GitHub Releases",
-        ):
-            if fragment.lower() not in listing_text.lower():
-                errors.append(
-                    f"STORE_LISTING.md is missing required distribution/privacy marker: {fragment}"
-                )
-
-    windows_packaging = ROOT / "docs/WINDOWS_PACKAGING.md"
-    if windows_packaging.exists():
-        packaging_text = windows_packaging.read_text(encoding="utf-8", errors="ignore")
-        for fragment in (
+        ),
+        "STORE_LISTING.md",
+    )
+    require_fragments_casefold(
+        errors,
+        ROOT / "docs/ANDROID_DISTRIBUTION_POLICY.md",
+        (
+            "Google Play",
+            "Play App Signing",
+            "upload key",
+            "non-production",
+            "private",
+        ),
+        "ANDROID_DISTRIBUTION_POLICY.md",
+    )
+    require_fragments_casefold(
+        errors,
+        ROOT / "docs/APPLE_DISTRIBUTION_POLICY.md",
+        (
+            "App Store",
+            "TestFlight",
+            "GitHub Releases",
+            "notarization",
+            "private",
+        ),
+        "APPLE_DISTRIBUTION_POLICY.md",
+    )
+    require_fragments_casefold(
+        errors,
+        ROOT / "docs/WINDOWS_PACKAGING.md",
+        (
             "portable ZIP",
             "build_windows_portable.ps1",
             "verify_windows_portable.ps1",
+            "smoke_test_windows_portable.ps1",
             "Authenticode",
             "SHA-256",
-        ):
-            if fragment.lower() not in packaging_text.lower():
-                errors.append(
-                    "WINDOWS_PACKAGING.md is missing required package-boundary marker: "
-                    f"{fragment}"
-                )
-
-    windows_signing = ROOT / "docs/WINDOWS_SIGNING_POLICY.md"
-    if windows_signing.exists():
-        signing_text = windows_signing.read_text(encoding="utf-8", errors="ignore")
-        for fragment in (
+        ),
+        "WINDOWS_PACKAGING.md",
+    )
+    require_fragments_casefold(
+        errors,
+        ROOT / "docs/WINDOWS_SIGNING_POLICY.md",
+        (
             "Authenticode",
             "private",
             "unsigned",
             "maintainer",
-        ):
-            if fragment.lower() not in signing_text.lower():
-                errors.append(
-                    "WINDOWS_SIGNING_POLICY.md is missing required signing-boundary marker: "
-                    f"{fragment}"
-                )
+        ),
+        "WINDOWS_SIGNING_POLICY.md",
+    )
 
     gitignore = (
         (ROOT / ".gitignore").read_text(encoding="utf-8", errors="ignore")
