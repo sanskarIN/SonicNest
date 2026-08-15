@@ -27,7 +27,7 @@ The package builder:
 - reads the public version from `pubspec.yaml`;
 - packages the entire runner directory rather than copying only the executable;
 - produces a versioned x64 ZIP under `build\windows-package` by default;
-- produces `SHA256SUMS.txt` for the exact ZIP bytes;
+- produces `SHA256SUMS.txt` containing the **SHA-256** digest for the exact ZIP bytes;
 - produces `PACKAGE_INFO.txt` describing the version, architecture, build configuration, artifact name, checksum, and signing boundary;
 - never creates or imports signing credentials.
 
