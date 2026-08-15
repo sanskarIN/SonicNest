@@ -63,6 +63,45 @@ void main() {
       },
     );
 
+    test('uses a numbered name when a directory occupies the basename', () async {
+      final source = File(p.join(root.path, 'session.wav'));
+      await source.writeAsBytes([1, 4, 9]);
+      final occupied = Directory(p.join(destination.path, 'session.wav'));
+      await occupied.create();
+
+      final copiedPath = await actions.copyFileToDirectoryCollisionSafe(
+        sourcePath: source.path,
+        directoryPath: destination.path,
+      );
+
+      expect(p.basename(copiedPath), 'session (2).wav');
+      expect(await occupied.exists(), isTrue);
+      expect(await File(copiedPath).readAsBytes(), [1, 4, 9]);
+    });
+
+    test(
+      'uses a numbered name when a broken symbolic link occupies the basename',
+      () async {
+        final source = File(p.join(root.path, 'linked.wav'));
+        await source.writeAsBytes([2, 4, 6]);
+        final reserved = p.join(destination.path, 'linked.wav');
+        await Link(reserved).create(p.join(root.path, 'missing-target.wav'));
+
+        final copiedPath = await actions.copyFileToDirectoryCollisionSafe(
+          sourcePath: source.path,
+          directoryPath: destination.path,
+        );
+
+        expect(p.basename(copiedPath), 'linked (2).wav');
+        expect(
+          await FileSystemEntity.type(reserved, followLinks: false),
+          FileSystemEntityType.link,
+        );
+        expect(await File(copiedPath).readAsBytes(), [2, 4, 6]);
+      },
+      skip: Platform.isWindows,
+    );
+
     test('rejects a missing source file', () async {
       expect(
         () => actions.copyFileToDirectoryCollisionSafe(
