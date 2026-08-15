@@ -70,11 +70,38 @@ The final manifest directory also contains its own `SHA256SUMS.txt` and a releas
 - missing-platform rejection;
 - full Git SHA enforcement.
 
-The permanent Repository Integrity Audit compiles Python helpers and runs these tests whenever Python release tooling or its test suite changes.
+`tool/tests/test_release_candidate_integration.py` locks the maintained workflow integration, all five platform artifact arguments, exact source/run binding, final manifest publication, and permanent Repository Integrity Audit execution of the Python release-tool suite.
+
+Repository Integrity Audit run `31876149473` passed Python helper compilation, repository invariants, **10/10** Python release-tool tests, Bash helper parsing, and PowerShell helper parsing.
 
 ## Hosted integration validation
 
-The maintained release-candidate workflow downloads the five platform artifact sets only after all platform jobs succeed, re-verifies their payload checksum records through the builder, and then uploads the unified manifest as a separate short-retention artifact. Exact successful run evidence is recorded in the project state and continuation ledger after the hosted matrix completes.
+The maintained release-candidate workflow downloads the five platform artifact sets only after all platform jobs succeed, re-verifies their payload checksum records through the builder, and then uploads the unified manifest as a separate short-retention artifact.
+
+Exact hosted validation completed successfully:
+
+- source SHA: `b95d77c4b69c9798f1ecb48d5f69583c4e08de5c`;
+- Release Candidate Validation run: `31876035202`;
+- run attempt: `1`;
+- Source preflight: **SUCCESS**;
+- Android release-mode non-production job: **SUCCESS**;
+- Linux release-mode job: **SUCCESS**;
+- Windows release portable build/verify/startup-smoke job: **SUCCESS**;
+- macOS release-mode job: **SUCCESS**;
+- iOS release-mode no-codesign job: **SUCCESS**;
+- Unified candidate provenance manifest job: **SUCCESS**.
+
+The generated manifest records application version `0.1.0+1`, `releaseClassification: development-preview`, and `stableReleaseApproved: false`.
+
+Exact manifest evidence:
+
+- `RELEASE_CANDIDATE_MANIFEST.json` SHA-256: `8a49759555cad26a60858025d82953ad0e3c3b429aa8138d67f7ef4f86d99b7e`;
+- independent post-download recomputation: `8a49759555cad26a60858025d82953ad0e3c3b429aa8138d67f7ef4f86d99b7e`;
+- manifest workflow artifact digest: `sha256:5fa654434ba304e7b67945250f7c8f4bec14eacbc87effefa5cd2d620885baa3`.
+
+The narrow push trigger used solely to obtain this hosted evidence was removed after validation. The maintained release-candidate workflow is again manual `workflow_dispatch` only.
+
+The full exact platform payload hashes and workflow artifact digests are preserved in `AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md` and the additive `../what_changed.md` continuation ledger.
 
 ## Evidence boundary
 
