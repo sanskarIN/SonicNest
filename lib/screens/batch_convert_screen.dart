@@ -4,6 +4,7 @@ import '../controllers/app_controller.dart';
 import '../l10n/app_localizations.dart';
 import '../models/recording_entry.dart';
 import '../models/recording_settings.dart';
+import '../services/batch_conversion_service.dart';
 
 class BatchConvertScreen extends StatefulWidget {
   const BatchConvertScreen({super.key, required this.controller});
@@ -33,6 +34,12 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
           .where((entry) => !entry.isTrashed)
           .toList(growable: false)
         ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+  @override
+  void dispose() {
+    _stopRequested = true;
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -340,105 +347,71 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
       _status = null;
     });
 
-    final failures = <String>[];
-    final exportFailures = <String>[];
-    var successes = 0;
-    var externalCopies = 0;
-    var stopped = false;
+    final service = BatchConversionService(
+      processor: controller.processor,
+      storage: controller.storage,
+      external: controller.external,
+    );
 
-    for (final entry in entries) {
-      if (_stopRequested) {
-        stopped = true;
-        break;
-      }
-
-      String? output;
-      try {
-        final title = '${entry.title} ${format.label}';
-        output = await controller.processor.transcode(
-          inputPath: entry.filePath,
-          outputTitle: title,
-          format: format,
-          bitRate: entry.bitRate > 0
-              ? entry.bitRate
-              : controller.settings.recording.bitRate,
-          sampleRate: entry.sampleRate > 0
-              ? entry.sampleRate
-              : controller.settings.recording.sampleRate,
-          channels: entry.channels > 0
-              ? entry.channels
-              : controller.settings.recording.channels,
-        );
-        await controller.addProcessedFile(
-          output,
-          title: title,
-          format: format,
-          markers: entry.markers,
-        );
-        successes++;
-
-        if (exportDirectory != null) {
-          try {
-            await controller.external.copyFileToDirectoryCollisionSafe(
-              sourcePath: output,
-              directoryPath: exportDirectory,
-            );
-            externalCopies++;
-          } catch (error) {
-            exportFailures.add('${entry.title}: $error');
-          }
-        }
-      } catch (error) {
-        if (output != null) {
-          await controller.storage.deleteIfExists(output);
-        }
-        failures.add('${entry.title}: $error');
-      } finally {
+    final result = await service.convert(
+      entries: entries,
+      format: format,
+      fallbackSettings: controller.settings.recording,
+      exportDirectory: exportDirectory,
+      registerOutput: ({
+        required path,
+        required title,
+        required format,
+        required markers,
+      }) => controller.addProcessedFile(
+        path,
+        title: title,
+        format: format,
+        markers: markers,
+      ),
+      shouldStop: () => _stopRequested,
+      onProgress: (completed, total) {
         if (mounted) {
-          setState(() => _completed++);
+          setState(() => _completed = completed);
         }
-      }
-
-      if (_stopRequested) {
-        stopped = true;
-        break;
-      }
-    }
+      },
+    );
 
     if (!mounted) {
       return;
     }
 
-    final conversionFailureText = failures.isEmpty
+    final conversionFailureText = result.conversionFailures.isEmpty
         ? ''
         : l10n.conversionFailureDetails(
-            failures.length,
-            failures.take(2).join(' | '),
+            result.conversionFailureCount,
+            result.conversionFailures.take(2).join(' | '),
           );
     final exportText = exportDirectory == null
         ? ''
-        : exportFailures.isEmpty
-        ? l10n.copiedToExportFolder(externalCopies)
+        : result.exportFailures.isEmpty
+        ? l10n.copiedToExportFolder(result.externalCopies)
         : l10n.externalCopyFailureSummary(
-            externalCopies,
-            exportFailures.length,
-            exportFailures.take(2).join(' | '),
+            result.externalCopies,
+            result.exportFailureCount,
+            result.exportFailures.take(2).join(' | '),
           );
 
     setState(() {
       _processing = false;
       _stopRequested = false;
-      _status = stopped
+      _completed = result.completed;
+      _status = result.stopped
           ? l10n.batchStoppedSummary(
-              _completed,
-              _total,
-              successes,
+              result.completed,
+              result.total,
+              result.successes,
               conversionFailureText,
               exportText,
             )
-          : failures.isEmpty
-          ? '${l10n.convertedCopiesCreated(successes)}$exportText'
-          : '${l10n.batchFailureSummary(successes, failures.length, failures.take(2).join(' | '))}$exportText';
+          : result.conversionFailures.isEmpty
+          ? '${l10n.convertedCopiesCreated(result.successes)}$exportText'
+          : '${l10n.batchFailureSummary(result.successes, result.conversionFailureCount, result.conversionFailures.take(2).join(' | '))}$exportText';
       _selectedIds.clear();
     });
   }
