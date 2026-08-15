@@ -1,6 +1,6 @@
 # SonicNest Managed Storage Boundary
 
-SonicNest treats the filesystem path stored in recording metadata as untrusted state until it is checked against the application-managed audio directories.
+SonicNest treats the filesystem path stored in recording metadata as untrusted state until it is checked against the application-managed audio directories, the supported recording extensions, and the current filesystem entity type.
 
 ## Managed audio locations
 
@@ -13,18 +13,22 @@ SonicNest/.trash
 
 Temporary capture/processing files use a separate application temporary directory and are not considered normal Library entries.
 
+A path inside one of the managed directories is still not managed audio unless it has a supported recording extension and resolves to a regular file when inspected without following symbolic links.
+
 ## Mutation rules
 
 The storage service applies these rules before path-changing or destructive Library operations:
 
-- Rename requires a regular file inside active `Recordings`.
-- Move to Trash requires a regular file inside active `Recordings`.
-- Restore requires a regular file inside `.trash`.
-- Duplicate requires a regular file inside either managed audio location and creates its copy in active `Recordings`.
-- Permanent delete requires a path inside a managed audio location; a missing path is already deleted, while symbolic links and other non-regular entries are refused.
-- Generated destination allocation treats any existing filesystem entity, including a broken symbolic link, as occupied and selects another collision-safe filename.
+- Rename requires a supported regular audio file inside active `Recordings`.
+- Move to Trash requires a supported regular audio file inside active `Recordings`.
+- Restore requires a supported regular audio file inside `.trash`.
+- Duplicate requires a supported regular audio file inside either managed audio location and creates its copy in active `Recordings`.
+- Permanent delete accepts only supported regular managed audio. A missing supported managed path is already deleted; symbolic links, unsupported files, directories, and other non-regular entries are refused.
+- Generated destination allocation treats any existing filesystem entity, including a directory or broken symbolic link, as occupied and selects another collision-safe filename.
 
 A path whose text is inside a managed directory is not enough to make it trusted audio. Symbolic links are not followed as managed recording files. This prevents a link placed inside managed storage from turning a Library mutation into an operation on an unrelated target outside SonicNest.
+
+Likewise, an unrelated regular file such as `notes.txt` is not granted recording authority merely because it is stored inside `Recordings`.
 
 ## Discovery and recovery rules
 
@@ -45,9 +49,25 @@ Unique-path allocation checks for any filesystem entity at a candidate path rath
 
 If a candidate cannot be inspected safely, SonicNest treats it as occupied and moves to the next numbered filename instead of risking overwrite.
 
+The same entity-aware collision principle is used for user-selected external export directories. A directory or broken symbolic link occupying an export basename forces a numbered destination rather than an overwrite attempt.
+
 ## Metadata reconciliation
 
-`AppController` accepts an indexed recording at startup only when `StorageService.isManagedAudioPath(...)` confirms that the path currently resolves to a regular file in the permitted managed location. Missing files, symbolic links, non-file entries, and out-of-bound paths are not retained as active Library metadata.
+`AppController` accepts an indexed recording at startup only when `StorageService.isManagedAudioPath(...)` confirms that the path:
+
+1. belongs to the permitted managed location;
+2. has a supported recording extension; and
+3. currently resolves to a regular file without following links.
+
+Missing files, unsupported regular files, symbolic links, non-file entries, and out-of-bound paths are not retained as Library metadata.
+
+## Managed storage accounting
+
+Recording and Trash counts/byte totals use the same top-level supported-regular-audio definition as recovery. Unsupported files, nested arbitrary files, directories, and links are excluded from Library audio totals.
+
+Temporary storage is accounted separately because processing backends can legitimately create non-audio or nested temporary artifacts.
+
+Automatic recording sequence allocation counts managed active/Trash audio entries, while the entity-aware unique-path allocator remains the final filename collision guard.
 
 This boundary is designed for local data safety. It does not claim that an application process can defend against an attacker who already has arbitrary code execution with the same operating-system privileges.
 
@@ -64,7 +84,17 @@ This boundary is designed for local data safety. It does not claim that an appli
 - recovery discovery that excludes symbolic links, nested files, and unsupported files;
 - active and Trash discovery isolation.
 
-`test/library_recovery_service_test.dart` covers active/Trash orphan reconstruction and deduplication. `test/app_controller_persistence_test.dart` covers persistence rollback behavior. `test/app_controller_output_safety_test.dart` covers failed processed-output cleanup without deleting caller-supplied external files.
+`test/storage_service_non_file_test.dart` covers:
+
+- directories named with audio extensions;
+- unsupported regular files inside managed storage;
+- non-file destination collisions;
+- recording/Trash byte and count accounting;
+- sequence counting that excludes unrelated managed-directory contents.
+
+`test/external_actions_test.dart` covers ordinary external-copy collisions, directory collisions, broken-symbolic-link collisions on supported hosts, batch mixed-success behavior, and duplicate basenames across a batch.
+
+`test/library_recovery_service_test.dart` covers active/Trash orphan reconstruction and deduplication. `test/app_controller_recovery_test.dart` covers end-to-end startup reconciliation and orphan recovery. `test/app_controller_persistence_test.dart` covers persistence rollback behavior. `test/app_controller_output_safety_test.dart` covers failed processed-output cleanup without deleting caller-supplied external files.
 
 ## Manual evidence still required
 
