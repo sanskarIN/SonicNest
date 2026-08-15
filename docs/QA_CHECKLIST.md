@@ -49,6 +49,18 @@ These generic checkboxes are intended to be executed again for the exact release
 - [x] Linux Package CI run `31867130938` validated the same managed-recovery source revision through release build, Debian construction/verification, package-manager installation, installed-payload validation, bounded GUI startup smoke, uninstall cleanup, and artifact upload.
 - [x] Repository Integrity Audit run `31867543888` validated the synchronized recovery-hardening project state and permanent workflow invariants.
 
+- [x] Managed storage now requires a supported regular audio file and refuses symbolic links, directories, unsupported regular files, and external paths as recording authority.
+- [x] Managed and external destination allocation treats ordinary files, directories, symbolic links, and broken symbolic links as occupied instead of overwriting/following them.
+- [x] Recording/Trash statistics and automatic sequence counting are covered against the same supported top-level regular-audio definition used by recovery.
+- [x] Active and managed-Trash orphan reconstruction plus startup removal of unsafe/missing/unsupported metadata is covered end-to-end by controller tests.
+- [x] A completed stopped recording whose metadata save fails remains on disk for later orphan recovery while its unsaved in-memory entry is removed.
+- [x] Failed processed-output and batch-registration cleanup is covered so a generated managed output can be removed without deleting a caller-supplied external path.
+- [x] Deterministic batch conversion tests cover per-file transcode failure isolation, external-copy failure isolation, stop-before/after-current behavior, and source-setting precedence.
+- [x] Recorder-service construction no longer eagerly instantiates the native recorder method channel; the backend is created only when recorder functionality is actually used.
+- [x] Core Flutter CI run `31870224720` validated source/test revision `e47b290a7255f126cfcf1436444a90cc32d10823`: analyzer **SUCCESS**, complete **87/87** unit suite **SUCCESS**, Android debug build **SUCCESS**, and Linux debug build **SUCCESS**.
+- [x] Windows run `31870087266`, Apple run `31870087249`, and Linux Package CI run `31870087317` are **SUCCESS** on application-code revision `72797fa477b9d88e2138b7ddf1d0f845cdd549ca`, which contains the final application code changes; `e47b290...` is a later test-only correction.
+- [ ] Checked-in Dart formatting is not yet clean under the CI Flutter/Dart toolchain: core run `31870224720` formatted 30 of 54 Dart files before analysis/tests. This repository-hygiene gap is tracked in `TODO.md` and must not be represented as formatter-clean release evidence.
+
 The automated entries above do **not** complete the unchecked real malformed-media corpus, real partially written orphan media, low-storage, permission-failure, abrupt process/power interruption, large-library UI/performance, accessibility, or physical-device gates later in this checklist.
 
 ## Startup and migration
