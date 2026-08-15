@@ -28,65 +28,81 @@ class LibraryRecoveryService {
         .toSet();
     final recovered = <RecordingEntry>[];
 
-    for (final file in await storage.managedRecordingFiles()) {
+    final candidates = <({File file, bool trashed})>[
+      for (final file in await storage.managedRecordingFiles())
+        (file: file, trashed: false),
+      for (final file in await storage.managedTrashFiles())
+        (file: file, trashed: true),
+    ];
+
+    for (final candidate in candidates) {
+      final file = candidate.file;
       final pathKey = _pathKey(file.path);
       if (knownPaths.contains(pathKey)) {
         continue;
       }
 
-      final format = _formatForPath(file.path);
-      if (format == null) {
+      final entry = await _recoverFile(file, trashed: candidate.trashed);
+      if (entry == null) {
         continue;
       }
-
-      FileStat stat;
-      try {
-        stat = await file.stat();
-      } on FileSystemException {
-        continue;
-      }
-      if (stat.type != FileSystemEntityType.file) {
-        continue;
-      }
-
-      var duration = Duration.zero;
-      var waveform = const <double>[];
-      try {
-        duration = await probeDuration(file.path);
-      } on Object {
-        // A partially written or damaged file should still be surfaced so the
-        // user can inspect, export, or delete the preserved managed copy.
-      }
-      try {
-        waveform = await extractWaveform(file.path);
-      } on Object {
-        // Waveform extraction is best effort during crash/orphan recovery.
-      }
-
-      final timestamp = stat.modified;
-      recovered.add(
-        RecordingEntry(
-          id: _idFactory(),
-          title: p.basenameWithoutExtension(file.path),
-          filePath: file.path,
-          durationMs: duration.isNegative ? 0 : duration.inMilliseconds,
-          sizeBytes: stat.size < 0 ? 0 : stat.size,
-          format: format,
-          bitRate: 0,
-          sampleRate: 0,
-          channels: 0,
-          createdAt: timestamp,
-          modifiedAt: timestamp,
-          tags: const ['Recovered'],
-          notes:
-              'Recovered from SonicNest managed storage after library metadata was missing.',
-          waveform: waveform,
-        ),
-      );
+      recovered.add(entry);
       knownPaths.add(pathKey);
     }
 
     return List.unmodifiable(recovered);
+  }
+
+  Future<RecordingEntry?> _recoverFile(File file, {required bool trashed}) async {
+    final format = _formatForPath(file.path);
+    if (format == null) {
+      return null;
+    }
+
+    FileStat stat;
+    try {
+      stat = await file.stat();
+    } on FileSystemException {
+      return null;
+    }
+    if (stat.type != FileSystemEntityType.file) {
+      return null;
+    }
+
+    var duration = Duration.zero;
+    var waveform = const <double>[];
+    try {
+      duration = await probeDuration(file.path);
+    } on Object {
+      // A partially written or damaged file should still be surfaced so the
+      // user can inspect, export, restore, or delete the preserved managed copy.
+    }
+    try {
+      waveform = await extractWaveform(file.path);
+    } on Object {
+      // Waveform extraction is best effort during crash/orphan recovery.
+    }
+
+    final timestamp = stat.modified;
+    return RecordingEntry(
+      id: _idFactory(),
+      title: p.basenameWithoutExtension(file.path),
+      filePath: file.path,
+      durationMs: duration.isNegative ? 0 : duration.inMilliseconds,
+      sizeBytes: stat.size < 0 ? 0 : stat.size,
+      format: format,
+      bitRate: 0,
+      sampleRate: 0,
+      channels: 0,
+      createdAt: timestamp,
+      modifiedAt: timestamp,
+      tags: const ['Recovered'],
+      notes: trashed
+          ? 'Recovered in Trash from SonicNest managed storage after Trash metadata was missing.'
+          : 'Recovered from SonicNest managed storage after library metadata was missing.',
+      waveform: waveform,
+      trashedAt: trashed ? timestamp : null,
+    );
   }
 
   RecordingFormat? _formatForPath(String path) {
