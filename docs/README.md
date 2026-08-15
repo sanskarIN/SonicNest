@@ -22,6 +22,7 @@ This directory contains the maintained technical, user, QA, branding, packaging,
 - [`QA_CHECKLIST.md`](QA_CHECKLIST.md) — complete evidence-based automated/manual QA matrix, including metadata/import automation evidence and intentionally unchecked real malformed-media, storage, performance, accessibility, hardware, and release gates.
 - [`RELEASE_EVIDENCE_TEMPLATE.md`](RELEASE_EVIDENCE_TEMPLATE.md) — structured record for exact commit, workflow, artifact, device, OS, microphone, routing, codec, accessibility, branding, performance, signing, and final-release evidence.
 - [`AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md`](AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md) — exact hosted release-candidate run, per-platform artifact checksums/digests, Android Debug-certificate classification, Windows portable startup-smoke evidence, repository-audit evidence, and the explicit boundary between automation and stable-release approval.
+- [`RELEASE_CANDIDATE_MANIFEST.md`](RELEASE_CANDIDATE_MANIFEST.md) — machine-readable candidate provenance design, per-platform checksum re-verification, source/run binding, Android non-production signing-state enforcement, regression coverage, and the stable-release evidence boundary.
 - Repository issue form **Device / Release QA report** — structured GitHub report for real-device or release-candidate observations.
 
 ## Release preparation
