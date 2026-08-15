@@ -48,8 +48,8 @@ jobs:
         run: flutter pub get
       - name: Generate deterministic branding source images
         run: dart tool/generate_brand_assets_v2.dart
-      - name: Format Dart sources
-        run: dart format lib test tool/generate_brand_assets_v2.dart
+      - name: Verify Dart formatting
+        run: dart format --output=none --set-exit-if-changed lib test tool/generate_brand_assets_v2.dart
       - name: Static analysis
         run: flutter analyze --no-fatal-infos
       - name: Unit tests
