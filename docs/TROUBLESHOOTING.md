@@ -20,7 +20,7 @@ Actions:
 
 SonicNest separates generic localized startup failure copy from technical detail so an underlying filesystem/settings error can remain diagnosable.
 
-The local Library metadata layer also attempts deterministic recovery before giving up: malformed individual records are isolated, structurally corrupt metadata is preserved to a timestamped `.corrupt.*` copy, and a valid `recordings.json.bak` can be restored after an interrupted metadata replacement. See **Metadata appears damaged or a backup remains** below and `docs/METADATA_INTEGRITY.md`.
+The local Library layer attempts deterministic recovery before giving up: malformed individual records are isolated, unsafe numeric/waveform metadata is normalized, structurally corrupt metadata is preserved to timestamped `.corrupt.*` copies, a valid `recordings.json.bak` can be restored after an interrupted replacement, and an unrecoverable metadata store is reset to a clean valid document only after diagnostics are preserved. Startup then reconciles metadata against managed storage and reconstructs supported managed recording files that are present on disk but missing from the index. See **Metadata appears damaged or a backup remains** and **A recording appears as Recovered after restart** below, plus `docs/METADATA_INTEGRITY.md`.
 
 ## 2. Microphone permission denied
 
@@ -377,21 +377,66 @@ SonicNest may leave diagnostic/recovery files next to its local metadata documen
 recordings.json
 recordings.json.bak
 recordings.json.corrupt.<timestamp>
+recordings.json.bak.corrupt.<timestamp>
 ```
 
 Expected automatic behavior:
 
 - a valid primary is preferred and a stale `.bak` is removed;
 - if the primary is missing and `.bak` is valid, the backup is restored to the primary path;
-- if the primary is structurally corrupt, a timestamped corrupt copy is preserved before a valid `.bak` is used;
+- if the primary is structurally corrupt, a collision-safe timestamped corrupt copy is preserved before a valid `.bak` is used;
 - malformed individual recording records are skipped instead of invalidating valid neighbors;
-- a corrupt backup is preserved for diagnosis rather than silently treated as valid data.
+- unsafe numeric/waveform values are normalized rather than trusted directly;
+- duplicate recording IDs and duplicate normalized file paths keep the first valid record and isolate later duplicates;
+- a corrupt backup is preserved for diagnosis rather than silently treated as valid data;
+- if neither the primary nor backup is usable, the corrupt documents are preserved and SonicNest writes a clean structurally valid empty metadata document;
+- after that reset, the same corrupt primary is not repeatedly copied on every launch;
+- startup then reconciles the surviving metadata against SonicNest-managed storage and attempts managed orphan recovery.
 
 Do not manually delete all metadata/recovery files as a first troubleshooting step. That can destroy evidence and organizer metadata even when the underlying audio files still exist. Preserve privacy-sensitive local files securely, capture the exact build/OS and error, and use `docs/METADATA_INTEGRITY.md` to understand the expected recovery sequence.
 
-Automatic metadata recovery does not reconstruct an audio file that has been deleted or damaged outside SonicNest.
+Automatic metadata recovery cannot recreate audio bytes that were deleted or irreversibly damaged outside SonicNest.
 
-## 29. GitHub Actions build passes but the app fails on hardware
+## 29. A recording appears as Recovered after restart
+
+A recording tagged **Recovered** means SonicNest found a supported audio file in its own managed `Recordings` directory but did not find a matching metadata entry after startup reconciliation.
+
+This can happen when:
+
+- the audio file was successfully written but the process stopped before metadata persistence completed;
+- metadata persistence failed after a managed audio file already existed;
+- the metadata document was unrecoverable and had to be reset after diagnostic preservation;
+- a previous permanent-delete attempt removed metadata first but the managed file deletion did not complete.
+
+Expected behavior:
+
+- the original managed audio file is preserved;
+- SonicNest creates a new unique metadata ID;
+- the filename becomes the recovery title;
+- filesystem modification time and size are reused;
+- duration and waveform are recovered on a best-effort basis;
+- unknown bitrate/sample-rate/channel information remains unknown instead of being invented;
+- if media probing fails, the file can still remain visible so it can be inspected, exported, or deleted intentionally.
+
+If the recovered file plays normally, you can rename/reorganize it like another library item. If it is damaged or unexpectedly appears repeatedly, preserve the file and diagnostic metadata privately and report the exact build/platform/reproduction conditions. Real partially written and damaged-media recovery remains a physical/filesystem QA gate.
+
+## 30. A metadata item disappears after restart
+
+Startup intentionally removes metadata entries that are unsafe or stale when the referenced audio path is outside SonicNest-managed recording/Trash storage or the referenced managed file no longer exists.
+
+This prevents a tampered or obsolete metadata path from being trusted as an instruction for later rename/Trash/restore/delete operations.
+
+If an item disappears unexpectedly:
+
+1. Determine whether its underlying file was manually moved, renamed, or deleted outside SonicNest.
+2. Confirm whether the file is still inside the app's managed `Recordings` or `.trash` directory.
+3. Preserve metadata diagnostics and logs before making more filesystem changes.
+4. If a supported file still exists at the top level of managed `Recordings`, restart recovery should reconstruct a missing metadata entry.
+5. If the file exists only outside managed storage, do not manually rewrite metadata to point at it; import the file through SonicNest instead.
+
+The managed-path boundary is a data-safety guard, not a general-purpose filesystem sandbox.
+
+## 31. GitHub Actions build passes but the app fails on hardware
 
 Compilation is necessary but not sufficient for a recorder.
 
@@ -409,7 +454,7 @@ Create a **Device / Release QA report** using the repository issue form and incl
 
 Do not upload tokens, signing credentials, private certificates, personal recordings, device serial numbers, or other sensitive information.
 
-## 30. Before reporting a bug
+## 32. Before reporting a bug
 
 Check:
 
