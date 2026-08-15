@@ -1,0 +1,138 @@
+name: One-shot Dart format cleanup
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/zz-format-cleanup.yml'
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  format-and-harden:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Configure commit identity
+        run: |
+          git config user.name "Sanskar"
+          git config user.email "sanskarin@outlook.in"
+      - name: Commit canonical Dart formatting
+        shell: bash
+        run: |
+          dart format lib test tool/generate_brand_assets_v2.dart
+          if ! git diff --quiet -- lib test tool/generate_brand_assets_v2.dart; then
+            git add lib test tool/generate_brand_assets_v2.dart
+            git commit -m "style: commit canonical Dart formatting"
+          fi
+          echo "FORMAT_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - name: Make core CI enforce formatting without rewriting source
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('.github/workflows/ci.yml')
+          s = p.read_text()
+          s = s.replace(
+              '      - name: Format Dart sources\n        run: dart format lib test tool/generate_brand_assets_v2.dart\n',
+              '      - name: Verify Dart formatting\n        run: dart format --output=none --set-exit-if-changed lib test tool/generate_brand_assets_v2.dart\n',
+          )
+          p.write_text(s)
+          PY
+          git add .github/workflows/ci.yml
+          git commit -m "ci: enforce Dart formatting without mutating source"
+      - name: Close formatter hygiene TODOs
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('TODO.md')
+          s = p.read_text()
+          s = s.replace('- [ ] Commit the Dart formatter output for the CI Flutter/Dart toolchain.', '- [x] Commit the Dart formatter output for the CI Flutter/Dart toolchain.')
+          s = s.replace('- [ ] After the tracked Dart tree is formatter-clean, change CI formatting from a mutating preparation step', '- [x] After the tracked Dart tree is formatter-clean, change CI formatting from a mutating preparation step')
+          s = s.replace('Core CI run `31870224720` formats 30 of 54 checked-in Dart files before analysis/tests, so analyzer/test success currently applies to the formatted checkout rather than proving the tracked Dart tree is formatter-clean.', 'Historical core CI run `31870224720` exposed formatting drift in 30 of 54 Dart files; the canonical formatter output is now committed and the CI enforcement step is non-mutating.')
+          p.write_text(s)
+          PY
+          git add TODO.md
+          git commit -m "docs: close Dart formatter hygiene tasks"
+      - name: Synchronize formatter documentation
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          files = [Path('README.md'), Path('docs/RELEASING.md')]
+          for p in files:
+              s = p.read_text()
+              s = s.replace('dart format lib test tool/generate_brand_assets_v2.dart', 'dart format --output=none --set-exit-if-changed lib test tool/generate_brand_assets_v2.dart')
+              p.write_text(s)
+          p = Path('docs/QA_CHECKLIST.md')
+          s = p.read_text().replace('`dart format --output=none --set-exit-if-changed lib test`', '`dart format --output=none --set-exit-if-changed lib test tool/generate_brand_assets_v2.dart`')
+          p.write_text(s)
+          PY
+          git add README.md docs/RELEASING.md docs/QA_CHECKLIST.md
+          git commit -m "docs: align formatter commands with enforcement gate"
+      - name: Update project-state formatter status
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('PROJECT_STATE.md')
+          s = p.read_text()
+          old = '  - checked-in Dart tree currently has formatter drift; core CI formats 30 of 54 Dart files before analysis/tests and TODO tracks committing formatter output plus later non-mutating enforcement\n'
+          s = s.replace(old, '')
+          s = s.replace('    formatting_note: CI formatted 30 of 54 checked-in Dart files before analyzer/tests; tracked tree is not yet formatter-clean', '    formatting_note: historical run exposed 30-file drift; canonical formatting is now committed and core CI uses non-mutating format enforcement; newer validation is dispatched below')
+          s = s.replace('  - commit the CI-toolchain Dart formatter output and then make formatting a non-mutating enforcement gate\n', '')
+          s = s.replace('- Formatter boundary: core CI currently mutates formatting for 30 of 54 Dart files before analysis/tests. The tracked tree is therefore **not yet claimed formatter-clean**; this is explicitly tracked in `TODO.md`.', '- Formatter boundary: historical core run `31870224720` exposed 30-file drift; canonical formatter output is now committed and core CI now checks formatting without rewriting source. Fresh validation is dispatched for the formatted revision.')
+          p.write_text(s)
+          PY
+          git add PROJECT_STATE.md
+          git commit -m "docs: mark formatter hygiene implementation complete"
+      - name: Append formatter-cleanup ledger
+        shell: bash
+        run: |
+          CI_SHA=$(git log -1 --format=%H -- .github/workflows/ci.yml)
+          TODO_SHA=$(git log -1 --format=%H -- TODO.md)
+          DOCS_SHA=$(git log -1 --format=%H -- README.md docs/RELEASING.md docs/QA_CHECKLIST.md)
+          STATE_SHA=$(git log -1 --format=%H -- PROJECT_STATE.md)
+          export FORMAT_SHA CI_SHA TODO_SHA DOCS_SHA STATE_SHA
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+          p = Path('what_changed.md')
+          s = p.read_text()
+          marker = '## 2026-08-15 — Canonical Dart formatting cleanup and enforcement'
+          if marker not in s:
+              s += f'''\n\n{marker}\n\nThis section closes the repository-only formatting hygiene item identified by core run `31870224720`.\n\n- `{os.environ['FORMAT_SHA']}` — canonical `dart format` output for `lib`, `test`, and `tool/generate_brand_assets_v2.dart` committed using the same stable Flutter/Dart toolchain class used by CI.\n- `{os.environ['CI_SHA']}` — core CI changed from a mutating `dart format` preparation step to `dart format --output=none --set-exit-if-changed ...`; formatting drift now fails validation instead of being silently rewritten before analysis/tests.\n- `{os.environ['TODO_SHA']}` — formatter hygiene implementation/enforcement tasks closed in `TODO.md`.\n- `{os.environ['DOCS_SHA']}` — README, releasing guidance, and QA commands synchronized with the non-mutating formatting gate.\n- `{os.environ['STATE_SHA']}` — project state no longer lists checked-in formatter drift as an open limitation.\n\nThe prior `31870224720` analyzer/test/build result remains historical evidence that exposed the drift. Fresh core/platform/package validations are dispatched after this one-shot helper removes itself so the formatter-clean source and enforcement workflow are validated together.\n'''
+          p.write_text(s)
+          PY
+          git add what_changed.md
+          git commit -m "docs: append canonical formatting cleanup ledger"
+      - name: Remove helper and push formatter-clean source
+        shell: bash
+        run: |
+          git rm .github/workflows/zz-format-cleanup.yml
+          git commit -m "chore: remove one-shot Dart format cleanup"
+          git push origin HEAD:main
+      - name: Dispatch clean-source validation workflows
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          for workflow in ci.yml windows.yml macos.yml linux-package.yml repository-audit.yml; do
+            curl --fail-with-body -L \
+              -X POST \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow}/dispatches" \
+              -d '{"ref":"main"}'
+          done
