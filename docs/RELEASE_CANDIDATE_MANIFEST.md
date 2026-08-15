@@ -72,6 +72,10 @@ The final manifest directory also contains its own `SHA256SUMS.txt` and a releas
 
 The permanent Repository Integrity Audit compiles Python helpers and runs these tests whenever Python release tooling or its test suite changes.
 
+## Hosted integration validation
+
+The maintained release-candidate workflow downloads the five platform artifact sets only after all platform jobs succeed, re-verifies their payload checksum records through the builder, and then uploads the unified manifest as a separate short-retention artifact. Exact successful run evidence is recorded in the project state and continuation ledger after the hosted matrix completes.
+
 ## Evidence boundary
 
 A green provenance-manifest job proves that the hosted artifacts downloaded by that job match their per-platform checksum records and that the manifest binds those bytes to the recorded source SHA and workflow run.
