@@ -60,6 +60,18 @@ For a final signed candidate, require Authenticode validation of the packaged So
 
 `-RequireSignature` is intentionally not used for ordinary public CI because the repository does not contain or provision the maintainer's private signing identity.
 
+## Hosted startup smoke
+
+After structural verification, hosted Windows CI also performs a bounded startup check on the **extracted portable ZIP**:
+
+```powershell
+./tool/smoke_test_windows_portable.ps1 -StartupSeconds 8
+```
+
+The smoke helper extracts the archive into a temporary directory, starts `sonic_nest.exe` with that directory as its working directory, requires the process to remain alive for the configured bounded startup interval, then terminates the validation process and removes the temporary extraction directory where possible.
+
+This is deliberately a narrow packaging/startup check. A passing hosted smoke does **not** prove microphone permission/capture, input routing, media devices, foreground/background behavior, accessibility, real Explorer/taskbar/Start branding, long-duration reliability, signed trust prompts, or general Windows release quality. Those remain real-system release evidence gates.
+
 ## Portable use
 
 Users must extract the complete ZIP before launching `sonic_nest.exe`. Running only the executable without its adjacent Flutter runtime, plugins, and `data` directory is unsupported.
@@ -75,11 +87,12 @@ Before a Windows portable ZIP can be called a stable public release:
 3. apply the maintainer-selected Authenticode process to the binaries that require signing;
 4. package the signed bytes;
 5. run `tool/verify_windows_portable.ps1 -RequireSignature` on the final archive;
-6. regenerate and publish the checksum **after** signing/package bytes are final;
-7. test extraction, launch, microphone capture/routing, playback, export, accessibility, branding, and cleanup on representative Windows systems;
-8. record the tested Windows versions/architectures and signature identity in release evidence;
-9. attach only that verified ZIP and matching checksum to the corresponding GitHub Release;
-10. do not reuse an unsigned validation checksum for a signed artifact.
+6. run the bounded portable startup smoke on the final packaged bytes;
+7. regenerate and publish the checksum **after** signing/package bytes are final;
+8. test extraction, launch, microphone capture/routing, playback, export, accessibility, branding, and cleanup on representative Windows systems;
+9. record the tested Windows versions/architectures and signature identity in release evidence;
+10. attach only that verified ZIP and matching checksum to the corresponding GitHub Release;
+11. do not reuse an unsigned validation checksum for a signed artifact.
 
 ## Future installer/store channels
 
