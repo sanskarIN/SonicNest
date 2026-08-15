@@ -161,3 +161,18 @@ Implemented: defensive model decoding, unsafe numeric/waveform normalization, st
 ## Native branding and packaging status
 
 Implemented: deterministic brand source generation, Android adaptive/monochrome/full launcher inputs, Android/iOS native splash resources, Android/iOS/macOS/Windows icon generation integrated into build workflows, Debian `.deb` packaging with desktop/AppStream integration and hosted install/smoke/uninstall validation, Windows versioned portable ZIP packaging with release-mode hosted build/verify/startup-smoke validation, and Android hosted release-mode package/signing-state inspection. Selected initial public channels are Google Play for Android (Play App Signing + protected upload key), TestFlight/App Store for iOS, signed/notarized GitHub Releases for macOS, GitHub Releases for Linux (`.deb` + SHA-256), and GitHub Releases for Windows (final Authenticode-verified portable ZIP + post-signing SHA-256). Remaining work is real OS-level visual/audio/accessibility inspection, representative package/install/device evidence, private signing/provisioning/notarization configuration, store submissions, real screenshots, and stable-release approval.
+
+
+## Unified release-candidate provenance milestone — completed 2026-08-15
+
+- [x] Add a standard-library Python builder for one machine-readable release-candidate provenance manifest.
+- [x] Require and re-verify checksummed Android, Linux, Windows, macOS, and iOS hosted candidate evidence.
+- [x] Bind the manifest to exact source SHA, application version, workflow run, and run attempt.
+- [x] Preserve platform signing classifications and explicitly keep hosted candidates at `stableReleaseApproved: false`.
+- [x] Add direct builder regression tests and repository/workflow integration tests.
+- [x] Run Python release-tool regressions in the permanent Repository Integrity Audit.
+- [x] Validate the complete provenance path in hosted run `31876035202`, including the final aggregation job.
+- [x] Preserve exact manifest/payload hashes in source-controlled release evidence.
+- [x] Return the maintained release-candidate workflow to manual dispatch after the controlled validation trigger.
+
+No further repository-only release-automation milestone is currently identified. Next milestones remain evidence-driven: physical-device audio/lifecycle QA, real filesystem/storage recovery, accessibility, sustained performance/soak testing, representative desktop/package QA, protected production signing/notarization, store review, and final stable-release approval.
