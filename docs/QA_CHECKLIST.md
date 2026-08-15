@@ -13,7 +13,7 @@ Do not mark SonicNest release-ready until these checks have been executed on rep
 - [ ] macOS debug build succeeds.
 - [ ] unsigned iOS debug build succeeds.
 
-These generic checkboxes are intended to be executed again for the exact release-candidate revision. Current repository evidence for the metadata/import reliability continuation is recorded separately below so one historical CI run is not mistaken for final-release approval.
+These generic checkboxes are intended to be executed again for the exact release-candidate revision. Current repository evidence for completed reliability continuations is recorded separately below so one historical CI run is not mistaken for final-release approval.
 
 ### Repository reliability automation evidence
 
@@ -22,15 +22,34 @@ These generic checkboxes are intended to be executed again for the exact release
 - [x] Structurally invalid metadata documents are preserved to timestamped diagnostic copies.
 - [x] Interrupted replacement recovery from a valid `recordings.json.bak` is covered by filesystem tests.
 - [x] Corrupt-primary fallback to a valid backup is covered while preserving the corrupt primary for diagnosis.
+- [x] Corrupt primary and backup documents with no valid recovery source are both preserved before a clean valid metadata store is written.
+- [x] A recovered/reset corrupt primary is not copied repeatedly on every later startup.
+- [x] Duplicate recording IDs and duplicate normalized file paths keep the first valid metadata record and isolate later duplicates.
+- [x] Negative/non-finite duration, size, bitrate, sample-rate, channel, and marker-position metadata is normalized safely.
+- [x] Non-finite waveform samples are removed and recovered finite waveform values are bounded.
+- [x] `channels: 0` remains available as the unknown imported-media state rather than being rewritten as invented channel data.
 - [x] A deterministic 3,000-entry metadata save/load filesystem round-trip is covered by the test suite.
+- [x] Managed rename, duplicate, Trash, restore, and permanent-delete operations reject unrelated external paths.
+- [x] Collision-safe managed recording allocation is covered by filesystem tests.
+- [x] Supported top-level managed recording discovery is covered without recursive arbitrary-directory scanning.
+- [x] Managed orphan recovery skips already indexed paths and reconstructs missing supported files.
+- [x] Damaged-media orphan recovery preserves the managed file as a visible recovered entry even when duration/waveform probing fails.
+- [x] Managed orphan reconstruction is covered for every represented recording format.
 - [x] Audio import copy failure is isolated without deleting an unrelated managed path.
 - [x] Audio import probe/waveform failures remove the copied managed file.
 - [x] Multi-file import controller logic continues after isolated malformed/missing audio failures while metadata-persistence failure remains fail-fast.
+- [x] Metadata-only single/batch controller mutations restore previous in-memory state when persistence fails.
+- [x] Rename, move-to-Trash, and restore contain rollback behavior when their matching metadata persistence fails.
+- [x] Permanent delete persists metadata before managed-file deletion and restores metadata if deletion fails while the file remains present.
 - [x] Core Flutter CI run `31807193932` validated source `a88aeadadda017b0aced4dbc25c8426a27364b77`: formatting, analyzer, unit tests, Android debug APK, and Linux debug build all succeeded.
 - [x] Windows run `31807141053` and Apple run `31807141166` validated import-controller source `3bf63e69186a7a538f7d0587f3d361e00c2e29e9` across Windows, macOS, and unsigned-iOS debug builds.
-- [x] Repository Integrity Audit run `31807662729` validated the cleaned permanent workflow set and workflow allowlist/read-only invariant.
+- [x] Managed-recovery source `f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe` passed formatting, analyzer, the complete unit-test suite, Android debug APK, and Linux debug build in core run `31867130926`.
+- [x] Windows run `31867130920` validated the same managed-recovery source revision with a successful Windows debug build.
+- [x] Apple run `31867130998` validated the same managed-recovery source revision with successful macOS and unsigned-iOS debug builds.
+- [x] Linux Package CI run `31867130938` validated the same managed-recovery source revision through release build, Debian construction/verification, package-manager installation, installed-payload validation, bounded GUI startup smoke, uninstall cleanup, and artifact upload.
+- [x] Repository Integrity Audit run `31867543888` validated the synchronized recovery-hardening project state and permanent workflow invariants.
 
-The automated entries above do **not** complete the unchecked real malformed-media corpus, low-storage, permission-failure, abrupt-interruption, large-library UI/performance, accessibility, or physical-device gates later in this checklist.
+The automated entries above do **not** complete the unchecked real malformed-media corpus, real partially written orphan media, low-storage, permission-failure, abrupt process/power interruption, large-library UI/performance, accessibility, or physical-device gates later in this checklist.
 
 ## Startup and migration
 
@@ -39,6 +58,16 @@ The automated entries above do **not** complete the unchecked real malformed-med
 - [ ] Existing metadata/settings from an older development build load without data loss.
 - [ ] Legacy recording settings that do not contain smart-naming fields receive safe defaults.
 - [ ] Light, dark, and system theme selection remains correct across restart.
+- [ ] A valid primary metadata file removes a stale completed `.bak` without changing valid Library entries.
+- [ ] A missing primary plus valid `.bak` restores the backup on a representative real filesystem.
+- [ ] A corrupt primary plus valid `.bak` preserves the corrupt primary and restores the backup on a representative real filesystem.
+- [ ] Corrupt primary and backup inputs are preserved before a clean store is created when neither is usable.
+- [ ] Startup reconciliation removes a deliberately stale missing-file metadata entry without touching unrelated files.
+- [ ] Startup reconciliation rejects an out-of-managed-storage metadata path without modifying the external file.
+- [ ] A supported orphan audio file in managed `Recordings` is reconstructed and visibly tagged `Recovered`.
+- [ ] A recovered valid audio file plays/exports normally after reconstruction.
+- [ ] A privacy-safe partially written/damaged managed orphan remains visible even if probing fails.
+- [ ] Restart after successful orphan reconstruction does not create a duplicate recovered entry.
 
 ## Recording basics
 
@@ -174,6 +203,9 @@ Verify on each target platform which settings are honored by the native recorder
 - [ ] Empty Trash removes all Trash entries.
 - [ ] Active playback stops before deleting the loaded file.
 - [ ] Confirmation behavior matches the user preference.
+- [ ] Tampered/out-of-bound metadata cannot cause permanent deletion of an unrelated external file.
+- [ ] Controlled deletion failure with the managed file still present restores the metadata entry.
+- [ ] Controlled process interruption after metadata-first deletion but before file deletion is recovered as a managed orphan on next startup.
 
 ## Managed storage
 
@@ -183,6 +215,12 @@ Verify on each target platform which settings are honored by the native recorder
 - [ ] Temporary cleanup removes stale temporary files when no recording is active.
 - [ ] Temporary cleanup is blocked while recording.
 - [ ] Files that are actively used by a platform codec are not destructively forced closed.
+- [ ] Rename refuses a source path outside managed active recordings.
+- [ ] Duplicate refuses a source path outside managed recording/Trash storage.
+- [ ] Move to Trash refuses a source path outside managed active recordings.
+- [ ] Restore refuses a source path outside managed Trash.
+- [ ] Managed delete refuses a source path outside managed recording/Trash storage.
+- [ ] Collision-safe allocation never overwrites an existing same-title managed recording.
 
 ## Playback
 
@@ -286,8 +324,14 @@ Verify on each target platform which settings are honored by the native recorder
 - [ ] Verify metadata is not persisted for a file that was never successfully created under a real filesystem failure.
 - [ ] Verify the app can recover after storage is made available again.
 - [ ] Exercise an interrupted metadata replacement under controlled real filesystem/process interruption and verify the recovery record.
+- [ ] Force a metadata-save failure after rename and verify the file returns to its original path.
+- [ ] Force a metadata-save failure after move-to-Trash and verify the file returns to active managed storage.
+- [ ] Force a metadata-save failure after restore and verify the file returns to Trash.
+- [ ] Interrupt the process after a managed recording exists but before metadata registration; verify next startup reconstructs exactly one `Recovered` entry.
+- [ ] Interrupt permanent deletion after metadata removal but before managed file deletion; verify next startup recovers the preserved orphan.
+- [ ] Revoke or deny access to a managed file during mutation and verify SonicNest surfaces a recoverable failure without deleting unrelated data.
 
-## Malformed-media import corpus
+## Malformed-media import and recovery corpus
 
 - [ ] Import privacy-safe truncated audio files on Android.
 - [ ] Import privacy-safe truncated audio files on iOS.
@@ -297,6 +341,10 @@ Verify on each target platform which settings are honored by the native recorder
 - [ ] Include mislabeled extensions, unsupported codec/container combinations, zero-byte files, and probe failures where safe to reproduce.
 - [ ] Select malformed and valid files together and verify later valid files continue after isolated failures on each target platform.
 - [ ] Verify failed managed copies are cleaned and no false Library entries remain.
+- [ ] Place a privacy-safe valid supported orphan file in managed `Recordings`; verify it is reconstructed once.
+- [ ] Place a privacy-safe truncated/partially written supported orphan in managed `Recordings`; verify the file remains visible even when probing fails.
+- [ ] Verify an unsupported extension in managed `Recordings` is not auto-indexed as audio.
+- [ ] Verify nested arbitrary files are not recursively pulled into the Library by orphan recovery.
 
 ## Soak and performance
 
@@ -309,6 +357,7 @@ Verify on each target platform which settings are honored by the native recorder
 - [ ] Thousands of metadata entries library UI behavior and startup latency.
 - [ ] Thousands-entry Library memory/scroll/search/filter profiling.
 - [ ] Long-audio seeking and editor operations do not exhibit uncontrolled memory growth.
+- [ ] Orphan scan startup cost is profiled with a large real managed recording directory.
 
 ## Privacy and release
 
@@ -326,7 +375,7 @@ Verify on each target platform which settings are honored by the native recorder
 
 ## Release rule
 
-A checkbox is evidence, not decoration. If a test requires physical hardware, a platform account, signing identity, store dashboard, external device, screen reader, or long-running test, leave it unchecked until that test has actually been performed and recorded.
+A checkbox is evidence, not decoration. If a test requires physical hardware, a platform account, signing identity, store dashboard, external device, screen reader, real filesystem failure, abrupt process interruption, partially written media, or long-running test, leave it unchecked until that test has actually been performed and recorded.
 
 ## External-folder batch export
 
@@ -402,6 +451,7 @@ Repository implementation/automation evidence:
 - [x] Package verification checks control metadata, executable permissions, desktop entry, AppStream metadata, icon presence, and SHA-256 integrity.
 - [x] Historical Linux Package CI run `31783749267` validated source `f2c773e59b27a2aaac77e0590e20441ed7eba03f` through structural package verification.
 - [x] Linux Package CI run `31785105648` validated source `a07468b4b7c14a76b9bce537bbe0455e4539e6bf` through release build, `.deb` construction, structural verification, package-manager installation, installed-payload validation, bounded virtual-display startup smoke, package-manager removal, uninstall cleanup verification, and artifact upload.
+- [x] Current recovery-hardening Linux Package CI run `31867130938` validated source `f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe` through the same complete automated release-build/package/install/startup/uninstall/artifact path.
 
 Real-system/release-candidate review:
 
@@ -412,6 +462,7 @@ Real-system/release-candidate review:
 - [ ] Launch SonicNest directly from `/opt/sonicnest/sonic_nest`.
 - [ ] Verify launcher, menu, task-switcher, and AppStream surfaces use the expected SonicNest icon/identity.
 - [ ] Verify microphone permission/capture and representative playback/import/export behavior from the installed package.
+- [ ] Verify managed metadata/orphan recovery with a privacy-safe controlled scenario in the installed package.
 - [ ] Verify upgrade behavior from a prior compatible candidate package.
 - [ ] Verify uninstall removes the package-owned application payload and desktop integration.
 - [ ] Verify no user recording/library data is silently deleted merely because the application package is removed.
