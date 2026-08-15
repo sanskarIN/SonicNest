@@ -13,7 +13,7 @@ Do not mark SonicNest release-ready until these checks have been executed on rep
 - [ ] macOS debug build succeeds.
 - [ ] unsigned iOS debug build succeeds.
 
-These generic checkboxes are intended to be executed again for the exact release-candidate revision. Current repository evidence for completed reliability continuations is recorded separately below so one historical CI run is not mistaken for final-release approval.
+These generic checkboxes are intended to be executed again for the exact public release-candidate revision. Current repository evidence for completed reliability and hosted release-candidate continuations is recorded separately below so one historical CI run is not mistaken for final-release approval.
 
 ### Repository reliability automation evidence
 
@@ -48,7 +48,6 @@ These generic checkboxes are intended to be executed again for the exact release
 - [x] Apple run `31867130998` validated the same managed-recovery source revision with successful macOS and unsigned-iOS debug builds.
 - [x] Linux Package CI run `31867130938` validated the same managed-recovery source revision through release build, Debian construction/verification, package-manager installation, installed-payload validation, bounded GUI startup smoke, uninstall cleanup, and artifact upload.
 - [x] Repository Integrity Audit run `31867543888` validated the synchronized recovery-hardening project state and permanent workflow invariants.
-
 - [x] Managed storage now requires a supported regular audio file and refuses symbolic links, directories, unsupported regular files, and external paths as recording authority.
 - [x] Managed and external destination allocation treats ordinary files, directories, symbolic links, and broken symbolic links as occupied instead of overwriting/following them.
 - [x] Recording/Trash statistics and automatic sequence counting are covered against the same supported top-level regular-audio definition used by recovery.
@@ -60,14 +59,28 @@ These generic checkboxes are intended to be executed again for the exact release
 - [x] Core Flutter CI run `31870224720` validated source/test revision `e47b290a7255f126cfcf1436444a90cc32d10823`: analyzer **SUCCESS**, complete **87/87** unit suite **SUCCESS**, Android debug build **SUCCESS**, and Linux debug build **SUCCESS**.
 - [x] Windows run `31870087266`, Apple run `31870087249`, and Linux Package CI run `31870087317` are **SUCCESS** on application-code revision `72797fa477b9d88e2138b7ddf1d0f845cdd549ca`, which contains the final application code changes; `e47b290...` is a later test-only correction.
 - [x] Historical formatter drift exposed by core run `31870224720` is closed: canonical formatter output is committed in `22c1d46e077625d6e1964d56716700727d1800dc`, core CI uses a non-mutating `--set-exit-if-changed` gate from `704b0f60aae8f179f4f41875c336d2052b45391e`, and formatter-clean run `31870933447` passed formatting, analysis, the full unit suite, Android debug, and Linux debug on source revision `4e0fbf16534a60e2d3209c5ec5f54d4982903f8c`.
-
 - [x] Formatter-clean Windows run `31870933908` succeeded on source revision `4e0fbf16534a60e2d3209c5ec5f54d4982903f8c`.
 - [x] Formatter-clean Apple run `31870933903` succeeded for macOS debug and unsigned-iOS debug on source revision `4e0fbf16534a60e2d3209c5ec5f54d4982903f8c`.
 - [x] Formatter-clean Linux Package CI run `31870933982` succeeded on source revision `4e0fbf16534a60e2d3209c5ec5f54d4982903f8c`, including release bundle, `.deb` build/verification, install, installed-app smoke, uninstall, and artifact publication.
 - [x] Source-controlled cross-platform listing/privacy draft exists at `docs/STORE_LISTING.md`; final store-console answers still require exact-candidate and then-current platform-policy review.
+- [x] Android public distribution policy is decided in `docs/ANDROID_DISTRIBUTION_POLICY.md`; protected upload-key/Play App Signing credentials remain maintainer-owned release work.
+- [x] Apple distribution policy is decided in `docs/APPLE_DISTRIBUTION_POLICY.md`; actual provisioning/signing/notarization/App Store Connect credentials remain maintainer-owned release work.
 - [x] Windows public signing policy is decided in `docs/WINDOWS_SIGNING_POLICY.md`; actual Authenticode credential/service provisioning remains maintainer-owned release work.
 
-The automated entries above do **not** complete the unchecked real malformed-media corpus, real partially written orphan media, low-storage, permission-failure, abrupt process/power interruption, large-library UI/performance, accessibility, or physical-device gates later in this checklist.
+### Final hosted release-candidate automation evidence — 2026-08-15
+
+- [x] Clean candidate source `048870ec8dc26a16e2451310460d3e03c9084dc7` passed Release Candidate Validation run `31873121457` with **SUCCESS** for source preflight and all Android/Linux/Windows/macOS/iOS release-mode jobs.
+- [x] Android release-mode APK/AAB package identity and signing state were verified before upload; the artifacts use `C=US, O=Android, CN=Android Debug` and are explicitly **NON-PRODUCTION**.
+- [x] Android candidate SHA-256 values are recorded: APK `1fe7ea48d771209f4bfea097fc7d9e723cff00411b2541ee848e7ec20d6c271e`, AAB `ecaf9842980b17af06f3b3f90898d286a3b38ebf0b15259271af2f07dab72f4f`.
+- [x] Linux release bundle and Debian `.deb` were built/verified in the same candidate run; `.deb` SHA-256 is `414f11ad877c7c51861a14817cd3900d2bb77d3b49ea949d601e3686d5346498`.
+- [x] Windows release portable ZIP was built, structurally verified, extracted, bounded-startup-smoked, and uploaded in the same candidate run; ZIP SHA-256 is `60f5680548b0352d5230b6d40acc17a8b8b12d075b2ce1fd08c6209f565e3eb1`.
+- [x] Permanent Windows Build run `31872928500` independently passed Windows release portable build/verify/extracted-startup-smoke and artifact publication.
+- [x] macOS release archive SHA-256 `364c0d8f84c2779c45a36e13fd59d6bbcceebe03f62662a41dc4e2f9178d4af3` and iOS no-codesign archive SHA-256 `8d1209b94aa1aaff4369dff041ace9698bf4dcd5e0e6363a0fd470c50ee2e54d` are recorded.
+- [x] Clean candidate-tree Repository Integrity Audit run `31873122160` passed on the exact candidate SHA.
+- [x] Strengthened Repository Integrity Audit run `31874506476` passed after `.yaml` workflow discovery and `permissions: write-all`/write-scope rejection were added.
+- [x] Exact inner checksums, workflow artifact digests, Android certificate fingerprints, and release-boundary notes are source-controlled in `docs/AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md`.
+
+The automated entries above do **not** complete the unchecked real malformed-media corpus, real partially written orphan media, low-storage, permission-failure, abrupt process/power interruption, large-library UI/performance, accessibility, physical-device, protected-signing, notarization, store-console, or stable-release gates later in this checklist.
 
 ## Startup and migration
 
@@ -454,10 +467,14 @@ iOS/macOS real-device/release-candidate review:
 
 Windows real-device/release-candidate review:
 
-- [ ] Windows icon is checked in Explorer.
+- [ ] Extract the complete versioned portable ZIP before launching SonicNest.
+- [ ] Windows icon is checked in Explorer for the packaged executable.
 - [ ] Windows icon is checked in taskbar/pinned-taskbar surfaces.
-- [ ] Windows icon is checked in Start/Search and shortcut surfaces.
-- [ ] Final installer/package icon is checked once a distribution format is selected.
+- [ ] Windows icon is checked in Start/Search surfaces reached through normal Windows interaction.
+- [ ] Verify the extracted portable folder contains the complete runtime/data bundle and launches without copying only `sonic_nest.exe` elsewhere.
+- [ ] Verify the portable channel does not claim installer-created shortcuts, registry entries, file associations, services, or machine-wide state.
+- [ ] Verify microphone/routing, playback/import/export, accessibility, managed recovery, and cleanup on representative Windows systems.
+- [ ] Verify final Authenticode status on the exact public Windows candidate.
 
 Linux Debian packaging review:
 
@@ -470,6 +487,7 @@ Repository implementation/automation evidence:
 - [x] Historical Linux Package CI run `31783749267` validated source `f2c773e59b27a2aaac77e0590e20441ed7eba03f` through structural package verification.
 - [x] Linux Package CI run `31785105648` validated source `a07468b4b7c14a76b9bce537bbe0455e4539e6bf` through release build, `.deb` construction, structural verification, package-manager installation, installed-payload validation, bounded virtual-display startup smoke, package-manager removal, uninstall cleanup verification, and artifact upload.
 - [x] Current recovery-hardening Linux Package CI run `31867130938` validated source `f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe` through the same complete automated release-build/package/install/startup/uninstall/artifact path.
+- [x] Final hosted release-candidate run `31873121457` built and verified Linux release artifacts from source `048870ec8dc26a16e2451310460d3e03c9084dc7`; the exact Debian candidate checksum is recorded in `docs/AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md`.
 
 Real-system/release-candidate review:
 
