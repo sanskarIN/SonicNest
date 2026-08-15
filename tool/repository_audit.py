@@ -49,6 +49,7 @@ REQUIRED_FILES = (
     "docs/UNSIGNED_ARTIFACTS.md",
     "docs/USER_GUIDE.md",
     "docs/TROUBLESHOOTING.md",
+    "docs/WINDOWS_PACKAGING.md",
     "docs/WINDOWS_SIGNING_POLICY.md",
     "packaging/linux/debian/sonicnest.desktop",
     "packaging/linux/debian/io.github.sanskarIN.SonicNest.metainfo.xml",
@@ -60,6 +61,8 @@ REQUIRED_FILES = (
     "tool/build_linux_deb.sh",
     "tool/verify_linux_deb.sh",
     "tool/smoke_test_installed_linux_deb.sh",
+    "tool/build_windows_portable.ps1",
+    "tool/verify_windows_portable.ps1",
     "tool/release_preflight.sh",
     "tool/release_preflight.ps1",
     ".github/workflows/ci.yml",
@@ -330,6 +333,38 @@ def audit() -> list[str]:
                     f"{fragment}"
                 )
 
+    windows_builder = ROOT / "tool/build_windows_portable.ps1"
+    if windows_builder.exists():
+        builder_text = windows_builder.read_text(encoding="utf-8", errors="ignore")
+        for fragment in (
+            "flutter_windows.dll",
+            "data\\icudtl.dat",
+            "data\\flutter_assets",
+            "Compress-Archive",
+            "Get-FileHash",
+            "SHA256SUMS.txt",
+        ):
+            if fragment not in builder_text:
+                errors.append(
+                    f"build_windows_portable.ps1 is missing required packaging invariant: {fragment}"
+                )
+
+    windows_verifier = ROOT / "tool/verify_windows_portable.ps1"
+    if windows_verifier.exists():
+        verifier_text = windows_verifier.read_text(encoding="utf-8", errors="ignore")
+        for fragment in (
+            "Expand-Archive",
+            "sonic_nest.exe",
+            "flutter_windows.dll",
+            "Get-AuthenticodeSignature",
+            "RequireSignature",
+            "SHA256SUMS.txt",
+        ):
+            if fragment not in verifier_text:
+                errors.append(
+                    f"verify_windows_portable.ps1 is missing required verification invariant: {fragment}"
+                )
+
     release_workflow = ROOT / ".github/workflows/release-candidate.yml"
     if release_workflow.exists():
         workflow_text = release_workflow.read_text(encoding="utf-8", errors="ignore")
@@ -342,7 +377,8 @@ def audit() -> list[str]:
             "tool/build_linux_deb.sh release",
             "tool/verify_linux_deb.sh",
             "sonicnest-android-release-unsigned.apk",
-            "sonicnest-windows-release-unsigned.zip",
+            "tool/build_windows_portable.ps1",
+            "tool/verify_windows_portable.ps1",
             "sonicnest-macos-release-unsigned.zip",
             "sonicnest-ios-release-unsigned.zip",
         ):
@@ -369,6 +405,23 @@ def audit() -> list[str]:
             if fragment not in workflow_text:
                 errors.append(
                     f"linux-package.yml is missing required validation marker: {fragment}"
+                )
+
+    windows_workflow = ROOT / ".github/workflows/windows.yml"
+    if windows_workflow.exists():
+        workflow_text = windows_workflow.read_text(encoding="utf-8", errors="ignore")
+        for fragment in (
+            "flutter build windows --debug",
+            "flutter build windows --release",
+            "tool/build_windows_portable.ps1",
+            "tool/verify_windows_portable.ps1",
+            "RELEASE_CANDIDATE_WARNING.txt",
+            "actions/upload-artifact@v4",
+            "contents: read",
+        ):
+            if fragment not in workflow_text:
+                errors.append(
+                    f"windows.yml is missing required Windows validation marker: {fragment}"
                 )
 
     for relative in ("tool/release_preflight.sh", "tool/release_preflight.ps1"):
@@ -411,6 +464,22 @@ def audit() -> list[str]:
             if fragment.lower() not in listing_text.lower():
                 errors.append(
                     f"STORE_LISTING.md is missing required distribution/privacy marker: {fragment}"
+                )
+
+    windows_packaging = ROOT / "docs/WINDOWS_PACKAGING.md"
+    if windows_packaging.exists():
+        packaging_text = windows_packaging.read_text(encoding="utf-8", errors="ignore")
+        for fragment in (
+            "portable ZIP",
+            "build_windows_portable.ps1",
+            "verify_windows_portable.ps1",
+            "Authenticode",
+            "SHA-256",
+        ):
+            if fragment.lower() not in packaging_text.lower():
+                errors.append(
+                    "WINDOWS_PACKAGING.md is missing required package-boundary marker: "
+                    f"{fragment}"
                 )
 
     windows_signing = ROOT / "docs/WINDOWS_SIGNING_POLICY.md"
