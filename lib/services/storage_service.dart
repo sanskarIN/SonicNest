@@ -113,22 +113,34 @@ class StorageService {
     final ext = extension.startsWith('.') ? extension.substring(1) : extension;
     var candidate = p.join(directory.path, '$stem.$ext');
     var suffix = 2;
-    while (await File(candidate).exists()) {
+    while (await _pathOccupied(candidate)) {
       candidate = p.join(directory.path, '$stem ($suffix).$ext');
       suffix++;
     }
     return candidate;
   }
 
+  Future<bool> _pathOccupied(String path) async {
+    try {
+      return await FileSystemEntity.type(path, followLinks: false) !=
+          FileSystemEntityType.notFound;
+    } on FileSystemException {
+      // If the path cannot be inspected safely, never choose it as a write
+      // destination. A numbered candidate is safer than overwriting an
+      // unknown filesystem entry.
+      return true;
+    }
+  }
+
   Future<int> nextRecordingSequence() async {
-    final recordings = await _countFiles(await recordingsDirectory);
-    final trash = await _countFiles(await trashDirectory);
-    return recordings + trash + 1;
+    final recordings = await managedRecordingFiles();
+    final trash = await managedTrashFiles();
+    return recordings.length + trash.length + 1;
   }
 
   Future<StorageStats> stats() async {
-    final recordingMetrics = await _directoryMetrics(await recordingsDirectory);
-    final trashMetrics = await _directoryMetrics(await trashDirectory);
+    final recordingMetrics = await _audioMetrics(await recordingsDirectory);
+    final trashMetrics = await _audioMetrics(await trashDirectory);
     final tempMetrics = await _directoryMetrics(await tempDirectory);
     return StorageStats(
       recordingsBytes: recordingMetrics.bytes,
@@ -151,16 +163,10 @@ class StorageService {
   Future<List<File>> _managedAudioFiles(Directory directory) async {
     final files = <File>[];
     await for (final entity in directory.list(followLinks: false)) {
-      if (entity is! File) {
+      if (entity is! File || !_hasSupportedAudioExtension(entity.path)) {
         continue;
       }
-      final extension = p
-          .extension(entity.path)
-          .replaceFirst('.', '')
-          .toLowerCase();
-      if (_supportedAudioExtensions.contains(extension)) {
-        files.add(entity);
-      }
+      files.add(entity);
     }
     files.sort((a, b) => a.path.compareTo(b.path));
     return List.unmodifiable(files);
@@ -175,6 +181,20 @@ class StorageService {
         // A file may still be in use by an active platform codec. Leave it alone.
       }
     }
+  }
+
+  Future<({int bytes, int files})> _audioMetrics(Directory directory) async {
+    var bytes = 0;
+    var files = 0;
+    for (final file in await _managedAudioFiles(directory)) {
+      try {
+        bytes += await file.length();
+        files++;
+      } on FileSystemException {
+        // Ignore a managed audio file that disappears while stats are read.
+      }
+    }
+    return (bytes: bytes, files: files);
   }
 
   Future<({int bytes, int files})> _directoryMetrics(
@@ -201,17 +221,29 @@ class StorageService {
     return (bytes: bytes, files: files);
   }
 
-  Future<int> _countFiles(Directory directory) async {
-    final metrics = await _directoryMetrics(directory);
-    return metrics.files;
-  }
-
   Future<int> fileSize(String path) async {
     final file = File(path);
     return await file.exists() ? file.length() : 0;
   }
 
-  Future<bool> isManagedAudioPath(String path, {bool includeTrash = true}) async {
+  Future<bool> isManagedAudioPath(
+    String path, {
+    bool includeTrash = true,
+  }) async {
+    if (!await _isManagedLocation(path, includeTrash: includeTrash)) {
+      return false;
+    }
+    if (!_hasSupportedAudioExtension(path)) {
+      return false;
+    }
+    return await FileSystemEntity.type(path, followLinks: false) ==
+        FileSystemEntityType.file;
+  }
+
+  Future<bool> _isManagedLocation(
+    String path, {
+    bool includeTrash = true,
+  }) async {
     if (_isWithin(path, (await recordingsDirectory).path)) {
       return true;
     }
@@ -219,7 +251,7 @@ class StorageService {
   }
 
   Future<String> renameAudio(String currentPath, String newTitle) async {
-    await _requireWithin(
+    await _requireManagedAudioWithin(
       currentPath,
       await recordingsDirectory,
       'Rename',
@@ -232,7 +264,8 @@ class StorageService {
   Future<String> duplicateAudio(String sourcePath, String newTitle) async {
     if (!await isManagedAudioPath(sourcePath)) {
       throw FileSystemException(
-        'Duplicate refused a path outside SonicNest managed audio storage.',
+        'Duplicate refused a path outside SonicNest managed audio storage '
+        'or an unsupported/non-regular source.',
         sourcePath,
       );
     }
@@ -242,7 +275,7 @@ class StorageService {
   }
 
   Future<String> moveToTrash(String sourcePath, String title) async {
-    await _requireWithin(
+    await _requireManagedAudioWithin(
       sourcePath,
       await recordingsDirectory,
       'Move to Trash',
@@ -253,7 +286,7 @@ class StorageService {
   }
 
   Future<String> restoreFromTrash(String sourcePath, String title) async {
-    await _requireWithin(
+    await _requireManagedAudioWithin(
       sourcePath,
       await trashDirectory,
       'Restore',
@@ -264,13 +297,29 @@ class StorageService {
   }
 
   Future<void> deleteManagedAudioIfExists(String path) async {
-    if (!await isManagedAudioPath(path)) {
+    if (!await _isManagedLocation(path)) {
       throw FileSystemException(
         'Delete refused a path outside SonicNest managed audio storage.',
         path,
       );
     }
-    await deleteIfExists(path);
+    if (!_hasSupportedAudioExtension(path)) {
+      throw FileSystemException(
+        'Delete refused an unsupported managed audio extension.',
+        path,
+      );
+    }
+    final type = await FileSystemEntity.type(path, followLinks: false);
+    if (type == FileSystemEntityType.notFound) {
+      return;
+    }
+    if (type != FileSystemEntityType.file) {
+      throw FileSystemException(
+        'Delete refused a non-regular managed audio path.',
+        path,
+      );
+    }
+    await File(path).delete();
   }
 
   Future<void> deleteIfExists(String path) async {
@@ -297,18 +346,35 @@ class StorageService {
     return (await source.copy(target)).path;
   }
 
-  Future<void> _requireWithin(
+  Future<void> _requireManagedAudioWithin(
     String path,
     Directory directory,
     String operation,
   ) async {
-    if (_isWithin(path, directory.path)) {
-      return;
+    if (!_isWithin(path, directory.path)) {
+      throw FileSystemException(
+        '$operation refused a path outside SonicNest managed audio storage.',
+        path,
+      );
     }
-    throw FileSystemException(
-      '$operation refused a path outside SonicNest managed audio storage.',
-      path,
-    );
+    if (!_hasSupportedAudioExtension(path)) {
+      throw FileSystemException(
+        '$operation refused an unsupported managed audio extension.',
+        path,
+      );
+    }
+    final type = await FileSystemEntity.type(path, followLinks: false);
+    if (type != FileSystemEntityType.file) {
+      throw FileSystemException(
+        '$operation refused a non-regular managed audio path.',
+        path,
+      );
+    }
+  }
+
+  bool _hasSupportedAudioExtension(String path) {
+    final extension = p.extension(path).replaceFirst('.', '').toLowerCase();
+    return _supportedAudioExtensions.contains(extension);
   }
 
   bool _isWithin(String candidate, String directory) {
