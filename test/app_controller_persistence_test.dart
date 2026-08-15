@@ -23,6 +23,7 @@ void main() {
   late FakeMetadataStore metadata;
   late FakeSettingsService settingsService;
   late AppController controller;
+  var controllerInitialized = false;
 
   setUp(() async {
     sandbox = await Directory.systemTemp.createTemp(
@@ -49,8 +50,6 @@ void main() {
       await sandbox.delete(recursive: true);
     }
   });
-
-  var controllerInitialized = false;
 
   Future<AppController> createController({
     StorageService? storageOverride,
