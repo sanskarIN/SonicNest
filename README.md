@@ -21,10 +21,13 @@ Current development version: **0.1.0**. The repository is structured as a produc
 - Smart filename templates with prefix, suffix, category, date/time, individual date/time fields, and sequence tokens.
 - Optional keep-screen-awake behavior during active recording, with cleanup after stop/cancel/failure.
 - Live amplitude waveform, clipping warning, recording timer, markers/bookmarks, and input-device-aware recording services.
-- Persisted waveform envelopes for recorded, imported, and processed media.
+- Persisted waveform envelopes for recorded, imported, processed, and recovered managed media.
 - Searchable library with favorites, pinned items, tags, folders, trash/restore, rename, duplicate, import, export, share, sorting, format/folder/tag/date filtering, and multi-selection bulk actions.
 - Multi-file import isolates copy/probe/waveform failures so a corrupt or missing selected audio file is cleaned up and does not prevent later valid selections from being imported.
-- Local metadata decoding tolerates damaged optional fields and malformed individual records, preserves structurally corrupt metadata for diagnostics, and can recover a valid `.bak` left by an interrupted metadata replacement.
+- Local metadata decoding tolerates damaged optional fields and malformed individual records, normalizes unsafe numeric/waveform values, isolates duplicate IDs/paths, preserves structurally corrupt metadata for diagnostics, and can recover a valid `.bak` left by an interrupted metadata replacement.
+- Startup orphan recovery reconstructs metadata for supported audio files that still exist in the managed `Recordings` directory after a crash, interrupted metadata write, or unrecoverable metadata reset; damaged media remains visible with best-effort metadata instead of being silently discarded.
+- Managed-storage path guards prevent rename, duplicate, move-to-Trash, restore, and permanent-delete operations from acting on metadata paths outside SonicNest-controlled audio directories.
+- Persistence-safe library mutations restore in-memory metadata and roll filesystem moves back when metadata persistence fails; permanent deletion persists metadata first so a crash prefers a recoverable orphan over irreversible data loss.
 - Batch tools can convert several recordings or copy selected originals directly to a user-selected folder with collision-safe naming.
 - Desktop secondary/right-click access to the same complete recording action surface used by touch/menu workflows.
 - Multi-recording batch format conversion with target-format selection, progress, per-file failure isolation, preserved source files, retained markers, and successful-output registration in the library.
@@ -128,7 +131,7 @@ Native recording uses platform encoders through `record`. Formats requiring tran
 
 ## Building, metadata integrity, branding, packaging, QA, and releases
 
-See `docs/BUILDING.md` for platform bootstrap/build commands, `docs/METADATA_INTEGRITY.md` for local-library corruption isolation and interrupted-save recovery, `docs/BRANDING.md` for deterministic native icon/splash generation, `docs/LINUX_PACKAGING.md` for Debian packaging, `docs/QA_CHECKLIST.md` for the full hardware/release checklist, `docs/RELEASING.md` for the release procedure, `RELEASE_NOTES.md` for the development-preview notes, and `TODO.md` for evidence-based remaining gates.
+See `docs/BUILDING.md` for platform bootstrap/build commands, `docs/METADATA_INTEGRITY.md` for local-library corruption isolation, managed-path protection, transaction rollback behavior, and orphan-audio recovery, `docs/BRANDING.md` for deterministic native icon/splash generation, `docs/LINUX_PACKAGING.md` for Debian packaging, `docs/QA_CHECKLIST.md` for the full hardware/release checklist, `docs/RELEASING.md` for the release procedure, `RELEASE_NOTES.md` for the development-preview notes, and `TODO.md` for evidence-based remaining gates.
 
 ## Contributing
 
