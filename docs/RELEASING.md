@@ -4,6 +4,8 @@ SonicNest uses semantic versioning. A release must not be declared stable only b
 
 The initial repository-supported Linux public distribution channel is GitHub Releases with the verified Debian `.deb` and its SHA-256 checksum. See `docs/LINUX_DISTRIBUTION_POLICY.md`.
 
+The initial repository-supported Windows public distribution channel is GitHub Releases with a versioned x64 portable ZIP. A stable public Windows ZIP must contain the final Authenticode-verified binaries and use a checksum generated after signing/package bytes are final. See `docs/WINDOWS_PACKAGING.md` and `docs/WINDOWS_SIGNING_POLICY.md`.
+
 ## 1. Prepare the source tree
 
 1. Update the version in `pubspec.yaml`.
@@ -14,7 +16,8 @@ The initial repository-supported Linux public distribution channel is GitHub Rel
 6. Confirm that no secrets, signing files, local paths, certificates, provisioning profiles, or build outputs are staged.
 7. Confirm generated branding PNG source outputs remain reproducible and are not accidentally committed as authoritative source files.
 8. For Linux, confirm the Debian package metadata under `packaging/linux/debian/` matches the release identity, launcher behavior, and AppStream information.
-9. Review `docs/STORE_LISTING.md` against the exact release candidate before copying listing/privacy material into a distribution console.
+9. For Windows, confirm the portable package contract and public signing boundary in `docs/WINDOWS_PACKAGING.md` and `docs/WINDOWS_SIGNING_POLICY.md` match the intended candidate.
+10. Review `docs/STORE_LISTING.md` against the exact release candidate before copying listing/privacy material into a distribution console.
 
 ## 2. Required automated checks
 
@@ -46,7 +49,9 @@ flutter pub get
 ./tool/apply_branding.ps1
 ```
 
-Require the GitHub workflows for Android, Linux, Linux Debian packaging, Windows, macOS, and unsigned iOS validation to pass for the release source revision. Android, Windows, macOS, and iOS builds must include the generated native SonicNest branding resources. The Linux package workflow must produce and structurally verify the `.deb`, its desktop entry, AppStream metadata, executable payload, deterministic icon, and checksum.
+Require the GitHub workflows for Android, Linux, Linux Debian packaging, Windows, macOS, and unsigned iOS validation to pass for the release source revision. Android, Windows, macOS, and iOS builds must include the generated native SonicNest branding resources. The Linux package workflow must produce and structurally verify the `.deb`, its desktop entry, AppStream metadata, executable payload, deterministic icon, and checksum. The Windows workflow must build the release-mode bundle, create the versioned portable ZIP using `tool/build_windows_portable.ps1`, verify it using `tool/verify_windows_portable.ps1`, and publish only an explicitly unsigned validation artifact unless protected signing is separately configured.
+
+The repository integrity audit must also pass, including Bash and PowerShell helper parsing, permanent-workflow read-only permission checks, required policy/document presence, package-script invariants, and release-candidate safety markers.
 
 ## 3. Required manual recorder checks
 
@@ -86,10 +91,12 @@ iOS/macOS:
 - macOS Dock, Finder, Spotlight, and application icon sizes.
 
 Windows:
-- Explorer icon;
-- taskbar icon;
-- Start/search surfaces;
-- shortcut and final installer/package surfaces once packaging is chosen.
+- extract the complete versioned portable ZIP rather than launching a copied standalone executable;
+- verify Explorer icon behavior for the packaged executable;
+- verify taskbar and Start/search surfaces reached through normal Windows interaction;
+- verify the extracted portable folder contains the complete runtime/data bundle;
+- confirm the portable channel does not claim installer-created shortcuts, registry entries, services, file associations, or machine-wide state that it does not create;
+- verify final Authenticode status on the exact public candidate when signing is required.
 
 Linux:
 - install the repository-generated Debian `.deb` on representative Debian/Ubuntu-family systems;
@@ -105,7 +112,7 @@ Signing material is maintainer-owned and must never be committed.
 
 - Android: use a private upload/release keystore outside the repository.
 - iOS/macOS: use the maintainer's Apple certificates, provisioning profiles, and notarization credentials.
-- Windows: stable public Windows distributables should follow `docs/WINDOWS_SIGNING_POLICY.md` and be Authenticode-signed with a maintainer-controlled identity. Unsigned development/CI artifacts remain valid engineering evidence but must not be represented as signed stable releases. Actual certificate/signing-service credentials and final installer/package integration stay outside the repository until provisioned by the maintainer.
+- Windows: the initial public channel is the versioned x64 portable ZIP. Public stable Windows binaries must follow `docs/WINDOWS_SIGNING_POLICY.md`; package the final signed bytes, verify the packaged executable with `tool/verify_windows_portable.ps1 -RequireSignature`, and generate the public ZIP checksum only after those bytes are final. Hosted CI remains unsigned.
 - Linux: GitHub Releases is the initial channel for the verified Debian `.deb` plus checksum. SonicNest does not initially operate an APT repository, so APT repository-index signing is not applicable. Development-preview CI packages can remain unsigned and must not be represented as signed stable artifacts. Any future detached package signature or signed-tag policy must use maintainer-owned credentials outside this repository.
 
 CI intentionally validates unsigned/debug or unsigned release-candidate builds unless a secure release environment is explicitly configured.
@@ -130,9 +137,22 @@ bash tool/build_linux_deb.sh release
 bash tool/verify_linux_deb.sh
 ```
 
+For the selected Windows portable package target, continue on Windows PowerShell with:
+
+```powershell
+./tool/build_windows_portable.ps1 -Configuration release -ArtifactSuffix unsigned
+./tool/verify_windows_portable.ps1
+```
+
+The `unsigned` suffix is for hosted/development candidate evidence only. After maintainer-owned signing is actually performed for a final public candidate, package the signed bundle with an appropriate label and require signature verification on the exact resulting archive:
+
+```powershell
+./tool/verify_windows_portable.ps1 -ArchivePath '<final-portable-zip>' -RequireSignature
+```
+
 Platform availability depends on the build host. iOS and macOS require macOS/Xcode. Windows builds require Windows. Debian package construction requires a compatible Linux host with `dpkg-deb`. Signing identities/credentials must be injected only from the maintainer's secure release environment.
 
-The manual `.github/workflows/release-candidate.yml` workflow creates release-mode validation artifacts and includes a structurally verified Debian package. Those artifacts remain non-public release candidates until all manual gates are complete.
+The manual `.github/workflows/release-candidate.yml` workflow creates release-mode validation artifacts across Android, Linux, Windows, macOS, and unsigned iOS. Its Windows job uses the same portable package builder/verifier as permanent Windows CI. Those artifacts remain non-public release candidates until all manual gates are complete.
 
 ## 7. Final release review
 
@@ -142,6 +162,7 @@ Before tagging:
 - verify the Buy Me a Coffee and project/contact links;
 - verify generated native icon/splash resources visually on real release candidates;
 - verify the Linux `.deb` installs, launches, displays the correct desktop icon, upgrades from the previous supported release where applicable, and uninstalls on tested systems;
+- verify the Windows portable ZIP extracts, launches with its complete runtime/data bundle, passes the required real-system recorder/accessibility/branding checks, and passes Authenticode verification for a stable public candidate;
 - capture real screenshots from the tested release candidate;
 - review `docs/STORE_LISTING.md` against the exact tested build and current distribution-console requirements;
 - verify store/listing assets match the exact tested build;
@@ -149,12 +170,15 @@ Before tagging:
 - confirm all manual release gates are documented;
 - review generated package sizes and included permissions;
 - confirm the release source revision matches the revision validated and signed where signing is claimed;
-- confirm the GitHub Release attaches the exact verified `.deb` and checksum from the tagged revision.
+- confirm the GitHub Release attaches the exact verified Linux `.deb` and checksum from the tagged revision;
+- confirm the GitHub Release attaches the exact verified Windows portable ZIP and its post-signing checksum from the tagged revision when publishing Windows.
 
 ## 8. Tag and publish
 
 After all gates are satisfied, create an annotated semantic-version tag, publish release notes, and attach only verified distributable artifacts and checksums.
 
 For the initial Linux channel, publish the verified `.deb` and its SHA-256 checksum on the corresponding GitHub Release and identify the tested Debian/Ubuntu-family environments in the release notes. Do not claim APT repository support unless a separately maintained and signed repository is actually deployed.
+
+For the initial Windows channel, publish the final Authenticode-verified versioned x64 portable ZIP and its SHA-256 checksum on the corresponding GitHub Release. Identify the Windows versions/architectures actually tested and the non-secret signing identity information recorded in `docs/RELEASE_EVIDENCE_TEMPLATE.md`. Do not claim Microsoft Store, MSIX, MSI, installer, or managed-update support unless that separate channel has actually been built and validated.
 
 Never publish a build that was not produced from the tagged source revision.
