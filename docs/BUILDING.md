@@ -8,7 +8,8 @@
 - Linux capture/build validation: PulseAudio utilities, FFmpeg, GTK development packages, and JSON-GLib development files used by the selected audio backends.
 - Debian package validation: `dpkg-deb`, `desktop-file-validate`, and `appstreamcli` on a Debian/Ubuntu-compatible build host.
 - Installed-package GUI startup smoke testing: `xvfb-run` on a disposable Linux validation host.
-- Windows portable packaging: Windows PowerShell/PowerShell 7 with the built-in archive and Authenticode inspection commands used by `tool/build_windows_portable.ps1` and `tool/verify_windows_portable.ps1`.
+- Windows portable packaging: Windows PowerShell/PowerShell 7 with the built-in archive, process, and Authenticode inspection commands used by `tool/build_windows_portable.ps1`, `tool/verify_windows_portable.ps1`, and `tool/smoke_test_windows_portable.ps1`.
+- Android release-candidate signing-state validation: Android SDK build-tools (`aapt`, `apksigner`), Java `keytool`/`jarsigner`, `unzip`, and `sha256sum` as used by `tool/verify_android_nonproduction_candidate.sh`.
 
 ## Bootstrap host projects
 
@@ -107,6 +108,20 @@ flutter build ios --debug --no-codesign
 
 Only run build targets supported by the host OS. Signing, provisioning profiles, keystores, certificates, and store credentials must remain outside the repository.
 
+## Android non-production release candidate
+
+The hosted release-candidate workflow compiles release-mode APK/AAB files without maintainer production signing credentials. Generated Flutter Android host defaults currently sign these validation artifacts with the Android Debug certificate, so SonicNest verifies and labels them **non-production** instead of “unsigned.”
+
+After building:
+
+```bash
+flutter build apk --release
+flutter build appbundle --release
+bash tool/verify_android_nonproduction_candidate.sh
+```
+
+The verifier checks package ID `io.github.sanskarin.sonic_nest`, application label `SonicNest`, APK/AAB archive integrity, the APK/AAB Android Debug certificate state, and writes `ANDROID_SIGNING_STATE.txt` with non-secret certificate/digest evidence. A pass does not make the artifact eligible for Google Play production. See `docs/ANDROID_DISTRIBUTION_POLICY.md` for Play App Signing/upload-key boundaries.
+
 ## Windows portable package
 
 A versioned x64 portable ZIP is the initial repository-supported Windows distribution package. Build and validate it after producing the release-mode Windows bundle:
@@ -116,14 +131,16 @@ A versioned x64 portable ZIP is the initial repository-supported Windows distrib
 flutter build windows --release
 ./tool/build_windows_portable.ps1 -Configuration release -ArtifactSuffix unsigned
 ./tool/verify_windows_portable.ps1
+./tool/smoke_test_windows_portable.ps1 -StartupSeconds 8
 ```
 
-The builder packages the complete Flutter runner directory, writes a SHA-256 checksum and package-info record, and leaves signing credentials entirely outside the repository. The verifier extracts the archive into an isolated temporary directory, checks the required executable/runtime/data layout, rejects common private/signing material, and verifies the sibling checksum when present.
+The builder packages the complete Flutter runner directory, writes a SHA-256 checksum and package-info record, and leaves signing credentials entirely outside the repository. The verifier extracts the archive into an isolated temporary directory, checks the required executable/runtime/data layout, rejects common private/signing material, and verifies the sibling checksum when present. The bounded startup smoke separately extracts the ZIP, starts `sonic_nest.exe`, requires the process to remain alive for the configured interval, then terminates it and cleans the temporary extraction where possible.
 
-Hosted CI intentionally uses the `unsigned` artifact label. For a final public candidate, the maintainer-owned Authenticode process must be applied to the final binaries before packaging/checksum publication, then the exact ZIP must pass:
+Hosted CI intentionally uses the `unsigned` artifact label. The startup smoke is only packaging/startup evidence; it is not microphone, routing, accessibility, branding, or trust verification. For a final public candidate, the maintainer-owned Authenticode process must be applied to the final binaries before packaging/checksum publication, then the exact ZIP must pass:
 
 ```powershell
 ./tool/verify_windows_portable.ps1 -ArchivePath '<final-portable-zip>' -RequireSignature
+./tool/smoke_test_windows_portable.ps1 -ArchivePath '<final-portable-zip>' -StartupSeconds 8
 ```
 
 See `docs/WINDOWS_PACKAGING.md` and `docs/WINDOWS_SIGNING_POLICY.md` for package, channel, signing, and evidence boundaries.
@@ -158,9 +175,9 @@ See `docs/LINUX_PACKAGING.md` for package layout, dependencies, CI behavior, ins
 
 - `.github/workflows/ci.yml`: deterministic brand image generation, non-mutating format gate, analyzer, unit tests, branded Android debug APK, Linux debug build.
 - `.github/workflows/linux-package.yml`: Linux release bundle, Debian package construction, structural verification, checksum verification, package-manager installation, installed-files/metadata checks, virtual-display startup smoke, uninstall cleanup checks, and short-retention CI artifact.
-- `.github/workflows/windows.yml`: branded Windows debug build plus branded release-mode portable ZIP construction, package verification, checksum/package-info output, explicit unsigned warning, and short-retention validation artifact.
+- `.github/workflows/windows.yml`: branded Windows debug build plus branded release-mode portable ZIP construction, package verification, checksum/package-info output, bounded extracted-package startup smoke, explicit unsigned warning, and short-retention validation artifact.
 - `.github/workflows/macos.yml`: branded macOS debug build and branded iOS no-codesign debug build.
-- `.github/workflows/release-candidate.yml`: manually triggered release-mode validation artifacts across Android, Linux, Windows, macOS, and unsigned iOS; Windows reuses the same portable package builder/verifier and Linux reuses the Debian package builder/verifier.
-- `.github/workflows/repository-audit.yml`: repository invariants, permanent-workflow permission safety, required package/policy markers, Bash syntax, and PowerShell helper parsing.
+- `.github/workflows/release-candidate.yml`: manually triggered release-mode validation artifacts across Android, Linux, Windows, macOS, and no-codesign iOS; Android verifies package identity/debug-certificate non-production signing, Windows reuses portable build/verify/smoke helpers, and Linux reuses the Debian package builder/verifier.
+- `.github/workflows/repository-audit.yml`: repository invariants, permanent-workflow permission safety, required package/policy markers, and syntax parsing for all tracked top-level Bash/PowerShell helpers.
 
-CI build/package/install-smoke success confirms compilation and repository-controlled package behavior on GitHub-hosted runners; microphone hardware, audio routing, lock-screen/background behavior, device interruptions, real icon/launch visual inspection, long-duration recording, package upgrade behavior on representative maintained systems, accessibility, production signing, and store/publication approval still require target-device or maintainer-secure-environment validation.
+CI build/package/install/startup-smoke success confirms compilation and repository-controlled package behavior on GitHub-hosted runners; microphone hardware, audio routing, lock-screen/background behavior, device interruptions, real icon/launch visual inspection, long-duration recording, package upgrade behavior on representative maintained systems, accessibility, production signing, and store/publication approval still require target-device or maintainer-secure-environment validation.
