@@ -95,5 +95,5 @@ Repository automation now provides deterministic baselines for malformed metadat
 ## Localization
 
 - [x] Migrate primary Flutter presentation strings, including Batch Convert and desktop recording actions, into the localization layer.
-- [ ] Decide whether backend diagnostic/error details should be translated or intentionally retained as technical text before adding non-English releases.
+- [x] Decide whether backend diagnostic/error details should be translated or intentionally retained as technical text before adding non-English releases. See `docs/LOCALIZATION_POLICY.md`.
 - [ ] Add additional locales only with translation review, text-expansion testing, and translation QA.
