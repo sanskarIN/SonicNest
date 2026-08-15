@@ -66,9 +66,10 @@ Repository automation now provides deterministic baselines for malformed metadat
 - [x] Implement reproducible Android/iOS native splash resource generation.
 - [x] Integrate launcher-icon generation for Android, iOS, macOS, and Windows build workflows.
 - [x] Select Debian `.deb` as the initial Linux installation format and integrate the deterministic SonicNest icon with its desktop entry and AppStream package metadata.
+- [x] Select a versioned x64 portable ZIP as the initial repository-supported Windows package format and add deterministic package build/verification plus hosted unsigned validation artifacts. See `docs/WINDOWS_PACKAGING.md`.
 - [ ] Visually review generated Android launcher icons across legacy/adaptive/themed masks on real devices.
 - [ ] Visually review generated iOS and macOS icons at small/large OS sizes on real Apple hardware.
-- [ ] Visually review generated Windows icon in Explorer, taskbar, Start, shortcuts, and final package/installer surfaces.
+- [ ] Visually review generated Windows icon in Explorer, taskbar, Start, shortcuts, and extracted portable-package surfaces.
 - [ ] Install the generated Linux `.deb` on representative Debian/Ubuntu-family systems and visually review launcher/menu/task-switcher icon surfaces.
 - [ ] Verify native launch/splash assets in signed/release Android and iOS configurations, including dark mode.
 - [ ] Capture real screenshots from tested builds; do not use fabricated screenshots.
@@ -79,7 +80,8 @@ Repository automation now provides deterministic baselines for malformed metadat
 - [ ] Configure private Android upload/release signing outside the repository.
 - [ ] Configure Apple certificates/provisioning/notarization outside the repository.
 - [x] Decide Windows public signing policy: stable public Windows distributables should use maintainer-controlled Authenticode signing; unsigned CI/development artifacts remain clearly labeled. See `docs/WINDOWS_SIGNING_POLICY.md`.
-- [ ] Provision/configure the actual Windows signing certificate or secure signing service and final installer/package integration outside the repository.
+- [x] Decide the initial Windows package format: versioned x64 portable ZIP, built from the complete Flutter release bundle. See `docs/WINDOWS_PACKAGING.md`.
+- [ ] Provision/configure the actual Windows signing certificate or secure signing service and apply it to the final public portable package in a protected release environment outside the repository.
 - [x] Select Debian `.deb` as the initial repository-supported Linux package target.
 - [x] Decide the public Linux distribution channel and repository/package signing policy. Initial channel: GitHub Releases with verified `.deb` + SHA-256 checksum; no initial APT repository. See `docs/LINUX_DISTRIBUTION_POLICY.md`.
 - [ ] Produce signed release candidates where the selected distribution channel requires signing.
