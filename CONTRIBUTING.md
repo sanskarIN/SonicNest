@@ -24,9 +24,24 @@ Run the repository integrity audit when changing project structure, release auto
 
 ```bash
 python tool/repository_audit.py
+python -m unittest discover -s tool/tests -p 'test_*.py' -v
 ```
 
 Do not commit secrets, signing keys, personal recordings, build outputs, generated native-brand PNG source outputs, or local environment files.
+
+## Release provenance changes
+
+Changes to `.github/workflows/release-candidate.yml`, `tool/build_release_candidate_manifest.py`, platform checksum generation, or hosted signing-state evidence must preserve the provenance contract in `docs/RELEASE_CANDIDATE_MANIFEST.md`.
+
+The unified manifest may only be produced after all five platform candidate jobs succeed. It must re-verify each platform payload against that platform's `SHA256SUMS.txt`, bind the evidence to the exact full Git SHA and workflow run, preserve Android's explicit Debug-certificate / NON-PRODUCTION classification, and retain `stableReleaseApproved: false` for hosted development-preview candidates.
+
+Run the Python tooling regressions after changing this path:
+
+```bash
+python -m unittest discover -s tool/tests -p 'test_*.py' -v
+```
+
+Do not weaken checksum, path, signing-state, or source-identity validation merely to make a hosted candidate pass. Fix the producing package step or the verifier instead.
 
 ## Audio changes
 
