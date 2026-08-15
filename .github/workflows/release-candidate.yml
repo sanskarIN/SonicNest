@@ -140,12 +140,19 @@ jobs:
           $Archive = Get-ChildItem 'build\release-candidate\windows' -Filter 'sonicnest-windows-*.zip' -File | Select-Object -First 1
           if (-not $Archive) { throw 'Windows release-candidate package was not created.' }
           ./tool/verify_windows_portable.ps1 -ArchivePath $Archive.FullName
+      - name: Smoke-test Windows portable startup
+        shell: pwsh
+        run: |
+          $Archive = Get-ChildItem 'build\release-candidate\windows' -Filter 'sonicnest-windows-*.zip' -File | Select-Object -First 1
+          if (-not $Archive) { throw 'Windows release-candidate package was not created.' }
+          ./tool/smoke_test_windows_portable.ps1 -ArchivePath $Archive.FullName -StartupSeconds 8
       - name: Add release-candidate warning
         shell: pwsh
         run: |
           @'
           SonicNest release-candidate validation artifact.
           This portable Windows archive is unsigned and is not approved for public distribution.
+          Hosted startup smoke only confirms that the extracted release executable remained alive during a bounded launch check; it does not validate microphone, audio routing, accessibility, real desktop branding, or Authenticode trust.
           Authenticode, real-machine microphone/routing, accessibility, final visual review, and release-evidence gates remain incomplete.
           '@ | Set-Content -Path 'build\release-candidate\windows\RELEASE_CANDIDATE_WARNING.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
