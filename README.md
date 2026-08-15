@@ -148,6 +148,7 @@ Native recording uses platform encoders through `record`. Formats requiring tran
 - `docs/LINUX_PACKAGING.md` — Debian package construction and verification.
 - `docs/LINUX_DISTRIBUTION_POLICY.md` — initial GitHub Releases `.deb` distribution/signing boundary.
 - `docs/STORE_LISTING.md` — source-controlled listing copy and privacy-declaration draft for distribution review.
+- `docs/WINDOWS_SIGNING_POLICY.md` — stable public Windows Authenticode policy and private-credential boundary.
 - `docs/QA_CHECKLIST.md` — hardware and stable-release evidence checklist.
 - `docs/RELEASING.md` — release procedure.
 - `RELEASE_NOTES.md` — development-preview release notes.
