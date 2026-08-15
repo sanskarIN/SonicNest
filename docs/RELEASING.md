@@ -14,6 +14,7 @@ The initial repository-supported Linux public distribution channel is GitHub Rel
 6. Confirm that no secrets, signing files, local paths, certificates, provisioning profiles, or build outputs are staged.
 7. Confirm generated branding PNG source outputs remain reproducible and are not accidentally committed as authoritative source files.
 8. For Linux, confirm the Debian package metadata under `packaging/linux/debian/` matches the release identity, launcher behavior, and AppStream information.
+9. Review `docs/STORE_LISTING.md` against the exact release candidate before copying listing/privacy material into a distribution console.
 
 ## 2. Required automated checks
 
@@ -22,10 +23,12 @@ Run on a Bash-capable validation host:
 ```bash
 flutter pub get
 dart tool/generate_brand_assets_v2.dart
-dart format lib test tool/generate_brand_assets_v2.dart
+dart format --output=none --set-exit-if-changed lib test tool/generate_brand_assets_v2.dart
 flutter analyze --no-fatal-infos
 flutter test
 ```
+
+The formatting command is intentionally non-mutating. If it reports drift, run ordinary `dart format` locally, review and commit the canonical formatter output, and rerun the preflight rather than allowing release validation to rewrite source silently.
 
 For platform builds, apply branding after bootstrap/dependency resolution and before compiling:
 
@@ -140,6 +143,7 @@ Before tagging:
 - verify generated native icon/splash resources visually on real release candidates;
 - verify the Linux `.deb` installs, launches, displays the correct desktop icon, upgrades from the previous supported release where applicable, and uninstalls on tested systems;
 - capture real screenshots from the tested release candidate;
+- review `docs/STORE_LISTING.md` against the exact tested build and current distribution-console requirements;
 - verify store/listing assets match the exact tested build;
 - confirm no known critical/high-priority reproducible defects remain;
 - confirm all manual release gates are documented;
