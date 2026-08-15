@@ -80,12 +80,16 @@ jobs:
       - name: Verify portable package
         shell: pwsh
         run: ./tool/verify_windows_portable.ps1
+      - name: Smoke-test portable startup
+        shell: pwsh
+        run: ./tool/smoke_test_windows_portable.ps1 -StartupSeconds 8
       - name: Add validation warning
         shell: pwsh
         run: |
           @'
           SonicNest Windows hosted validation artifact.
           This portable ZIP is unsigned and is not approved for public stable distribution.
+          Hosted startup smoke only confirms that the extracted release executable remained alive during a bounded launch check; it does not validate microphone, audio routing, accessibility, real desktop branding, or Authenticode trust.
           Public release still requires the Authenticode, real-machine, accessibility, microphone, branding, and release-evidence gates documented by the repository.
           '@ | Set-Content -Path 'build\windows-package\RELEASE_CANDIDATE_WARNING.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
