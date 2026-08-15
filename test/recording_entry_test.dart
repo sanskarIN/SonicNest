@@ -94,6 +94,31 @@ void main() {
     expect(entry.trashedAt, isNull);
   });
 
+  test('negative and non-finite numeric metadata is normalized safely', () {
+    final entry = RecordingEntry.fromJson({
+      'id': 'numeric-safety',
+      'filePath': '/audio/safe.wav',
+      'durationMs': -100,
+      'sizeBytes': -1,
+      'format': 'wav',
+      'bitRate': double.infinity,
+      'sampleRate': double.nan,
+      'channels': 0,
+      'markers': [
+        {'positionMs': -500, 'label': 'Bad position'},
+      ],
+      'waveform': [0.5, double.nan, double.infinity, -0.25],
+    });
+
+    expect(entry.durationMs, 0);
+    expect(entry.sizeBytes, 0);
+    expect(entry.bitRate, 0);
+    expect(entry.sampleRate, 0);
+    expect(entry.channels, 1);
+    expect(entry.markers.single.positionMs, 0);
+    expect(entry.waveform, [0.5, -0.25]);
+  });
+
   test('copyWith can clear trash state', () {
     final entry = RecordingEntry(
       id: 'abc',
