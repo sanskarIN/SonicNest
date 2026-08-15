@@ -248,8 +248,15 @@ class AppController extends ChangeNotifier {
   Future<RecordingEntry> stopRecording() async {
     final result = await recorder.stop();
     final entry = await _entryFromResult(result);
+    final previousSelection = selectedRecording;
     _recordings.add(entry);
-    await _persist();
+    try {
+      await _persist();
+    } catch (_) {
+      _recordings.removeWhere((item) => item.id == entry.id);
+      selectedRecording = previousSelection;
+      rethrow;
+    }
     selectedRecording = entry;
     return entry;
   }
@@ -308,7 +315,9 @@ class AppController extends ChangeNotifier {
         _recordings.removeWhere((entry) => entry.id == addedEntry!.id);
       }
       selectedRecording = previousSelection;
-      await storage.deleteIfExists(path);
+      if (await storage.isManagedAudioPath(path, includeTrash: false)) {
+        await storage.deleteIfExists(path);
+      }
       rethrow;
     }
   }
