@@ -21,6 +21,27 @@ supported_platform_targets:
   - macOS
   - Windows
   - Linux
+android_distribution:
+  initial_public_channel: Google Play
+  signing_model: Play App Signing with a separate maintainer-controlled upload key
+  hosted_release_candidate: release-mode APK/AAB signed only by Android Debug certificate and explicitly NON-PRODUCTION
+  policy: docs/ANDROID_DISTRIBUTION_POLICY.md
+  signing_credentials: maintainer-owned and outside repository
+apple_distribution:
+  ios_public_channel: TestFlight then Apple App Store
+  macos_initial_public_channel: signed and notarized GitHub Releases
+  hosted_release_candidate: macOS unsigned archive plus iOS no-codesign archive
+  policy: docs/APPLE_DISTRIBUTION_POLICY.md
+  signing_credentials: maintainer-owned and outside repository
+windows_distribution:
+  initial_package_format: versioned x64 portable ZIP
+  build_script: tool/build_windows_portable.ps1
+  verify_script: tool/verify_windows_portable.ps1
+  startup_smoke_script: tool/smoke_test_windows_portable.ps1
+  public_channel: GitHub Releases
+  stable_signing: Authenticode required for public stable binaries
+  policy: docs/WINDOWS_PACKAGING.md + docs/WINDOWS_SIGNING_POLICY.md
+  signing_credentials: maintainer-owned and outside repository
 linux_distribution:
   initial_package_format: Debian .deb
   install_prefix: /opt/sonicnest
@@ -103,7 +124,12 @@ completed_features:
   - Debian Linux package builder verifier desktop entry AppStream metadata generated icon integration and package checksums
   - hosted-runner Debian package install installed-payload GUI startup smoke and uninstall cleanup validation
   - dedicated Linux Debian package CI and Debian release-candidate artifact integration
-  - repository workflow allowlist rejecting leftover temporary one-shot workflows and permanent contents-write permissions
+  - versioned Windows x64 portable ZIP builder verifier checksum/package-info output and bounded extracted-package startup smoke
+  - Android hosted release-candidate package identity and non-production Debug-certificate verification
+  - cross-platform release-candidate workflow producing Android Linux Windows macOS and iOS release-mode validation artifacts from one clean source revision
+  - exact automated release evidence record with inner artifact SHA-256 values and workflow artifact digests
+  - repository workflow allowlist rejecting leftover temporary one-shot workflows and permanent write permissions including write-all
+  - repository audit recognizes both .yml and .yaml workflow files
   - unit tests open-source docs GitHub project templates and release documentation
   - analyzer unit-test Android Linux Windows macOS and unsigned iOS build workflows
   - core CI path filtering that avoids documentation-only rebuild churn
@@ -118,7 +144,9 @@ completed_features:
   - localization policy separating translated product summaries from raw technical diagnostic evidence
   - GitHub Releases selected as the initial public Linux Debian package channel
   - source-controlled store listing and privacy declaration draft for Android Apple macOS Windows and Linux distribution review
-  - Windows stable public signing policy requires Authenticode while actual signing credentials/service and final installer integration remain maintainer-owned
+  - Android distribution policy selects Google Play and Play App Signing with a separate upload key
+  - Apple distribution policy selects TestFlight/App Store for iOS and signed/notarized GitHub Releases for initial macOS public distribution
+  - Windows stable public signing policy requires Authenticode while actual signing credentials/service remain maintainer-owned
 partial_features:
   - English is the only shipped locale; diagnostic-text policy is decided, while additional locales still require translation review, text-expansion testing, and accessibility QA
   - Windows and Linux do not yet expose a dedicated SonicNest system-wide media-session integration beyond the selected desktop playback backend
@@ -127,7 +155,10 @@ partial_features:
   - deterministic corrupt-import and orphan-recovery failure isolation is covered but representative malformed and partially written real-media corpus testing remains manual
   - deterministic 3000-entry metadata persistence is covered but real large-library UI memory and performance profiling remains manual
   - managed-path and rollback behavior is deterministically covered but real permission revocation low-storage abrupt-process and power-loss filesystem behavior remains manual
-  - Debian package structure and hosted-runner install/startup/uninstall smoke are automated and the initial GitHub Releases channel is selected, while representative-system microphone routing desktop rendering accessibility upgrade and any optional public artifact-signing credentials remain manual release gates
+  - Debian package structure and hosted-runner install/startup/uninstall smoke are automated and the initial GitHub Releases channel is selected, while representative-system microphone routing desktop rendering accessibility and upgrade evidence remain manual release gates
+  - Windows portable packaging and hosted extracted-startup smoke are automated, while real microphone routing accessibility visual review and Authenticode trust remain manual or credential-dependent release gates
+  - Android release-mode APK/AAB compilation and Debug-certificate classification are automated, while protected upload-key/Play App Signing and physical-device/store validation remain maintainer/manual gates
+  - macOS release-mode and iOS no-codesign release-mode compilation are automated, while Apple provisioning signing notarization TestFlight/App Store and real-hardware validation remain maintainer/manual gates
 pending_manual_validation:
   - microphone permission accepted denied revoked and permanently denied behavior on devices
   - Android and Apple background lock-screen media-session and interruption behavior on physical devices
@@ -147,8 +178,12 @@ pending_manual_validation:
   - screen-reader audits with TalkBack VoiceOver Narrator and desktop tooling
   - large-library UI memory and performance with thousands of recordings
   - Debian package install launch upgrade uninstall microphone routing and desktop icon visual behavior on representative Debian Ubuntu family systems
+  - Windows portable ZIP extraction microphone routing playback import export accessibility branding and cleanup on representative Windows systems
   - real screenshots final native icon launch asset review and store metadata
-  - store packaging signing certificates provisioning notarization and release credentials
+  - Android protected upload-key Play App Signing and Play Console candidate validation
+  - Apple provisioning signing notarization TestFlight App Store Connect and protected release validation
+  - Windows Authenticode signing and trust verification on the exact final public package
+  - stable release approval and v1.0.0 tag only after all required evidence gates complete
 latest_automated_validation:
   formatter_clean_source_commit: 4e0fbf16534a60e2d3209c5ec5f54d4982903f8c
   canonical_format_commit: 22c1d46e077625d6e1964d56716700727d1800dc
@@ -161,28 +196,44 @@ latest_automated_validation:
     unit_tests: success_complete_suite
     android_debug_apk: success
     linux_debug_build: success
-  windows_ci:
-    run_id: 31870933908
-    source_commit: 4e0fbf16534a60e2d3209c5ec5f54d4982903f8c
+  release_candidate:
+    run_id: 31873121457
+    source_commit: 048870ec8dc26a16e2451310460d3e03c9084dc7
+    source_preflight: success
+    android_release_nonproduction: success
+    android_debug_certificate_verification: success
+    linux_release_and_deb: success
+    windows_release_portable_build_verify_startup_smoke: success
+    macos_release_unsigned_archive: success
+    ios_release_no_codesign_archive: success
+    android_apk_sha256: 1fe7ea48d771209f4bfea097fc7d9e723cff00411b2541ee848e7ec20d6c271e
+    android_aab_sha256: ecaf9842980b17af06f3b3f90898d286a3b38ebf0b15259271af2f07dab72f4f
+    linux_bundle_sha256: a5fe64b440bf19b1b8a74e5a5ff875e645c2da7661bd8492e1a910160de179f8
+    linux_deb_sha256: 414f11ad877c7c51861a14817cd3900d2bb77d3b49ea949d601e3686d5346498
+    windows_portable_sha256: 60f5680548b0352d5230b6d40acc17a8b8b12d075b2ce1fd08c6209f565e3eb1
+    macos_archive_sha256: 364c0d8f84c2779c45a36e13fd59d6bbcceebe03f62662a41dc4e2f9178d4af3
+    ios_archive_sha256: 8d1209b94aa1aaff4369dff041ace9698bf4dcd5e0e6363a0fd470c50ee2e54d
+    evidence_document: docs/AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md
+  permanent_windows_package_ci:
+    run_id: 31872928500
+    source_commit: 9a974f865e2dc189f08735fc6464b989eaa99eb4
     windows_debug_build: success
-  apple_ci:
-    run_id: 31870933903
-    source_commit: 4e0fbf16534a60e2d3209c5ec5f54d4982903f8c
-    macos_debug_build: success
-    ios_debug_no_codesign: success
-  linux_package_ci:
-    run_id: 31870933982
-    source_commit: 4e0fbf16534a60e2d3209c5ec5f54d4982903f8c
-    result: success
-    release_bundle: success
-    deb_build_and_verify: success
-    package_install: success
-    installed_app_smoke: success
-    package_uninstall: success
+    windows_release_build: success
+    portable_build: success
+    portable_verify: success
+    extracted_startup_smoke: success
     artifact_publication: success
+  repository_integrity:
+    candidate_clean_tree_run_id: 31873122160
+    candidate_clean_tree_source_commit: 048870ec8dc26a16e2451310460d3e03c9084dc7
+    candidate_clean_tree_result: success
+    strengthened_audit_run_id: 31874506476
+    strengthened_audit_source_commit: 64c121fa0e5c81531a3710b1d67b88fb3dfc93db
+    strengthened_audit_result: success
   validation_relationship:
-    - formatter-clean revision 4e0fbf16534a60e2d3209c5ec5f54d4982903f8c contains the final validated application/source state for this continuation
-    - later commits are documentation policy state and do not alter application runtime code
+    - formatter-clean revision 4e0fbf16534a60e2d3209c5ec5f54d4982903f8c remains the exact debug/source-quality baseline with analysis tests Android and Linux debug validation
+    - release-candidate revision 048870ec8dc26a16e2451310460d3e03c9084dc7 is the exact fully green cross-platform release-mode hosted artifact source
+    - later commits are documentation and repository-audit policy hardening and do not alter candidate runtime code or the recorded candidate artifacts
     - stable release still requires the unchecked real-system and maintainer-credential gates
 known_limitations:
   - codec availability and effective sample bitrate channel and DSP settings depend on OS device and runtime support
@@ -195,6 +246,9 @@ known_limitations:
   - metadata and managed-storage rollback/recovery tests do not substitute for low-storage abrupt-power process-kill permission-revocation and filesystem-failure evidence on real systems
   - metadata backup/orphan recovery cannot recreate audio bytes deleted or irreversibly damaged outside SonicNest
   - hosted-runner Linux package smoke proves install installed-payload startup-window and uninstall behavior only on the CI runner and does not prove representative real-system audio routing desktop integration accessibility upgrade or long-duration quality
+  - hosted Windows startup smoke proves only bounded launch of the extracted portable package and does not prove microphone routing accessibility desktop integration or Authenticode trust
+  - hosted Android release-mode artifacts are signed by the Android Debug certificate and are intentionally non-production
+  - hosted macOS and iOS release-mode artifacts are unsigned/no-codesign validation artifacts and are not public Apple distributables
   - automated compilation cannot substitute for microphone hardware interruption background lock-screen routing media-button accessibility storage-failure and long-duration QA
   - signed distributable packages require maintainer-owned signing material that must not be committed
 branch: main
@@ -202,7 +256,6 @@ commit_identity:
   name: Sanskar
   email: sanskarin@outlook.in
 next_exact_tasks:
-  - commit the CI-toolchain Dart formatter output and then make formatting a non-mutating enforcement gate
   - execute docs/QA_CHECKLIST.md on representative Android iOS macOS Windows and Linux hardware
   - verify countdown screen-wake microphone routing interruption and media-session behavior on physical devices
   - run abrupt process interruption permission failure and low-storage recovery scenarios against the managed metadata and orphan-recovery paths on representative systems
@@ -210,6 +263,7 @@ next_exact_tasks:
   - run a privacy-safe malformed audio corpus through import on each maintained platform and record per-file results
   - profile thousands of Library entries in the real UI for latency memory and scrolling behavior rather than relying only on metadata serialization tests
   - install the Debian package on representative Debian Ubuntu family systems and verify launcher icon microphone routing upgrade and uninstall behavior with release evidence
+  - extract the Windows portable ZIP on representative Windows systems and verify microphone routing accessibility branding cleanup and final Authenticode status for a public candidate
   - listen-test and tune advanced processing presets against representative recordings
   - test large batch conversion and direct-export sets plus desktop secondary-click ergonomics on physical desktop systems
   - evaluate dedicated Windows and Linux system media-session integration only where maintained platform support is suitable
@@ -217,7 +271,8 @@ next_exact_tasks:
   - profile multi-hour recordings and large libraries
   - resolve any reproducible device-only issues discovered by manual QA
   - capture real screenshots and review native icon launch assets from tested release candidates
-  - prepare signing and store metadata only after manual release gates are satisfied
+  - configure protected Android Apple and Windows signing only in maintainer-owned release environments after manual gates are satisfied
+  - tag v1.0.0 only after the exact signed/public candidates complete every required release gate
 ```
 
 ## Latest exact validation — external batch export
@@ -305,7 +360,6 @@ next_exact_tasks:
 - Real low-storage/permission/process-kill/power-loss scenarios, real damaged/partially written media recovery, large-library UI profiling, hardware audio routing, accessibility, signing, and public release approval remain evidence-dependent.
 - Release classification remains **development preview**.
 
-
 ## Latest exact validation — storage, recovery, batch, and lazy-recorder hardening
 
 - Final application-code revision: `72797fa477b9d88e2138b7ddf1d0f845cdd549ca`.
@@ -316,9 +370,8 @@ next_exact_tasks:
 - Linux Package CI run `31870087317`: Debian package workflow **SUCCESS** on the final application-code revision.
 - Initial Linux public channel decision: GitHub Releases with verified `.deb` plus SHA-256 checksum; no initial custom APT repository.
 - Diagnostic localization decision: translate product-facing summaries; preserve raw OS/plugin/FFmpeg/filesystem backend detail as technical evidence.
-- Formatter boundary: core CI currently mutates formatting for 30 of 54 Dart files before analysis/tests. The tracked tree is therefore **not yet claimed formatter-clean**; this is explicitly tracked in `TODO.md`.
+- Historical formatter drift from that run was later closed by canonical formatting and a non-mutating CI gate.
 - Release classification remains **development preview** until the remaining physical-device, real-filesystem, accessibility, representative-package, long-duration, signing, and stable-release gates are completed.
-
 
 ## Formatter-clean final automated validation — 2026-08-15
 
@@ -333,3 +386,13 @@ next_exact_tasks:
 - Windows public signing policy: `docs/WINDOWS_SIGNING_POLICY.md`; actual maintainer signing credentials/service configuration remains open.
 - Linux public channel remains GitHub Releases with verified `.deb` + SHA-256 checksum; no initial custom APT repository.
 - Release classification remains **development preview** pending the unchecked real-device/filesystem/accessibility/performance/branding/signing/release evidence gates.
+
+## Final cross-platform automated release-candidate validation — 2026-08-15
+
+- Candidate source revision: `048870ec8dc26a16e2451310460d3e03c9084dc7`.
+- Release Candidate Validation run `31873121457`: **SUCCESS** across Source preflight, Android release-mode non-production APK/AAB, Linux release bundle + Debian package, Windows release portable ZIP + verify + extracted startup smoke, macOS release archive, and iOS release no-codesign archive.
+- Android Debug-certificate identity and non-production classification were verified before upload; exact certificate and artifact hashes are recorded in `docs/AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md`.
+- Windows permanent package CI run `31872928500` independently passed release build, portable package construction/verification, extracted startup smoke, and artifact publication.
+- Clean candidate-tree repository audit run `31873122160`: **SUCCESS**.
+- Strengthened repository audit run `31874506476` on commit `64c121fa0e5c81531a3710b1d67b88fb3dfc93db`: **SUCCESS** after adding `.yaml` workflow recognition and `write-all`/write-scope rejection.
+- The automated evidence is release-mode structural/build/package evidence only. SonicNest remains a **development preview** until physical-device, representative real-system, accessibility, long-duration/performance, protected signing/notarization, and stable-release approval gates are completed.
