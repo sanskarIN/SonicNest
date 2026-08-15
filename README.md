@@ -45,6 +45,7 @@ Current development version: **0.1.0**. The repository is structured as a produc
 - Offline-first local metadata and audio storage. No hidden upload, tracking, or analytics.
 - Android foreground recording-service integration through reproducible platform overrides.
 - Lazy native recorder initialization: constructing application/controller services does not touch the recorder method channel until recorder functionality is actually requested.
+- Source-controlled cross-platform store/distribution listing and privacy copy that must be reviewed against the exact release candidate before submission.
 
 ## Desktop shortcuts
 
@@ -96,10 +97,12 @@ flutter run
 ```bash
 flutter pub get
 dart tool/generate_brand_assets_v2.dart
-dart format lib test tool/generate_brand_assets_v2.dart
+dart format --output=none --set-exit-if-changed lib test tool/generate_brand_assets_v2.dart
 flutter analyze --no-fatal-infos
 flutter test
 ```
+
+The formatting step is an enforcement check and must not rewrite source during validation. If it reports drift, apply canonical `dart format` locally, review/commit that output, and rerun validation.
 
 GitHub Actions additionally compile representative debug builds for Android, Linux, Windows, macOS, and unsigned iOS host validation. A dedicated Linux package workflow builds a release-mode Linux bundle, creates a Debian package, verifies its payload/metadata/icon/checksum structure, installs it through the package manager, smoke-starts the installed application under a bounded virtual display, removes the package, verifies package-owned integration cleanup, and publishes a short-retention validation artifact.
 
@@ -144,6 +147,7 @@ Native recording uses platform encoders through `record`. Formats requiring tran
 - `docs/BRANDING.md` — deterministic native icon/splash generation.
 - `docs/LINUX_PACKAGING.md` — Debian package construction and verification.
 - `docs/LINUX_DISTRIBUTION_POLICY.md` — initial GitHub Releases `.deb` distribution/signing boundary.
+- `docs/STORE_LISTING.md` — source-controlled listing copy and privacy-declaration draft for distribution review.
 - `docs/QA_CHECKLIST.md` — hardware and stable-release evidence checklist.
 - `docs/RELEASING.md` — release procedure.
 - `RELEASE_NOTES.md` — development-preview release notes.
