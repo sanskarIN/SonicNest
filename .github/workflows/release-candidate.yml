@@ -27,7 +27,7 @@ jobs:
         run: bash tool/release_preflight.sh
 
   android:
-    name: Android release-mode artifacts
+    name: Android release-mode non-production artifacts
     needs: preflight
     runs-on: ubuntu-latest
     timeout-minutes: 55
@@ -44,19 +44,22 @@ jobs:
         run: |
           flutter build apk --release
           flutter build appbundle --release
+      - name: Verify package identity and non-production signing state
+        run: bash tool/verify_android_nonproduction_candidate.sh
       - name: Prepare checksums and warning
         run: |
           mkdir -p build/release-candidate/android
-          cp build/app/outputs/flutter-apk/app-release.apk build/release-candidate/android/sonicnest-android-release-unsigned.apk
-          cp build/app/outputs/bundle/release/app-release.aab build/release-candidate/android/sonicnest-android-release-unsigned.aab
+          cp build/app/outputs/flutter-apk/app-release.apk build/release-candidate/android/sonicnest-android-release-nonproduction.apk
+          cp build/app/outputs/bundle/release/app-release.aab build/release-candidate/android/sonicnest-android-release-nonproduction.aab
           cat > build/release-candidate/android/RELEASE_CANDIDATE_WARNING.txt <<'TXT'
           SonicNest release-candidate validation artifact.
-          This output is not approved for public/store distribution.
-          It has not passed the repository's physical-device, accessibility, signing, store, and final visual-QA gates.
+          These Android release-mode files are signed only with the generated Android Debug certificate and are NON-PRODUCTION artifacts.
+          They are not approved for Google Play production, public distribution, or stable-release claims.
+          Physical-device, accessibility, protected upload-key/Play signing, store review, and final visual-QA gates remain incomplete.
           Maintainer-owned production signing credentials are intentionally not stored in this repository.
           TXT
           cd build/release-candidate/android
-          sha256sum sonicnest-android-release-unsigned.apk sonicnest-android-release-unsigned.aab > SHA256SUMS.txt
+          sha256sum sonicnest-android-release-nonproduction.apk sonicnest-android-release-nonproduction.aab > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
           name: sonicnest-android-release-candidate
