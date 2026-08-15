@@ -9,6 +9,7 @@ import '../models/recording_settings.dart';
 import '../services/audio_import_service.dart';
 import '../services/audio_processor.dart';
 import '../services/external_actions.dart';
+import '../services/library_recovery_service.dart';
 import '../services/metadata_store.dart';
 import '../services/player_service.dart';
 import '../services/recorder_service.dart';
@@ -172,6 +173,7 @@ class AppController extends ChangeNotifier {
       settings = await settingsService.load();
       _recordings = await metadata.load();
       await _reconcileManagedMetadata();
+      await _recoverOrphanedRecordings();
       initialized = true;
       errorMessage = null;
     } catch (error) {
@@ -756,6 +758,20 @@ class AppController extends ChangeNotifier {
     if (before != _recordings.length) {
       await _persist();
     }
+  }
+
+  Future<void> _recoverOrphanedRecordings() async {
+    final recovery = LibraryRecoveryService(
+      storage: storage,
+      probeDuration: player.probeDuration,
+      extractWaveform: processor.extractWaveformEnvelope,
+    );
+    final recovered = await recovery.recoverOrphanedRecordings(_recordings);
+    if (recovered.isEmpty) {
+      return;
+    }
+    _recordings.addAll(recovered);
+    await _persist();
   }
 
   Future<void> _guarded(Future<void> Function() action) async {
