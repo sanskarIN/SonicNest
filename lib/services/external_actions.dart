@@ -85,13 +85,23 @@ class ExternalActions {
     var candidate = p.join(directory.path, '$stem$extension');
     var suffix = 2;
 
-    while (await File(candidate).exists()) {
+    while (await _pathOccupied(candidate)) {
       candidate = p.join(directory.path, '$stem ($suffix)$extension');
       suffix++;
     }
 
     final copied = await source.copy(candidate);
     return copied.path;
+  }
+
+  Future<bool> _pathOccupied(String path) async {
+    try {
+      return await FileSystemEntity.type(path, followLinks: false) !=
+          FileSystemEntityType.notFound;
+    } on FileSystemException {
+      // Do not choose a destination path that cannot be inspected safely.
+      return true;
+    }
   }
 
   Future<ExternalCopyBatchResult> copyFilesToDirectoryCollisionSafe({
