@@ -22,11 +22,17 @@ Use one copy of this template for each release candidate that is being considere
 - Linux Debian package workflow run:
 - Windows debug/package workflow run:
 - Windows portable package verification result:
+- Windows portable startup-smoke result:
 - macOS build workflow run:
-- unsigned iOS build workflow run:
+- iOS no-codesign build workflow run:
 - Repository integrity workflow run:
 - Release-candidate artifact workflow run:
-- Android artifact SHA-256:
+- Android hosted candidate package ID:
+- Android hosted candidate signing classification:
+- Android hosted candidate certificate SHA-256 fingerprint:
+- Android hosted `ANDROID_SIGNING_STATE.txt` reviewed: Yes / No
+- Android APK artifact SHA-256:
+- Android AAB artifact SHA-256:
 - Linux raw-bundle artifact SHA-256:
 - Linux Debian `.deb` artifact SHA-256:
 - Linux package structural verification result:
@@ -222,6 +228,27 @@ Notes / evidence links:
 
 Screenshot/evidence links:
 
+## Android hosted candidate signing evidence
+
+Record this for repository-hosted release-mode validation separately from actual Google Play production signing.
+
+- Exact candidate SHA:
+- Exact APK filename:
+- Exact AAB filename:
+- Package ID equals `io.github.sanskarin.sonic_nest`: Yes / No
+- Application label equals `SonicNest`: Yes / No
+- `tool/verify_android_nonproduction_candidate.sh` result:
+- Hosted APK signer DN:
+- Hosted AAB signer owner/issuer:
+- Hosted certificate SHA-256 fingerprint:
+- Classification recorded as Android Debug / NON-PRODUCTION: Yes / No
+- APK SHA-256:
+- AAB SHA-256:
+- `ANDROID_SIGNING_STATE.txt` preserved with candidate artifact: Yes / No
+- Confirm no Play upload key/private production signing material was present: Yes / No
+
+A pass here does not satisfy Google Play signing or physical-device QA. The protected Play candidate must be recorded separately below.
+
 ## Windows portable package evidence
 
 Record this separately from hosted build/package CI. A CI-created portable archive is not considered real-system validated until these observations exist on representative Windows systems.
@@ -231,6 +258,7 @@ Record this separately from hosted build/package CI. A CI-created portable archi
 - Exact portable ZIP filename:
 - SHA-256 matches candidate evidence:
 - `tool/verify_windows_portable.ps1` result:
+- Hosted `tool/smoke_test_windows_portable.ps1` result:
 - Archive extracted completely before launch: Yes / No
 - `sonic_nest.exe` launch result:
 - Microphone permission/capture result:
@@ -300,17 +328,27 @@ Notes / evidence links:
 
 ## Signing and distribution evidence
 
-Leave blank until performed in the maintainer's secure environment.
+Leave credential-dependent results blank until performed in the maintainer's secure environment.
 
-- Android signing identity/fingerprint:
-- Android Play upload/internal-test result:
+- Android selected public channel: Google Play
+- Android Play App Signing enrollment/result:
+- Android upload-key public certificate fingerprint:
+- Android protected upload AAB SHA-256:
+- Android Play testing-track upload result:
+- Android Play-distributed physical-device result:
+- iOS selected public channel: TestFlight / App Store
 - Apple signing identity/team:
-- iOS provisioning result:
-- macOS notarization result:
+- iOS provisioning/archive result:
+- TestFlight upload/distribution result:
+- iOS App Store submission result:
+- macOS selected public channel: signed/notarized GitHub Releases
+- macOS Developer ID signing result:
+- macOS notarization/stapling/verification result:
+- Windows selected public channel: GitHub Releases portable ZIP
 - Windows portable package Authenticode verification:
 - Windows signing identity/result:
-- Linux public distribution channel:
-- Linux package/repository signing identity/result:
+- Linux selected public channel: GitHub Releases Debian `.deb`
+- Linux package/repository signing identity/result, if adopted:
 - Store metadata/privacy declarations reviewed:
 
 ## Defects and disposition
