@@ -171,7 +171,7 @@ class AppController extends ChangeNotifier {
     try {
       settings = await settingsService.load();
       _recordings = await metadata.load();
-      await _removeMissingMetadata();
+      await _reconcileManagedMetadata();
       initialized = true;
       errorMessage = null;
     } catch (error) {
@@ -276,11 +276,13 @@ class AppController extends ChangeNotifier {
     required RecordingFormat format,
     List<RecordingMarker> markers = const [],
   }) async {
+    final previousSelection = selectedRecording;
+    RecordingEntry? addedEntry;
     try {
       final duration = await player.probeDuration(path);
       final waveform = await processor.extractWaveformEnvelope(path);
       final now = DateTime.now();
-      final entry = RecordingEntry(
+      addedEntry = RecordingEntry(
         id: _uuid.v7(),
         title: title,
         filePath: path,
@@ -295,11 +297,15 @@ class AppController extends ChangeNotifier {
         waveform: waveform,
         markers: markers,
       );
-      _recordings.add(entry);
-      selectedRecording = entry;
+      _recordings.add(addedEntry);
+      selectedRecording = addedEntry;
       await _persist();
-      return entry;
+      return addedEntry;
     } catch (_) {
+      if (addedEntry != null) {
+        _recordings.removeWhere((entry) => entry.id == addedEntry!.id);
+      }
+      selectedRecording = previousSelection;
       await storage.deleteIfExists(path);
       rethrow;
     }
@@ -398,16 +404,32 @@ class AppController extends ChangeNotifier {
       return;
     }
     await _guarded(() async {
-      final newPath = entry.isTrashed
-          ? entry.filePath
-          : await storage.renameAudio(entry.filePath, clean);
-      await _replace(
-        entry.copyWith(
-          title: clean,
-          filePath: newPath,
-          modifiedAt: DateTime.now(),
-        ),
-      );
+      if (entry.isTrashed) {
+        await _replace(
+          entry.copyWith(title: clean, modifiedAt: DateTime.now()),
+        );
+        return;
+      }
+
+      final originalPath = entry.filePath;
+      final newPath = await storage.renameAudio(originalPath, clean);
+      try {
+        await _replace(
+          entry.copyWith(
+            title: clean,
+            filePath: newPath,
+            modifiedAt: DateTime.now(),
+          ),
+        );
+      } catch (error) {
+        await _rollbackMoveOrThrow(
+          movedPath: newPath,
+          originalPath: originalPath,
+          operation: 'Rename',
+          persistenceError: error,
+        );
+        rethrow;
+      }
     });
   }
 
@@ -492,15 +514,24 @@ class AppController extends ChangeNotifier {
         if (player.loadedPath == entry.filePath) {
           await player.stop();
         }
-        final path = await storage.moveToTrash(entry.filePath, entry.title);
-        final index = _recordings.indexWhere((item) => item.id == entry.id);
-        if (index >= 0) {
-          _recordings[index] = entry.copyWith(
-            filePath: path,
-            trashedAt: DateTime.now(),
-            modifiedAt: DateTime.now(),
+        final originalPath = entry.filePath;
+        final path = await storage.moveToTrash(originalPath, entry.title);
+        try {
+          await _replace(
+            entry.copyWith(
+              filePath: path,
+              trashedAt: DateTime.now(),
+              modifiedAt: DateTime.now(),
+            ),
           );
-          await _persist();
+        } catch (error) {
+          await _rollbackMoveOrThrow(
+            movedPath: path,
+            originalPath: originalPath,
+            operation: 'Move to Trash',
+            persistenceError: error,
+          );
+          rethrow;
         }
       }
       if (selectedRecording != null &&
@@ -521,18 +552,24 @@ class AppController extends ChangeNotifier {
     }
     await _guarded(() async {
       for (final entry in targets) {
-        final path = await storage.restoreFromTrash(
-          entry.filePath,
-          entry.title,
-        );
-        final index = _recordings.indexWhere((item) => item.id == entry.id);
-        if (index >= 0) {
-          _recordings[index] = entry.copyWith(
-            filePath: path,
-            clearTrashedAt: true,
-            modifiedAt: DateTime.now(),
+        final originalPath = entry.filePath;
+        final path = await storage.restoreFromTrash(originalPath, entry.title);
+        try {
+          await _replace(
+            entry.copyWith(
+              filePath: path,
+              clearTrashedAt: true,
+              modifiedAt: DateTime.now(),
+            ),
           );
-          await _persist();
+        } catch (error) {
+          await _rollbackMoveOrThrow(
+            movedPath: path,
+            originalPath: originalPath,
+            operation: 'Restore',
+            persistenceError: error,
+          );
+          rethrow;
         }
       }
     });
@@ -550,29 +587,14 @@ class AppController extends ChangeNotifier {
     }
     await _guarded(() async {
       for (final entry in targets) {
-        if (player.loadedPath == entry.filePath) {
-          await player.stop();
-        }
-        await storage.deleteIfExists(entry.filePath);
-        _recordings.removeWhere((item) => item.id == entry.id);
-        if (selectedRecording?.id == entry.id) {
-          selectedRecording = null;
-        }
-        await _persist();
+        await _permanentlyDeleteOne(entry);
       }
     });
   }
 
-  Future<void> emptyTrash() async {
-    await _guarded(() async {
-      final trashed = _recordings.where((entry) => entry.isTrashed).toList();
-      for (final entry in trashed) {
-        await storage.deleteIfExists(entry.filePath);
-        _recordings.removeWhere((item) => item.id == entry.id);
-        await _persist();
-      }
-    });
-  }
+  Future<void> emptyTrash() => permanentlyDeleteEntries(
+    _recordings.where((entry) => entry.isTrashed).toList(growable: false),
+  );
 
   Future<void> clearTemporaryStorage() async {
     if (recorder.isActive) {
@@ -583,8 +605,14 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> updateSettings(SettingsSnapshot snapshot) async {
+    final previous = settings;
     settings = snapshot;
-    await settingsService.save(snapshot);
+    try {
+      await settingsService.save(snapshot);
+    } catch (_) {
+      settings = previous;
+      rethrow;
+    }
     notifyListeners();
   }
 
@@ -604,6 +632,8 @@ class AppController extends ChangeNotifier {
     if (targets.isEmpty) {
       return;
     }
+    final previousRecordings = List<RecordingEntry>.of(_recordings);
+    final previousSelection = selectedRecording;
     final now = DateTime.now();
     final updates = {for (final entry in targets) entry.id: update(entry, now)};
     for (var index = 0; index < _recordings.length; index++) {
@@ -615,7 +645,13 @@ class AppController extends ChangeNotifier {
     if (selectedRecording != null) {
       selectedRecording = updates[selectedRecording!.id] ?? selectedRecording;
     }
-    await _persist();
+    try {
+      await _persist();
+    } catch (_) {
+      _recordings = previousRecordings;
+      selectedRecording = previousSelection;
+      rethrow;
+    }
     notifyListeners();
   }
 
@@ -624,20 +660,94 @@ class AppController extends ChangeNotifier {
     if (index < 0) {
       return;
     }
+    final previous = _recordings[index];
+    final previousSelection = selectedRecording;
     _recordings[index] = updated;
     if (selectedRecording?.id == updated.id) {
       selectedRecording = updated;
     }
-    await _persist();
+    try {
+      await _persist();
+    } catch (_) {
+      _recordings[index] = previous;
+      selectedRecording = previousSelection;
+      rethrow;
+    }
     notifyListeners();
+  }
+
+  Future<void> _permanentlyDeleteOne(RecordingEntry entry) async {
+    if (player.loadedPath == entry.filePath) {
+      await player.stop();
+    }
+    final index = _recordings.indexWhere((item) => item.id == entry.id);
+    if (index < 0) {
+      return;
+    }
+
+    final previousSelection = selectedRecording;
+    final removed = _recordings.removeAt(index);
+    if (selectedRecording?.id == removed.id) {
+      selectedRecording = null;
+    }
+
+    try {
+      await _persist();
+    } catch (_) {
+      _recordings.insert(index, removed);
+      selectedRecording = previousSelection;
+      rethrow;
+    }
+
+    try {
+      await storage.deleteManagedAudioIfExists(removed.filePath);
+    } catch (deleteError) {
+      if (await File(removed.filePath).exists()) {
+        _recordings.insert(index, removed);
+        selectedRecording = previousSelection;
+        try {
+          await _persist();
+        } catch (rollbackError) {
+          throw StateError(
+            'Audio deletion failed ($deleteError) and metadata rollback also '
+            'failed ($rollbackError). The audio file was preserved at '
+            '${removed.filePath}.',
+          );
+        }
+      }
+      rethrow;
+    }
+  }
+
+  Future<void> _rollbackMoveOrThrow({
+    required String movedPath,
+    required String originalPath,
+    required String operation,
+    required Object persistenceError,
+  }) async {
+    if (!await File(movedPath).exists()) {
+      return;
+    }
+    try {
+      await File(movedPath).rename(originalPath);
+    } catch (rollbackError) {
+      throw StateError(
+        '$operation metadata persistence failed ($persistenceError) and the '
+        'file rollback also failed ($rollbackError). The audio remains at '
+        '$movedPath.',
+      );
+    }
   }
 
   Future<void> _persist() => metadata.save(_recordings);
 
-  Future<void> _removeMissingMetadata() async {
+  Future<void> _reconcileManagedMetadata() async {
     final before = _recordings.length;
     final existing = <RecordingEntry>[];
     for (final entry in _recordings) {
+      if (!await storage.isManagedAudioPath(entry.filePath)) {
+        continue;
+      }
       if (await File(entry.filePath).exists()) {
         existing.add(entry);
       }
