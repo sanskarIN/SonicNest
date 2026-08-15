@@ -15,7 +15,7 @@ Every release-candidate run begins with source preflight:
 - generate Flutter host projects from the selected stable SDK;
 - resolve project dependencies;
 - regenerate/apply SonicNest native branding;
-- verify checked-in Dart formatting;
+- verify checked-in Dart formatting without rewriting source;
 - run Flutter static analysis;
 - run unit tests.
 
@@ -43,15 +43,18 @@ The repository does not provide maintainer production signing credentials. A rel
 - SHA-256 checksums for the candidate tar archive and `.deb`;
 - explicit warning that release-candidate output is not yet approved for public distribution.
 
-Debian `.deb` is the initial repository-supported Linux package target. Real-machine microphone/routing tests, accessibility review, long-duration/low-storage tests, package install/upgrade/uninstall testing, desktop icon visual inspection, and the final public distribution/signing policy remain separate release gates.
+Debian `.deb` is the initial repository-supported Linux package target. Real-machine microphone/routing tests, accessibility review, long-duration/low-storage tests, representative package install/upgrade/uninstall testing, and desktop icon visual inspection remain separate release gates.
 
 ### Windows
 
-- release-mode Windows runner bundle compressed as a ZIP archive;
-- SHA-256 checksum;
+- release-mode Flutter Windows runner bundle packaged as the repository-selected versioned x64 portable ZIP through `tool/build_windows_portable.ps1`;
+- complete bundle checks for `sonic_nest.exe`, `flutter_windows.dll`, ICU data, and Flutter assets;
+- isolated ZIP extraction and package-layout verification through `tool/verify_windows_portable.ps1`;
+- common private/signing-material rejection inside the validation archive;
+- SHA-256 checksum and package-info record;
 - explicit unsigned/non-publication warning.
 
-A final installer/package format and production code-signing policy remain release gates.
+The portable ZIP package format and initial GitHub Releases channel are repository decisions, not pending package choices. What remains open is the maintainer-owned Authenticode credential/protected-signing process and real-system Windows evidence. A final stable public ZIP must contain the final signed binaries, pass `tool/verify_windows_portable.ps1 -RequireSignature`, and use a SHA-256 generated after signing/package bytes are final. The unsigned CI ZIP must never be relabeled as signed or stable.
 
 ### macOS
 
@@ -73,7 +76,7 @@ An App Store/TestFlight candidate requires provisioning, signing, real-device te
 
 The permanent manual workflow uses short-lived GitHub Actions artifacts. They exist to inspect release-mode packaging and should not be treated as a permanent download channel.
 
-A stable release should publish only artifacts produced from the final tested/tagged source revision in the maintainer's secure signing environment, with checksums recorded in the corresponding release evidence record.
+A stable release should publish only artifacts produced from the final tested/tagged source revision in the maintainer's secure signing environment where signing is required, with checksums recorded in the corresponding release evidence record.
 
 ## Checksum verification
 
@@ -101,7 +104,7 @@ Get-FileHash -Algorithm SHA256 <artifact-file>
 
 Compare the result with the checksum recorded alongside the artifact.
 
-The Debian package builder also writes `<package>.deb.sha256` beside its direct build output under `build/linux-package/`; the package verifier compares that digest against the actual `.deb` bytes.
+The Debian package builder also writes `<package>.deb.sha256` beside its direct build output under `build/linux-package/`; the package verifier compares that digest against the actual `.deb` bytes. The Windows portable builder writes the exact archive digest to `SHA256SUMS.txt`, and the Windows verifier checks that digest when the checksum file is present beside the archive.
 
 ## What successful automation does not prove
 
@@ -114,8 +117,10 @@ A successful unsigned release-candidate workflow does not complete any of these 
 - accessibility audits;
 - native icon/splash visual approval on real OS surfaces;
 - Linux `.deb` install/upgrade/uninstall quality on representative real systems;
-- production signing or notarization;
+- Windows portable extraction/launch/microphone/routing/accessibility/branding quality on representative real systems;
+- Windows Authenticode production signing;
+- Android/Apple production signing or Apple notarization;
 - store privacy/listing review;
 - public distribution approval.
 
-Those remain governed by `docs/QA_CHECKLIST.md`, `docs/RELEASING.md`, and a completed copy of `docs/RELEASE_EVIDENCE_TEMPLATE.md`.
+Those remain governed by `docs/QA_CHECKLIST.md`, `docs/RELEASING.md`, `docs/WINDOWS_PACKAGING.md`, `docs/WINDOWS_SIGNING_POLICY.md`, and a completed copy of `docs/RELEASE_EVIDENCE_TEMPLATE.md`.
