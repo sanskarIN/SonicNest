@@ -34,6 +34,16 @@ class StorageService {
        _temporaryDirectoryProvider =
            temporaryDirectoryProvider ?? getTemporaryDirectory;
 
+  static const _supportedAudioExtensions = {
+    'm4a',
+    'wav',
+    'flac',
+    'opus',
+    'mp3',
+    'ogg',
+    'aac',
+  };
+
   final Future<Directory> Function() _documentsDirectoryProvider;
   final Future<Directory> Function() _temporaryDirectoryProvider;
 
@@ -128,6 +138,22 @@ class StorageService {
       trashCount: trashMetrics.files,
       temporaryFileCount: tempMetrics.files,
     );
+  }
+
+  Future<List<File>> managedRecordingFiles() async {
+    final directory = await recordingsDirectory;
+    final files = <File>[];
+    await for (final entity in directory.list(followLinks: false)) {
+      if (entity is! File) {
+        continue;
+      }
+      final extension = p.extension(entity.path).replaceFirst('.', '').toLowerCase();
+      if (_supportedAudioExtensions.contains(extension)) {
+        files.add(entity);
+      }
+    }
+    files.sort((a, b) => a.path.compareTo(b.path));
+    return List.unmodifiable(files);
   }
 
   Future<void> clearTemporaryFiles() async {
@@ -253,8 +279,7 @@ class StorageService {
         .extension(source.path)
         .replaceFirst('.', '')
         .toLowerCase();
-    const supported = {'m4a', 'wav', 'flac', 'opus', 'mp3', 'ogg', 'aac'};
-    if (!supported.contains(extension)) {
+    if (!_supportedAudioExtensions.contains(extension)) {
       throw const FormatException('Unsupported audio extension.');
     }
     final title = p.basenameWithoutExtension(source.path);
