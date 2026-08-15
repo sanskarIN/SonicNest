@@ -23,6 +23,7 @@ Use one copy of this template for each release candidate that is being considere
 - Windows build workflow run:
 - macOS build workflow run:
 - unsigned iOS build workflow run:
+- Repository integrity workflow run:
 - Release-candidate artifact workflow run:
 - Android artifact SHA-256:
 - Linux raw-bundle artifact SHA-256:
@@ -114,6 +115,38 @@ For every supported target format tested, record platform, actual file propertie
 
 Notes / evidence links:
 
+## Metadata, managed-storage, and recovery evidence
+
+Use privacy-safe controlled data. Record the exact platform, filesystem conditions, candidate SHA/artifact, observation, and whether the recovered file was independently playable.
+
+- Existing valid metadata startup result:
+- Missing primary + valid `.bak` recovery result:
+- Corrupt primary + valid `.bak` recovery result:
+- Corrupt primary + corrupt backup preservation/reset result:
+- Repeated restart after corrupt-store reset creates no repeated active-corrupt loop:
+- Malformed individual metadata record isolation result:
+- Duplicate recording ID isolation result:
+- Duplicate normalized file-path isolation result:
+- Negative/non-finite metadata normalization result:
+- Out-of-managed-storage metadata path rejection result:
+- Missing managed-file metadata reconciliation result:
+- External file confirmed untouched by managed mutation guard:
+- Rename metadata-persistence rollback result:
+- Move-to-Trash metadata-persistence rollback result:
+- Restore metadata-persistence rollback result:
+- Permanent-delete managed-file failure metadata restoration result:
+- Process interruption after managed file creation/before metadata registration:
+- Recovered valid orphan visible exactly once after restart:
+- Recovered valid orphan playback/export result:
+- Recovered partially written/damaged orphan result:
+- Unsupported/nested file excluded from orphan reconstruction:
+- Low-storage recovery result:
+- Filesystem permission revocation/recovery result:
+- Abrupt process termination recovery result:
+- Abrupt device/power interruption recovery result where safely testable:
+
+Exact test paths/data descriptions or evidence links:
+
 ## Playback/media-session evidence
 
 - Play/pause/seek:
@@ -200,16 +233,19 @@ Record this separately from CI structural verification. A CI-created `.deb` is n
 - Direct `/opt/sonicnest/sonic_nest` launch result:
 - Microphone permission/capture result:
 - Playback/import/export result:
+- Managed metadata/orphan recovery controlled test result:
 - AppStream visibility/result where applicable:
 - Upgrade from prior candidate result:
 - Uninstall result:
 - Residual application payload check:
+- Existing user recording/library data preserved after package removal:
 
 Notes / evidence links:
 
 ## Performance and stress evidence
 
 - Library size tested:
+- Managed recording-file count tested during startup orphan scan:
 - Longest recording tested:
 - Largest imported file tested:
 - Largest batch conversion tested:
@@ -217,6 +253,7 @@ Notes / evidence links:
 - Peak memory observations:
 - CPU/thermal observations:
 - Storage growth observations:
+- Startup/orphan-scan timing observations:
 - Crash/hang observations:
 
 ## Privacy/security review
@@ -224,6 +261,8 @@ Notes / evidence links:
 - No unintended analytics/telemetry introduced:
 - No automatic recording upload introduced:
 - Permissions match documented need:
+- Managed-path guards reviewed against the candidate source:
+- Corrupt/recovery diagnostic files handled as privacy-sensitive local data:
 - Privacy document matches behavior:
 - Security document reviewed:
 - Dependency/license notices reviewed:
