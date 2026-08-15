@@ -1,6 +1,6 @@
 # Metadata Integrity and Recovery
 
-SonicNest stores recording-library metadata locally as JSON under the platform application-support directory. The metadata layer is designed so malformed metadata, interrupted replacement, one bad recording object, or a missing metadata record does not unnecessarily hide the recoverable audio library.
+SonicNest stores recording-library metadata locally as JSON under the platform application-support directory. The metadata layer is designed so malformed metadata, interrupted replacement, one bad recording object, a missing metadata record, or an interrupted managed-file mutation does not unnecessarily hide recoverable audio.
 
 ## Storage location
 
@@ -12,7 +12,7 @@ SonicNest/recordings.json
 
 Generated audio files remain separate from this metadata file. The JSON document references managed recording paths and organizer information such as titles, tags, folders, notes, markers, waveform envelopes, favorites, pins, and Trash state.
 
-The storage boundary is intentionally strict: destructive library mutations are accepted only for paths inside SonicNest's managed `Recordings` or `.trash` directories. Metadata that points outside those managed locations is removed during startup reconciliation instead of being trusted as a filesystem instruction.
+The storage boundary is intentionally strict: destructive library mutations are accepted only for supported regular audio files inside SonicNest's managed `Recordings` or `.trash` directories. Metadata that points outside those locations, points to a missing file, uses an unsupported extension, or resolves to a symbolic link/non-regular filesystem entry is removed during startup reconciliation instead of being trusted as a filesystem instruction.
 
 ## Atomic-style save sequence
 
@@ -76,6 +76,8 @@ A document is considered structurally invalid when, for example:
 
 An absent `recordings` field is treated as an empty but structurally valid library.
 
+Diagnostic copies can contain user-created titles, tags, notes, folders, and file paths. They should be treated as privacy-sensitive local data when collecting troubleshooting evidence.
+
 ## Per-record isolation and normalization
 
 One malformed object inside an otherwise valid `recordings` list does not invalidate the entire metadata document.
@@ -94,36 +96,60 @@ The loader:
 
 Unexpected optional-field types fall back to safe defaults. This allows valid entries before and after a damaged record to remain available.
 
-## Managed-path reconciliation
+## Managed-path and regular-file reconciliation
 
 After metadata loading, the application controller reconciles the library against SonicNest-managed storage.
 
-A metadata entry remains active only when:
+A metadata entry remains represented only when its path:
 
-1. its audio path is inside SonicNest's managed recording or Trash directory; and
-2. the referenced file currently exists.
+1. is inside the correct SonicNest managed `Recordings` or `.trash` location;
+2. has a supported recording extension;
+3. exists as a regular file when inspected without following symbolic links.
 
-If reconciliation removes stale or out-of-bound metadata, the cleaned library is persisted. The storage service independently guards rename, duplicate, move-to-Trash, restore, and permanent-delete operations, providing a second boundary even if a malformed entry reaches a mutation path.
+This rejects:
 
-## Orphaned-audio recovery
+- paths outside managed audio storage;
+- missing files;
+- unsupported regular files;
+- directories and other non-file entries;
+- symbolic links, even when the link itself is located inside a managed directory.
 
-SonicNest also performs the inverse reconciliation: supported audio files present in the managed `Recordings` directory but missing from metadata are recovered into the library.
+If reconciliation removes stale or unsafe metadata, the cleaned library is persisted. `StorageService` independently guards rename, duplicate, move-to-Trash, restore, and permanent-delete operations, providing a second boundary even if malformed state reaches a mutation path.
 
-`LibraryRecoveryService`:
+Destination allocation also checks filesystem entities without following links. A directory, regular file, symbolic link, or broken symbolic link occupying a candidate name forces allocation of the next collision-safe filename. A path that cannot be inspected safely is treated as occupied rather than selected as a write destination.
 
-1. enumerates supported top-level managed recording files;
-2. skips normalized paths already represented by metadata;
-3. derives the recording format from the extension;
-4. captures filesystem size and modification time;
-5. best-effort probes duration and extracts a waveform;
-6. still recovers the preserved file if media probing or waveform extraction fails;
-7. creates a new unique metadata ID;
-8. tags the entry `Recovered` and records why it was reconstructed;
+See `docs/MANAGED_STORAGE_BOUNDARY.md` for the focused filesystem contract.
+
+## Orphaned managed-audio recovery
+
+SonicNest also performs the inverse reconciliation: supported regular audio files present in managed storage but missing from metadata are recovered into the library.
+
+`LibraryRecoveryService` scans two controlled top-level locations with link following disabled:
+
+```text
+SonicNest/Recordings
+SonicNest/.trash
+```
+
+It does not recurse into arbitrary directories.
+
+For each eligible file the recovery service:
+
+1. skips normalized paths already represented by metadata;
+2. derives the recording format from the extension;
+3. captures filesystem size and modification time;
+4. best-effort probes duration and extracts a waveform;
+5. still recovers the preserved file if media probing or waveform extraction fails;
+6. creates a new unique metadata ID;
+7. tags the entry `Recovered` and records why it was reconstructed;
+8. preserves unknown bitrate/sample-rate/channel data as unknown rather than inventing values;
 9. persists the reconstructed entries through the normal metadata transaction.
 
-This means a successfully written managed audio file can be surfaced again after a crash or metadata-write interruption instead of becoming a permanently hidden orphan. It also allows recoverable managed audio to reappear after an unrecoverable metadata document has been preserved and reset.
+An orphan from active `Recordings` is reconstructed as an active entry. An orphan from `.trash` is reconstructed with Trash state restored so an interrupted permanent deletion does not silently promote a preserved Trash file into the active Library.
 
-The recovery scanner does not recurse into arbitrary directories and ignores unsupported file extensions.
+This means a successfully written managed recording can be surfaced again after a crash or metadata-write interruption instead of becoming a permanently hidden orphan. It also allows recoverable managed audio to reappear after an unrecoverable metadata document has been preserved and reset.
+
+The recovery scanner ignores unsupported file extensions, symbolic links, nested arbitrary files, and non-file entries.
 
 ## Persistence-safe library mutations
 
@@ -131,21 +157,33 @@ Metadata updates are treated as part of the filesystem operation rather than as 
 
 Current safeguards include:
 
+- a stopped recording whose metadata persistence fails is removed from the unsaved in-memory index while its completed managed audio file is preserved for startup orphan recovery;
 - single-entry metadata edits restore the previous in-memory entry if persistence fails;
 - batch metadata edits restore the previous in-memory library and selection if persistence fails;
-- processed-output registration removes the failed metadata entry and generated output when registration cannot be persisted;
+- settings restore the previous in-memory snapshot when settings persistence fails;
+- processed-output registration removes the failed metadata entry and generated managed output when registration cannot be persisted;
+- failed processed-output cleanup refuses to delete a caller-supplied external path merely because probing/registration failed;
 - rename, move-to-Trash, and restore operations attempt to move the audio file back to its original path when metadata persistence fails;
-- permanent deletion removes/persists metadata before deleting managed audio, preferring a harmless orphan over irreversible data loss if a process stops between the two steps;
-- when audio deletion itself fails and the file still exists, the metadata entry is restored and persisted again;
-- settings state rolls back in memory when its persistence operation fails.
+- import registration removes the just-created managed copy if metadata persistence fails;
+- permanent deletion removes and persists metadata before deleting managed audio, preferring a recoverable orphan over irreversible data loss if a process stops between the two steps;
+- if interrupted permanent deletion leaves the file in `.trash`, startup recovery reconstructs it as a Trash entry;
+- when managed audio deletion itself fails and the file still exists, the metadata entry is restored and persisted again.
 
 These safeguards reduce split-brain states between the library index and managed audio files. They are not a substitute for a transactional filesystem or database and therefore do not justify claiming perfect crash atomicity.
+
+## Managed storage accounting
+
+User-visible recording and Trash storage totals use the same definition as recovery and mutation safety: top-level supported regular managed audio files. Unsupported files, nested arbitrary files, directories, and symbolic links are not counted as Library recordings merely because they are located under `Recordings` or `.trash`.
+
+Temporary processing storage remains separately measured because temporary work products can use non-audio extensions and nested backend artifacts.
+
+The automatic recording sequence likewise counts managed active/Trash audio rather than unrelated filesystem entries. Collision-safe allocation remains the final guard against a pre-existing destination name.
 
 ## Large-library automated coverage
 
 The metadata test suite includes an end-to-end filesystem round-trip of 3,000 `RecordingEntry` objects through the real JSON save/load implementation. The test checks entry count, ordering/identity samples, and cleanup of `.tmp`/`.bak` files after a completed save.
 
-This automated test is a deterministic regression gate. It does not replace real large-library UI profiling, memory profiling, filesystem-performance testing, or long-duration device QA, which remain separate release gates.
+This automated test is a deterministic regression gate. It does not replace real large-library UI profiling, memory profiling, filesystem-performance testing, orphan-scan timing, or long-duration device QA, which remain separate release gates.
 
 ## Regression coverage
 
@@ -163,10 +201,20 @@ This automated test is a deterministic regression gate. It does not replace real
 
 `test/recording_entry_test.dart` verifies tolerant decoding, non-negative numeric normalization, bounded finite waveform recovery, and preservation of the zero/unknown imported channel-count state.
 
-`test/storage_service_test.dart` verifies managed-path mutation guards, protected external files, collision-safe allocation, and supported-file discovery for recovery.
+`test/storage_service_test.dart` verifies managed-path mutation guards, protected external files, collision-safe allocation, active/Trash discovery, and symbolic-link/non-regular-path refusal on supported test hosts.
 
-`test/library_recovery_service_test.dart` verifies orphan discovery, known-entry deduplication, damaged-media best-effort recovery, and recovery coverage for every supported recording format.
+`test/storage_service_non_file_test.dart` verifies unsupported regular-file protection, non-file collisions, and managed-audio-only storage accounting/sequence behavior.
+
+`test/library_recovery_service_test.dart` verifies active/Trash orphan discovery, known-entry deduplication, damaged-media best-effort recovery, and recovery coverage for every supported recording format.
+
+`test/app_controller_recovery_test.dart` verifies controller startup reconciliation, active/Trash orphan reconstruction, unsafe metadata removal, and no duplicate reconstruction across restart.
+
+`test/app_controller_persistence_test.dart` verifies controller-level rollback/data-preservation behavior for metadata edits and managed-file mutations.
+
+`test/app_controller_output_safety_test.dart` verifies failed processed-output registration cleanup without deleting caller-supplied external files.
+
+`test/audio_import_service_test.dart` verifies managed-copy cleanup after copy/probe/waveform failures.
 
 ## Release boundary
 
-Metadata and managed-storage recovery tests prove deterministic repository behavior only. They do not establish release readiness for real low-storage failures, abrupt device power loss, filesystem permission revocation, malformed real-media corpora, removable-media behavior, or multi-hour/large-library performance on real target systems. Those evidence-dependent checks remain in `TODO.md` and `docs/QA_CHECKLIST.md`.
+Metadata, managed-storage, recovery, and rollback tests prove deterministic repository behavior only. They do not establish release readiness for real low-storage failures, abrupt process/device power loss, filesystem permission revocation, malformed/partially written real-media corpora, removable-media behavior, or multi-hour/large-library performance on real target systems. Those evidence-dependent checks remain in `TODO.md`, `docs/QA_CHECKLIST.md`, and `docs/RECOVERY_TESTING.md`.
