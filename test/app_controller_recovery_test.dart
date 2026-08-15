@@ -226,11 +226,6 @@ class _RecoveryPlayerService extends PlayerService {
   Future<Duration> probeDuration(String path) async {
     return const Duration(milliseconds: 1500);
   }
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
 }
 
 class _RecoveryProcessor extends AudioProcessor {
@@ -248,9 +243,4 @@ class _RecoveryProcessor extends AudioProcessor {
 class _NoopRecorderService extends RecorderService {
   _NoopRecorderService(StorageService storage, AudioProcessor processor)
     : super(storage, processor, BackgroundServiceBridge());
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
 }
