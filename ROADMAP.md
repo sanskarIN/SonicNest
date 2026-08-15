@@ -93,7 +93,7 @@ Remaining:
 
 Completed/in progress:
 - Reproducible Bash and PowerShell platform bootstrapping.
-- Android/Linux/Windows/macOS/unsigned-iOS automated build workflows.
+- Android/Linux/Windows/macOS/iOS no-codesign automated build workflows.
 - Detailed manual QA checklist, release procedure, preview release notes, release evidence template, and evidence-based remaining-work file.
 - Deterministic native brand raster generation from repository-controlled SonicNest geometry.
 - Reproducible Android/iOS native splash resources and Android/iOS/macOS/Windows launcher/application icon generation.
@@ -104,15 +104,21 @@ Completed/in progress:
 - Initial Linux public channel selected: GitHub Releases with the verified `.deb` and SHA-256 checksum; no initial custom APT repository.
 - Versioned x64 portable ZIP selected as the initial repository-supported Windows package format.
 - Windows portable package builder/verifier implemented with complete Flutter bundle checks, sensitive/signing-material rejection, SHA-256/package-info output, and optional final Authenticode verification.
-- Permanent Windows CI now validates both debug compilation and a release-mode unsigned portable package artifact.
+- Bounded extracted-Windows-package startup smoke implemented for hosted validation without claiming microphone/device quality.
+- Permanent Windows CI validates debug compilation plus a release-mode unsigned portable package, structural verification, startup smoke, warning, and short-retention artifact.
 - Initial Windows public channel selected: GitHub Releases with the final Authenticode-verified portable ZIP and post-signing SHA-256; Microsoft Store/MSIX/MSI/installer channels are future separate work.
+- Hosted Android release candidates are explicitly inspected with `aapt`, `apksigner`, `keytool`, `jarsigner`, archive checks, and SHA-256 output; generated Android Debug-certificate artifacts are classified **NON-PRODUCTION** rather than incorrectly called unsigned.
+- Initial Android public channel selected: Google Play with Play App Signing and a separate maintainer-controlled upload key; production keys/credentials remain outside the repository.
+- Initial iOS public channel selected: TestFlight/App Store with maintainer-owned Apple signing/provisioning.
+- Initial macOS public channel selected: signed/notarized GitHub Releases; Mac App Store is a future separate channel.
 - Store/distribution listing and privacy-declaration copy is source-controlled for exact-candidate review.
-- Permanent workflow allowlist/read-only integrity checks implemented and expanded to reject write scopes, require release policy/package documents, verify packaging markers, and parse Bash/PowerShell helpers.
+- Permanent workflow allowlist/read-only integrity checks reject write scopes, require release policy/package documents, verify package/candidate markers, and parse every tracked top-level Bash/PowerShell helper.
 - Canonical Dart formatting is tracked and core CI enforces formatting without mutating its checkout.
 - Managed-storage/orphan-recovery source revision `f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe` validated by core run `31867130926`, Windows run `31867130920`, Apple run `31867130998`, and Linux Package CI run `31867130938`.
 - Formatter-clean application revision `4e0fbf16534a60e2d3209c5ec5f54d4982903f8c` validated by core run `31870933447`, Windows run `31870933908`, Apple run `31870933903`, and Linux Package CI run `31870933982`.
 - Windows portable package path validated by Windows run `31872155143`: debug build, release build, portable ZIP construction, package verification, checksum/package-info generation, explicit unsigned warning, and artifact upload all succeeded.
-- Clean repository audit run `31872390093` passed on SHA `8096d45bb0ea09cf3107e8fd80e05bf6844baf9b`, including repository invariants plus Bash and PowerShell helper syntax validation.
+- First complete release-candidate matrix run `31872389283` passed preflight, Android, Linux, Windows, macOS, and iOS release-mode validation on source `8096d45bb0ea09cf3107e8fd80e05bf6844baf9b`; inspection of its Android artifact exposed the inaccurate historical `unsigned` label and directly led to the non-production certificate-verification correction.
+- Clean repository audit run `31873122160` passed on final-validation candidate SHA `048870ec8dc26a16e2451310460d3e03c9084dc7`, including all repository invariants and top-level Bash/PowerShell helper parsing.
 
 Remaining:
 - Keep Android/Linux/Windows/macOS/iOS build and release-candidate workflows green for future source revisions.
@@ -125,8 +131,9 @@ Remaining:
 - Visually inspect generated Android/iOS/macOS/Windows native icons and Android/iOS launch/splash resources on real release candidates.
 - Install and visually inspect the generated Linux `.deb` on representative Debian/Ubuntu-family systems, including microphone/audio-stack behavior, launcher/menu/task-switcher icon surfaces, upgrade, and uninstall behavior.
 - Extract and test the generated Windows portable ZIP on representative Windows systems, including microphone/routing, playback/import/export, accessibility, branding, cleanup, and final Authenticode verification.
-- Provision maintainer-owned Android signing, Apple signing/notarization, and Windows Authenticode credentials/services outside the repository.
-- Produce signed release candidates only in protected release environments and record exact artifact checksums after signing.
+- Provision maintainer-owned Android Play App Signing/upload-key configuration, Apple signing/provisioning/notarization configuration, and Windows Authenticode credentials/services outside the repository.
+- Produce protected signed/upload candidates only in secure release environments and record exact artifact checksums after signing.
+- Complete TestFlight/App Store/Google Play/store-console review using exact candidate privacy/listing data.
 - Keep dependency/API compatibility pinned and documented when upstream plugins introduce breaking API or native-registration changes.
 - Capture real screenshots from tested release candidates.
 
@@ -153,4 +160,4 @@ Implemented: defensive model decoding, unsafe numeric/waveform normalization, st
 
 ## Native branding and packaging status
 
-Implemented: deterministic brand source generation, Android adaptive/monochrome/full launcher inputs, Android/iOS native splash resources, Android/iOS/macOS/Windows icon generation integrated into build workflows, Debian `.deb` packaging with desktop/AppStream integration and hosted install/smoke/uninstall validation, and Windows versioned portable ZIP packaging with release-mode hosted build/verification. Initial public channels are GitHub Releases for both Linux (`.deb` + SHA-256) and Windows (final Authenticode-verified portable ZIP + post-signing SHA-256). Remaining work is real OS-level visual/audio/accessibility inspection, representative Linux install/upgrade/uninstall evidence, representative Windows portable-package evidence, private signing/notarization configuration, real screenshots, and stable-release approval.
+Implemented: deterministic brand source generation, Android adaptive/monochrome/full launcher inputs, Android/iOS native splash resources, Android/iOS/macOS/Windows icon generation integrated into build workflows, Debian `.deb` packaging with desktop/AppStream integration and hosted install/smoke/uninstall validation, Windows versioned portable ZIP packaging with release-mode hosted build/verify/startup-smoke validation, and Android hosted release-mode package/signing-state inspection. Selected initial public channels are Google Play for Android (Play App Signing + protected upload key), TestFlight/App Store for iOS, signed/notarized GitHub Releases for macOS, GitHub Releases for Linux (`.deb` + SHA-256), and GitHub Releases for Windows (final Authenticode-verified portable ZIP + post-signing SHA-256). Remaining work is real OS-level visual/audio/accessibility inspection, representative package/install/device evidence, private signing/provisioning/notarization configuration, store submissions, real screenshots, and stable-release approval.
