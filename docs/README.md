@@ -21,13 +21,14 @@ This directory contains the maintained technical, user, QA, branding, packaging,
 
 - [`QA_CHECKLIST.md`](QA_CHECKLIST.md) — complete evidence-based automated/manual QA matrix, including metadata/import automation evidence and intentionally unchecked real malformed-media, storage, performance, accessibility, hardware, and release gates.
 - [`RELEASE_EVIDENCE_TEMPLATE.md`](RELEASE_EVIDENCE_TEMPLATE.md) — structured record for exact commit, workflow, artifact, device, OS, microphone, routing, codec, accessibility, branding, performance, signing, and final-release evidence.
+- [`AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md`](AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md) — exact hosted release-candidate run, per-platform artifact checksums/digests, Android Debug-certificate classification, Windows portable startup-smoke evidence, repository-audit evidence, and the explicit boundary between automation and stable-release approval.
 - Repository issue form **Device / Release QA report** — structured GitHub report for real-device or release-candidate observations.
 
 ## Release preparation
 
 - [`RELEASING.md`](RELEASING.md) — stable-release procedure, source preparation, branding, automated/manual gates, signing boundaries, candidate builds, visual review, tagging, and publication rules.
-- [`UNSIGNED_ARTIFACTS.md`](UNSIGNED_ARTIFACTS.md) — purpose and limitations of the manual unsigned release-candidate workflow and its checksummed validation artifacts.
-- [`../RELEASE_NOTES.md`](../RELEASE_NOTES.md) — development-preview release notes including metadata/import reliability and Linux package validation boundaries.
+- [`UNSIGNED_ARTIFACTS.md`](UNSIGNED_ARTIFACTS.md) — purpose and limitations of the manual unsigned/non-production release-candidate workflow and its checksummed validation artifacts.
+- [`../RELEASE_NOTES.md`](../RELEASE_NOTES.md) — development-preview release notes including metadata/import reliability and package validation boundaries.
 - [`../CHANGELOG.md`](../CHANGELOG.md) — chronological project changes and exact validation evidence.
 - [`../ROADMAP.md`](../ROADMAP.md) — implemented stages and remaining evidence-dependent work.
 - [`../TODO.md`](../TODO.md) — only unfinished/manual/credential-dependent gates, with deterministic reliability baselines separated from real-system validation.
@@ -44,7 +45,7 @@ This directory contains the maintained technical, user, QA, branding, packaging,
 ## Continuation/state files
 
 - [`../PROJECT_STATE.md`](../PROJECT_STATE.md) — compact machine-readable/current project state and validation boundaries.
-- [`../what_changed.md`](../what_changed.md) — long-form additive continuation history. The metadata-integrity/resilient-import continuation was appended in commit `f6e8fb572b2c2b59d89e9cd4690acf89682fd8c5`; do not truncate or replace prior sections.
+- [`../what_changed.md`](../what_changed.md) — long-form additive continuation history. Do not truncate or replace prior sections; each development continuation appends its exact implementation/validation state.
 
 ## Documentation rule
 
