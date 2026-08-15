@@ -205,6 +205,8 @@ From Trash you can:
 
 Restored filenames are allocated safely if a file with the original name already exists.
 
+SonicNest also protects destructive library operations with a managed-storage boundary. Metadata cannot direct rename, duplicate, Trash, restore, or permanent-delete operations at unrelated files outside SonicNest's own managed audio locations.
+
 ## 8. Import, share, and export
 
 ### Import
@@ -363,7 +365,7 @@ Some recorder processing settings are requests to the native backend and can be 
 
 Temporary cleanup is disabled while an active recording could depend on temporary files.
 
-## 13. Local metadata recovery
+## 13. Local metadata and managed recording recovery
 
 SonicNest keeps recording-library metadata in a local JSON document separate from the audio files. The persistence layer uses a temporary file and a short-lived backup during replacement.
 
@@ -371,13 +373,36 @@ On startup:
 
 - malformed optional fields fall back to safe values instead of crashing the whole Library;
 - malformed individual recording objects are isolated so valid neighboring entries can still load;
-- structurally corrupt metadata is copied to a timestamped `.corrupt.*` diagnostic file;
+- negative/non-finite duration, size, bitrate, sample-rate, channel, and marker-position metadata is normalized safely;
+- non-finite waveform samples are discarded and finite recovered waveform values are bounded to the supported range;
+- duplicate recording IDs and duplicate normalized file paths keep the first valid record and isolate later duplicates;
+- structurally corrupt metadata is copied to a collision-safe timestamped `.corrupt.*` diagnostic file;
 - if an interrupted replacement left a valid `recordings.json.bak`, SonicNest can restore that backup to the primary metadata path;
-- a corrupt primary can fall back to a valid backup after preserving the corrupt primary for diagnosis.
+- a corrupt primary can fall back to a valid backup after preserving the corrupt primary for diagnosis;
+- if neither primary nor backup can be recovered, SonicNest preserves corrupt diagnostics and writes a clean valid empty metadata document rather than repeatedly loading the same corrupt primary;
+- metadata entries pointing outside SonicNest-managed recording/Trash storage, or to managed files that no longer exist, are removed during startup reconciliation;
+- supported audio files still present at the top level of SonicNest's managed `Recordings` directory but missing from metadata are reconstructed as recovered Library entries.
 
-This recovery behavior protects metadata continuity, but it does not recreate an audio file that was externally deleted or damaged. Missing managed audio references are removed during startup reconciliation.
+### Recovered recordings
 
-See `docs/METADATA_INTEGRITY.md` for the exact repository invariants and test coverage.
+A reconstructed entry receives the `Recovered` tag and a recovery note. SonicNest reuses the managed filename, filesystem size, and modification time, then best-effort probes duration and waveform information.
+
+If a preserved file is partially written or damaged enough that media probing fails, SonicNest can still keep the managed file visible with unknown technical metadata so it can be inspected, exported, renamed, or intentionally deleted rather than remaining a hidden orphan.
+
+This recovery path is designed to preserve user audio after an interrupted metadata update. It does not recreate audio bytes that were externally deleted or irreversibly damaged.
+
+### Persistence-safe mutations
+
+Library metadata and managed file operations are coordinated so avoidable split states can be rolled back:
+
+- metadata-only edits restore their previous in-memory value if persistence fails;
+- rename, move-to-Trash, and restore move the file back when their matching metadata save fails;
+- settings restore their previous in-memory snapshot if persistence fails;
+- generated/processed output registration removes an unregistered output after persistence failure;
+- permanent deletion persists metadata removal before deleting the managed file, preferring a recoverable orphan over irreversible loss if an interruption occurs between those steps;
+- if managed file deletion fails while the file still exists, the metadata entry is restored and persisted again.
+
+See `docs/METADATA_INTEGRITY.md` for the exact repository invariants and deterministic test coverage. Real low-storage, permission-revocation, abrupt-process/power-loss, and partially written-media behavior remains release QA work on representative target systems.
 
 ## 14. Desktop keyboard shortcuts
 
@@ -421,6 +446,8 @@ The current source has extensive automated compile/test coverage, but stable rel
 - calls/alarms/audio interruptions;
 - background/lock-screen behavior;
 - low-storage recovery;
+- real permission-revocation and abrupt process/power-loss recovery behavior;
+- real recovered-orphan behavior with playable, partially written, and damaged media;
 - real malformed-audio imports across maintained target systems;
 - long recordings and very large libraries/batches;
 - TalkBack/VoiceOver/Narrator/Linux accessibility audits;
