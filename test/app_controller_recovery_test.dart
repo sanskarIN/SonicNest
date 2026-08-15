@@ -85,7 +85,9 @@ void main() {
     final indexedTrash = await trashFile('Indexed Trash', 'm4a');
     final activeOrphan = await activeFile('Active Orphan', 'mp3');
     final trashOrphan = await trashFile('Trash Orphan', 'flac');
-    final unsupported = File('${(await storage.recordingsDirectory).path}/notes.txt');
+    final unsupported = File(
+      '${(await storage.recordingsDirectory).path}/notes.txt',
+    );
     await unsupported.writeAsString('not an audio recording', flush: true);
     final external = File('${sandbox.path}/outside.wav');
     await external.writeAsBytes(const [9, 9, 9], flush: true);
@@ -109,10 +111,24 @@ void main() {
     final controller = await createController();
 
     expect(controller.recordings, hasLength(4));
-    expect(controller.recordings.map((entry) => entry.id), containsAll(['indexed', 'indexed-trash']));
-    expect(controller.recordings.any((entry) => entry.filePath == external.path), isFalse);
-    expect(controller.recordings.any((entry) => entry.filePath == unsupported.path), isFalse);
-    expect(controller.recordings.any((entry) => entry.filePath == missingPath), isFalse);
+    expect(
+      controller.recordings.map((entry) => entry.id),
+      containsAll(['indexed', 'indexed-trash']),
+    );
+    expect(
+      controller.recordings.any((entry) => entry.filePath == external.path),
+      isFalse,
+    );
+    expect(
+      controller.recordings.any(
+        (entry) => entry.filePath == unsupported.path,
+      ),
+      isFalse,
+    );
+    expect(
+      controller.recordings.any((entry) => entry.filePath == missingPath),
+      isFalse,
+    );
     expect(await external.exists(), isTrue);
     expect(await unsupported.exists(), isTrue);
 
@@ -212,7 +228,9 @@ class _RecoveryPlayerService extends PlayerService {
   }
 
   @override
-  void dispose() {}
+  void dispose() {
+    super.dispose();
+  }
 }
 
 class _RecoveryProcessor extends AudioProcessor {
@@ -232,5 +250,7 @@ class _NoopRecorderService extends RecorderService {
     : super(storage, processor, BackgroundServiceBridge());
 
   @override
-  void dispose() {}
+  void dispose() {
+    super.dispose();
+  }
 }
