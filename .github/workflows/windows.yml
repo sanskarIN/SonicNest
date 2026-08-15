@@ -29,7 +29,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  windows:
+  windows-debug:
     name: Windows debug build
     runs-on: windows-latest
     timeout-minutes: 45
@@ -51,3 +51,46 @@ jobs:
         run: ./tool/apply_branding.ps1
       - name: Build Windows debug application
         run: flutter build windows --debug
+
+  windows-package:
+    name: Windows release portable package
+    runs-on: windows-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+      - name: Generate platform hosts
+        shell: pwsh
+        run: ./tool/bootstrap_platforms.ps1
+      - name: Resolve dependencies
+        run: flutter pub get
+      - name: Apply SonicNest native branding
+        shell: pwsh
+        run: ./tool/apply_branding.ps1
+      - name: Build Windows release application
+        run: flutter build windows --release
+      - name: Build portable package
+        shell: pwsh
+        run: ./tool/build_windows_portable.ps1 -Configuration release -ArtifactSuffix unsigned
+      - name: Verify portable package
+        shell: pwsh
+        run: ./tool/verify_windows_portable.ps1
+      - name: Add validation warning
+        shell: pwsh
+        run: |
+          @'
+          SonicNest Windows hosted validation artifact.
+          This portable ZIP is unsigned and is not approved for public stable distribution.
+          Public release still requires the Authenticode, real-machine, accessibility, microphone, branding, and release-evidence gates documented by the repository.
+          '@ | Set-Content -Path 'build\windows-package\RELEASE_CANDIDATE_WARNING.txt' -Encoding UTF8
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sonicnest-windows-portable-validation
+          path: build/windows-package
+          if-no-files-found: error
+          retention-days: 7
