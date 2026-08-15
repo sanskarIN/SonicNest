@@ -105,7 +105,7 @@ Signing material is maintainer-owned and must never be committed.
 
 - Android: use a private upload/release keystore outside the repository.
 - iOS/macOS: use the maintainer's Apple certificates, provisioning profiles, and notarization credentials.
-- Windows: code signing is optional for development builds but recommended for public distribution.
+- Windows: stable public Windows distributables should follow `docs/WINDOWS_SIGNING_POLICY.md` and be Authenticode-signed with a maintainer-controlled identity. Unsigned development/CI artifacts remain valid engineering evidence but must not be represented as signed stable releases. Actual certificate/signing-service credentials and final installer/package integration stay outside the repository until provisioned by the maintainer.
 - Linux: GitHub Releases is the initial channel for the verified Debian `.deb` plus checksum. SonicNest does not initially operate an APT repository, so APT repository-index signing is not applicable. Development-preview CI packages can remain unsigned and must not be represented as signed stable artifacts. Any future detached package signature or signed-tag policy must use maintainer-owned credentials outside this repository.
 
 CI intentionally validates unsigned/debug or unsigned release-candidate builds unless a secure release environment is explicitly configured.
