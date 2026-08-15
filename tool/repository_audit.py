@@ -31,16 +31,25 @@ REQUIRED_FILES = (
     "pubspec.yaml",
     "analysis_options.yaml",
     "docs/ARCHITECTURE.md",
+    "docs/BATCH_CONVERSION.md",
     "docs/BUILDING.md",
     "docs/BRANDING.md",
     "docs/CODECS.md",
+    "docs/LINUX_DISTRIBUTION_POLICY.md",
     "docs/LINUX_PACKAGING.md",
+    "docs/LOCALIZATION_POLICY.md",
+    "docs/MANAGED_STORAGE_BOUNDARY.md",
+    "docs/METADATA_INTEGRITY.md",
     "docs/QA_CHECKLIST.md",
+    "docs/RECOVERY_INDEX.md",
+    "docs/RECOVERY_TESTING.md",
     "docs/RELEASING.md",
     "docs/RELEASE_EVIDENCE_TEMPLATE.md",
+    "docs/STORE_LISTING.md",
     "docs/UNSIGNED_ARTIFACTS.md",
     "docs/USER_GUIDE.md",
     "docs/TROUBLESHOOTING.md",
+    "docs/WINDOWS_SIGNING_POLICY.md",
     "packaging/linux/debian/sonicnest.desktop",
     "packaging/linux/debian/io.github.sanskarIN.SonicNest.metainfo.xml",
     "tool/bootstrap_platforms.sh",
@@ -51,6 +60,8 @@ REQUIRED_FILES = (
     "tool/build_linux_deb.sh",
     "tool/verify_linux_deb.sh",
     "tool/smoke_test_installed_linux_deb.sh",
+    "tool/release_preflight.sh",
+    "tool/release_preflight.ps1",
     ".github/workflows/ci.yml",
     ".github/workflows/linux-package.yml",
     ".github/workflows/windows.yml",
@@ -98,6 +109,21 @@ PRIVATE_MATERIAL_PATTERNS = (
     re.compile(r"-----BEGIN (?:RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----"),
     re.compile(r"-----BEGIN ENCRYPTED PRIVATE KEY-----"),
     re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
+)
+
+FORBIDDEN_PERMANENT_WORKFLOW_WRITE_PERMISSIONS = (
+    "actions: write",
+    "checks: write",
+    "contents: write",
+    "deployments: write",
+    "id-token: write",
+    "issues: write",
+    "packages: write",
+    "pages: write",
+    "pull-requests: write",
+    "repository-projects: write",
+    "security-events: write",
+    "statuses: write",
 )
 
 SELF_AUDIT_PATH = "tool/repository_audit.py"
@@ -155,10 +181,12 @@ def audit() -> list[str]:
         except OSError as exc:
             errors.append(f"Could not read workflow {relative}: {exc}")
             continue
-        if "contents: write" in workflow_text:
-            errors.append(
-                f"Permanent workflow must not request contents: write: {relative}"
-            )
+        for permission in FORBIDDEN_PERMANENT_WORKFLOW_WRITE_PERMISSIONS:
+            if permission in workflow_text:
+                errors.append(
+                    "Permanent workflow must stay read-only and must not request "
+                    f"{permission!r}: {relative}"
+                )
 
     for relative in tracked:
         path = ROOT / relative
@@ -313,6 +341,10 @@ def audit() -> list[str]:
             "contents: read",
             "tool/build_linux_deb.sh release",
             "tool/verify_linux_deb.sh",
+            "sonicnest-android-release-unsigned.apk",
+            "sonicnest-windows-release-unsigned.zip",
+            "sonicnest-macos-release-unsigned.zip",
+            "sonicnest-ios-release-unsigned.zip",
         ):
             if fragment not in workflow_text:
                 errors.append(
@@ -337,6 +369,63 @@ def audit() -> list[str]:
             if fragment not in workflow_text:
                 errors.append(
                     f"linux-package.yml is missing required validation marker: {fragment}"
+                )
+
+    for relative in ("tool/release_preflight.sh", "tool/release_preflight.ps1"):
+        preflight_path = ROOT / relative
+        if preflight_path.exists():
+            preflight_text = preflight_path.read_text(encoding="utf-8", errors="ignore")
+            for fragment in (
+                "dart format --output=none --set-exit-if-changed",
+                "flutter analyze --no-fatal-infos",
+                "flutter test",
+            ):
+                if fragment not in preflight_text:
+                    errors.append(
+                        f"{relative} is missing required non-mutating validation marker: {fragment}"
+                    )
+
+    ci_workflow = ROOT / ".github/workflows/ci.yml"
+    if ci_workflow.exists():
+        ci_text = ci_workflow.read_text(encoding="utf-8", errors="ignore")
+        for fragment in (
+            "dart format --output=none --set-exit-if-changed",
+            "flutter analyze --no-fatal-infos",
+            "flutter test",
+        ):
+            if fragment not in ci_text:
+                errors.append(f"ci.yml is missing required validation marker: {fragment}")
+
+    store_listing = ROOT / "docs/STORE_LISTING.md"
+    if store_listing.exists():
+        listing_text = store_listing.read_text(encoding="utf-8", errors="ignore")
+        for fragment in (
+            "SonicNest",
+            "microphone",
+            "privacy",
+            "Google Play",
+            "Apple App Store",
+            "Microsoft",
+            "GitHub Releases",
+        ):
+            if fragment.lower() not in listing_text.lower():
+                errors.append(
+                    f"STORE_LISTING.md is missing required distribution/privacy marker: {fragment}"
+                )
+
+    windows_signing = ROOT / "docs/WINDOWS_SIGNING_POLICY.md"
+    if windows_signing.exists():
+        signing_text = windows_signing.read_text(encoding="utf-8", errors="ignore")
+        for fragment in (
+            "Authenticode",
+            "private",
+            "unsigned",
+            "maintainer",
+        ):
+            if fragment.lower() not in signing_text.lower():
+                errors.append(
+                    "WINDOWS_SIGNING_POLICY.md is missing required signing-boundary marker: "
+                    f"{fragment}"
                 )
 
     gitignore = (
