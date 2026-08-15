@@ -108,4 +108,22 @@ void main() {
     expect(await File(firstPath).readAsBytes(), [1]);
     expect(await File(secondPath).readAsBytes(), [2]);
   });
+
+  test('recoverable file discovery returns only supported top-level audio', () async {
+    final directory = await storage.recordingsDirectory;
+    final wav = File('${directory.path}/b.wav');
+    final mp3 = File('${directory.path}/a.MP3');
+    final text = File('${directory.path}/notes.txt');
+    final nestedDirectory = Directory('${directory.path}/nested');
+    final nestedAudio = File('${nestedDirectory.path}/hidden.flac');
+    await nestedDirectory.create(recursive: true);
+    await wav.writeAsBytes(const [1], flush: true);
+    await mp3.writeAsBytes(const [2], flush: true);
+    await text.writeAsString('not audio', flush: true);
+    await nestedAudio.writeAsBytes(const [3], flush: true);
+
+    final files = await storage.managedRecordingFiles();
+
+    expect(files.map((file) => file.path), [mp3.path, wav.path]);
+  });
 }
