@@ -2,6 +2,8 @@
 
 SonicNest uses semantic versioning. A release must not be declared stable only because CI compiles the application. Recorder releases also require the hardware, accessibility, branding, lifecycle, storage, packaging, and distribution checks in `docs/QA_CHECKLIST.md`.
 
+The initial repository-supported Linux public distribution channel is GitHub Releases with the verified Debian `.deb` and its SHA-256 checksum. See `docs/LINUX_DISTRIBUTION_POLICY.md`.
+
 ## 1. Prepare the source tree
 
 1. Update the version in `pubspec.yaml`.
@@ -101,7 +103,7 @@ Signing material is maintainer-owned and must never be committed.
 - Android: use a private upload/release keystore outside the repository.
 - iOS/macOS: use the maintainer's Apple certificates, provisioning profiles, and notarization credentials.
 - Windows: code signing is optional for development builds but recommended for public distribution.
-- Linux: Debian `.deb` is the initial package format; package/repository signing policy must match the eventual public distribution channel and remain outside committed source.
+- Linux: GitHub Releases is the initial channel for the verified Debian `.deb` plus checksum. SonicNest does not initially operate an APT repository, so APT repository-index signing is not applicable. Development-preview CI packages can remain unsigned and must not be represented as signed stable artifacts. Any future detached package signature or signed-tag policy must use maintainer-owned credentials outside this repository.
 
 CI intentionally validates unsigned/debug or unsigned release-candidate builds unless a secure release environment is explicitly configured.
 
@@ -127,7 +129,7 @@ bash tool/verify_linux_deb.sh
 
 Platform availability depends on the build host. iOS and macOS require macOS/Xcode. Windows builds require Windows. Debian package construction requires a compatible Linux host with `dpkg-deb`. Signing identities/credentials must be injected only from the maintainer's secure release environment.
 
-The manual `.github/workflows/release-candidate.yml` workflow creates release-mode validation artifacts and now includes a structurally verified Debian package. Those artifacts remain non-public release candidates until all manual gates are complete.
+The manual `.github/workflows/release-candidate.yml` workflow creates release-mode validation artifacts and includes a structurally verified Debian package. Those artifacts remain non-public release candidates until all manual gates are complete.
 
 ## 7. Final release review
 
@@ -136,14 +138,19 @@ Before tagging:
 - verify Privacy, Security, Support, license, and third-party notices;
 - verify the Buy Me a Coffee and project/contact links;
 - verify generated native icon/splash resources visually on real release candidates;
-- verify the Linux `.deb` installs, launches, displays the correct desktop icon, and uninstalls on tested systems;
+- verify the Linux `.deb` installs, launches, displays the correct desktop icon, upgrades from the previous supported release where applicable, and uninstalls on tested systems;
 - capture real screenshots from the tested release candidate;
 - verify store/listing assets match the exact tested build;
 - confirm no known critical/high-priority reproducible defects remain;
 - confirm all manual release gates are documented;
 - review generated package sizes and included permissions;
-- confirm the release source revision matches the revision validated and signed.
+- confirm the release source revision matches the revision validated and signed where signing is claimed;
+- confirm the GitHub Release attaches the exact verified `.deb` and checksum from the tagged revision.
 
 ## 8. Tag and publish
 
-After all gates are satisfied, create an annotated semantic-version tag, publish release notes, and attach only verified distributable artifacts and checksums. Never publish a build that was not produced from the tagged source revision.
+After all gates are satisfied, create an annotated semantic-version tag, publish release notes, and attach only verified distributable artifacts and checksums.
+
+For the initial Linux channel, publish the verified `.deb` and its SHA-256 checksum on the corresponding GitHub Release and identify the tested Debian/Ubuntu-family environments in the release notes. Do not claim APT repository support unless a separately maintained and signed repository is actually deployed.
+
+Never publish a build that was not produced from the tagged source revision.
