@@ -1,0 +1,373 @@
+name: One-shot Provenance Ledger Sync
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/zz-provenance-ledger-sync.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Configure commit identity
+        run: |
+          git config user.name "Sanskar"
+          git config user.email "sanskarin@outlook.in"
+      - name: Update changelog
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('CHANGELOG.md')
+          text = p.read_text(encoding='utf-8')
+          added = "- Unified machine-readable release-candidate provenance manifest builder and final hosted aggregation job that re-verifies all five platform payload checksum records and binds them to the exact source SHA, application version, workflow run, and attempt.\n- Python regression coverage for release provenance tooling plus permanent repository-audit execution of the Python release-tool suite.\n"
+          changed = "- Release-candidate validation now publishes a separate checksummed `sonicnest-release-candidate-manifest` artifact only after Android, Linux, Windows, macOS, and iOS candidate jobs succeed.\n- Repository release evidence now preserves the unified manifest hash, platform payload hashes, workflow artifact digests, signing classifications, and explicit `stableReleaseApproved: false` boundary.\n"
+          validation = "- Provenance source revision `b95d77c4b69c9798f1ecb48d5f69583c4e08de5c` passed Release Candidate Validation run `31876035202`: source preflight, Android, Linux, Windows, macOS, iOS, and the unified provenance manifest job all succeeded.\n- The generated `RELEASE_CANDIDATE_MANIFEST.json` SHA-256 is `8a49759555cad26a60858025d82953ad0e3c3b429aa8138d67f7ef4f86d99b7e`; independent post-download recomputation matched it exactly. The manifest workflow artifact digest is `sha256:5fa654434ba304e7b67945250f7c8f4bec14eacbc87effefa5cd2d620885baa3`.\n- Repository Integrity Audit run `31876149473` passed Python compilation, repository invariants, all 10 Python release-tool tests, Bash syntax, and PowerShell syntax.\n"
+          if added.strip() not in text:
+              text = text.replace('### Added\n', '### Added\n' + added, 1)
+          if changed.strip() not in text:
+              text = text.replace('### Changed\n', '### Changed\n' + changed, 1)
+          if validation.strip() not in text:
+              text = text.replace('### Validation\n', '### Validation\n' + validation, 1)
+          p.write_text(text, encoding='utf-8')
+          PY
+          git add CHANGELOG.md
+          git commit -m "docs: record unified provenance release hardening"
+      - name: Update release notes
+        run: |
+          cat >> RELEASE_NOTES.md <<'EOF'
+
+## 2026-08-15 — Unified hosted release-candidate provenance
+
+SonicNest now produces a machine-readable provenance record after all five hosted release-mode platform jobs succeed. `tool/build_release_candidate_manifest.py` downloads/re-verifies each platform candidate's checksum evidence, requires Android's explicit Debug-certificate / NON-PRODUCTION classification, records every evidence file's SHA-256 and size, and binds the result to the exact full Git source SHA, application version, GitHub Actions run, and run attempt.
+
+The permanent Repository Integrity Audit compiles the Python release helpers and runs the release-tool regression suite. Run `31876149473` passed all **10/10** Python tests together with the repository invariant audit and Bash/PowerShell helper syntax checks.
+
+Hosted Release Candidate Validation run `31876035202` on source `b95d77c4b69c9798f1ecb48d5f69583c4e08de5c` completed successfully for Source preflight, Android release-mode non-production APK/AAB, Linux release bundle + Debian package, Windows release portable ZIP + verification + extracted startup smoke, macOS release archive, iOS release no-codesign archive, and the final **Unified candidate provenance manifest** job.
+
+The generated `RELEASE_CANDIDATE_MANIFEST.json` records application version `0.1.0+1`, release classification `development-preview`, and `stableReleaseApproved: false`. Its SHA-256 is `8a49759555cad26a60858025d82953ad0e3c3b429aa8138d67f7ef4f86d99b7e`; independent recomputation after downloading the artifact matched exactly. The manifest workflow artifact digest is `sha256:5fa654434ba304e7b67945250f7c8f4bec14eacbc87effefa5cd2d620885baa3`.
+
+This evidence proves hosted checksum/source/run consistency only. It does not complete physical microphone/routing/interruption/background validation, real storage/process-failure testing, accessibility, sustained performance/soak tests, real visual review/screenshots, representative-system package QA, Android Play production signing, Apple provisioning/signing/notarization, Windows Authenticode, store acceptance, or final `v1.0.0` approval. SonicNest remains a **development preview**.
+EOF
+          git add RELEASE_NOTES.md
+          git commit -m "docs: add unified provenance release notes"
+      - name: Update QA checklist
+        run: |
+          cat >> docs/QA_CHECKLIST.md <<'EOF'
+
+## Unified release-candidate provenance automation
+
+Repository implementation/automation evidence:
+
+- [x] `tool/build_release_candidate_manifest.py` requires Android, Linux, Windows, macOS, and iOS candidate evidence directories.
+- [x] The manifest builder re-verifies platform release payloads against each artifact set's `SHA256SUMS.txt` and rejects malformed, missing, mismatched, path-escaping, or unchecksummed payload evidence.
+- [x] Android provenance requires the expected package identity and explicit Android Debug certificate / NON-PRODUCTION signing-state markers.
+- [x] The manifest binds evidence to a full 40-character source Git SHA, application version, GitHub Actions run ID, and run attempt.
+- [x] Hosted development-preview provenance explicitly records `stableReleaseApproved: false` and preserves platform signing classifications.
+- [x] Repository Integrity Audit run `31876149473` passed Python compilation, repository invariants, **10/10** Python release-tool tests, Bash parsing, and PowerShell parsing.
+- [x] Release Candidate Validation run `31876035202` on source `b95d77c4b69c9798f1ecb48d5f69583c4e08de5c` passed all five platform jobs plus the final unified provenance job.
+- [x] `RELEASE_CANDIDATE_MANIFEST.json` SHA-256 `8a49759555cad26a60858025d82953ad0e3c3b429aa8138d67f7ef4f86d99b7e` was independently recomputed after artifact download and matched the workflow checksum record.
+- [x] Manifest workflow artifact digest is `sha256:5fa654434ba304e7b67945250f7c8f4bec14eacbc87effefa5cd2d620885baa3`.
+- [x] The temporary narrow push trigger used solely to obtain hosted provenance validation was removed; the maintained release-candidate workflow is manual `workflow_dispatch` only.
+
+The checks above do **not** complete any physical-device, representative real-system, accessibility, long-duration/performance, visual-branding, private-signing/notarization, store-dashboard, or final stable-release checkbox elsewhere in this document.
+EOF
+          git add docs/QA_CHECKLIST.md
+          git commit -m "docs: add unified provenance QA evidence"
+      - name: Update roadmap
+        run: |
+          cat >> ROADMAP.md <<'EOF'
+
+## Unified release-candidate provenance milestone — completed 2026-08-15
+
+- [x] Add a standard-library Python builder that produces one machine-readable release-candidate provenance manifest.
+- [x] Require and re-verify checksummed Android, Linux, Windows, macOS, and iOS hosted candidate evidence.
+- [x] Bind the manifest to exact source SHA, application version, workflow run, and run attempt.
+- [x] Preserve platform signing classifications and explicitly keep hosted candidates at `stableReleaseApproved: false`.
+- [x] Add direct builder regression tests and repository/workflow integration tests.
+- [x] Run Python release-tool regressions in the permanent Repository Integrity Audit.
+- [x] Validate the complete provenance path in hosted run `31876035202`, including the final aggregation job.
+- [x] Preserve exact manifest/payload hashes in source-controlled release evidence.
+- [x] Return the maintained release-candidate workflow to manual dispatch after the one-time hosted validation trigger.
+
+No further repository-only release-automation milestone is currently identified. Next milestones remain evidence-driven: physical-device audio/lifecycle QA, real filesystem/storage recovery, accessibility, sustained performance/soak testing, representative desktop/package QA, protected production signing/notarization, store review, and final stable-release approval.
+EOF
+          git add ROADMAP.md
+          git commit -m "docs: close unified provenance roadmap milestone"
+      - name: Append continuation ledger
+        run: |
+          cat >> what_changed.md <<'EOF'
+
+
+## 2026-08-15 — Unified release-candidate provenance manifest continuation
+
+This section is additive. All earlier SonicNest continuation history above remains preserved unchanged. This continuation did not alter recorder/runtime application behavior; it hardened repository-owned release evidence so a hosted cross-platform candidate can be tied to one exact source revision and its downloaded platform artifact bytes without overstating stable-release readiness.
+
+### Machine-readable provenance builder
+
+Added `tool/build_release_candidate_manifest.py` as a Python-standard-library-only release evidence tool.
+
+The builder requires one candidate artifact directory for each maintained platform:
+
+- Android
+- Linux
+- Windows
+- macOS
+- iOS
+
+It requires each platform artifact directory to contain `RELEASE_CANDIDATE_WARNING.txt` and `SHA256SUMS.txt`. Android additionally requires `ANDROID_SIGNING_STATE.txt`.
+
+The builder verifies and records:
+
+- a full 40-character Git source SHA;
+- positive GitHub Actions run ID and run attempt;
+- application version from `pubspec.yaml`;
+- every checksummed platform payload still exists;
+- every checksummed payload's bytes match the recorded SHA-256;
+- checksum entries cannot escape their platform evidence directory through absolute paths or `..` components;
+- release payload files cannot be present without an entry in `SHA256SUMS.txt`;
+- Android package/signing evidence includes `Package: io.github.sanskarin.sonic_nest`;
+- Android hosted signing classification includes `Android Debug certificate / NON-PRODUCTION`;
+- every evidence file is recorded with path, SHA-256, byte size, and payload/metadata role;
+- platform build/signing/distribution classifications remain explicit;
+- hosted candidate release classification remains `development-preview`;
+- `stableReleaseApproved` is explicitly `false`.
+
+Focused commit:
+
+- `86e0bbab9b8e31c81c57814277f8f3ef41d34399` — `feat: add release candidate provenance manifest builder`.
+
+### Direct and integration regression coverage
+
+Added `tool/tests/test_release_candidate_manifest.py` with direct regression coverage for:
+
+- successful complete five-platform manifest construction;
+- tampered payload checksum rejection;
+- release payload omitted from its checksum record;
+- checksum path traversal rejection;
+- Android non-production signing-state marker enforcement;
+- missing platform evidence rejection;
+- non-full source SHA rejection.
+
+Focused commit:
+
+- `252c71dc6c8a1b566ad544601ede954b7a35f365` — `test: cover release candidate manifest verification`.
+
+Added `tool/tests/test_release_candidate_integration.py` so repository tests also require the maintained release-candidate workflow to retain:
+
+- the final unified provenance job;
+- platform artifact downloading through `actions/download-artifact@v4`;
+- Android/Linux/Windows/macOS/iOS artifact arguments;
+- exact source/run binding arguments;
+- `RELEASE_CANDIDATE_MANIFEST.json` generation;
+- `sonicnest-release-candidate-manifest` publication;
+- permanent repository-audit execution of Python release-tool tests.
+
+Focused commit:
+
+- `3d4787afb00a3729f09dcfd2ad07189752dc5f88` — `test: lock release candidate manifest workflow integration`.
+
+### Release-candidate workflow aggregation
+
+The maintained `.github/workflows/release-candidate.yml` now contains a final **Unified candidate provenance manifest** job with `needs: [android, linux, windows, macos, ios]`.
+
+The job cannot intentionally publish a complete provenance record until all five platform candidate jobs succeed. It then:
+
+1. checks out the same source revision;
+2. downloads the exact Android, Linux, Windows, macOS, and iOS candidate artifact sets;
+3. invokes the manifest builder with `${GITHUB_SHA}`, `${GITHUB_RUN_ID}`, and `${GITHUB_RUN_ATTEMPT}`;
+4. re-verifies the downloaded platform payload checksum evidence;
+5. writes `RELEASE_CANDIDATE_MANIFEST.json`;
+6. writes an explicit development-preview warning;
+7. writes SHA-256 evidence for the JSON manifest itself;
+8. uploads `sonicnest-release-candidate-manifest` with short validation retention.
+
+Focused commit:
+
+- `e6182098ce205ef9f6008c5bd1418055c12377c3` — `ci: publish unified release candidate provenance manifest`.
+
+### Permanent Python release-tool validation
+
+The permanent Repository Integrity Audit was expanded to compile repository Python helpers and execute `python3 -m unittest discover -s tool/tests -p 'test_*.py' -v` whenever Python release tooling/tests or protected release/project paths change.
+
+Focused commit:
+
+- `a970bf6c9100b5bfd00821a002b682473b0c1e59` — `ci: validate Python release tooling in repository audit`.
+
+Repository Integrity Audit run `31876149473` completed successfully with:
+
+- Python helper compilation: **SUCCESS**;
+- repository integrity audit: **SUCCESS**;
+- Python release-tool tests: **10/10 passed**;
+- Bash helper syntax validation: **SUCCESS**;
+- PowerShell helper syntax validation: **SUCCESS**.
+
+### Documentation and contribution contract
+
+Added `docs/RELEASE_CANDIDATE_MANIFEST.md` documenting:
+
+- builder invocation;
+- required platform evidence;
+- checksum/path/signing-state rejection rules;
+- manifest contents;
+- regression coverage;
+- hosted integration behavior;
+- the explicit boundary between provenance consistency and real stable-release evidence.
+
+The document was indexed in `docs/README.md`.
+
+`CONTRIBUTING.md` now requires release-provenance changes to preserve the unified manifest contract and prohibits weakening checksum, path, signing-state, or source-identity validation merely to make a hosted candidate pass.
+
+`docs/UNSIGNED_ARTIFACTS.md` now describes the final unified provenance artifact and its second-layer checksum re-verification after workflow artifact download.
+
+`docs/RELEASE_EVIDENCE_TEMPLATE.md` now includes fields for:
+
+- unified manifest job result;
+- manifest artifact and workflow digest;
+- JSON manifest SHA-256;
+- source/version/run binding checks;
+- five-platform presence;
+- `stableReleaseApproved: false` verification;
+- payload checksum re-verification.
+
+Focused commits:
+
+- `0aca44f9e35aca9c4b2c4da927935785413d2ca0` — `docs: document unified release candidate provenance manifest`;
+- `e087cf82a023de62d021e029cc67785f8c67fa9e` — `docs: index release candidate provenance manifest`;
+- `eac04f1dfe2959342556cd72764bc40720a52f09` — `docs: add release provenance contribution checks`;
+- `bd5fe0b6820f41e3105e179c6a644080258157b9` — `docs: document unified candidate provenance artifact`;
+- `77b80c290c4a47d16884c944fee4accfed54525a` — `docs: add unified provenance manifest evidence fields`.
+
+### Controlled hosted validation trigger and cleanup
+
+The GitHub connector available in this continuation did not expose a workflow-dispatch action. To obtain actual hosted evidence without leaving another permanent workflow, the maintained release-candidate workflow was temporarily given a narrow push trigger limited to `docs/RELEASE_CANDIDATE_MANIFEST.md`.
+
+Focused commits:
+
+- `61186265e6eafeafadd2c51354dc0485f971f64d` — `ci: add one-time manifest validation trigger path`;
+- `b95d77c4b69c9798f1ecb48d5f69583c4e08de5c` — `docs: trigger hosted provenance manifest validation`.
+
+After the hosted matrix completed successfully, the narrow trigger was removed immediately:
+
+- `79b5195e7f207ebc1076e38faecb5c4c9c2447e7` — `ci: restore manual release candidate trigger`.
+
+The maintained release-candidate workflow is therefore again manual `workflow_dispatch` only. No one-shot provenance workflow remains tracked.
+
+### Exact hosted provenance validation
+
+Release Candidate Validation run:
+
+- Run ID: `31876035202`
+- Source revision: `b95d77c4b69c9798f1ecb48d5f69583c4e08de5c`
+- Attempt: `1`
+- Overall conclusion: **SUCCESS**
+
+Successful jobs on the exact source revision:
+
+- Source preflight: **SUCCESS**
+- Android release-mode non-production artifacts: **SUCCESS**
+- Linux release-mode artifacts: **SUCCESS**
+- Windows release-mode artifact: **SUCCESS**
+- macOS release-mode artifact: **SUCCESS**
+- iOS no-codesign release-mode artifact: **SUCCESS**
+- Unified candidate provenance manifest: **SUCCESS**
+
+The Windows job again passed release build, portable package construction, structural verification, and extracted-package startup smoke. Android again passed package identity and Debug-certificate/NON-PRODUCTION verification before upload.
+
+### Exact generated manifest evidence
+
+The manifest produced by run `31876035202` records:
+
+- application version: `0.1.0+1`;
+- source SHA: `b95d77c4b69c9798f1ecb48d5f69583c4e08de5c`;
+- workflow run ID: `31876035202`;
+- workflow run attempt: `1`;
+- release classification: `development-preview`;
+- `stableReleaseApproved: false`;
+- all five maintained platforms;
+- Android signing classification: `Android Debug certificate`;
+- Linux signing classification: `unsigned repository validation artifact`;
+- Windows signing classification: `unsigned`;
+- macOS signing classification: `unsigned / not notarized`;
+- iOS signing classification: `no-codesign`.
+
+`RELEASE_CANDIDATE_MANIFEST.json` SHA-256 recorded by the workflow:
+
+- `8a49759555cad26a60858025d82953ad0e3c3b429aa8138d67f7ef4f86d99b7e`
+
+The manifest artifact was downloaded after the run and the JSON SHA-256 was recomputed independently. The recomputed digest matched the workflow record exactly:
+
+- `8a49759555cad26a60858025d82953ad0e3c3b429aa8138d67f7ef4f86d99b7e`
+
+Manifest workflow artifact digest:
+
+- `sha256:5fa654434ba304e7b67945250f7c8f4bec14eacbc87effefa5cd2d620885baa3`
+
+### Platform payload SHA-256 values re-verified by the unified manifest
+
+- Android APK: `1457f53822af974de18905ba4d103b3c9a8fe2f66080848a48cd591f6287f9b8`
+- Android AAB: `029571a665ec3359cdee5cb2b5c8357c8b3c450ef3fcb1f63d8f808eb635e99a`
+- Linux raw release bundle: `fbecb458fec864d451f0ba67e0b70f58f34710de883d5d4c8c86e32ab3238bd6`
+- Linux Debian `.deb`: `eee447e80713f8c4102c200349cfae0873da1948dc0e2740f1b7d058a07d26e1`
+- Windows portable ZIP: `c0cbc9ef7d00481e9f39fc058d5747779372dd61454a542eb5ce487d2da68ff3`
+- macOS release archive: `0a4b2ac2c097e0f53eabbf84909ddc8f28bd28bd8bc37a0ea189b4ebc810733a`
+- iOS no-codesign archive: `a6b77c3d3a5badc305c7d7ebfc3a5a646197b48f09c1000854980fcffaaf17a7`
+
+Workflow artifact digests from the same run:
+
+- Android: `sha256:9a123c791ca5fce6391be017f0873ffa770f317f7c8fc75d975c38731820d0d6`
+- Linux: `sha256:5a80aeb576c5cfea3d9c58f65a29e4e8aadb306d6bc59d0c71beafc5ee7e36ed`
+- Windows: `sha256:1ad4aee180fcb114d5f7b8a40d9e458dd0e7e8abcdbc661e7bfad3dbbc4489b3`
+- macOS: `sha256:e578be6e601502c25169399d650e245013852f26799bcf599a893d6d001efb99`
+- iOS: `sha256:ee6d63de19d362efc400df6beec326c8a04019bfab093d23b76af8ffa12a571d`
+- Unified manifest: `sha256:5fa654434ba304e7b67945250f7c8f4bec14eacbc87effefa5cd2d620885baa3`
+
+### Repository-state synchronization
+
+Additional focused state/evidence commits around this continuation include:
+
+- `daea59d99c3ad2d12df90074fb3381f84518f72f` — `docs: track hosted provenance manifest validation`;
+- `0af3a861d8161d05b7c9ac084731c0d5b0b41433` — `docs: close hosted provenance manifest validation`;
+- `23658ef6a152b37d9a2b960c62b8c3d2e05477a2` — `docs: record unified hosted provenance validation`;
+- `f345d6e8bd2e0a523c44a6f849b5c98e56fe0b03` — `docs: synchronize project state with provenance validation`;
+- this continuation's focused changelog/release-notes/QA/roadmap synchronization commits.
+
+### Current completion boundary
+
+No additional repository-only release-automation gap is currently identified after this provenance continuation. The repository now has source-quality validation, release-mode platform artifact generation, platform-specific packaging/signing-state validation, exact artifact checksums, a unified machine-readable provenance manifest, regression tests for that manifest contract, permanent Python release-tool CI, source-controlled evidence, and a manual-only maintained release-candidate workflow.
+
+The following remain intentionally incomplete because they require real evidence or protected maintainer credentials rather than repository-only automation:
+
+- physical microphone permission/capture/routing on Android, iOS, macOS, Windows, and Linux;
+- built-in/wired/USB/Bluetooth/external-interface routing;
+- interruptions, background, lock-screen, foreground-service/OEM, reconnect, and media-button behavior;
+- real low-storage, permission-revocation, process-kill, device/power-loss, malformed-media, and partially written-media recovery;
+- start/stop and pause/resume stress plus 30-minute/multi-hour recording soak;
+- real large-library, long-audio, and large-batch performance/memory profiling;
+- desktop secondary-click/native-menu usability evidence;
+- TalkBack, VoiceOver, Narrator, Linux accessibility tooling, large text, keyboard-only, and reduced-motion audits;
+- real native icon/splash/desktop visual review and real screenshots;
+- representative Debian/Ubuntu package install/audio/upgrade/uninstall review;
+- representative Windows portable microphone/routing/accessibility/branding/cleanup review;
+- Android protected upload-key / Play App Signing production candidate;
+- Apple certificates/provisioning/signing/notarization/TestFlight/App Store Connect;
+- Windows Authenticode signing and trust verification;
+- final release checklist approval and `v1.0.0` tag.
+
+SonicNest therefore remains a **development preview**. The unified provenance manifest increases confidence that hosted candidate evidence is internally consistent; it does not replace the real-world and protected-signing gates above.
+EOF
+          git add what_changed.md
+          git commit -m "docs: append unified provenance continuation ledger"
+      - name: Remove one-shot synchronizer
+        run: |
+          git rm .github/workflows/zz-provenance-ledger-sync.yml
+          git commit -m "chore: remove one-shot provenance ledger synchronizer"
+      - name: Push focused commits
+        run: git push origin HEAD:main
