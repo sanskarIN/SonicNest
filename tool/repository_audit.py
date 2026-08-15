@@ -86,6 +86,8 @@ ALLOWED_WORKFLOW_FILES = {
     ".github/workflows/repository-audit.yml",
 }
 
+WORKFLOW_SUFFIXES = (".yml", ".yaml")
+
 FORBIDDEN_TRACKED_SUFFIXES = (
     ".jks",
     ".keystore",
@@ -118,19 +120,19 @@ PRIVATE_MATERIAL_PATTERNS = (
     re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
 )
 
-FORBIDDEN_PERMANENT_WORKFLOW_WRITE_PERMISSIONS = (
-    "actions: write",
-    "checks: write",
-    "contents: write",
-    "deployments: write",
-    "id-token: write",
-    "issues: write",
-    "packages: write",
-    "pages: write",
-    "pull-requests: write",
-    "repository-projects: write",
-    "security-events: write",
-    "statuses: write",
+FORBIDDEN_PERMANENT_WORKFLOW_WRITE_SCOPES = (
+    "actions",
+    "checks",
+    "contents",
+    "deployments",
+    "id-token",
+    "issues",
+    "packages",
+    "pages",
+    "pull-requests",
+    "repository-projects",
+    "security-events",
+    "statuses",
 )
 
 SELF_AUDIT_PATH = "tool/repository_audit.py"
@@ -190,7 +192,8 @@ def audit() -> list[str]:
     tracked_workflows = {
         relative
         for relative in tracked
-        if relative.startswith(".github/workflows/") and relative.endswith(".yml")
+        if relative.startswith(".github/workflows/")
+        and relative.casefold().endswith(WORKFLOW_SUFFIXES)
     }
 
     for relative in sorted(tracked_workflows - ALLOWED_WORKFLOW_FILES):
@@ -206,11 +209,23 @@ def audit() -> list[str]:
         except OSError as exc:
             errors.append(f"Could not read workflow {relative}: {exc}")
             continue
-        for permission in FORBIDDEN_PERMANENT_WORKFLOW_WRITE_PERMISSIONS:
-            if permission in workflow_text:
+        workflow_casefold = workflow_text.casefold()
+        if re.search(
+            r"(?m)^\s*permissions\s*:\s*write-all\s*(?:#.*)?$",
+            workflow_casefold,
+        ):
+            errors.append(
+                "Permanent workflow must stay read-only and must not request "
+                f"'permissions: write-all': {relative}"
+            )
+        for scope in FORBIDDEN_PERMANENT_WORKFLOW_WRITE_SCOPES:
+            if re.search(
+                rf"(?<![\w-]){re.escape(scope)}\s*:\s*write(?![\w-])",
+                workflow_casefold,
+            ):
                 errors.append(
                     "Permanent workflow must stay read-only and must not request "
-                    f"{permission!r}: {relative}"
+                    f"'{scope}: write': {relative}"
                 )
 
     for relative in tracked:
