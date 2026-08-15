@@ -44,6 +44,7 @@ class MetadataStore {
       final recovered = await _decodeEntries(backup);
       if (!recovered.valid) {
         await _backupCorruptFile(backup);
+        await save(const []);
         return [];
       }
       await backup.copy(file.path);
@@ -61,12 +62,14 @@ class MetadataStore {
 
     await _backupCorruptFile(file);
     if (!await backup.exists()) {
+      await save(const []);
       return [];
     }
 
     final recovered = await _decodeEntries(backup);
     if (!recovered.valid) {
       await _backupCorruptFile(backup);
+      await save(const []);
       return [];
     }
 
@@ -107,6 +110,8 @@ class MetadataStore {
     }
 
     final entries = <RecordingEntry>[];
+    final seenIds = <String>{};
+    final seenPaths = <String>{};
     for (final item in rawEntries) {
       if (item is! Map) {
         continue;
@@ -115,9 +120,14 @@ class MetadataStore {
         final entry = RecordingEntry.fromJson(
           Map<String, dynamic>.from(item),
         );
-        if (entry.id.isNotEmpty && entry.filePath.isNotEmpty) {
-          entries.add(entry);
+        if (entry.id.isEmpty || entry.filePath.isEmpty) {
+          continue;
         }
+        final normalizedPath = p.normalize(entry.filePath);
+        if (!seenIds.add(entry.id) || !seenPaths.add(normalizedPath)) {
+          continue;
+        }
+        entries.add(entry);
       } on Object {
         // Isolate malformed records so one bad entry cannot block startup or
         // hide otherwise recoverable library metadata.
