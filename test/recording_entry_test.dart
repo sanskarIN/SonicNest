@@ -103,11 +103,11 @@ void main() {
       'format': 'wav',
       'bitRate': double.infinity,
       'sampleRate': double.nan,
-      'channels': 0,
+      'channels': -2,
       'markers': [
         {'positionMs': -500, 'label': 'Bad position'},
       ],
-      'waveform': [0.5, double.nan, double.infinity, -0.25],
+      'waveform': [0.5, double.nan, double.infinity, -0.25, 1.25],
     });
 
     expect(entry.durationMs, 0);
@@ -116,7 +116,17 @@ void main() {
     expect(entry.sampleRate, 0);
     expect(entry.channels, 1);
     expect(entry.markers.single.positionMs, 0);
-    expect(entry.waveform, [0.5, -0.25]);
+    expect(entry.waveform, [0.5, 0.0, 1.0]);
+  });
+
+  test('zero channels remains available as unknown imported metadata', () {
+    final entry = RecordingEntry.fromJson({
+      'id': 'imported',
+      'filePath': '/audio/imported.mp3',
+      'channels': 0,
+    });
+
+    expect(entry.channels, 0);
   });
 
   test('copyWith can clear trash state', () {
