@@ -141,13 +141,23 @@ class StorageService {
   }
 
   Future<List<File>> managedRecordingFiles() async {
-    final directory = await recordingsDirectory;
+    return _managedAudioFiles(await recordingsDirectory);
+  }
+
+  Future<List<File>> managedTrashFiles() async {
+    return _managedAudioFiles(await trashDirectory);
+  }
+
+  Future<List<File>> _managedAudioFiles(Directory directory) async {
     final files = <File>[];
     await for (final entity in directory.list(followLinks: false)) {
       if (entity is! File) {
         continue;
       }
-      final extension = p.extension(entity.path).replaceFirst('.', '').toLowerCase();
+      final extension = p
+          .extension(entity.path)
+          .replaceFirst('.', '')
+          .toLowerCase();
       if (_supportedAudioExtensions.contains(extension)) {
         files.add(entity);
       }
