@@ -18,7 +18,7 @@ This file intentionally contains only work that is still incomplete, requires ph
 
 ## Reliability and stress validation
 
-Repository automation now provides deterministic baselines for malformed metadata decoding, non-finite/negative numeric normalization, bounded waveform recovery, duplicate ID/path isolation, structural metadata corruption preservation, interrupted `.bak` recovery, corrupt-store reset, a 3,000-entry metadata save/load round-trip, managed-path mutation guards, persistence rollback for library mutations, supported-file discovery, orphaned managed-audio reconstruction, and isolated import copy/probe/waveform failures. The checks below intentionally remain incomplete because they require real filesystems, media corpora, devices, UI/performance profiling, abrupt process/device interruption, or sustained workloads rather than synthetic regression coverage alone.
+Repository automation now provides deterministic baselines for malformed metadata decoding, non-finite/negative numeric normalization, bounded waveform recovery, duplicate ID/path isolation, structural metadata corruption preservation, interrupted `.bak` recovery, corrupt-store reset, a 3,000-entry metadata save/load round-trip, managed-path mutation guards, persistence rollback for library mutations, supported-file discovery, orphaned managed-audio reconstruction, isolated import copy/probe/waveform failures, entity-safe managed/external filename collisions, and deterministic batch-conversion failure/stop behavior. The checks below intentionally remain incomplete because they require real filesystems, media corpora, devices, UI/performance profiling, abrupt process/device interruption, or sustained workloads rather than synthetic regression coverage alone.
 
 - [ ] Low-storage recording and export failure tests.
 - [ ] Disk/file permission failure recovery tests.
@@ -75,7 +75,7 @@ Repository automation now provides deterministic baselines for malformed metadat
 - [ ] Configure Apple certificates/provisioning/notarization outside the repository.
 - [ ] Decide and configure Windows signing for public distribution.
 - [x] Select Debian `.deb` as the initial repository-supported Linux package target.
-- [ ] Decide the public Linux distribution channel and any repository/package signing policy.
+- [x] Decide the public Linux distribution channel and repository/package signing policy. Initial channel: GitHub Releases with verified `.deb` + SHA-256 checksum; no initial APT repository. See `docs/LINUX_DISTRIBUTION_POLICY.md`.
 - [ ] Produce signed release candidates where the selected distribution channel requires signing.
 - [ ] Complete the release checklist in `docs/RELEASING.md`.
 - [ ] Tag `v1.0.0` only after all required stable-release gates are complete.
