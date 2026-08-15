@@ -97,6 +97,60 @@ void main() {
     expect(await managed.exists(), isFalse);
   });
 
+  test(
+    'managed mutations reject a symlink that points outside storage',
+    () async {
+      final external = File('${sandbox.path}/private.wav');
+      await external.writeAsBytes(const [9, 9, 9], flush: true);
+      final directory = await storage.recordingsDirectory;
+      final link = Link('${directory.path}/linked.wav');
+      await link.create(external.path);
+
+      expect(await storage.isManagedAudioPath(link.path), isFalse);
+      await expectLater(
+        storage.renameAudio(link.path, 'Renamed'),
+        throwsA(isA<FileSystemException>()),
+      );
+      await expectLater(
+        storage.duplicateAudio(link.path, 'Copy'),
+        throwsA(isA<FileSystemException>()),
+      );
+      await expectLater(
+        storage.moveToTrash(link.path, 'Linked'),
+        throwsA(isA<FileSystemException>()),
+      );
+      await expectLater(
+        storage.deleteManagedAudioIfExists(link.path),
+        throwsA(isA<FileSystemException>()),
+      );
+
+      expect(await external.exists(), isTrue);
+      expect(
+        await FileSystemEntity.type(link.path, followLinks: false),
+        FileSystemEntityType.link,
+      );
+    },
+    skip: Platform.isWindows,
+  );
+
+  test(
+    'collision allocation never chooses a broken symlink path',
+    () async {
+      final reserved = await storage.uniqueRecordingPath('Reserved', 'wav');
+      final brokenLink = Link(reserved);
+      await brokenLink.create('${sandbox.path}/missing-target.wav');
+
+      final allocated = await storage.uniqueRecordingPath('Reserved', 'wav');
+
+      expect(allocated, isNot(reserved));
+      expect(
+        await FileSystemEntity.type(reserved, followLinks: false),
+        FileSystemEntityType.link,
+      );
+    },
+    skip: Platform.isWindows,
+  );
+
   test('collision allocation keeps every managed recording distinct', () async {
     final firstPath = await storage.uniqueRecordingPath('Same Name', 'wav');
     await File(firstPath).writeAsBytes(const [1], flush: true);
@@ -121,6 +175,13 @@ void main() {
     await mp3.writeAsBytes(const [2], flush: true);
     await text.writeAsString('not audio', flush: true);
     await nestedAudio.writeAsBytes(const [3], flush: true);
+
+    if (!Platform.isWindows) {
+      final external = File('${sandbox.path}/external.wav');
+      final linkedAudio = Link('${directory.path}/linked.wav');
+      await external.writeAsBytes(const [4], flush: true);
+      await linkedAudio.create(external.path);
+    }
 
     final files = await storage.managedRecordingFiles();
 
