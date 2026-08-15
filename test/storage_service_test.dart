@@ -126,4 +126,19 @@ void main() {
 
     expect(files.map((file) => file.path), [mp3.path, wav.path]);
   });
+
+  test('Trash discovery is isolated from active recording discovery', () async {
+    final active = await createManagedRecording('Active');
+    final trashDirectory = await storage.trashDirectory;
+    final trashed = File('${trashDirectory.path}/Deleted.wav');
+    final ignored = File('${trashDirectory.path}/diagnostic.txt');
+    await trashed.writeAsBytes(const [9, 8, 7], flush: true);
+    await ignored.writeAsString('not audio', flush: true);
+
+    final activeFiles = await storage.managedRecordingFiles();
+    final trashFiles = await storage.managedTrashFiles();
+
+    expect(activeFiles.map((file) => file.path), [active.path]);
+    expect(trashFiles.map((file) => file.path), [trashed.path]);
+  });
 }
