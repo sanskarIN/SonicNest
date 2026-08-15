@@ -78,22 +78,28 @@ SonicNest is an offline-first cross-platform sound and voice recorder built with
 - Reproducible native-brand generation via Bash and PowerShell helpers.
 - GitHub Actions for analyzer/unit tests plus representative platform debug builds that apply native branding before Android, Windows, macOS, and iOS compilation.
 - Dedicated Linux package CI builds a release-mode Flutter bundle, creates and structurally verifies the Debian package, installs it through the package manager, verifies installed metadata/payload, smoke-starts the packaged GUI under a bounded virtual display, removes the package, verifies package-owned integration cleanup, and publishes a short-retention validation artifact.
-- Manual release-candidate automation includes the Linux `.deb` alongside the raw Linux bundle archive without treating either as public-release approval.
+- Manual release-candidate automation includes Android release-mode non-production APK/AAB, Linux release bundle and `.deb`, Windows release portable ZIP, macOS release archive, and iOS no-codesign release archive without treating any hosted artifact as public-release approval.
+- Android hosted release candidates are package/signature-verified and explicitly classified as **NON-PRODUCTION** because Flutter's generated release build uses the Android Debug certificate until protected maintainer signing is configured.
+- Windows portable-package automation builds from the complete release runner bundle, structurally verifies the archive, performs a bounded extracted-package startup smoke, and records checksum/package metadata.
+- Exact hosted candidate hashes, workflow artifact digests, and Android certificate fingerprints are source-controlled in `docs/AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md`.
 - Metadata regression tests cover invalid JSON, invalid document structure, malformed-record isolation, corrupt numeric/waveform normalization, duplicate ID/path isolation, interrupted backup recovery, corrupt-primary fallback, clean reset when no valid store remains, and a deterministic 3,000-entry filesystem round-trip.
 - Managed-storage tests cover protected external paths, collision-safe path allocation, and supported managed-file discovery.
 - Orphan-recovery tests cover known-entry deduplication, damaged-media best-effort reconstruction, and every represented recording format.
 - Import regression tests cover successful managed import plus cleanup after selected-source copy, media-probe, and waveform-extraction failures.
-- Repository integrity rejects unapproved temporary/one-shot workflow files and rejects maintained permanent workflows that request `contents: write`.
+- Repository integrity rejects unapproved temporary/one-shot workflow files under both `.yml` and `.yaml`, rejects permanent workflow write scopes including `permissions: write-all`, and requires the maintained release-evidence/policy documents.
 - Native-branding source revision `40c4a758debef136c2d8c977c321446cca2697cd` passed deterministic branding generation, analyzer/unit tests, Android and Linux core builds in run `31776174696`, Windows debug build in run `31776174725`, and macOS/unsigned-iOS debug builds in run `31776174715`.
 - Linux Debian package source revision `a07468b4b7c14a76b9bce537bbe0455e4539e6bf` passed release Linux compilation, Debian package construction, structural verification, desktop/AppStream validation, checksum verification, package inspection, package-manager installation, installed-payload validation, virtual-display startup smoke, package-manager removal, uninstall cleanup verification, and artifact upload in run `31785105648`.
 - Metadata/import reliability revision `a88aeadadda017b0aced4dbc25c8426a27364b77` passed formatting, analyzer, unit tests, Android debug APK, and Linux debug build in core run `31807193932`; the cross-platform controller revision `3bf63e69186a7a538f7d0587f3d361e00c2e29e9` also passed Windows run `31807141053` and Apple run `31807141166` for Windows, macOS, and unsigned-iOS debug builds.
 - Managed-storage/orphan-recovery source revision `f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe` passed formatting, static analysis, the complete unit-test suite, Android debug APK, and Linux debug build in core run `31867130926`; Windows run `31867130920` passed; Apple run `31867130998` passed for macOS and unsigned iOS; Linux Package CI run `31867130938` passed the release build, Debian verification/install/startup/uninstall path and artifact upload.
-- Repository Integrity Audit run `31867543888` passed after the managed-recovery documentation and project-state synchronization were committed.
-- Apache-2.0 license, contribution/security/privacy/support documentation, architecture/build/branding/codec/Linux-packaging/metadata-integrity/QA documentation, and release procedure.
+- Formatter-clean source revision `4e0fbf16534a60e2d3209c5ec5f54d4982903f8c` passed core run `31870933447`, Windows run `31870933908`, Apple run `31870933903`, and Linux Package CI run `31870933982`.
+- Final hosted release-candidate source revision `048870ec8dc26a16e2451310460d3e03c9084dc7` passed Release Candidate Validation run `31873121457` across source preflight and all five release-mode platform artifact jobs.
+- Permanent Windows Build run `31872928500` independently passed Windows debug plus release portable build, verification, extracted startup smoke, and artifact publication.
+- Clean candidate Repository Integrity Audit run `31873122160` passed on `048870ec8dc26a16e2451310460d3e03c9084dc7`; strengthened audit run `31874506476` passed after `.yaml` and write-all/write-scope hardening.
+- Apache-2.0 license, contribution/security/privacy/support documentation, architecture/build/branding/codec/Linux-packaging/metadata-integrity/QA documentation, distribution policies, and release procedure.
 
 ## Before v1.0.0
 
-This preview must not be treated as a stable public recorder release until the physical-device, interruption, background, low-storage, abrupt-process/power-loss recovery, real damaged/partial-media recovery, long-recording, malformed-real-media corpus, large-library performance, batch-performance, accessibility, native-brand visual-inspection, representative Linux installation/upgrade, signed-packaging, and store-release gates in `docs/QA_CHECKLIST.md` and `docs/RELEASING.md` have been completed with real evidence.
+This preview must not be treated as a stable public recorder release until the physical-device, interruption, background, low-storage, abrupt-process/power-loss recovery, real damaged/partial-media recovery, long-recording, malformed-real-media corpus, large-library performance, batch-performance, accessibility, native-brand visual-inspection, representative Linux/Windows package testing, protected Android/Apple/Windows signing/notarization, store/release, and final approval gates in `docs/QA_CHECKLIST.md` and `docs/RELEASING.md` have been completed with real evidence.
 
 ### Batch export destination update
 
@@ -135,7 +141,6 @@ This preview must not be treated as a stable public recorder release until the p
 - `LibraryRecoveryService` reconstructs missing metadata for supported managed recordings at startup and keeps damaged/partial preserved files visible even when duration/waveform probing cannot succeed.
 - Real malformed-media corpora, abrupt-power/process-kill, low-storage/filesystem-permission recovery, real damaged/partial orphan media, and real large-library UI/memory profiling remain manual release gates rather than being inferred from synthetic tests.
 
-
 ## 2026-08-15 — Managed storage, recovery, batch, and release-policy hardening
 
 This development-preview continuation tightens the local-data boundary and makes the tested batch path the production batch path. Managed recording authority now requires a supported regular audio file in SonicNest-managed active/Trash storage; symbolic links, directories, unsupported regular files, missing paths, and external paths are not trusted as recording instructions. Startup reconciliation and orphan recovery preserve active-versus-Trash state, and recording/Trash accounting follows the same supported top-level regular-audio definition.
@@ -148,8 +153,7 @@ The project also now has explicit policy decisions for future localization and L
 
 Validation evidence: core run `31870224720` is green on revision `e47b290a7255f126cfcf1436444a90cc32d10823` for static analysis, all 87 unit tests, Android debug, and Linux debug. Windows run `31870087266`, Apple run `31870087249`, and Linux Package CI run `31870087317` are green on application-code revision `72797fa477b9d88e2138b7ddf1d0f845cdd549ca`; the later `e47b290...` change corrects only a persistence test fixture.
 
-One repository-hygiene item remains explicit: the core job currently formats 30 of 54 checked-in Dart files before analysis/tests. Behavior validation is green on the formatted checkout, but the tracked tree is not yet claimed formatter-clean. Physical-device, filesystem-failure, accessibility, long-duration, representative-package, signing, and stable-release evidence remains intentionally incomplete.
-
+The earlier formatter-hygiene warning exposed by that run is now historical: canonical formatter output was later committed and CI was converted to a non-mutating enforcement gate. Physical-device, filesystem-failure, accessibility, long-duration, representative-package, signing, and stable-release evidence remains intentionally incomplete.
 
 ## 2026-08-15 — Formatter-clean source and distribution policy completion
 
@@ -157,6 +161,18 @@ The earlier formatting-hygiene warning is now resolved. Canonical stable-toolcha
 
 Formatter-clean source revision `4e0fbf16534a60e2d3209c5ec5f54d4982903f8c` passed the complete maintained automated matrix used in this continuation: core run `31870933447` passed the non-mutating format gate, static analysis, full unit suite, Android debug, and Linux debug; Windows run `31870933908` passed; Apple run `31870933903` passed macOS debug and unsigned-iOS debug; Linux Package CI run `31870933982` passed release-bundle creation, Debian package build/verification, installation, installed-app smoke, uninstall, and artifact publication.
 
-The repository also now contains `docs/STORE_LISTING.md` with cross-platform listing/privacy copy and `docs/WINDOWS_SIGNING_POLICY.md` defining Authenticode signing as the policy for stable public Windows distributables. Actual store-console submission, private signing credentials, final installer/package integration, and signed release candidates remain maintainer/release-candidate work.
+The repository also now contains `docs/STORE_LISTING.md` with cross-platform listing/privacy copy and `docs/WINDOWS_SIGNING_POLICY.md` defining Authenticode signing as the policy for stable public Windows distributables. Actual store-console submission, private signing credentials, final public packages, and signed release candidates remain maintainer/release-candidate work.
 
 This does not change the release classification: SonicNest remains a development preview until the unchecked physical-device, real-filesystem, accessibility, long-duration/performance, visual-branding, representative-package, signing/notarization, and final stable-release gates are completed with evidence.
+
+## 2026-08-15 — Final hosted cross-platform release-candidate evidence
+
+A clean release-candidate source revision `048870ec8dc26a16e2451310460d3e03c9084dc7` completed Release Candidate Validation run `31873121457` successfully across all maintained hosted jobs: source preflight, Android release-mode non-production APK/AAB, Linux release bundle and Debian package, Windows release portable ZIP with structural verification and extracted startup smoke, macOS release archive, and iOS release no-codesign archive.
+
+The Android signing state is now recorded accurately rather than described as unsigned. Hosted APK/AAB validation confirmed package `io.github.sanskarin.sonic_nest`, label `SonicNest`, and Android Debug certificate `C=US, O=Android, CN=Android Debug`; the certificate SHA-256 is `ccbfe6b04e1859cf9064c9e5a2c8f9fe1d73be92e6ef1454142b9d2fbfff89e1`. The APK SHA-256 is `1fe7ea48d771209f4bfea097fc7d9e723cff00411b2541ee848e7ec20d6c271e` and the AAB SHA-256 is `ecaf9842980b17af06f3b3f90898d286a3b38ebf0b15259271af2f07dab72f4f`. These are explicitly **NON-PRODUCTION** candidates and do not replace Play App Signing/upload-key work.
+
+The same candidate produced Linux bundle SHA-256 `a5fe64b440bf19b1b8a74e5a5ff875e645c2da7661bd8492e1a910160de179f8`, Debian package SHA-256 `414f11ad877c7c51861a14817cd3900d2bb77d3b49ea949d601e3686d5346498`, Windows portable ZIP SHA-256 `60f5680548b0352d5230b6d40acc17a8b8b12d075b2ce1fd08c6209f565e3eb1`, macOS archive SHA-256 `364c0d8f84c2779c45a36e13fd59d6bbcceebe03f62662a41dc4e2f9178d4af3`, and iOS no-codesign archive SHA-256 `8d1209b94aa1aaff4369dff041ace9698bf4dcd5e0e6363a0fd470c50ee2e54d`.
+
+Permanent Windows Build run `31872928500` independently passed the release portable build, verification, extracted startup smoke, and artifact publication path. Repository Integrity Audit run `31873122160` passed on the clean candidate SHA. A later hardening commit `64c121fa0e5c81531a3710b1d67b88fb3dfc93db` broadened workflow discovery to `.yaml` as well as `.yml` and rejects `permissions: write-all` plus permanent write scopes; audit run `31874506476` passed that strengthened policy.
+
+Exact workflow artifact digests and the full automated/manual boundary are preserved in `docs/AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md`. This evidence closes the currently identified repository-owned release-automation work; it does **not** close physical-device, real-system package, accessibility, sustained recording/performance, protected signing/notarization, store-console, or stable-release approval gates.
