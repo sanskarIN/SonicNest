@@ -51,41 +51,48 @@ void main() {
     expect(await File('${metadataFile.path}.tmp').exists(), isFalse);
   });
 
-  test('corrupt primary is not copied repeatedly after recovery reset', () async {
-    await metadataFile.parent.create(recursive: true);
-    await metadataFile.writeAsString('{not-json');
-    final store = createStore();
+  test(
+    'corrupt primary is not copied repeatedly after recovery reset',
+    () async {
+      await metadataFile.parent.create(recursive: true);
+      await metadataFile.writeAsString('{not-json');
+      final store = createStore();
 
-    await store.load();
-    await store.load();
+      await store.load();
+      await store.load();
 
-    final corruptCopies = metadataFile.parent
-        .listSync()
-        .whereType<File>()
-        .where((file) => p.basename(file.path).contains('.corrupt.'))
-        .toList(growable: false);
-    expect(corruptCopies, hasLength(1));
-  });
+      final corruptCopies = metadataFile.parent
+          .listSync()
+          .whereType<File>()
+          .where((file) => p.basename(file.path).contains('.corrupt.'))
+          .toList(growable: false);
+      expect(corruptCopies, hasLength(1));
+    },
+  );
 
-  test('structurally invalid recordings payload is preserved then reset', () async {
-    await metadataFile.parent.create(recursive: true);
-    await metadataFile.writeAsString(
-      jsonEncode(<String, Object>{
-        'schemaVersion': 1,
-        'recordings': 'not-a-list',
-      }),
-    );
+  test(
+    'structurally invalid recordings payload is preserved then reset',
+    () async {
+      await metadataFile.parent.create(recursive: true);
+      await metadataFile.writeAsString(
+        jsonEncode(<String, Object>{
+          'schemaVersion': 1,
+          'recordings': 'not-a-list',
+        }),
+      );
 
-    final entries = await createStore().load();
+      final entries = await createStore().load();
 
-    expect(entries, isEmpty);
-    final backup = File(
-      '${metadataFile.path}.corrupt.${fixedClock.millisecondsSinceEpoch}',
-    );
-    expect(await backup.exists(), isTrue);
-    final resetDocument = jsonDecode(await metadataFile.readAsString()) as Map;
-    expect(resetDocument['recordings'], isEmpty);
-  });
+      expect(entries, isEmpty);
+      final backup = File(
+        '${metadataFile.path}.corrupt.${fixedClock.millisecondsSinceEpoch}',
+      );
+      expect(await backup.exists(), isTrue);
+      final resetDocument =
+          jsonDecode(await metadataFile.readAsString()) as Map;
+      expect(resetDocument['recordings'], isEmpty);
+    },
+  );
 
   test('one malformed record cannot hide valid library entries', () async {
     await metadataFile.parent.create(recursive: true);
@@ -96,11 +103,7 @@ void main() {
         'recordings': <Object?>[
           valid,
           'not-a-record',
-          <String, Object?>{
-            'id': 44,
-            'filePath': false,
-            'tags': 'not-a-list',
-          },
+          <String, Object?>{'id': 44, 'filePath': false, 'tags': 'not-a-list'},
           <String, Object?>{
             'id': 'second-valid',
             'filePath': '/audio/second.wav',
@@ -123,27 +126,35 @@ void main() {
     expect(entries.last.markers.single.label, 'Marker');
   });
 
-  test('duplicate ids and duplicate file paths keep only first records', () async {
-    await metadataFile.parent.create(recursive: true);
-    final first = _entry(1).toJson();
-    final duplicateId = _entry(2).toJson()..['id'] = 'recording-1';
-    final duplicatePath = _entry(3).toJson()
-      ..['filePath'] = '/audio/recording-1.wav';
-    await metadataFile.writeAsString(
-      jsonEncode(<String, Object>{
-        'schemaVersion': 1,
-        'recordings': <Object>[first, duplicateId, duplicatePath, _entry(4).toJson()],
-      }),
-    );
+  test(
+    'duplicate ids and duplicate file paths keep only first records',
+    () async {
+      await metadataFile.parent.create(recursive: true);
+      final first = _entry(1).toJson();
+      final duplicateId = _entry(2).toJson()..['id'] = 'recording-1';
+      final duplicatePath = _entry(3).toJson()
+        ..['filePath'] = '/audio/recording-1.wav';
+      await metadataFile.writeAsString(
+        jsonEncode(<String, Object>{
+          'schemaVersion': 1,
+          'recordings': <Object>[
+            first,
+            duplicateId,
+            duplicatePath,
+            _entry(4).toJson(),
+          ],
+        }),
+      );
 
-    final entries = await createStore().load();
+      final entries = await createStore().load();
 
-    expect(entries.map((entry) => entry.id), ['recording-1', 'recording-4']);
-    expect(
-      entries.map((entry) => entry.filePath),
-      ['/audio/recording-1.wav', '/audio/recording-4.wav'],
-    );
-  });
+      expect(entries.map((entry) => entry.id), ['recording-1', 'recording-4']);
+      expect(entries.map((entry) => entry.filePath), [
+        '/audio/recording-1.wav',
+        '/audio/recording-4.wav',
+      ]);
+    },
+  );
 
   test('missing primary metadata recovers an interrupted backup', () async {
     final store = createStore();

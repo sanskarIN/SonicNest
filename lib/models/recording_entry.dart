@@ -214,9 +214,7 @@ List<RecordingMarker> _markerList(Object? value) {
       continue;
     }
     try {
-      markers.add(
-        RecordingMarker.fromJson(Map<String, dynamic>.from(item)),
-      );
+      markers.add(RecordingMarker.fromJson(Map<String, dynamic>.from(item)));
     } on Object {
       // A malformed marker must not invalidate the containing recording.
     }

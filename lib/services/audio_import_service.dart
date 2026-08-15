@@ -25,10 +25,7 @@ class ImportedAudioData {
 }
 
 class AudioImportException implements Exception {
-  const AudioImportException({
-    required this.sourcePath,
-    required this.message,
-  });
+  const AudioImportException({required this.sourcePath, required this.message});
 
   final String sourcePath;
   final String message;
@@ -38,10 +35,7 @@ class AudioImportException implements Exception {
 }
 
 class AudioImportService {
-  const AudioImportService({
-    required this.storage,
-    required this.processor,
-  });
+  const AudioImportService({required this.storage, required this.processor});
 
   final StorageService storage;
   final AudioProcessor processor;
@@ -50,7 +44,10 @@ class AudioImportService {
     String? importedPath;
     try {
       importedPath = await storage.importFile(sourcePath);
-      final extension = p.extension(importedPath).replaceFirst('.', '').toLowerCase();
+      final extension = p
+          .extension(importedPath)
+          .replaceFirst('.', '')
+          .toLowerCase();
       final format =
           RecordingFormat.values
               .where((candidate) => candidate.extension == extension)

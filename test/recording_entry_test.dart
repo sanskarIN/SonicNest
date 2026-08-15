@@ -61,11 +61,7 @@ void main() {
       'folder': false,
       'notes': 99,
       'markers': [
-        {
-          'positionMs': 'bad',
-          'label': 5,
-          'note': false,
-        },
+        {'positionMs': 'bad', 'label': 5, 'note': false},
         'not-a-marker',
         {1: 'non-string-key'},
       ],

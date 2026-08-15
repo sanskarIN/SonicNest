@@ -60,12 +60,9 @@ void main() {
     final selectedStorage = storageOverride ?? storage;
     metadata.entries = List.of(entries);
     final processor = AudioProcessor(selectedStorage);
-    final recorder = recorderFactory?.call(selectedStorage, processor) ??
-        RecorderService(
-          selectedStorage,
-          processor,
-          BackgroundServiceBridge(),
-        );
+    final recorder =
+        recorderFactory?.call(selectedStorage, processor) ??
+        RecorderService(selectedStorage, processor, BackgroundServiceBridge());
     controller = AppController(
       storage: selectedStorage,
       metadata: metadata,
@@ -155,10 +152,7 @@ void main() {
     await file.writeAsBytes(const [9, 8, 7, 6], flush: true);
     metadata.failSaves = true;
 
-    await expectLater(
-      app.stopRecording(),
-      throwsA(isA<FileSystemException>()),
-    );
+    await expectLater(app.stopRecording(), throwsA(isA<FileSystemException>()));
 
     expect(app.recordings, isEmpty);
     expect(app.selectedRecording, isNull);
@@ -185,30 +179,32 @@ void main() {
     expect(app.recordings.single.title, 'original');
     final directory = await storage.recordingsDirectory;
     expect(
-      directory
-          .listSync()
-          .whereType<File>()
-          .where((file) => file.path != originalPath),
+      directory.listSync().whereType<File>().where(
+        (file) => file.path != originalPath,
+      ),
       isEmpty,
     );
   });
 
-  test('move to Trash restores original file when metadata save fails', () async {
-    final entry = await createActiveEntry('trash-rollback');
-    final originalPath = entry.filePath;
-    final app = await createController(entries: [entry]);
-    metadata.failSaves = true;
+  test(
+    'move to Trash restores original file when metadata save fails',
+    () async {
+      final entry = await createActiveEntry('trash-rollback');
+      final originalPath = entry.filePath;
+      final app = await createController(entries: [entry]);
+      metadata.failSaves = true;
 
-    await expectLater(
-      app.moveToTrash(app.recordings.single),
-      throwsA(isA<FileSystemException>()),
-    );
+      await expectLater(
+        app.moveToTrash(app.recordings.single),
+        throwsA(isA<FileSystemException>()),
+      );
 
-    expect(await File(originalPath).exists(), isTrue);
-    expect(app.recordings.single.filePath, originalPath);
-    expect(app.recordings.single.isTrashed, isFalse);
-    expect((await storage.trashDirectory).listSync(), isEmpty);
-  });
+      expect(await File(originalPath).exists(), isTrue);
+      expect(app.recordings.single.filePath, originalPath);
+      expect(app.recordings.single.isTrashed, isFalse);
+      expect((await storage.trashDirectory).listSync(), isEmpty);
+    },
+  );
 
   test('restore returns file to Trash when metadata save fails', () async {
     final entry = await createTrashedEntry('restore-rollback');
@@ -227,19 +223,22 @@ void main() {
     expect((await storage.recordingsDirectory).listSync(), isEmpty);
   });
 
-  test('permanent delete never removes file if metadata removal fails', () async {
-    final entry = await createActiveEntry('delete-save-failure');
-    final app = await createController(entries: [entry]);
-    metadata.failSaves = true;
+  test(
+    'permanent delete never removes file if metadata removal fails',
+    () async {
+      final entry = await createActiveEntry('delete-save-failure');
+      final app = await createController(entries: [entry]);
+      metadata.failSaves = true;
 
-    await expectLater(
-      app.permanentlyDelete(app.recordings.single),
-      throwsA(isA<FileSystemException>()),
-    );
+      await expectLater(
+        app.permanentlyDelete(app.recordings.single),
+        throwsA(isA<FileSystemException>()),
+      );
 
-    expect(await File(entry.filePath).exists(), isTrue);
-    expect(app.recordings.map((item) => item.id), [entry.id]);
-  });
+      expect(await File(entry.filePath).exists(), isTrue);
+      expect(app.recordings.map((item) => item.id), [entry.id]);
+    },
+  );
 
   test('failed managed file deletion restores persisted metadata', () async {
     final guardedStorage = FailingDeleteStorageService(
@@ -268,20 +267,23 @@ void main() {
     expect(metadata.savedSnapshots.last.map((item) => item.id), [entry.id]);
   });
 
-  test('settings snapshot rolls back when settings persistence fails', () async {
-    final app = await createController();
-    final original = app.settings;
-    final changed = original.copyWith(defaultPlaybackSpeed: 1.75);
-    settingsService.failSaves = true;
+  test(
+    'settings snapshot rolls back when settings persistence fails',
+    () async {
+      final app = await createController();
+      final original = app.settings;
+      final changed = original.copyWith(defaultPlaybackSpeed: 1.75);
+      settingsService.failSaves = true;
 
-    await expectLater(
-      app.updateSettings(changed),
-      throwsA(isA<FileSystemException>()),
-    );
+      await expectLater(
+        app.updateSettings(changed),
+        throwsA(isA<FileSystemException>()),
+      );
 
-    expect(app.settings.defaultPlaybackSpeed, original.defaultPlaybackSpeed);
-    expect(app.settings.themeMode, original.themeMode);
-  });
+      expect(app.settings.defaultPlaybackSpeed, original.defaultPlaybackSpeed);
+      expect(app.settings.themeMode, original.themeMode);
+    },
+  );
 }
 
 RecordingEntry _entry({

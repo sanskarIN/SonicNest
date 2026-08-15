@@ -47,7 +47,11 @@ void main() {
       service.importOne('/picked/broken.mp3'),
       throwsA(
         isA<AudioImportException>()
-            .having((error) => error.sourcePath, 'sourcePath', '/picked/broken.mp3')
+            .having(
+              (error) => error.sourcePath,
+              'sourcePath',
+              '/picked/broken.mp3',
+            )
             .having(
               (error) => error.message,
               'message',
@@ -79,7 +83,9 @@ void main() {
   });
 
   test('copy failure is reported without deleting an unrelated path', () async {
-    final storage = _FakeStorageService(importFailures: const {'/picked/missing.ogg'});
+    final storage = _FakeStorageService(
+      importFailures: const {'/picked/missing.ogg'},
+    );
     final processor = _FakeAudioProcessor(storage);
     final service = AudioImportService(storage: storage, processor: processor);
 
@@ -144,7 +150,9 @@ class _FakeAudioProcessor extends AudioProcessor {
   @override
   Future<Duration> probeDuration(String inputPath) async {
     if (probeFailures.contains(inputPath)) {
-      throw const AudioProcessingException('Could not determine audio duration.');
+      throw const AudioProcessingException(
+        'Could not determine audio duration.',
+      );
     }
     return durations[inputPath] ?? Duration.zero;
   }

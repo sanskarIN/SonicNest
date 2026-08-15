@@ -358,17 +358,18 @@ class _BatchConvertScreenState extends State<BatchConvertScreen> {
       format: format,
       fallbackSettings: controller.settings.recording,
       exportDirectory: exportDirectory,
-      registerOutput: ({
-        required path,
-        required title,
-        required format,
-        required markers,
-      }) => controller.addProcessedFile(
-        path,
-        title: title,
-        format: format,
-        markers: markers,
-      ),
+      registerOutput:
+          ({
+            required path,
+            required title,
+            required format,
+            required markers,
+          }) => controller.addProcessedFile(
+            path,
+            title: title,
+            format: format,
+            markers: markers,
+          ),
       shouldStop: () => _stopRequested,
       onProgress: (completed, total) {
         if (mounted) {

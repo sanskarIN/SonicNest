@@ -53,7 +53,10 @@ class LibraryRecoveryService {
     return List.unmodifiable(recovered);
   }
 
-  Future<RecordingEntry?> _recoverFile(File file, {required bool trashed}) async {
+  Future<RecordingEntry?> _recoverFile(
+    File file, {
+    required bool trashed,
+  }) async {
     final format = _formatForPath(file.path);
     if (format == null) {
       return null;

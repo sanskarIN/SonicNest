@@ -117,9 +117,7 @@ class MetadataStore {
         continue;
       }
       try {
-        final entry = RecordingEntry.fromJson(
-          Map<String, dynamic>.from(item),
-        );
+        final entry = RecordingEntry.fromJson(Map<String, dynamic>.from(item));
         if (entry.id.isEmpty || entry.filePath.isEmpty) {
           continue;
         }

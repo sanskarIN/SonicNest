@@ -4,12 +4,13 @@ import 'audio_processor.dart';
 import 'external_actions.dart';
 import 'storage_service.dart';
 
-typedef BatchOutputRegistrar = Future<void> Function({
-  required String path,
-  required String title,
-  required RecordingFormat format,
-  required List<RecordingMarker> markers,
-});
+typedef BatchOutputRegistrar =
+    Future<void> Function({
+      required String path,
+      required String title,
+      required RecordingFormat format,
+      required List<RecordingMarker> markers,
+    });
 
 typedef BatchStopPredicate = bool Function();
 typedef BatchProgressCallback = void Function(int completed, int total);

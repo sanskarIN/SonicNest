@@ -42,11 +42,7 @@ void main() {
       storage: storage,
       metadata: MetadataStore(supportDirectoryProvider: () async => support),
       settingsService: _FakeSettingsService(),
-      recorder: RecorderService(
-        storage,
-        processor,
-        BackgroundServiceBridge(),
-      ),
+      recorder: RecorderService(storage, processor, BackgroundServiceBridge()),
       player: _ProbeFailurePlayerService(),
       processor: processor,
       external: ExternalActions(),
@@ -63,40 +59,46 @@ void main() {
     }
   });
 
-  test('failed processed registration never deletes an external path', () async {
-    final external = File('${sandbox.path}/external.wav');
-    await external.writeAsBytes(const [1, 2, 3, 4], flush: true);
+  test(
+    'failed processed registration never deletes an external path',
+    () async {
+      final external = File('${sandbox.path}/external.wav');
+      await external.writeAsBytes(const [1, 2, 3, 4], flush: true);
 
-    await expectLater(
-      controller.addProcessedFile(
-        external.path,
-        title: 'External',
-        format: RecordingFormat.wav,
-      ),
-      throwsA(isA<FormatException>()),
-    );
+      await expectLater(
+        controller.addProcessedFile(
+          external.path,
+          title: 'External',
+          format: RecordingFormat.wav,
+        ),
+        throwsA(isA<FormatException>()),
+      );
 
-    expect(await external.exists(), isTrue);
-    expect(controller.recordings, isEmpty);
-  });
+      expect(await external.exists(), isTrue);
+      expect(controller.recordings, isEmpty);
+    },
+  );
 
-  test('failed processed registration cleans a managed active output', () async {
-    final managedPath = await storage.uniqueRecordingPath('Generated', 'wav');
-    final managed = File(managedPath);
-    await managed.writeAsBytes(const [5, 6, 7, 8], flush: true);
+  test(
+    'failed processed registration cleans a managed active output',
+    () async {
+      final managedPath = await storage.uniqueRecordingPath('Generated', 'wav');
+      final managed = File(managedPath);
+      await managed.writeAsBytes(const [5, 6, 7, 8], flush: true);
 
-    await expectLater(
-      controller.addProcessedFile(
-        managed.path,
-        title: 'Generated',
-        format: RecordingFormat.wav,
-      ),
-      throwsA(isA<FormatException>()),
-    );
+      await expectLater(
+        controller.addProcessedFile(
+          managed.path,
+          title: 'Generated',
+          format: RecordingFormat.wav,
+        ),
+        throwsA(isA<FormatException>()),
+      );
 
-    expect(await managed.exists(), isFalse);
-    expect(controller.recordings, isEmpty);
-  });
+      expect(await managed.exists(), isFalse);
+      expect(controller.recordings, isEmpty);
+    },
+  );
 }
 
 class _ProbeFailurePlayerService extends PlayerService {

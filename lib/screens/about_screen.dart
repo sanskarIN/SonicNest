@@ -25,8 +25,9 @@ class AboutScreen extends StatelessWidget {
             Text(
               l10n.appName,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.headlineMedium
-                  ?.copyWith(fontWeight: FontWeight.w900),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 6),
             Text(l10n.aboutTagline, textAlign: TextAlign.center),

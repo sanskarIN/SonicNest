@@ -42,8 +42,9 @@ void main() {
         final source = File(p.join(root.path, 'lecture.mp3'));
         await source.writeAsBytes([7, 8, 9]);
         await File(p.join(destination.path, 'lecture.mp3')).writeAsBytes([1]);
-        await File(p.join(destination.path, 'lecture (2).mp3'))
-            .writeAsBytes([2]);
+        await File(
+          p.join(destination.path, 'lecture (2).mp3'),
+        ).writeAsBytes([2]);
 
         final copiedPath = await actions.copyFileToDirectoryCollisionSafe(
           sourcePath: source.path,
@@ -63,21 +64,24 @@ void main() {
       },
     );
 
-    test('uses a numbered name when a directory occupies the basename', () async {
-      final source = File(p.join(root.path, 'session.wav'));
-      await source.writeAsBytes([1, 4, 9]);
-      final occupied = Directory(p.join(destination.path, 'session.wav'));
-      await occupied.create();
+    test(
+      'uses a numbered name when a directory occupies the basename',
+      () async {
+        final source = File(p.join(root.path, 'session.wav'));
+        await source.writeAsBytes([1, 4, 9]);
+        final occupied = Directory(p.join(destination.path, 'session.wav'));
+        await occupied.create();
 
-      final copiedPath = await actions.copyFileToDirectoryCollisionSafe(
-        sourcePath: source.path,
-        directoryPath: destination.path,
-      );
+        final copiedPath = await actions.copyFileToDirectoryCollisionSafe(
+          sourcePath: source.path,
+          directoryPath: destination.path,
+        );
 
-      expect(p.basename(copiedPath), 'session (2).wav');
-      expect(await occupied.exists(), isTrue);
-      expect(await File(copiedPath).readAsBytes(), [1, 4, 9]);
-    });
+        expect(p.basename(copiedPath), 'session (2).wav');
+        expect(await occupied.exists(), isTrue);
+        expect(await File(copiedPath).readAsBytes(), [1, 4, 9]);
+      },
+    );
 
     test(
       'uses a numbered name when a broken symbolic link occupies the basename',

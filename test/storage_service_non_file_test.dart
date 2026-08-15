@@ -48,32 +48,35 @@ void main() {
     expect(await directory.exists(), isTrue);
   });
 
-  test('unsupported regular file inside managed storage is protected', () async {
-    final recordings = await storage.recordingsDirectory;
-    final notes = File('${recordings.path}/notes.txt');
-    await notes.writeAsString('do not treat as recording', flush: true);
+  test(
+    'unsupported regular file inside managed storage is protected',
+    () async {
+      final recordings = await storage.recordingsDirectory;
+      final notes = File('${recordings.path}/notes.txt');
+      await notes.writeAsString('do not treat as recording', flush: true);
 
-    expect(await storage.isManagedAudioPath(notes.path), isFalse);
-    await expectLater(
-      storage.renameAudio(notes.path, 'Renamed'),
-      throwsA(isA<FileSystemException>()),
-    );
-    await expectLater(
-      storage.duplicateAudio(notes.path, 'Copy'),
-      throwsA(isA<FileSystemException>()),
-    );
-    await expectLater(
-      storage.moveToTrash(notes.path, 'Notes'),
-      throwsA(isA<FileSystemException>()),
-    );
-    await expectLater(
-      storage.deleteManagedAudioIfExists(notes.path),
-      throwsA(isA<FileSystemException>()),
-    );
+      expect(await storage.isManagedAudioPath(notes.path), isFalse);
+      await expectLater(
+        storage.renameAudio(notes.path, 'Renamed'),
+        throwsA(isA<FileSystemException>()),
+      );
+      await expectLater(
+        storage.duplicateAudio(notes.path, 'Copy'),
+        throwsA(isA<FileSystemException>()),
+      );
+      await expectLater(
+        storage.moveToTrash(notes.path, 'Notes'),
+        throwsA(isA<FileSystemException>()),
+      );
+      await expectLater(
+        storage.deleteManagedAudioIfExists(notes.path),
+        throwsA(isA<FileSystemException>()),
+      );
 
-    expect(await notes.exists(), isTrue);
-    expect(await notes.readAsString(), 'do not treat as recording');
-  });
+      expect(await notes.exists(), isTrue);
+      expect(await notes.readAsString(), 'do not treat as recording');
+    },
+  );
 
   test('non-file collision forces a numbered destination', () async {
     final recordings = await storage.recordingsDirectory;
@@ -102,10 +105,7 @@ void main() {
     await active.writeAsBytes(const [1, 2, 3], flush: true);
     await trashed.writeAsBytes(const [4, 5, 6, 7], flush: true);
     await unsupported.writeAsBytes(const [8, 9, 10, 11, 12], flush: true);
-    await nestedAudio.writeAsBytes(
-      const [13, 14, 15, 16, 17, 18],
-      flush: true,
-    );
+    await nestedAudio.writeAsBytes(const [13, 14, 15, 16, 17, 18], flush: true);
     await temporaryFile.writeAsBytes(const [19, 20], flush: true);
 
     final stats = await storage.stats();

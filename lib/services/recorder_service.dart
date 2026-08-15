@@ -164,7 +164,9 @@ class RecorderService extends ChangeNotifier {
         captureEncoder = AudioEncoder.wav;
         captureExtension = 'wav';
         _postTranscode = true;
-      } else if (await _recorderBackend.isEncoderSupported(AudioEncoder.aacLc)) {
+      } else if (await _recorderBackend.isEncoderSupported(
+        AudioEncoder.aacLc,
+      )) {
         captureEncoder = AudioEncoder.aacLc;
         captureExtension = 'm4a';
         _postTranscode = true;

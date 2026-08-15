@@ -80,77 +80,80 @@ void main() {
     return file;
   }
 
-  test('startup drops unsafe metadata and recovers active and Trash orphans', () async {
-    final indexed = await activeFile('Indexed', 'wav');
-    final indexedTrash = await trashFile('Indexed Trash', 'm4a');
-    final activeOrphan = await activeFile('Active Orphan', 'mp3');
-    final trashOrphan = await trashFile('Trash Orphan', 'flac');
-    final unsupported = File(
-      '${(await storage.recordingsDirectory).path}/notes.txt',
-    );
-    await unsupported.writeAsString('not an audio recording', flush: true);
-    final external = File('${sandbox.path}/outside.wav');
-    await external.writeAsBytes(const [9, 9, 9], flush: true);
-    final missingPath = await storage.uniqueRecordingPath('Missing', 'wav');
+  test(
+    'startup drops unsafe metadata and recovers active and Trash orphans',
+    () async {
+      final indexed = await activeFile('Indexed', 'wav');
+      final indexedTrash = await trashFile('Indexed Trash', 'm4a');
+      final activeOrphan = await activeFile('Active Orphan', 'mp3');
+      final trashOrphan = await trashFile('Trash Orphan', 'flac');
+      final unsupported = File(
+        '${(await storage.recordingsDirectory).path}/notes.txt',
+      );
+      await unsupported.writeAsString('not an audio recording', flush: true);
+      final external = File('${sandbox.path}/outside.wav');
+      await external.writeAsBytes(const [9, 9, 9], flush: true);
+      final missingPath = await storage.uniqueRecordingPath('Missing', 'wav');
 
-    final now = DateTime.utc(2026, 8, 15, 12);
-    metadata.entries = [
-      _entry('indexed', indexed.path, RecordingFormat.wav, now),
-      _entry(
-        'indexed-trash',
-        indexedTrash.path,
-        RecordingFormat.m4a,
-        now,
-        trashedAt: now,
-      ),
-      _entry('external', external.path, RecordingFormat.wav, now),
-      _entry('unsupported', unsupported.path, RecordingFormat.wav, now),
-      _entry('missing', missingPath, RecordingFormat.wav, now),
-    ];
+      final now = DateTime.utc(2026, 8, 15, 12);
+      metadata.entries = [
+        _entry('indexed', indexed.path, RecordingFormat.wav, now),
+        _entry(
+          'indexed-trash',
+          indexedTrash.path,
+          RecordingFormat.m4a,
+          now,
+          trashedAt: now,
+        ),
+        _entry('external', external.path, RecordingFormat.wav, now),
+        _entry('unsupported', unsupported.path, RecordingFormat.wav, now),
+        _entry('missing', missingPath, RecordingFormat.wav, now),
+      ];
 
-    final controller = await createController();
+      final controller = await createController();
 
-    expect(controller.recordings, hasLength(4));
-    expect(
-      controller.recordings.map((entry) => entry.id),
-      containsAll(['indexed', 'indexed-trash']),
-    );
-    expect(
-      controller.recordings.any((entry) => entry.filePath == external.path),
-      isFalse,
-    );
-    expect(
-      controller.recordings.any(
-        (entry) => entry.filePath == unsupported.path,
-      ),
-      isFalse,
-    );
-    expect(
-      controller.recordings.any((entry) => entry.filePath == missingPath),
-      isFalse,
-    );
-    expect(await external.exists(), isTrue);
-    expect(await unsupported.exists(), isTrue);
+      expect(controller.recordings, hasLength(4));
+      expect(
+        controller.recordings.map((entry) => entry.id),
+        containsAll(['indexed', 'indexed-trash']),
+      );
+      expect(
+        controller.recordings.any((entry) => entry.filePath == external.path),
+        isFalse,
+      );
+      expect(
+        controller.recordings.any(
+          (entry) => entry.filePath == unsupported.path,
+        ),
+        isFalse,
+      );
+      expect(
+        controller.recordings.any((entry) => entry.filePath == missingPath),
+        isFalse,
+      );
+      expect(await external.exists(), isTrue);
+      expect(await unsupported.exists(), isTrue);
 
-    final recoveredActive = controller.recordings.singleWhere(
-      (entry) => entry.filePath == activeOrphan.path,
-    );
-    expect(recoveredActive.tags, contains('Recovered'));
-    expect(recoveredActive.isTrashed, isFalse);
-    expect(recoveredActive.durationMs, 1500);
-    expect(recoveredActive.waveform, [0.0, 0.5, 1.0]);
+      final recoveredActive = controller.recordings.singleWhere(
+        (entry) => entry.filePath == activeOrphan.path,
+      );
+      expect(recoveredActive.tags, contains('Recovered'));
+      expect(recoveredActive.isTrashed, isFalse);
+      expect(recoveredActive.durationMs, 1500);
+      expect(recoveredActive.waveform, [0.0, 0.5, 1.0]);
 
-    final recoveredTrash = controller.recordings.singleWhere(
-      (entry) => entry.filePath == trashOrphan.path,
-    );
-    expect(recoveredTrash.tags, contains('Recovered'));
-    expect(recoveredTrash.isTrashed, isTrue);
-    expect(recoveredTrash.trashedAt, isNotNull);
+      final recoveredTrash = controller.recordings.singleWhere(
+        (entry) => entry.filePath == trashOrphan.path,
+      );
+      expect(recoveredTrash.tags, contains('Recovered'));
+      expect(recoveredTrash.isTrashed, isTrue);
+      expect(recoveredTrash.trashedAt, isNotNull);
 
-    expect(metadata.savedSnapshots, hasLength(2));
-    expect(metadata.savedSnapshots.first, hasLength(2));
-    expect(metadata.savedSnapshots.last, hasLength(4));
-  });
+      expect(metadata.savedSnapshots, hasLength(2));
+      expect(metadata.savedSnapshots.first, hasLength(2));
+      expect(metadata.savedSnapshots.last, hasLength(4));
+    },
+  );
 
   test('restart does not create duplicate recovered entries', () async {
     final activeOrphan = await activeFile('Restart Orphan', 'opus');
@@ -158,10 +161,10 @@ void main() {
 
     final first = await createController();
     expect(first.recordings, hasLength(2));
-    expect(
-      first.recordings.map((entry) => entry.filePath).toSet(),
-      {activeOrphan.path, trashOrphan.path},
-    );
+    expect(first.recordings.map((entry) => entry.filePath).toSet(), {
+      activeOrphan.path,
+      trashOrphan.path,
+    });
     final firstIds = first.recordings.map((entry) => entry.id).toSet();
     final savesAfterFirstStartup = metadata.savedSnapshots.length;
 

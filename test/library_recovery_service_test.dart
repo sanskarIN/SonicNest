@@ -63,7 +63,9 @@ void main() {
   test('recovers supported managed audio missing from metadata', () async {
     final orphan = await createRecording('Orphan', 'wav');
 
-    final recovered = await createRecovery().recoverOrphanedRecordings(const []);
+    final recovered = await createRecovery().recoverOrphanedRecordings(
+      const [],
+    );
 
     expect(recovered, hasLength(1));
     final entry = recovered.single;
@@ -83,7 +85,9 @@ void main() {
   test('recovers an unindexed managed Trash file back into Trash', () async {
     final orphan = await createTrashRecording('Interrupted Delete', 'flac');
 
-    final recovered = await createRecovery().recoverOrphanedRecordings(const []);
+    final recovered = await createRecovery().recoverOrphanedRecordings(
+      const [],
+    );
 
     expect(recovered, hasLength(1));
     final entry = recovered.single;
@@ -95,27 +99,32 @@ void main() {
     expect(entry.notes, contains('Recovered in Trash'));
   });
 
-  test('does not duplicate a managed file already represented in metadata', () async {
-    final file = await createRecording('Known', 'm4a');
-    final now = DateTime.utc(2026, 8, 15);
-    final known = RecordingEntry(
-      id: 'known',
-      title: 'Known',
-      filePath: file.path,
-      durationMs: 100,
-      sizeBytes: 4,
-      format: RecordingFormat.m4a,
-      bitRate: 96000,
-      sampleRate: 44100,
-      channels: 1,
-      createdAt: now,
-      modifiedAt: now,
-    );
+  test(
+    'does not duplicate a managed file already represented in metadata',
+    () async {
+      final file = await createRecording('Known', 'm4a');
+      final now = DateTime.utc(2026, 8, 15);
+      final known = RecordingEntry(
+        id: 'known',
+        title: 'Known',
+        filePath: file.path,
+        durationMs: 100,
+        sizeBytes: 4,
+        format: RecordingFormat.m4a,
+        bitRate: 96000,
+        sampleRate: 44100,
+        channels: 1,
+        createdAt: now,
+        modifiedAt: now,
+      );
 
-    final recovered = await createRecovery().recoverOrphanedRecordings([known]);
+      final recovered = await createRecovery().recoverOrphanedRecordings([
+        known,
+      ]);
 
-    expect(recovered, isEmpty);
-  });
+      expect(recovered, isEmpty);
+    },
+  );
 
   test('does not duplicate a managed Trash file already represented', () async {
     final file = await createTrashRecording('Known Trash', 'wav');
@@ -161,10 +170,15 @@ void main() {
       await createRecording('Audio ${format.name}', format.extension);
     }
 
-    final recovered = await createRecovery().recoverOrphanedRecordings(const []);
+    final recovered = await createRecovery().recoverOrphanedRecordings(
+      const [],
+    );
 
     expect(recovered, hasLength(RecordingFormat.values.length));
-    expect(recovered.map((entry) => entry.id).toSet(), hasLength(recovered.length));
+    expect(
+      recovered.map((entry) => entry.id).toSet(),
+      hasLength(recovered.length),
+    );
     expect(
       recovered.map((entry) => entry.format).toSet(),
       RecordingFormat.values.toSet(),

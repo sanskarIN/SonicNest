@@ -133,23 +133,19 @@ void main() {
     skip: Platform.isWindows,
   );
 
-  test(
-    'collision allocation never chooses a broken symlink path',
-    () async {
-      final reserved = await storage.uniqueRecordingPath('Reserved', 'wav');
-      final brokenLink = Link(reserved);
-      await brokenLink.create('${sandbox.path}/missing-target.wav');
+  test('collision allocation never chooses a broken symlink path', () async {
+    final reserved = await storage.uniqueRecordingPath('Reserved', 'wav');
+    final brokenLink = Link(reserved);
+    await brokenLink.create('${sandbox.path}/missing-target.wav');
 
-      final allocated = await storage.uniqueRecordingPath('Reserved', 'wav');
+    final allocated = await storage.uniqueRecordingPath('Reserved', 'wav');
 
-      expect(allocated, isNot(reserved));
-      expect(
-        await FileSystemEntity.type(reserved, followLinks: false),
-        FileSystemEntityType.link,
-      );
-    },
-    skip: Platform.isWindows,
-  );
+    expect(allocated, isNot(reserved));
+    expect(
+      await FileSystemEntity.type(reserved, followLinks: false),
+      FileSystemEntityType.link,
+    );
+  }, skip: Platform.isWindows);
 
   test('collision allocation keeps every managed recording distinct', () async {
     final firstPath = await storage.uniqueRecordingPath('Same Name', 'wav');
@@ -163,30 +159,33 @@ void main() {
     expect(await File(secondPath).readAsBytes(), [2]);
   });
 
-  test('recoverable file discovery returns only supported top-level audio', () async {
-    final directory = await storage.recordingsDirectory;
-    final wav = File('${directory.path}/b.wav');
-    final mp3 = File('${directory.path}/a.MP3');
-    final text = File('${directory.path}/notes.txt');
-    final nestedDirectory = Directory('${directory.path}/nested');
-    final nestedAudio = File('${nestedDirectory.path}/hidden.flac');
-    await nestedDirectory.create(recursive: true);
-    await wav.writeAsBytes(const [1], flush: true);
-    await mp3.writeAsBytes(const [2], flush: true);
-    await text.writeAsString('not audio', flush: true);
-    await nestedAudio.writeAsBytes(const [3], flush: true);
+  test(
+    'recoverable file discovery returns only supported top-level audio',
+    () async {
+      final directory = await storage.recordingsDirectory;
+      final wav = File('${directory.path}/b.wav');
+      final mp3 = File('${directory.path}/a.MP3');
+      final text = File('${directory.path}/notes.txt');
+      final nestedDirectory = Directory('${directory.path}/nested');
+      final nestedAudio = File('${nestedDirectory.path}/hidden.flac');
+      await nestedDirectory.create(recursive: true);
+      await wav.writeAsBytes(const [1], flush: true);
+      await mp3.writeAsBytes(const [2], flush: true);
+      await text.writeAsString('not audio', flush: true);
+      await nestedAudio.writeAsBytes(const [3], flush: true);
 
-    if (!Platform.isWindows) {
-      final external = File('${sandbox.path}/external.wav');
-      final linkedAudio = Link('${directory.path}/linked.wav');
-      await external.writeAsBytes(const [4], flush: true);
-      await linkedAudio.create(external.path);
-    }
+      if (!Platform.isWindows) {
+        final external = File('${sandbox.path}/external.wav');
+        final linkedAudio = Link('${directory.path}/linked.wav');
+        await external.writeAsBytes(const [4], flush: true);
+        await linkedAudio.create(external.path);
+      }
 
-    final files = await storage.managedRecordingFiles();
+      final files = await storage.managedRecordingFiles();
 
-    expect(files.map((file) => file.path), [mp3.path, wav.path]);
-  });
+      expect(files.map((file) => file.path), [mp3.path, wav.path]);
+    },
+  );
 
   test('Trash discovery is isolated from active recording discovery', () async {
     final active = await createManagedRecording('Active');
