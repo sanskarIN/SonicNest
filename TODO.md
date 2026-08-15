@@ -8,6 +8,7 @@ This file intentionally contains only work that is still incomplete, requires ph
 - [x] After the tracked Dart tree is formatter-clean, change CI formatting from a mutating preparation step to a non-mutating enforcement gate. Core CI now uses `dart format --output=none --set-exit-if-changed lib test tool/generate_brand_assets_v2.dart` via `704b0f60aae8f179f4f41875c336d2052b45391e`.
 - [x] Audit both `.yml` and `.yaml` workflow files and reject permanent workflow write scopes including `permissions: write-all`; strengthened audit run `31874506476` passed on `64c121fa0e5c81531a3710b1d67b88fb3dfc93db`.
 - [x] Keep the exact hosted release-candidate evidence source-controlled and audit-required in `docs/AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md`.
+- [x] Compile Python release helpers and run repository-owned release-tool regressions in the permanent Repository Integrity Audit. Run `31876149473` passed all **10/10** Python tests plus repository, Bash, and PowerShell checks.
 
 ## Repository-owned release automation
 
@@ -18,8 +19,11 @@ This file intentionally contains only work that is still incomplete, requires ph
 - [x] Produce, structurally verify, and bounded-startup-smoke the versioned Windows x64 portable ZIP in both permanent Windows CI and the release-candidate workflow.
 - [x] Produce macOS release-mode unsigned and iOS release-mode no-codesign validation archives.
 - [x] Record exact inner artifact SHA-256 values and workflow artifact digests for the final hosted candidate in `docs/AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md`.
+- [x] Implement `tool/build_release_candidate_manifest.py` so one machine-readable JSON manifest re-verifies all five platform checksum records, binds artifact evidence to the full source SHA and workflow run/attempt, preserves platform signing classifications, and explicitly records `stableReleaseApproved: false`.
+- [x] Add unit and repository-integration regression coverage for the unified candidate manifest. Repository Integrity Audit run `31876149473` passed **10/10** Python release-tool tests.
+- [ ] Validate the new unified provenance-manifest job against one real hosted five-platform release-candidate run and record the resulting manifest checksum/artifact evidence. Active validation run: `31876035202` on source `b95d77c4b69c9798f1ecb48d5f69583c4e08de5c`.
 
-No additional repository-only release-automation gap is currently identified. The remaining unchecked tasks below require real devices/systems, sustained workloads, representative media, accessibility tooling, private signing credentials, distribution-console access, or final release approval.
+After the active provenance validation completes, no additional repository-only release-automation gap is currently identified. The remaining unchecked tasks below require real devices/systems, sustained workloads, representative media, accessibility tooling, private signing credentials, distribution-console access, or final release approval.
 
 ## Hardware and lifecycle validation
 
