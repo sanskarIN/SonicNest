@@ -1,0 +1,51 @@
+name: One-shot Provenance Ledger Sync
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/zz-provenance-ledger-sync.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Configure commit identity
+        run: |
+          git config user.name "Sanskar"
+          git config user.email "sanskarin@outlook.in"
+      - name: Apply additive ledger edits
+        run: python3 tool/one_shot_provenance_ledger_sync.py
+      - name: Commit changelog
+        run: |
+          git add CHANGELOG.md
+          git commit -m "docs: record unified provenance release hardening"
+      - name: Commit release notes
+        run: |
+          git add RELEASE_NOTES.md
+          git commit -m "docs: add unified provenance release notes"
+      - name: Commit QA evidence
+        run: |
+          git add docs/QA_CHECKLIST.md
+          git commit -m "docs: add unified provenance QA evidence"
+      - name: Commit roadmap milestone
+        run: |
+          git add ROADMAP.md
+          git commit -m "docs: close unified provenance roadmap milestone"
+      - name: Commit continuation ledger
+        run: |
+          git add what_changed.md
+          git commit -m "docs: append unified provenance continuation ledger"
+      - name: Remove one-shot sync files
+        run: |
+          git rm .github/workflows/zz-provenance-ledger-sync.yml tool/one_shot_provenance_ledger_sync.py
+          git commit -m "chore: remove one-shot provenance ledger sync files"
+      - name: Push focused commits
+        run: git push origin HEAD:main
