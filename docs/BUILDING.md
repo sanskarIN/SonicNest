@@ -8,6 +8,7 @@
 - Linux capture/build validation: PulseAudio utilities, FFmpeg, GTK development packages, and JSON-GLib development files used by the selected audio backends.
 - Debian package validation: `dpkg-deb`, `desktop-file-validate`, and `appstreamcli` on a Debian/Ubuntu-compatible build host.
 - Installed-package GUI startup smoke testing: `xvfb-run` on a disposable Linux validation host.
+- Windows portable packaging: Windows PowerShell/PowerShell 7 with the built-in archive and Authenticode inspection commands used by `tool/build_windows_portable.ps1` and `tool/verify_windows_portable.ps1`.
 
 ## Bootstrap host projects
 
@@ -57,23 +58,27 @@ dart run flutter_native_splash:create
 ## Verify Dart and Flutter code
 
 ```bash
-dart format lib test tool/generate_brand_assets_v2.dart
+dart format --output=none --set-exit-if-changed lib test tool/generate_brand_assets_v2.dart
 flutter analyze --no-fatal-infos
 flutter test
 ```
 
-The repository CI treats analyzer errors/warnings as failures while allowing informational style lints to remain non-fatal. New source should still be formatted before commit.
+The formatting command is a non-mutating cleanliness check, matching core CI. If it reports drift, run ordinary `dart format lib test tool/generate_brand_assets_v2.dart`, review the formatter output, commit it, and rerun validation.
 
-Focused reliability checks can be run while changing local-library persistence or audio import behavior:
+The repository CI treats analyzer errors/warnings as failures while allowing informational style lints to remain non-fatal.
+
+Focused reliability checks can be run while changing local-library persistence, recovery, batch conversion, or audio import behavior:
 
 ```bash
 flutter test test/recording_entry_test.dart test/metadata_store_test.dart
-flutter test test/audio_import_service_test.dart
+flutter test test/app_controller_persistence_test.dart test/app_controller_recovery_test.dart
+flutter test test/storage_service_test.dart test/storage_service_non_file_test.dart
+flutter test test/audio_import_service_test.dart test/batch_conversion_service_test.dart
 ```
 
-The metadata suite covers malformed field decoding, corrupt-document preservation, interrupted `.bak` recovery, and a 3,000-entry filesystem round-trip. The import suite covers successful managed imports and cleanup after copy/probe/waveform failures. These deterministic tests do not replace real malformed-audio corpus testing, filesystem-failure simulation on target devices, or large-library UI/performance profiling.
+The deterministic suites cover malformed field decoding, corrupt-document preservation, interrupted `.bak` recovery, a 3,000-entry filesystem round-trip, managed-path mutation guards, active/Trash orphan reconstruction, persistence rollback, import cleanup, entity-aware filename collisions, and batch conversion failure/stop isolation. They do not replace real malformed-audio corpus testing, filesystem-failure simulation on target devices, long-duration workloads, or large-library UI/performance profiling.
 
-See `docs/METADATA_INTEGRITY.md` for the persistence/recovery invariants behind those tests.
+See `docs/METADATA_INTEGRITY.md`, `docs/MANAGED_STORAGE_BOUNDARY.md`, `docs/RECOVERY_TESTING.md`, and `docs/BATCH_CONVERSION.md` for the invariants behind those tests.
 
 ## Platform builds
 
@@ -101,6 +106,27 @@ flutter build ios --debug --no-codesign
 ```
 
 Only run build targets supported by the host OS. Signing, provisioning profiles, keystores, certificates, and store credentials must remain outside the repository.
+
+## Windows portable package
+
+A versioned x64 portable ZIP is the initial repository-supported Windows distribution package. Build and validate it after producing the release-mode Windows bundle:
+
+```powershell
+./tool/apply_branding.ps1
+flutter build windows --release
+./tool/build_windows_portable.ps1 -Configuration release -ArtifactSuffix unsigned
+./tool/verify_windows_portable.ps1
+```
+
+The builder packages the complete Flutter runner directory, writes a SHA-256 checksum and package-info record, and leaves signing credentials entirely outside the repository. The verifier extracts the archive into an isolated temporary directory, checks the required executable/runtime/data layout, rejects common private/signing material, and verifies the sibling checksum when present.
+
+Hosted CI intentionally uses the `unsigned` artifact label. For a final public candidate, the maintainer-owned Authenticode process must be applied to the final binaries before packaging/checksum publication, then the exact ZIP must pass:
+
+```powershell
+./tool/verify_windows_portable.ps1 -ArchivePath '<final-portable-zip>' -RequireSignature
+```
+
+See `docs/WINDOWS_PACKAGING.md` and `docs/WINDOWS_SIGNING_POLICY.md` for package, channel, signing, and evidence boundaries.
 
 ## Debian Linux package
 
@@ -130,10 +156,11 @@ See `docs/LINUX_PACKAGING.md` for package layout, dependencies, CI behavior, ins
 
 ## CI coverage
 
-- `.github/workflows/ci.yml`: deterministic brand image generation, analyzer, unit tests, branded Android debug APK, Linux debug build.
+- `.github/workflows/ci.yml`: deterministic brand image generation, non-mutating format gate, analyzer, unit tests, branded Android debug APK, Linux debug build.
 - `.github/workflows/linux-package.yml`: Linux release bundle, Debian package construction, structural verification, checksum verification, package-manager installation, installed-files/metadata checks, virtual-display startup smoke, uninstall cleanup checks, and short-retention CI artifact.
-- `.github/workflows/windows.yml`: branded Windows debug desktop build.
+- `.github/workflows/windows.yml`: branded Windows debug build plus branded release-mode portable ZIP construction, package verification, checksum/package-info output, explicit unsigned warning, and short-retention validation artifact.
 - `.github/workflows/macos.yml`: branded macOS debug build and branded iOS no-codesign debug build.
-- `.github/workflows/release-candidate.yml`: manually triggered release-mode validation artifacts, including the structurally verified Linux `.deb`.
+- `.github/workflows/release-candidate.yml`: manually triggered release-mode validation artifacts across Android, Linux, Windows, macOS, and unsigned iOS; Windows reuses the same portable package builder/verifier and Linux reuses the Debian package builder/verifier.
+- `.github/workflows/repository-audit.yml`: repository invariants, permanent-workflow permission safety, required package/policy markers, Bash syntax, and PowerShell helper parsing.
 
-CI build/install-smoke success confirms compilation and repository-controlled package behavior on GitHub-hosted runners; microphone hardware, audio routing, lock-screen/background behavior, device interruptions, real icon/launch visual inspection, long-duration recording, package upgrade behavior on representative maintained systems, accessibility, and store/signing approval still require target-device validation.
+CI build/package/install-smoke success confirms compilation and repository-controlled package behavior on GitHub-hosted runners; microphone hardware, audio routing, lock-screen/background behavior, device interruptions, real icon/launch visual inspection, long-duration recording, package upgrade behavior on representative maintained systems, accessibility, production signing, and store/publication approval still require target-device or maintainer-secure-environment validation.
