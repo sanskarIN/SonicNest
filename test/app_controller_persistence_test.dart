@@ -136,7 +136,6 @@ void main() {
   test('stopped recording stays on disk when metadata save fails', () async {
     final path = await storage.uniqueRecordingPath('Stopped', 'wav');
     final file = File(path);
-    await file.writeAsBytes(const [9, 8, 7, 6], flush: true);
     final result = RecorderResult(
       path: path,
       title: 'Stopped',
@@ -149,6 +148,11 @@ void main() {
       recorderFactory: (storage, processor) =>
           FakeStopRecorderService(storage, processor, result),
     );
+
+    // The completed file must appear after startup. Creating it before
+    // initialize() would intentionally exercise orphan recovery instead of
+    // stop-time metadata rollback.
+    await file.writeAsBytes(const [9, 8, 7, 6], flush: true);
     metadata.failSaves = true;
 
     await expectLater(
@@ -159,7 +163,10 @@ void main() {
     expect(app.recordings, isEmpty);
     expect(app.selectedRecording, isNull);
     expect(await file.exists(), isTrue);
-    expect(await storage.isManagedAudioPath(file.path, includeTrash: false), isTrue);
+    expect(
+      await storage.isManagedAudioPath(file.path, includeTrash: false),
+      isTrue,
+    );
   });
 
   test('rename restores original file and metadata when save fails', () async {
