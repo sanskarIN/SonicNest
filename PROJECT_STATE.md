@@ -117,6 +117,8 @@ completed_features:
   - lazy native AudioRecorder construction without constructor-time method-channel side effects
   - localization policy separating translated product summaries from raw technical diagnostic evidence
   - GitHub Releases selected as the initial public Linux Debian package channel
+  - source-controlled store listing and privacy declaration draft for Android Apple macOS Windows and Linux distribution review
+  - Windows stable public signing policy requires Authenticode while actual signing credentials/service and final installer integration remain maintainer-owned
 partial_features:
   - English is the only shipped locale; diagnostic-text policy is decided, while additional locales still require translation review, text-expansion testing, and accessibility QA
   - Windows and Linux do not yet expose a dedicated SonicNest system-wide media-session integration beyond the selected desktop playback backend
@@ -148,37 +150,41 @@ pending_manual_validation:
   - real screenshots final native icon launch asset review and store metadata
   - store packaging signing certificates provisioning notarization and release credentials
 latest_automated_validation:
-  application_code_commit: 72797fa477b9d88e2138b7ddf1d0f845cdd549ca
-  final_source_test_revision: e47b290a7255f126cfcf1436444a90cc32d10823
+  formatter_clean_source_commit: 4e0fbf16534a60e2d3209c5ec5f54d4982903f8c
+  canonical_format_commit: 22c1d46e077625d6e1964d56716700727d1800dc
+  non_mutating_format_gate_commit: 704b0f60aae8f179f4f41875c336d2052b45391e
   core_flutter_ci:
-    run_id: 31870224720
-    source_commit: e47b290a7255f126cfcf1436444a90cc32d10823
+    run_id: 31870933447
+    source_commit: 4e0fbf16534a60e2d3209c5ec5f54d4982903f8c
+    dart_format_check: success_non_mutating
     analyzer: success
-    unit_tests: success_87_of_87
+    unit_tests: success_complete_suite
     android_debug_apk: success
     linux_debug_build: success
-    formatting_note: CI formatted 30 of 54 checked-in Dart files before analyzer/tests; tracked tree is not yet formatter-clean
   windows_ci:
-    run_id: 31870087266
-    source_commit: 72797fa477b9d88e2138b7ddf1d0f845cdd549ca
+    run_id: 31870933908
+    source_commit: 4e0fbf16534a60e2d3209c5ec5f54d4982903f8c
     windows_debug_build: success
   apple_ci:
-    run_id: 31870087249
-    source_commit: 72797fa477b9d88e2138b7ddf1d0f845cdd549ca
+    run_id: 31870933903
+    source_commit: 4e0fbf16534a60e2d3209c5ec5f54d4982903f8c
     macos_debug_build: success
     ios_debug_no_codesign: success
   linux_package_ci:
-    run_id: 31870087317
-    source_commit: 72797fa477b9d88e2138b7ddf1d0f845cdd549ca
+    run_id: 31870933982
+    source_commit: 4e0fbf16534a60e2d3209c5ec5f54d4982903f8c
     result: success
-    package_target: Debian .deb
-    public_channel_policy: GitHub Releases with verified .deb and SHA-256 checksum
+    release_bundle: success
+    deb_build_and_verify: success
+    package_install: success
+    installed_app_smoke: success
+    package_uninstall: success
+    artifact_publication: success
   validation_relationship:
-    - application-code revision 72797fa477b9d88e2138b7ddf1d0f845cdd549ca contains the final application source changes and is green in Windows Apple and Linux-package workflows
-    - source/test revision e47b290a7255f126cfcf1436444a90cc32d10823 is a later test-only correction and is green in core analyzer 87-test Android and Linux validation
-    - documentation-only commits after these revisions do not alter the validated application code
+    - formatter-clean revision 4e0fbf16534a60e2d3209c5ec5f54d4982903f8c contains the final validated application/source state for this continuation
+    - later commits are documentation policy state and do not alter application runtime code
+    - stable release still requires the unchecked real-system and maintainer-credential gates
 known_limitations:
-  - checked-in Dart tree currently has formatter drift; core CI formats 30 of 54 Dart files before analysis/tests and TODO tracks committing formatter output plus later non-mutating enforcement
   - codec availability and effective sample bitrate channel and DSP settings depend on OS device and runtime support
   - sharing silence-skip media-session input-device and screen-wake capabilities differ by platform backend
   - A-B loop is application-managed and requires real-device timing validation
@@ -312,3 +318,18 @@ next_exact_tasks:
 - Diagnostic localization decision: translate product-facing summaries; preserve raw OS/plugin/FFmpeg/filesystem backend detail as technical evidence.
 - Formatter boundary: core CI currently mutates formatting for 30 of 54 Dart files before analysis/tests. The tracked tree is therefore **not yet claimed formatter-clean**; this is explicitly tracked in `TODO.md`.
 - Release classification remains **development preview** until the remaining physical-device, real-filesystem, accessibility, representative-package, long-duration, signing, and stable-release gates are completed.
+
+
+## Formatter-clean final automated validation — 2026-08-15
+
+- Canonical formatting commit: `22c1d46e077625d6e1964d56716700727d1800dc`.
+- Non-mutating core CI formatting enforcement: `704b0f60aae8f179f4f41875c336d2052b45391e`.
+- Formatter-clean source revision: `4e0fbf16534a60e2d3209c5ec5f54d4982903f8c`.
+- Core run `31870933447`: format enforcement **SUCCESS**, static analysis **SUCCESS**, full unit suite **SUCCESS**, Android debug **SUCCESS**, Linux debug **SUCCESS**.
+- Windows run `31870933908`: **SUCCESS**.
+- Apple run `31870933903`: macOS debug **SUCCESS**, unsigned-iOS debug **SUCCESS**.
+- Linux Package CI run `31870933982`: release bundle, package build/verification, install, installed-app smoke, uninstall, artifact publication **SUCCESS**.
+- Store/listing/privacy draft: `docs/STORE_LISTING.md`.
+- Windows public signing policy: `docs/WINDOWS_SIGNING_POLICY.md`; actual maintainer signing credentials/service configuration remains open.
+- Linux public channel remains GitHub Releases with verified `.deb` + SHA-256 checksum; no initial custom APT repository.
+- Release classification remains **development preview** pending the unchecked real-device/filesystem/accessibility/performance/branding/signing/release evidence gates.
