@@ -72,7 +72,7 @@ Repository automation now provides deterministic baselines for malformed metadat
 - [ ] Install the generated Linux `.deb` on representative Debian/Ubuntu-family systems and visually review launcher/menu/task-switcher icon surfaces.
 - [ ] Verify native launch/splash assets in signed/release Android and iOS configurations, including dark mode.
 - [ ] Capture real screenshots from tested builds; do not use fabricated screenshots.
-- [ ] Prepare store/listing copy and privacy declarations for each selected distribution channel.
+- [x] Prepare source-controlled store/listing copy and privacy declarations for the selected distribution channels. See `docs/STORE_LISTING.md`; final console submission remains release-candidate review work.
 
 ## Signing and distribution
 
