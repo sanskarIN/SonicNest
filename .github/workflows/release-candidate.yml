@@ -237,3 +237,45 @@ jobs:
           path: build/release-candidate/ios
           if-no-files-found: error
           retention-days: 7
+
+  manifest:
+    name: Unified candidate provenance manifest
+    needs: [android, linux, windows, macos, ios]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download platform candidate artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: sonicnest-*-release-candidate
+          path: build/release-candidate/downloaded
+          merge-multiple: false
+      - name: Verify artifacts and build provenance manifest
+        run: |
+          set -euo pipefail
+          OUT=build/release-candidate/manifest
+          mkdir -p "$OUT"
+          python3 tool/build_release_candidate_manifest.py \
+            --artifact android=build/release-candidate/downloaded/sonicnest-android-release-candidate \
+            --artifact linux=build/release-candidate/downloaded/sonicnest-linux-release-candidate \
+            --artifact windows=build/release-candidate/downloaded/sonicnest-windows-release-candidate \
+            --artifact macos=build/release-candidate/downloaded/sonicnest-macos-release-candidate \
+            --artifact ios=build/release-candidate/downloaded/sonicnest-ios-release-candidate \
+            --source-sha "${GITHUB_SHA}" \
+            --workflow-run-id "${GITHUB_RUN_ID}" \
+            --workflow-run-attempt "${GITHUB_RUN_ATTEMPT}" \
+            --output "$OUT/RELEASE_CANDIDATE_MANIFEST.json"
+          cat > "$OUT/RELEASE_CANDIDATE_WARNING.txt" <<'TXT'
+          SonicNest unified hosted release-candidate provenance evidence.
+          This manifest verifies and binds the hosted validation artifacts to one source SHA and workflow run.
+          It does not convert development-preview, unsigned, no-codesign, or Android Debug-signed artifacts into stable public release approval.
+          Physical-device, accessibility, protected production signing, notarization, store review, and final visual gates remain incomplete.
+          TXT
+          (cd "$OUT" && sha256sum RELEASE_CANDIDATE_MANIFEST.json > SHA256SUMS.txt)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sonicnest-release-candidate-manifest
+          path: build/release-candidate/manifest
+          if-no-files-found: error
+          retention-days: 7
