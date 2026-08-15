@@ -32,7 +32,7 @@ void main() {
     clock: () => fixedClock,
   );
 
-  test('invalid JSON is backed up and returns an empty library', () async {
+  test('invalid JSON is preserved and reset to a valid empty store', () async {
     await metadataFile.parent.create(recursive: true);
     await metadataFile.writeAsString('{not-json');
 
@@ -44,9 +44,30 @@ void main() {
     );
     expect(await backup.exists(), isTrue);
     expect(await backup.readAsString(), '{not-json');
+
+    final resetDocument = jsonDecode(await metadataFile.readAsString()) as Map;
+    expect(resetDocument['recordings'], isEmpty);
+    expect(await File('${metadataFile.path}.bak').exists(), isFalse);
+    expect(await File('${metadataFile.path}.tmp').exists(), isFalse);
   });
 
-  test('structurally invalid recordings payload is backed up', () async {
+  test('corrupt primary is not copied repeatedly after recovery reset', () async {
+    await metadataFile.parent.create(recursive: true);
+    await metadataFile.writeAsString('{not-json');
+    final store = createStore();
+
+    await store.load();
+    await store.load();
+
+    final corruptCopies = metadataFile.parent
+        .listSync()
+        .whereType<File>()
+        .where((file) => p.basename(file.path).contains('.corrupt.'))
+        .toList(growable: false);
+    expect(corruptCopies, hasLength(1));
+  });
+
+  test('structurally invalid recordings payload is preserved then reset', () async {
     await metadataFile.parent.create(recursive: true);
     await metadataFile.writeAsString(
       jsonEncode(<String, Object>{
@@ -62,6 +83,8 @@ void main() {
       '${metadataFile.path}.corrupt.${fixedClock.millisecondsSinceEpoch}',
     );
     expect(await backup.exists(), isTrue);
+    final resetDocument = jsonDecode(await metadataFile.readAsString()) as Map;
+    expect(resetDocument['recordings'], isEmpty);
   });
 
   test('one malformed record cannot hide valid library entries', () async {
@@ -100,6 +123,28 @@ void main() {
     expect(entries.last.markers.single.label, 'Marker');
   });
 
+  test('duplicate ids and duplicate file paths keep only first records', () async {
+    await metadataFile.parent.create(recursive: true);
+    final first = _entry(1).toJson();
+    final duplicateId = _entry(2).toJson()..['id'] = 'recording-1';
+    final duplicatePath = _entry(3).toJson()
+      ..['filePath'] = '/audio/recording-1.wav';
+    await metadataFile.writeAsString(
+      jsonEncode(<String, Object>{
+        'schemaVersion': 1,
+        'recordings': <Object>[first, duplicateId, duplicatePath, _entry(4).toJson()],
+      }),
+    );
+
+    final entries = await createStore().load();
+
+    expect(entries.map((entry) => entry.id), ['recording-1', 'recording-4']);
+    expect(
+      entries.map((entry) => entry.filePath),
+      ['/audio/recording-1.wav', '/audio/recording-4.wav'],
+    );
+  });
+
   test('missing primary metadata recovers an interrupted backup', () async {
     final store = createStore();
     await store.save([_entry(7)]);
@@ -132,6 +177,28 @@ void main() {
     );
     expect(await corruptCopy.exists(), isTrue);
     expect(await corruptCopy.readAsString(), '{broken-primary');
+  });
+
+  test('corrupt primary and backup are both preserved before reset', () async {
+    await metadataFile.parent.create(recursive: true);
+    await metadataFile.writeAsString('{broken-primary');
+    final backup = File('${metadataFile.path}.bak');
+    await backup.writeAsString('{broken-backup');
+
+    final restored = await createStore().load();
+
+    expect(restored, isEmpty);
+    final firstCorrupt = File(
+      '${metadataFile.path}.corrupt.${fixedClock.millisecondsSinceEpoch}',
+    );
+    final secondCorrupt = File(
+      '${metadataFile.path}.bak.corrupt.${fixedClock.millisecondsSinceEpoch}',
+    );
+    expect(await firstCorrupt.readAsString(), '{broken-primary');
+    expect(await secondCorrupt.readAsString(), '{broken-backup');
+    expect(await backup.exists(), isFalse);
+    final resetDocument = jsonDecode(await metadataFile.readAsString()) as Map;
+    expect(resetDocument['recordings'], isEmpty);
   });
 
   test('save and load roundtrip supports thousands of entries', () async {
