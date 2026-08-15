@@ -65,14 +65,18 @@ jobs:
         run: python3 tool/repository_audit.py
       - name: Validate Bash helper syntax
         run: |
-          bash -n tool/bootstrap_platforms.sh
-          bash -n tool/apply_branding.sh
-          bash -n tool/release_preflight.sh
+          set -euo pipefail
+          find tool -maxdepth 1 -type f -name '*.sh' -print0 \
+            | sort -z \
+            | while IFS= read -r -d '' script; do
+                echo "Parsing $script"
+                bash -n "$script"
+              done
       - name: Validate PowerShell helper syntax
         shell: pwsh
         run: |
           $Failed = $false
-          Get-ChildItem -Path tool -Filter '*.ps1' -File | ForEach-Object {
+          Get-ChildItem -Path tool -Filter '*.ps1' -File | Sort-Object FullName | ForEach-Object {
             $Tokens = $null
             $Errors = $null
             [System.Management.Automation.Language.Parser]::ParseFile(
