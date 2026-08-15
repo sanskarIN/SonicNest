@@ -4,8 +4,8 @@ This file intentionally contains only work that is still incomplete, requires ph
 
 ## Repository hygiene
 
-- [ ] Commit the Dart formatter output for the CI Flutter/Dart toolchain. Core CI run `31870224720` formats 30 of 54 checked-in Dart files before analysis/tests, so analyzer/test success currently applies to the formatted checkout rather than proving the tracked Dart tree is formatter-clean.
-- [ ] After the tracked Dart tree is formatter-clean, change CI formatting from a mutating preparation step to a non-mutating enforcement gate such as `dart format --output=none --set-exit-if-changed lib test tool/generate_brand_assets_v2.dart`.
+- [x] Commit the Dart formatter output for the CI Flutter/Dart toolchain. Historical core CI run `31870224720` exposed formatting drift; canonical stable-toolchain formatter output is now committed in `22c1d46e077625d6e1964d56716700727d1800dc`.
+- [x] After the tracked Dart tree is formatter-clean, change CI formatting from a mutating preparation step to a non-mutating enforcement gate. Core CI now uses `dart format --output=none --set-exit-if-changed lib test tool/generate_brand_assets_v2.dart` via `704b0f60aae8f179f4f41875c336d2052b45391e`.
 
 ## Hardware and lifecycle validation
 
