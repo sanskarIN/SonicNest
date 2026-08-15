@@ -1,0 +1,38 @@
+name: One-shot release-candidate dispatcher
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/zz-dispatch-release-candidate.yml'
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Configure commit identity
+        run: |
+          git config user.name "Sanskar"
+          git config user.email "sanskarin@outlook.in"
+      - name: Remove one-shot helper from main
+        run: |
+          git rm .github/workflows/zz-dispatch-release-candidate.yml
+          git commit -m "chore: remove one-shot release-candidate dispatcher"
+          git push origin main
+      - name: Dispatch release candidate on clean main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run release-candidate.yml --ref main
+      - name: Dispatch clean-tree repository audit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run repository-audit.yml --ref main
