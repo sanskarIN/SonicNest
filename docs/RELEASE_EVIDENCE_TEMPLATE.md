@@ -27,6 +27,16 @@ Use one copy of this template for each release candidate that is being considere
 - iOS no-codesign build workflow run:
 - Repository integrity workflow run:
 - Release-candidate artifact workflow run:
+- Unified release-candidate manifest job result:
+- Unified manifest artifact name:
+- Unified manifest artifact workflow digest:
+- `RELEASE_CANDIDATE_MANIFEST.json` SHA-256:
+- Manifest `sourceSha` equals exact candidate commit: Yes / No
+- Manifest `applicationVersion` equals `pubspec.yaml`: Yes / No
+- Manifest workflow run ID/attempt matches candidate run: Yes / No
+- Manifest contains Android/Linux/Windows/macOS/iOS entries: Yes / No
+- Manifest `stableReleaseApproved` is `false` for hosted development-preview evidence: Yes / No
+- Platform payload checksums re-verified by manifest builder: Yes / No
 - Android hosted candidate package ID:
 - Android hosted candidate signing classification:
 - Android hosted candidate certificate SHA-256 fingerprint:
@@ -40,6 +50,8 @@ Use one copy of this template for each release candidate that is being considere
 - Windows portable artifact SHA-256:
 - macOS artifact SHA-256:
 - iOS validation artifact SHA-256:
+
+The unified hosted provenance manifest is an additional consistency/evidence layer. It does not replace per-platform signing verification, real-system QA, protected production signing, notarization, or store validation.
 
 ## Device matrix
 
