@@ -1681,3 +1681,111 @@ The project remains a **development preview**. Repository regression tests and h
 ## Exact continuation point
 
 Do not reimplement the storage guard, corrupt-store reset, duplicate metadata isolation, transaction rollback behavior, or orphan recovery in the next continuation. Start by checking the final Android result for source `f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe`; if it succeeds, synchronize that exact result into project-state/release evidence documentation. After that, further legitimate work is evidence-driven unless a new reproducible repository defect is identified.
+
+
+## 2026-08-15 — Storage boundary, batch execution, release-policy, and validation continuation
+
+This section is additive. All earlier continuation history above remains intact.
+
+### Managed storage authority and filesystem safety
+
+- `StorageService` now treats a path as managed audio only when it is inside the allowed active/Trash location, has a supported recording extension, and resolves to a regular file when inspected with symbolic-link following disabled.
+- Rename, duplicate, move-to-Trash, restore, and permanent-delete guards therefore refuse external paths, unsupported regular files, symbolic links, directories, and other non-regular filesystem entries.
+- Managed destination allocation checks `FileSystemEntity.type(..., followLinks: false)` and treats ordinary files, directories, symbolic links, broken symbolic links, and uninspectable paths as occupied.
+- Recording/Trash counts and byte totals now use the same supported top-level regular-audio definition used by startup recovery. Temporary processing storage remains separate because backend work products can legitimately use non-audio/nested artifacts.
+- Automatic recording sequence counting now counts managed active/Trash audio rather than unrelated directory contents; collision-safe destination allocation remains the final overwrite guard.
+- Startup reconciliation is covered end-to-end for safe indexed entries, unsafe external/unsupported/missing metadata removal, active orphan reconstruction, Trash orphan reconstruction, and no duplicate reconstruction across restart.
+
+### External export collision hardening
+
+- External copy allocation is now entity-aware rather than regular-file-only. A destination basename occupied by a directory, symbolic link, or broken symbolic link is not selected for overwrite/following.
+- Batch original export still preserves successful copies when a later source fails.
+- Deterministic tests cover ordinary collisions, directory collisions, broken-link collisions on supported hosts, missing sources, unavailable destinations, duplicate basenames, and mixed-success batches.
+
+### Batch conversion production service
+
+- Added `lib/services/batch_conversion_service.dart` as the deterministic sequential execution boundary used by production Batch Convert.
+- The service prefers known source bitrate/sample-rate/channel metadata and falls back to current recording settings only when source values are unknown.
+- Each conversion is registered into the managed Library before an optional external-folder copy. An external-copy failure therefore does not invalidate a conversion already preserved in SonicNest.
+- Per-file transcode/registration failure is isolated; later files continue unless a stop request is active.
+- Failed generated-output registration removes the output only when storage confirms it is eligible managed audio. A caller-supplied external path is preserved.
+- Stop behavior is explicitly "Stop after current file": the service checks before starting an item and after completing the current item rather than forcibly terminating FFmpeg mid-write.
+- `BatchConvertScreen` now delegates to this service. Disposing/leaving the screen raises the same stop request so another selected item is not intentionally started after the current conversion completes.
+- `test/batch_conversion_service_test.dart` covers transcode failure isolation, registration cleanup, external-output protection, external-copy isolation, stop-before/after-current behavior, progress, and source technical-setting precedence.
+
+### Recorder construction hardening
+
+- `RecorderService` no longer instantiates `AudioRecorder` in its constructor. The native recorder backend is created lazily when input-device/permission/capture functionality actually needs it.
+- This removes constructor/disposal-time native method-channel side effects from pure controller tests without weakening production microphone permission checks or recorder capability checks.
+- After the lazy-backend change, the controller suite reached real persistence logic instead of failing during native plugin construction.
+
+### Persistence-test correction
+
+- The stopped-recording metadata-save regression initially created its output before `AppController.initialize()`. With active orphan recovery implemented, startup correctly reconstructed that file, so the fixture was testing the wrong phase.
+- The corrected test creates the completed managed audio after startup and then injects metadata-save failure during `stopRecording()`.
+- The expected invariant is now tested directly: the unsaved in-memory entry is removed, the completed managed audio remains on disk, and restart recovery can reconstruct it later.
+
+### Localization policy decision
+
+- Added `docs/LOCALIZATION_POLICY.md`.
+- Ordinary product-facing labels, actions, confirmations, summaries, and high-level errors belong in localization.
+- Raw operating-system, plugin, FFmpeg, filesystem, path, and backend diagnostic detail remains technical/source-language evidence unless SonicNest maps a stable backend code to its own localized message.
+- Diagnostic evidence remains privacy-sensitive and is not uploaded automatically.
+- Additional locales remain gated on translation review, expansion/layout checks, plural behavior, accessibility, and RTL review where applicable.
+
+### Linux public distribution policy decision
+
+- Added `docs/LINUX_DISTRIBUTION_POLICY.md`.
+- The initial public Linux channel is GitHub Releases with the repository-verified Debian `.deb` plus SHA-256 checksum.
+- SonicNest does not initially operate a custom APT repository, so APT repository-index signing is not applicable to this first channel.
+- Development-preview CI packages may remain unsigned but cannot be represented as signed stable artifacts. Any future signature policy uses maintainer-owned credentials outside the repository.
+- Real representative-system install/audio/desktop/accessibility/upgrade evidence remains a stable-release gate.
+
+### Documentation synchronized in this continuation
+
+Updated or added: `README.md`, `SECURITY.md`, `TODO.md`, `docs/ARCHITECTURE.md`, `docs/BATCH_CONVERSION.md`, `docs/LINUX_DISTRIBUTION_POLICY.md`, `docs/LOCALIZATION_POLICY.md`, `docs/MANAGED_STORAGE_BOUNDARY.md`, `docs/METADATA_INTEGRITY.md`, `docs/RECOVERY_INDEX.md`, `docs/RELEASING.md`, `docs/TROUBLESHOOTING.md`, `docs/USER_GUIDE.md`, `docs/QA_CHECKLIST.md`, `CHANGELOG.md`, `RELEASE_NOTES.md`, `PROJECT_STATE.md`, and this additive ledger.
+
+Ledger/state synchronization commits generated in this final pass:
+
+- `c0c01ef543591c611761f3b821b3448b76e7f8df` — `docs: record final recovery and batch QA evidence`.
+- `c94f162cfae0f12916a31c485d4a5707ecc8e95d` — `docs: record storage batch and release hardening changes`.
+- `fbc5ece5676fb18d103b9d0a219c2af30e05ef95` — `docs: add current development preview hardening notes`.
+- `8da55fd1ae640a17a44a00e9588addee2c4a19e2` — `docs: synchronize final hardening project state`.
+- this `what_changed.md` append commit follows those records.
+
+### Exact application/source validation relationship
+
+Application-code revision:
+
+- `72797fa477b9d88e2138b7ddf1d0f845cdd549ca` — `fix: lazily initialize native recorder backend`.
+- This revision contains the final application code from the storage-boundary, external-export, batch-service/UI, and lazy-recorder continuation.
+- Windows run `31870087266`: **SUCCESS**.
+- Apple run `31870087249`: **SUCCESS** for macOS debug and unsigned-iOS debug.
+- Linux Package CI run `31870087317`: **SUCCESS** for the maintained Debian package pipeline.
+
+Final source/test revision:
+
+- `e47b290a7255f126cfcf1436444a90cc32d10823` — `test: isolate stopped-recording persistence rollback scenario`.
+- Its additional change is a test-fixture correction; it does not alter application code.
+- Core Flutter CI run `31870224720`: static analysis **SUCCESS**, complete **87/87** test suite **SUCCESS**, Android debug **SUCCESS**, Linux debug **SUCCESS**.
+
+### Formatter boundary intentionally not overclaimed
+
+The core CI job runs `dart format` before analysis/tests and reported `Formatted 54 files (30 changed)`. Therefore:
+
+- analyzer/tests/build behavior is green on the formatter-normalized checkout;
+- the committed Dart tree is **not** claimed formatter-clean;
+- `TODO.md` now explicitly tracks committing the formatter output for the CI toolchain;
+- after that source cleanup is committed, CI should become a non-mutating formatting enforcement gate rather than silently correcting drift before validation.
+
+This is the remaining repository-only hygiene item identified in this continuation. It is intentionally not hidden by the otherwise green validation result.
+
+### Release/evidence boundary
+
+The project remains a **development preview**. Still-open work is evidence-dependent: physical microphone permission/routing, background/lock-screen/interruption behavior, real low-storage/permission/process/power-loss recovery, playable/partially-written/damaged real-media recovery, malformed-media corpus testing, large-library/large-batch/long-duration profiling, screen-reader/accessibility audits, native-brand visual review, representative Debian/Ubuntu install/audio/upgrade/desktop evidence, real screenshots, Windows signing decision, Android/Apple signing/notarization, and final stable release approval.
+
+Do not convert those unchecked gates to completed status from hosted unit/build evidence alone.
+
+### Exact continuation point
+
+Do not reimplement the managed-path boundary, active/Trash orphan reconstruction, entity-aware collision rules, batch execution service, lazy recorder construction, Linux GitHub Releases policy, or diagnostic localization policy in the next continuation. The next repository-only task is the formatter-cleanup/enforcement item in `TODO.md`. After that, remaining work is primarily real-system evidence and maintainer-owned signing/release work unless a new reproducible repository defect is found.
