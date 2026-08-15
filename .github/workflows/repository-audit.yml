@@ -4,7 +4,8 @@ on:
   push:
     branches: [main]
     paths:
-      - 'tool/repository_audit.py'
+      - 'tool/*.py'
+      - 'tool/tests/**'
       - 'pubspec.yaml'
       - '.gitignore'
       - 'LICENSE'
@@ -24,7 +25,8 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - 'tool/repository_audit.py'
+      - 'tool/*.py'
+      - 'tool/tests/**'
       - 'pubspec.yaml'
       - '.gitignore'
       - 'LICENSE'
@@ -59,10 +61,16 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
-      - name: Compile audit script
-        run: python3 -m py_compile tool/repository_audit.py
+      - name: Compile Python helpers
+        run: |
+          set -euo pipefail
+          find tool -type f -name '*.py' -print0 \
+            | sort -z \
+            | xargs -0 -r python3 -m py_compile
       - name: Run repository integrity audit
         run: python3 tool/repository_audit.py
+      - name: Run Python tooling regression tests
+        run: python3 -m unittest discover -s tool/tests -p 'test_*.py' -v
       - name: Validate Bash helper syntax
         run: |
           set -euo pipefail
