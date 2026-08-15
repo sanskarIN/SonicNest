@@ -2,6 +2,10 @@ name: Release Candidate Validation
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/RELEASE_CANDIDATE_MANIFEST.md'
 
 permissions:
   contents: read
