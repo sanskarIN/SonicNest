@@ -134,3 +134,18 @@ This preview must not be treated as a stable public recorder release until the p
 - Rename/Trash/restore and metadata-only updates roll back their in-memory/filesystem changes when metadata persistence fails; permanent delete uses metadata-first ordering so an interrupted operation leaves an orphan that can be rediscovered rather than silently destroying unindexed audio.
 - `LibraryRecoveryService` reconstructs missing metadata for supported managed recordings at startup and keeps damaged/partial preserved files visible even when duration/waveform probing cannot succeed.
 - Real malformed-media corpora, abrupt-power/process-kill, low-storage/filesystem-permission recovery, real damaged/partial orphan media, and real large-library UI/memory profiling remain manual release gates rather than being inferred from synthetic tests.
+
+
+## 2026-08-15 — Managed storage, recovery, batch, and release-policy hardening
+
+This development-preview continuation tightens the local-data boundary and makes the tested batch path the production batch path. Managed recording authority now requires a supported regular audio file in SonicNest-managed active/Trash storage; symbolic links, directories, unsupported regular files, missing paths, and external paths are not trusted as recording instructions. Startup reconciliation and orphan recovery preserve active-versus-Trash state, and recording/Trash accounting follows the same supported top-level regular-audio definition.
+
+External copy allocation is now entity-aware, so directories and broken symbolic links occupy names just like existing files. `BatchConversionService` owns sequential conversion, managed registration, optional external copy, failure isolation, generated-output cleanup, progress, and stop-after-current semantics; `BatchConvertScreen` uses that service directly. Leaving the screen requests stop after the current item instead of intentionally starting another selected conversion.
+
+`RecorderService` now lazily creates the native `AudioRecorder` backend. Controller/service construction no longer touches the native method channel until recorder functionality is requested, which removes a unit-test/native-channel coupling without bypassing microphone permission or production recorder checks.
+
+The project also now has explicit policy decisions for future localization and Linux distribution. Product-facing text is localized while raw OS/plugin/FFmpeg/filesystem diagnostics remain technical evidence. The initial public Linux channel is GitHub Releases with the verified Debian `.deb` and SHA-256 checksum; SonicNest does not initially operate a custom APT repository and does not claim signing that has not actually been performed with maintainer-owned credentials.
+
+Validation evidence: core run `31870224720` is green on revision `e47b290a7255f126cfcf1436444a90cc32d10823` for static analysis, all 87 unit tests, Android debug, and Linux debug. Windows run `31870087266`, Apple run `31870087249`, and Linux Package CI run `31870087317` are green on application-code revision `72797fa477b9d88e2138b7ddf1d0f845cdd549ca`; the later `e47b290...` change corrects only a persistence test fixture.
+
+One repository-hygiene item remains explicit: the core job currently formats 30 of 54 checked-in Dart files before analysis/tests. Behavior validation is green on the formatted checkout, but the tracked tree is not yet claimed formatter-clean. Physical-device, filesystem-failure, accessibility, long-duration, representative-package, signing, and stable-release evidence remains intentionally incomplete.
