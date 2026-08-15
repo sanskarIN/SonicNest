@@ -30,6 +30,10 @@ linux_distribution:
   build_script: tool/build_linux_deb.sh
   verify_script: tool/verify_linux_deb.sh
   installed_smoke_script: tool/smoke_test_installed_linux_deb.sh
+  public_channel: GitHub Releases
+  public_artifacts: verified Debian .deb + SHA-256 checksum
+  apt_repository: not initially operated
+  signing_credentials: maintainer-owned and outside repository
 completed_features:
   - project architecture and Material 3 design system
   - branded Flutter startup screen with recoverable startup failure state
@@ -104,15 +108,24 @@ completed_features:
   - analyzer unit-test Android Linux Windows macOS and unsigned iOS build workflows
   - core CI path filtering that avoids documentation-only rebuild churn
   - detailed QA checklist release procedure development-preview release notes and remaining-work tracker
+  - supported-extension regular-file managed audio boundary with symbolic-link and non-file refusal
+  - entity-safe collision allocation for managed and external destinations including broken symbolic links
+  - active and Trash orphan reconstruction with startup unsafe-metadata removal
+  - managed-audio-only recording and Trash statistics plus sequence counting
+  - deterministic BatchConversionService used by the production Batch Convert screen
+  - stop-after-current behavior shared by the Batch Convert stop control and screen disposal
+  - lazy native AudioRecorder construction without constructor-time method-channel side effects
+  - localization policy separating translated product summaries from raw technical diagnostic evidence
+  - GitHub Releases selected as the initial public Linux Debian package channel
 partial_features:
-  - English is the only shipped locale; backend diagnostic and error text localization policy must be decided before additional locales are released
+  - English is the only shipped locale; diagnostic-text policy is decided, while additional locales still require translation review, text-expansion testing, and accessibility QA
   - Windows and Linux do not yet expose a dedicated SonicNest system-wide media-session integration beyond the selected desktop playback backend
   - desktop secondary-click opens the complete action surface but a cursor-anchored platform-native context menu can still be evaluated after usability testing
   - advanced filter and audio-processing defaults require listening tests before claiming mastering-grade behavior
   - deterministic corrupt-import and orphan-recovery failure isolation is covered but representative malformed and partially written real-media corpus testing remains manual
   - deterministic 3000-entry metadata persistence is covered but real large-library UI memory and performance profiling remains manual
   - managed-path and rollback behavior is deterministically covered but real permission revocation low-storage abrupt-process and power-loss filesystem behavior remains manual
-  - Debian package structure and hosted-runner install/startup/uninstall smoke are automated but representative-system microphone routing desktop rendering accessibility upgrade and signing/distribution policy remain manual release gates
+  - Debian package structure and hosted-runner install/startup/uninstall smoke are automated and the initial GitHub Releases channel is selected, while representative-system microphone routing desktop rendering accessibility upgrade and any optional public artifact-signing credentials remain manual release gates
 pending_manual_validation:
   - microphone permission accepted denied revoked and permanently denied behavior on devices
   - Android and Apple background lock-screen media-session and interruption behavior on physical devices
@@ -135,52 +148,37 @@ pending_manual_validation:
   - real screenshots final native icon launch asset review and store metadata
   - store packaging signing certificates provisioning notarization and release credentials
 latest_automated_validation:
-  application_source_commit: f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe
+  application_code_commit: 72797fa477b9d88e2138b7ddf1d0f845cdd549ca
+  final_source_test_revision: e47b290a7255f126cfcf1436444a90cc32d10823
   core_flutter_ci:
-    run_id: 31867130926
-    source_commit: f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe
-    brand_generation: success
+    run_id: 31870224720
+    source_commit: e47b290a7255f126cfcf1436444a90cc32d10823
     analyzer: success
-    unit_tests: success
+    unit_tests: success_87_of_87
     android_debug_apk: success
     linux_debug_build: success
+    formatting_note: CI formatted 30 of 54 checked-in Dart files before analyzer/tests; tracked tree is not yet formatter-clean
   windows_ci:
-    run_id: 31867130920
-    source_commit: f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe
-    brand_generation: success
+    run_id: 31870087266
+    source_commit: 72797fa477b9d88e2138b7ddf1d0f845cdd549ca
     windows_debug_build: success
   apple_ci:
-    run_id: 31867130998
-    source_commit: f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe
-    brand_generation: success
+    run_id: 31870087249
+    source_commit: 72797fa477b9d88e2138b7ddf1d0f845cdd549ca
     macos_debug_build: success
     ios_debug_no_codesign: success
   linux_package_ci:
-    validated_source_commit: f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe
-    run_id: 31867130938
-    linux_release_build: success
-    debian_package_build: success
-    desktop_entry_validation: success
-    appstream_validation: success
-    package_payload_verification: success
-    checksum_verification: success
-    apt_package_install: success
-    installed_payload_verification: success
-    virtual_display_startup_smoke: success
-    apt_package_remove: success
-    uninstall_cleanup_verification: success
-    artifact_upload: success
-  repository_integrity_audit:
-    validated_source_commit: 704220ecf254c91967648380f6efdb18a856e6a3
-    run_id: 31867491653
+    run_id: 31870087317
+    source_commit: 72797fa477b9d88e2138b7ddf1d0f845cdd549ca
     result: success
+    package_target: Debian .deb
+    public_channel_policy: GitHub Releases with verified .deb and SHA-256 checksum
   validation_relationship:
-    - core Flutter CI run 31867130926 validates formatting analysis unit tests Android debug and Linux debug on the final recovery-hardening source revision f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe
-    - Windows run 31867130920 and Apple run 31867130998 validate Windows macOS and unsigned-iOS debug builds on the same final recovery-hardening source revision
-    - Linux Package CI run 31867130938 validates Linux release package construction verification install startup smoke uninstall and artifact upload on the same final recovery-hardening source revision
-    - repository audit run 31867491653 validates the permanent workflow allowlist and repository invariants after the full additive what_changed continuation was committed
-    - documentation-only synchronization commits after the validated application source revision do not trigger all application build workflows by design
+    - application-code revision 72797fa477b9d88e2138b7ddf1d0f845cdd549ca contains the final application source changes and is green in Windows Apple and Linux-package workflows
+    - source/test revision e47b290a7255f126cfcf1436444a90cc32d10823 is a later test-only correction and is green in core analyzer 87-test Android and Linux validation
+    - documentation-only commits after these revisions do not alter the validated application code
 known_limitations:
+  - checked-in Dart tree currently has formatter drift; core CI formats 30 of 54 Dart files before analysis/tests and TODO tracks committing formatter output plus later non-mutating enforcement
   - codec availability and effective sample bitrate channel and DSP settings depend on OS device and runtime support
   - sharing silence-skip media-session input-device and screen-wake capabilities differ by platform backend
   - A-B loop is application-managed and requires real-device timing validation
@@ -198,6 +196,7 @@ commit_identity:
   name: Sanskar
   email: sanskarin@outlook.in
 next_exact_tasks:
+  - commit the CI-toolchain Dart formatter output and then make formatting a non-mutating enforcement gate
   - execute docs/QA_CHECKLIST.md on representative Android iOS macOS Windows and Linux hardware
   - verify countdown screen-wake microphone routing interruption and media-session behavior on physical devices
   - run abrupt process interruption permission failure and low-storage recovery scenarios against the managed metadata and orphan-recovery paths on representative systems
@@ -205,10 +204,8 @@ next_exact_tasks:
   - run a privacy-safe malformed audio corpus through import on each maintained platform and record per-file results
   - profile thousands of Library entries in the real UI for latency memory and scrolling behavior rather than relying only on metadata serialization tests
   - install the Debian package on representative Debian Ubuntu family systems and verify launcher icon microphone routing upgrade and uninstall behavior with release evidence
-  - decide the public Linux distribution channel and any Debian repository/package signing policy
   - listen-test and tune advanced processing presets against representative recordings
   - test large batch conversion and direct-export sets plus desktop secondary-click ergonomics on physical desktop systems
-  - decide backend diagnostic text localization policy before adding additional languages
   - evaluate dedicated Windows and Linux system media-session integration only where maintained platform support is suitable
   - evaluate cursor-anchored platform-native desktop context menus only if they materially improve usability over the implemented action surface
   - profile multi-hour recordings and large libraries
@@ -301,3 +298,17 @@ next_exact_tasks:
 - New deterministic coverage includes managed-path mutation guards, protected external files, corrupt numeric/waveform normalization, corrupt-store reset, duplicate ID/path isolation, filesystem move rollback behavior, supported-file discovery, and orphan recovery across every represented format.
 - Real low-storage/permission/process-kill/power-loss scenarios, real damaged/partially written media recovery, large-library UI profiling, hardware audio routing, accessibility, signing, and public release approval remain evidence-dependent.
 - Release classification remains **development preview**.
+
+
+## Latest exact validation — storage, recovery, batch, and lazy-recorder hardening
+
+- Final application-code revision: `72797fa477b9d88e2138b7ddf1d0f845cdd549ca`.
+- Final source/test revision: `e47b290a7255f126cfcf1436444a90cc32d10823`; its additional change is a test-fixture correction, not application code.
+- Core Flutter CI run `31870224720`: analyzer **SUCCESS**, complete **87/87** test suite **SUCCESS**, Android debug **SUCCESS**, Linux debug **SUCCESS**.
+- Windows run `31870087266`: Windows debug build **SUCCESS** on the final application-code revision.
+- Apple run `31870087249`: macOS debug and unsigned-iOS debug builds **SUCCESS** on the final application-code revision.
+- Linux Package CI run `31870087317`: Debian package workflow **SUCCESS** on the final application-code revision.
+- Initial Linux public channel decision: GitHub Releases with verified `.deb` plus SHA-256 checksum; no initial custom APT repository.
+- Diagnostic localization decision: translate product-facing summaries; preserve raw OS/plugin/FFmpeg/filesystem backend detail as technical evidence.
+- Formatter boundary: core CI currently mutates formatting for 30 of 54 Dart files before analysis/tests. The tracked tree is therefore **not yet claimed formatter-clean**; this is explicitly tracked in `TODO.md`.
+- Release classification remains **development preview** until the remaining physical-device, real-filesystem, accessibility, representative-package, long-duration, signing, and stable-release gates are completed.
