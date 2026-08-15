@@ -5,6 +5,8 @@ All notable project changes are documented here.
 ## [Unreleased]
 
 ### Added
+- Source-controlled cross-platform distribution listing and privacy declaration draft in `docs/STORE_LISTING.md`.
+- Windows public Authenticode signing policy in `docs/WINDOWS_SIGNING_POLICY.md`, while private credential/service configuration remains outside the repository.
 - `BatchConversionService` as the production sequential batch execution boundary with deterministic per-file conversion/export failure isolation and stop-after-current behavior.
 - Supported-regular-audio and symbolic-link/non-file regression coverage for managed storage, startup reconciliation, storage accounting, and external copy destinations.
 - `docs/LOCALIZATION_POLICY.md` defining localized product text versus intentionally raw technical diagnostic evidence.
@@ -51,6 +53,8 @@ All notable project changes are documented here.
 - Expanded manual QA matrix covering recorder lifecycle, codec fallback, smart naming, A-B looping, storage, editor processing, accessibility, localization readiness, stress testing, packaging, and signing/release boundaries.
 
 ### Changed
+- Canonical Dart formatter output is now committed; core CI and release preflight use a non-mutating `dart format --output=none --set-exit-if-changed` enforcement gate.
+- Release guidance now requires candidate-specific review of the store/privacy draft and aligns stable Windows distribution with the Authenticode policy.
 - Managed audio authority now requires a supported extension and a regular file inspected without following symbolic links; path text inside `Recordings`/`.trash` alone is insufficient.
 - Recording/Trash storage totals and automatic recording sequence counting now use the same supported top-level regular-audio definition as recovery.
 - External export collision detection now treats files, directories, symbolic links, broken links, and uninspectable destination paths as occupied.
@@ -111,6 +115,8 @@ All notable project changes are documented here.
 - Obsolete temporary/one-shot write-enabled continuation workflows were removed from `main`.
 
 ### Validation
+- Formatter-clean source revision `4e0fbf16534a60e2d3209c5ec5f54d4982903f8c` passed core run `31870933447`: non-mutating format gate, static analysis, full unit suite, Android debug, and Linux debug all succeeded.
+- The same formatter-clean source revision passed Windows run `31870933908`, Apple run `31870933903` (macOS + unsigned iOS), and Linux Package CI run `31870933982` including package install/smoke/uninstall.
 - Core Flutter CI run `31870224720` is fully green on source/test revision `e47b290a7255f126cfcf1436444a90cc32d10823`: static analysis, all 87 unit tests, Android debug APK, and Linux debug build succeeded.
 - Windows run `31870087266`, Apple run `31870087249`, and Linux Package CI run `31870087317` are green on application-code revision `72797fa477b9d88e2138b7ddf1d0f845cdd549ca`, covering Windows debug, macOS debug, unsigned-iOS debug, and the verified Debian package path.
 - CI currently formats 30 of 54 checked-in Dart files before analysis/tests; this is tracked as an unresolved repository-hygiene item and is not claimed as formatter-clean source evidence.
