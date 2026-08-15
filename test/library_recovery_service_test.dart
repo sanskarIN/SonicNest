@@ -53,6 +53,13 @@ void main() {
     return file;
   }
 
+  Future<File> createTrashRecording(String title, String extension) async {
+    final path = await storage.uniqueTrashPath(title, extension);
+    final file = File(path);
+    await file.writeAsBytes(const [4, 3, 2, 1], flush: true);
+    return file;
+  }
+
   test('recovers supported managed audio missing from metadata', () async {
     final orphan = await createRecording('Orphan', 'wav');
 
@@ -70,6 +77,22 @@ void main() {
     expect(entry.tags, ['Recovered']);
     expect(entry.notes, contains('metadata was missing'));
     expect(entry.waveform, [0.0, 0.5, 1.0, 0.25]);
+    expect(entry.isTrashed, isFalse);
+  });
+
+  test('recovers an unindexed managed Trash file back into Trash', () async {
+    final orphan = await createTrashRecording('Interrupted Delete', 'flac');
+
+    final recovered = await createRecovery().recoverOrphanedRecordings(const []);
+
+    expect(recovered, hasLength(1));
+    final entry = recovered.single;
+    expect(entry.filePath, orphan.path);
+    expect(entry.format, RecordingFormat.flac);
+    expect(entry.isTrashed, isTrue);
+    expect(entry.trashedAt, isNotNull);
+    expect(entry.tags, ['Recovered']);
+    expect(entry.notes, contains('Recovered in Trash'));
   });
 
   test('does not duplicate a managed file already represented in metadata', () async {
@@ -87,6 +110,29 @@ void main() {
       channels: 1,
       createdAt: now,
       modifiedAt: now,
+    );
+
+    final recovered = await createRecovery().recoverOrphanedRecordings([known]);
+
+    expect(recovered, isEmpty);
+  });
+
+  test('does not duplicate a managed Trash file already represented', () async {
+    final file = await createTrashRecording('Known Trash', 'wav');
+    final now = DateTime.utc(2026, 8, 15);
+    final known = RecordingEntry(
+      id: 'known-trash',
+      title: 'Known Trash',
+      filePath: file.path,
+      durationMs: 100,
+      sizeBytes: 4,
+      format: RecordingFormat.wav,
+      bitRate: 0,
+      sampleRate: 48000,
+      channels: 1,
+      createdAt: now,
+      modifiedAt: now,
+      trashedAt: now,
     );
 
     final recovered = await createRecovery().recoverOrphanedRecordings([known]);
