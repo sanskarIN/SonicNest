@@ -128,6 +128,9 @@ completed_features:
   - Android hosted release-candidate package identity and non-production Debug-certificate verification
   - cross-platform release-candidate workflow producing Android Linux Windows macOS and iOS release-mode validation artifacts from one clean source revision
   - exact automated release evidence record with inner artifact SHA-256 values and workflow artifact digests
+  - unified machine-readable release-candidate provenance manifest that re-verifies all five platform payload checksum records and binds evidence to the full source SHA workflow run and attempt
+  - hosted provenance manifest explicitly preserves per-platform signing classifications and stableReleaseApproved false
+  - Python release-tool unit and workflow-integration regressions executed by the permanent Repository Integrity Audit
   - repository workflow allowlist rejecting leftover temporary one-shot workflows and permanent write permissions including write-all
   - repository audit recognizes both .yml and .yaml workflow files
   - unit tests open-source docs GitHub project templates and release documentation
@@ -214,6 +217,30 @@ latest_automated_validation:
     macos_archive_sha256: 364c0d8f84c2779c45a36e13fd59d6bbcceebe03f62662a41dc4e2f9178d4af3
     ios_archive_sha256: 8d1209b94aa1aaff4369dff041ace9698bf4dcd5e0e6363a0fd470c50ee2e54d
     evidence_document: docs/AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md
+  provenance_release_candidate:
+    run_id: 31876035202
+    source_commit: b95d77c4b69c9798f1ecb48d5f69583c4e08de5c
+    run_attempt: 1
+    source_preflight: success
+    android_release_nonproduction: success
+    linux_release_and_deb: success
+    windows_release_portable_build_verify_startup_smoke: success
+    macos_release_unsigned_archive: success
+    ios_release_no_codesign_archive: success
+    unified_manifest: success
+    application_version: 0.1.0+1
+    release_classification: development-preview
+    stable_release_approved: false
+    manifest_json_sha256: 8a49759555cad26a60858025d82953ad0e3c3b429aa8138d67f7ef4f86d99b7e
+    manifest_artifact_digest: sha256:5fa654434ba304e7b67945250f7c8f4bec14eacbc87effefa5cd2d620885baa3
+    android_apk_sha256: 1457f53822af974de18905ba4d103b3c9a8fe2f66080848a48cd591f6287f9b8
+    android_aab_sha256: 029571a665ec3359cdee5cb2b5c8357c8b3c450ef3fcb1f63d8f808eb635e99a
+    linux_bundle_sha256: fbecb458fec864d451f0ba67e0b70f58f34710de883d5d4c8c86e32ab3238bd6
+    linux_deb_sha256: eee447e80713f8c4102c200349cfae0873da1948dc0e2740f1b7d058a07d26e1
+    windows_portable_sha256: c0cbc9ef7d00481e9f39fc058d5747779372dd61454a542eb5ce487d2da68ff3
+    macos_archive_sha256: 0a4b2ac2c097e0f53eabbf84909ddc8f28bd28bd8bc37a0ea189b4ebc810733a
+    ios_archive_sha256: a6b77c3d3a5badc305c7d7ebfc3a5a646197b48f09c1000854980fcffaaf17a7
+    evidence_document: docs/AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md
   permanent_windows_package_ci:
     run_id: 31872928500
     source_commit: 9a974f865e2dc189f08735fc6464b989eaa99eb4
@@ -230,10 +257,14 @@ latest_automated_validation:
     strengthened_audit_run_id: 31874506476
     strengthened_audit_source_commit: 64c121fa0e5c81531a3710b1d67b88fb3dfc93db
     strengthened_audit_result: success
+    python_release_tooling_run_id: 31876149473
+    python_release_tooling_result: success
+    python_release_tool_tests: 10_of_10_passed
   validation_relationship:
     - formatter-clean revision 4e0fbf16534a60e2d3209c5ec5f54d4982903f8c remains the exact debug/source-quality baseline with analysis tests Android and Linux debug validation
-    - release-candidate revision 048870ec8dc26a16e2451310460d3e03c9084dc7 is the exact fully green cross-platform release-mode hosted artifact source
-    - later commits are documentation and repository-audit policy hardening and do not alter candidate runtime code or the recorded candidate artifacts
+    - release-candidate revision 048870ec8dc26a16e2451310460d3e03c9084dc7 remains the earlier fully green cross-platform release-mode hosted artifact baseline
+    - provenance release-candidate revision b95d77c4b69c9798f1ecb48d5f69583c4e08de5c validates the unified machine-readable checksum/source/run binding on a complete five-platform hosted matrix
+    - commits after b95d77c4 are documentation tests audit-policy and trigger-restoration changes and do not alter the runtime application code represented by the candidate
     - stable release still requires the unchecked real-system and maintainer-credential gates
 known_limitations:
   - codec availability and effective sample bitrate channel and DSP settings depend on OS device and runtime support
@@ -249,6 +280,7 @@ known_limitations:
   - hosted Windows startup smoke proves only bounded launch of the extracted portable package and does not prove microphone routing accessibility desktop integration or Authenticode trust
   - hosted Android release-mode artifacts are signed by the Android Debug certificate and are intentionally non-production
   - hosted macOS and iOS release-mode artifacts are unsigned/no-codesign validation artifacts and are not public Apple distributables
+  - unified provenance manifest proves hosted artifact checksum/source/run consistency only and does not convert validation artifacts into stable signed distributables
   - automated compilation cannot substitute for microphone hardware interruption background lock-screen routing media-button accessibility storage-failure and long-duration QA
   - signed distributable packages require maintainer-owned signing material that must not be committed
 branch: main
@@ -396,3 +428,18 @@ next_exact_tasks:
 - Clean candidate-tree repository audit run `31873122160`: **SUCCESS**.
 - Strengthened repository audit run `31874506476` on commit `64c121fa0e5c81531a3710b1d67b88fb3dfc93db`: **SUCCESS** after adding `.yaml` workflow recognition and `write-all`/write-scope rejection.
 - The automated evidence is release-mode structural/build/package evidence only. SonicNest remains a **development preview** until physical-device, representative real-system, accessibility, long-duration/performance, protected signing/notarization, and stable-release approval gates are completed.
+
+## Unified release-candidate provenance validation — 2026-08-15
+
+- Provenance source revision: `b95d77c4b69c9798f1ecb48d5f69583c4e08de5c`.
+- Release Candidate Validation run `31876035202`: **SUCCESS** for Source preflight, Android, Linux, Windows, macOS, iOS, and the final **Unified candidate provenance manifest** job.
+- `tool/build_release_candidate_manifest.py` re-verified all platform payloads against each artifact set's `SHA256SUMS.txt`, required the Android Debug/NON-PRODUCTION signing-state markers, and bound the result to the exact full source SHA, workflow run, workflow attempt, and application version.
+- Manifest application version: `0.1.0+1`.
+- Manifest release classification: `development-preview`.
+- Manifest `stableReleaseApproved`: `false`.
+- `RELEASE_CANDIDATE_MANIFEST.json` SHA-256: `8a49759555cad26a60858025d82953ad0e3c3b429aa8138d67f7ef4f86d99b7e`.
+- Independent post-download recomputation matched the recorded manifest SHA-256 exactly.
+- Manifest workflow artifact digest: `sha256:5fa654434ba304e7b67945250f7c8f4bec14eacbc87effefa5cd2d620885baa3`.
+- Permanent Repository Integrity Audit run `31876149473` passed Python compilation, repository invariants, **10/10** Python release-tool tests, Bash syntax, and PowerShell syntax.
+- The temporary narrow documentation-path push trigger used to obtain this validation was removed in commit `79b5195e7f207ebc1076e38faecb5c4c9c2447e7`; the permanent release-candidate workflow is again manual `workflow_dispatch` only.
+- This provenance evidence proves hosted checksum/source/run consistency. It does not complete physical-device, real-system, accessibility, protected signing/notarization, store, or stable-release gates.
