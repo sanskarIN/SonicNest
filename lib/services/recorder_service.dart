@@ -40,7 +40,7 @@ class RecorderService extends ChangeNotifier {
   final StorageService _storage;
   final AudioProcessor _processor;
   final BackgroundServiceBridge _background;
-  final AudioRecorder _recorder = AudioRecorder();
+  AudioRecorder? _recorder;
   final Stopwatch _stopwatch = Stopwatch();
   final List<double> _waveform = [];
   final List<RecordingMarker> _markers = [];
@@ -66,6 +66,8 @@ class RecorderService extends ChangeNotifier {
   String? lastError;
   RecordConfig? effectiveConfig;
 
+  AudioRecorder get _recorderBackend => _recorder ??= AudioRecorder();
+
   bool get isActive =>
       status == RecorderStatus.countdown ||
       status == RecorderStatus.recording ||
@@ -76,7 +78,8 @@ class RecorderService extends ChangeNotifier {
   List<RecordingMarker> get markers => List.unmodifiable(_markers);
   InputDevice? get selectedDevice => _selectedDevice;
 
-  Future<List<InputDevice>> listInputDevices() => _recorder.listInputDevices();
+  Future<List<InputDevice>> listInputDevices() =>
+      _recorderBackend.listInputDevices();
 
   void selectInputDevice(InputDevice? device) {
     if (isActive) {
@@ -108,7 +111,7 @@ class RecorderService extends ChangeNotifier {
     final countdownGeneration = ++_countdownGeneration;
     try {
       lastError = null;
-      final permission = await _recorder.hasPermission();
+      final permission = await _recorderBackend.hasPermission();
       if (!permission) {
         throw StateError('Microphone permission was not granted.');
       }
@@ -150,18 +153,18 @@ class RecorderService extends ChangeNotifier {
       final requestedEncoder = settings.format.nativeEncoder;
       final directSupported =
           !settings.format.needsTranscode &&
-          await _recorder.isEncoderSupported(requestedEncoder);
+          await _recorderBackend.isEncoderSupported(requestedEncoder);
       AudioEncoder captureEncoder;
       String captureExtension;
       if (directSupported) {
         captureEncoder = requestedEncoder;
         captureExtension = settings.format.extension;
         _postTranscode = false;
-      } else if (await _recorder.isEncoderSupported(AudioEncoder.wav)) {
+      } else if (await _recorderBackend.isEncoderSupported(AudioEncoder.wav)) {
         captureEncoder = AudioEncoder.wav;
         captureExtension = 'wav';
         _postTranscode = true;
-      } else if (await _recorder.isEncoderSupported(AudioEncoder.aacLc)) {
+      } else if (await _recorderBackend.isEncoderSupported(AudioEncoder.aacLc)) {
         captureEncoder = AudioEncoder.aacLc;
         captureExtension = 'm4a';
         _postTranscode = true;
@@ -181,7 +184,7 @@ class RecorderService extends ChangeNotifier {
             )
           : _capturePath;
 
-      await _recorder.setOnConfigChanged((config) {
+      await _recorderBackend.setOnConfigChanged((config) {
         effectiveConfig = config;
         notifyListeners();
       });
@@ -199,7 +202,7 @@ class RecorderService extends ChangeNotifier {
       );
 
       await _background.start();
-      await _recorder.start(config, path: _capturePath!);
+      await _recorderBackend.start(config, path: _capturePath!);
       _stopwatch
         ..reset()
         ..start();
@@ -207,7 +210,7 @@ class RecorderService extends ChangeNotifier {
         elapsed = _stopwatch.elapsed;
         notifyListeners();
       });
-      _amplitudeSubscription = _recorder
+      _amplitudeSubscription = _recorderBackend
           .onAmplitudeChanged(const Duration(milliseconds: 100))
           .listen(
             _onAmplitude,
@@ -258,7 +261,7 @@ class RecorderService extends ChangeNotifier {
     }
     _transitioning = true;
     try {
-      await _recorder.pause();
+      await _recorderBackend.pause();
       _stopwatch.stop();
       status = RecorderStatus.paused;
       notifyListeners();
@@ -273,7 +276,7 @@ class RecorderService extends ChangeNotifier {
     }
     _transitioning = true;
     try {
-      await _recorder.resume();
+      await _recorderBackend.resume();
       _stopwatch.start();
       status = RecorderStatus.recording;
       notifyListeners();
@@ -312,7 +315,7 @@ class RecorderService extends ChangeNotifier {
       _timer?.cancel();
       await _amplitudeSubscription?.cancel();
       _amplitudeSubscription = null;
-      final recordedPath = await _recorder.stop();
+      final recordedPath = await _recorderBackend.stop();
       await _safeStopBackground();
       final capturePath = recordedPath ?? _capturePath;
       final settings = _settings;
@@ -376,7 +379,7 @@ class RecorderService extends ChangeNotifier {
       _stopwatch.stop();
       await _amplitudeSubscription?.cancel();
       _amplitudeSubscription = null;
-      await _recorder.cancel();
+      await _recorderBackend.cancel();
       await _safeStopBackground();
       await _safeDisableScreenWake();
       await _deleteCaptureFiles();
@@ -412,10 +415,13 @@ class RecorderService extends ChangeNotifier {
   }
 
   Future<void> _cleanupFailedCapture() async {
-    try {
-      await _recorder.cancel();
-    } catch (_) {
-      // The recorder may not have entered a capturable state yet.
+    final recorder = _recorder;
+    if (recorder != null) {
+      try {
+        await recorder.cancel();
+      } catch (_) {
+        // The recorder may not have entered a capturable state yet.
+      }
     }
     await _deleteCaptureFiles();
   }
@@ -458,7 +464,10 @@ class RecorderService extends ChangeNotifier {
     if (_screenWakeEnabled) {
       unawaited(WakelockPlus.disable());
     }
-    _recorder.dispose();
+    final recorder = _recorder;
+    if (recorder != null) {
+      unawaited(recorder.dispose());
+    }
     super.dispose();
   }
 }
