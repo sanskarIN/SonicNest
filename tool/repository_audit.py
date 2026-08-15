@@ -33,6 +33,7 @@ REQUIRED_FILES = (
     "docs/ANDROID_DISTRIBUTION_POLICY.md",
     "docs/APPLE_DISTRIBUTION_POLICY.md",
     "docs/ARCHITECTURE.md",
+    "docs/AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md",
     "docs/BATCH_CONVERSION.md",
     "docs/BUILDING.md",
     "docs/BRANDING.md",
