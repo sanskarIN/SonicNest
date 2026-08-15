@@ -9,7 +9,7 @@ class RecordingMarker {
 
   factory RecordingMarker.fromJson(Map<String, dynamic> json) =>
       RecordingMarker(
-        positionMs: _intValue(json['positionMs']),
+        positionMs: _nonNegativeIntValue(json['positionMs']),
         label: _stringValue(json['label'], 'Marker'),
         note: _stringValue(json['note']),
       );
@@ -58,12 +58,12 @@ class RecordingEntry {
       id: _stringValue(json['id']),
       title: _stringValue(json['title'], 'Recording'),
       filePath: _stringValue(json['filePath']),
-      durationMs: _intValue(json['durationMs']),
-      sizeBytes: _intValue(json['sizeBytes']),
+      durationMs: _nonNegativeIntValue(json['durationMs']),
+      sizeBytes: _nonNegativeIntValue(json['sizeBytes']),
       format: format,
-      bitRate: _intValue(json['bitRate']),
-      sampleRate: _intValue(json['sampleRate']),
-      channels: _intValue(json['channels'], 1),
+      bitRate: _nonNegativeIntValue(json['bitRate']),
+      sampleRate: _nonNegativeIntValue(json['sampleRate']),
+      channels: _positiveIntValue(json['channels'], 1),
       createdAt: _dateTimeValue(json['createdAt']) ?? now,
       modifiedAt: _dateTimeValue(json['modifiedAt']) ?? now,
       favorite: _boolValue(json['favorite']),
@@ -171,8 +171,18 @@ class RecordingEntry {
 String _stringValue(Object? value, [String fallback = '']) =>
     value is String ? value : fallback;
 
-int _intValue(Object? value, [int fallback = 0]) =>
-    value is num ? value.toInt() : fallback;
+int _nonNegativeIntValue(Object? value, [int fallback = 0]) {
+  if (value is! num || !value.isFinite) {
+    return fallback;
+  }
+  final parsed = value.toInt();
+  return parsed < 0 ? fallback : parsed;
+}
+
+int _positiveIntValue(Object? value, [int fallback = 1]) {
+  final parsed = _nonNegativeIntValue(value, fallback);
+  return parsed > 0 ? parsed : fallback;
+}
 
 bool _boolValue(Object? value, [bool fallback = false]) =>
     value is bool ? value : fallback;
@@ -191,9 +201,11 @@ List<double> _doubleList(Object? value) {
   if (value is! Iterable) {
     return const [];
   }
-  return value.whereType<num>().map((number) => number.toDouble()).toList(
-    growable: false,
-  );
+  return value
+      .whereType<num>()
+      .map((number) => number.toDouble())
+      .where((number) => number.isFinite)
+      .toList(growable: false);
 }
 
 List<RecordingMarker> _markerList(Object? value) {
