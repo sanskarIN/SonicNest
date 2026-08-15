@@ -67,6 +67,7 @@ Completed:
 - Bookmark-position adjustment for cut and inserted-silence copies.
 - Multi-recording batch format conversion with per-file progress/failure handling and preserved source recordings.
 - Direct multi-file original export to a user-selected destination with collision-safe naming and per-file failure isolation.
+- Batch execution moved behind a deterministic service with per-file conversion/registration/external-copy isolation and stop-after-current semantics shared by tests and production UI.
 
 Remaining:
 - Profile multi-file conversion and direct export with large real-world libraries, low-storage conditions, permission loss, and destination disappearance.
@@ -78,10 +79,10 @@ Completed/in progress:
 - Responsive Material 3 layouts, semantics, reduced-motion preference, and keyboard navigation are implemented.
 - Branded Flutter startup experience and recoverable startup state are implemented.
 - Primary Flutter presentation surfaces are centralized in the localization catalog; English is the currently supported locale.
+- Backend diagnostic/error localization policy is explicitly decided: product-facing summaries are localized while raw backend diagnostics remain technical evidence.
 - Deterministic metadata stress coverage exercises 3,000 entries through the real JSON persistence path.
 
 Remaining:
-- Decide whether backend diagnostic/error details should be translated or intentionally retained as technical text before non-English releases.
 - Add additional locales only with translation review, text-expansion testing, and translation QA.
 - Complete screen-reader audits with VoiceOver, TalkBack, Narrator, and desktop accessibility tooling.
 - Profile multi-hour recordings and real Library UI behavior with thousands of entries.
@@ -93,31 +94,39 @@ Remaining:
 Completed/in progress:
 - Reproducible Bash and PowerShell platform bootstrapping.
 - Android/Linux/Windows/macOS/unsigned-iOS automated build workflows.
-- Detailed manual QA checklist, release procedure, preview release notes, and evidence-based remaining-work file.
+- Detailed manual QA checklist, release procedure, preview release notes, release evidence template, and evidence-based remaining-work file.
 - Deterministic native brand raster generation from repository-controlled SonicNest geometry.
 - Reproducible Android/iOS native splash resources and Android/iOS/macOS/Windows launcher/application icon generation.
-- Permanent Android/Windows/Apple workflows apply generated native branding before compiling representative debug builds.
-- Native branding source revision `40c4a758debef136c2d8c977c321446cca2697cd` validated by analyzer/tests plus Android, Linux, Windows, macOS, and unsigned iOS debug builds.
+- Permanent Android/Windows/Apple workflows apply generated native branding before compiling representative builds.
 - Debian `.deb` selected as the initial repository-supported Linux installation package.
 - Linux desktop entry, deterministic icon installation, AppStream metadata, package builder, structural verifier, checksum generation, dedicated package CI, and release-candidate `.deb` output implemented.
 - Hosted-runner Debian installation, installed-payload/startup smoke, package removal, and uninstall cleanup validation implemented.
-- Permanent workflow allowlist/read-only integrity checks implemented; obsolete write-enabled one-shot workflows removed from `main`.
-- Metadata/import reliability revision `a88aeadadda017b0aced4dbc25c8426a27364b77` validated by core run `31807193932` for formatting, analyzer, tests, Android, and Linux; controller source `3bf63e69186a7a538f7d0587f3d361e00c2e29e9` validated by Windows run `31807141053` and Apple run `31807141166`.
-- Managed-storage/orphan-recovery source revision `f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe` validated by core run `31867130926` for formatting, analyzer, full unit tests, Android, and Linux; Windows run `31867130920`; Apple run `31867130998`; and Linux Package CI run `31867130938`.
-- Repository Integrity Audit run `31867543888` passed after the recovery-hardening documentation/project-state synchronization.
+- Initial Linux public channel selected: GitHub Releases with the verified `.deb` and SHA-256 checksum; no initial custom APT repository.
+- Versioned x64 portable ZIP selected as the initial repository-supported Windows package format.
+- Windows portable package builder/verifier implemented with complete Flutter bundle checks, sensitive/signing-material rejection, SHA-256/package-info output, and optional final Authenticode verification.
+- Permanent Windows CI now validates both debug compilation and a release-mode unsigned portable package artifact.
+- Initial Windows public channel selected: GitHub Releases with the final Authenticode-verified portable ZIP and post-signing SHA-256; Microsoft Store/MSIX/MSI/installer channels are future separate work.
+- Store/distribution listing and privacy-declaration copy is source-controlled for exact-candidate review.
+- Permanent workflow allowlist/read-only integrity checks implemented and expanded to reject write scopes, require release policy/package documents, verify packaging markers, and parse Bash/PowerShell helpers.
+- Canonical Dart formatting is tracked and core CI enforces formatting without mutating its checkout.
+- Managed-storage/orphan-recovery source revision `f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe` validated by core run `31867130926`, Windows run `31867130920`, Apple run `31867130998`, and Linux Package CI run `31867130938`.
+- Formatter-clean application revision `4e0fbf16534a60e2d3209c5ec5f54d4982903f8c` validated by core run `31870933447`, Windows run `31870933908`, Apple run `31870933903`, and Linux Package CI run `31870933982`.
+- Windows portable package path validated by Windows run `31872155143`: debug build, release build, portable ZIP construction, package verification, checksum/package-info generation, explicit unsigned warning, and artifact upload all succeeded.
+- Clean repository audit run `31872390093` passed on SHA `8096d45bb0ea09cf3107e8fd80e05bf6844baf9b`, including repository invariants plus Bash and PowerShell helper syntax validation.
 
 Remaining:
-- Keep Android/Linux/Windows/macOS/iOS build workflows green for future source revisions.
-- Keep the Linux Debian package workflow green for future source revisions.
+- Keep Android/Linux/Windows/macOS/iOS build and release-candidate workflows green for future source revisions.
+- Keep Linux Debian and Windows portable package validation green for future source revisions.
 - Validate microphone input switching and codec availability on each supported OS.
 - Verify background/lock-screen/interruption behavior against each platform's current policies.
 - Validate countdown, screen-wake, A-B loop, media buttons, batch conversion/export, desktop secondary-click interaction, and advanced editor outputs on physical target hardware.
 - Complete malformed-real-media corpus testing and real low-storage/filesystem-permission/interruption recovery evidence.
 - Verify real abrupt-process/power-loss and partially written managed-audio recovery behavior instead of inferring it from deterministic regression tests.
 - Visually inspect generated Android/iOS/macOS/Windows native icons and Android/iOS launch/splash resources on real release candidates.
-- Install and visually inspect the generated Linux `.deb` on representative Debian/Ubuntu-family systems, including launcher/menu/task-switcher icon surfaces and package uninstall behavior.
-- Decide the public Linux distribution channel and any package/repository signing policy.
-- Prepare reproducible release-build checks before signing is introduced.
+- Install and visually inspect the generated Linux `.deb` on representative Debian/Ubuntu-family systems, including microphone/audio-stack behavior, launcher/menu/task-switcher icon surfaces, upgrade, and uninstall behavior.
+- Extract and test the generated Windows portable ZIP on representative Windows systems, including microphone/routing, playback/import/export, accessibility, branding, cleanup, and final Authenticode verification.
+- Provision maintainer-owned Android signing, Apple signing/notarization, and Windows Authenticode credentials/services outside the repository.
+- Produce signed release candidates only in protected release environments and record exact artifact checksums after signing.
 - Keep dependency/API compatibility pinned and documented when upstream plugins introduce breaking API or native-registration changes.
 - Capture real screenshots from tested release candidates.
 
@@ -126,7 +135,7 @@ Remaining:
 - Zero known critical/high-priority reproducible bugs.
 - Manual QA checklist complete on Android, iOS, macOS, Windows, and Linux.
 - Privacy/security/release documentation reviewed against the shipping build.
-- Final store/release assets and signed packages prepared by the maintainer.
+- Final store/release assets and signed packages prepared by the maintainer where signing is required.
 - Release notes and checksums published for distributable artifacts where applicable.
 - Stable tag created only from the exact tested and signed source revision.
 
@@ -136,12 +145,12 @@ Implemented: optional user-selected destination-folder copies, collision-safe de
 
 ## Localization migration status
 
-Primary Flutter presentation surfaces are centralized in the localization catalog and English remains the baseline locale. Remaining localization work is translation introduction, text-expansion testing, translation QA, and deciding how much backend diagnostic text should be localized versus retained as technical detail.
+Primary Flutter presentation surfaces are centralized in the localization catalog and English remains the baseline locale. The diagnostic policy is closed: user-facing summaries belong in localization while raw backend diagnostics stay technical evidence. Remaining localization work is deliberate translation introduction, text-expansion testing, and translation QA.
 
 ## Metadata integrity, managed recovery, and resilient import status
 
-Implemented: defensive model decoding, unsafe numeric/waveform normalization, structurally corrupt metadata preservation, per-record and duplicate ID/path isolation, valid-backup recovery after interrupted/corrupt primary replacement, clean-store reset when no valid metadata source remains, a deterministic 3,000-entry metadata round-trip, managed-path mutation guards, controller persistence rollback, supported-file discovery, startup orphan reconstruction, dedicated per-file import validation/cleanup, and controller-level continuation after isolated malformed/missing selections. Remaining work is real malformed/partially written media testing, abrupt-process/power-loss recovery evidence, real large-library UI/memory profiling, low-storage and filesystem-permission recovery, and representative target-system validation.
+Implemented: defensive model decoding, unsafe numeric/waveform normalization, structurally corrupt metadata preservation, per-record and duplicate ID/path isolation, valid-backup recovery after interrupted/corrupt primary replacement, clean-store reset when no valid metadata source remains, a deterministic 3,000-entry metadata round-trip, supported-regular-audio managed-path mutation guards, controller persistence rollback, active/Trash supported-file discovery, startup orphan reconstruction, dedicated per-file import validation/cleanup, and controller-level continuation after isolated malformed/missing selections. Remaining work is real malformed/partially written media testing, abrupt-process/power-loss recovery evidence, real large-library UI/memory profiling, low-storage and filesystem-permission recovery, and representative target-system validation.
 
-## Native branding and Linux packaging status
+## Native branding and packaging status
 
-Implemented: deterministic brand source generation, Android adaptive/monochrome/full launcher inputs, Android/iOS native splash resources, Android/iOS/macOS/Windows icon generation integrated into build workflows, and Debian `.deb` packaging with a Linux desktop entry, AppStream metadata, hicolor icon installation, checksum generation, structural verification, hosted-runner install/startup/uninstall smoke, and CI/release-candidate integration. Remaining work is real OS-level visual inspection, signed/release launch-screen review, real screenshots, representative `.deb` install/upgrade/uninstall testing, and the final public Linux distribution/signing policy.
+Implemented: deterministic brand source generation, Android adaptive/monochrome/full launcher inputs, Android/iOS native splash resources, Android/iOS/macOS/Windows icon generation integrated into build workflows, Debian `.deb` packaging with desktop/AppStream integration and hosted install/smoke/uninstall validation, and Windows versioned portable ZIP packaging with release-mode hosted build/verification. Initial public channels are GitHub Releases for both Linux (`.deb` + SHA-256) and Windows (final Authenticode-verified portable ZIP + post-signing SHA-256). Remaining work is real OS-level visual/audio/accessibility inspection, representative Linux install/upgrade/uninstall evidence, representative Windows portable-package evidence, private signing/notarization configuration, real screenshots, and stable-release approval.
