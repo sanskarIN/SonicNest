@@ -10,7 +10,7 @@
 
 ## Status
 
-Current development version: **0.1.0**. The repository is structured as a production project with automated analysis/tests, Android/Linux/Windows/macOS/iOS build validation workflows, Debian Linux package validation, Windows portable-package validation, open-source documentation, continuation state, reproducible platform bootstrap and branding tooling, and explicit manual release gates. This is still a development preview until the physical-device and signed-release checklist is complete.
+Current development version: **0.1.0**. The repository is structured as a production project with automated analysis/tests, Android/Linux/Windows/macOS/iOS build validation workflows, Debian Linux package validation, Windows portable-package validation, non-production release-candidate validation, open-source documentation, continuation state, reproducible platform bootstrap and branding tooling, and explicit manual release gates. This is still a development preview until the physical-device and signed-release checklist is complete.
 
 ## Major features
 
@@ -40,8 +40,11 @@ Current development version: **0.1.0**. The repository is structured as a produc
 - Native launcher/splash branding generated reproducibly from project-controlled SonicNest mark geometry, plus branded Flutter startup UI with startup-error recovery.
 - Debian `.deb` packaging for Linux with desktop entry, AppStream metadata, generated SonicNest icon integration, package checksums, structural verification, hosted-runner installation/startup smoke, and uninstall cleanup verification.
 - Initial public Linux distribution policy: verified `.deb` + SHA-256 checksum through GitHub Releases; no initial custom APT repository.
-- Versioned x64 portable ZIP packaging for Windows with complete Flutter runner-bundle validation, credential-material checks, SHA-256 output, optional final Authenticode verification, and hosted unsigned package artifacts.
+- Versioned x64 portable ZIP packaging for Windows with complete Flutter runner-bundle validation, credential-material checks, SHA-256 output, bounded extracted-package startup smoke, optional final Authenticode verification, and hosted unsigned package artifacts.
 - Initial Windows public distribution policy: GitHub Releases with the final Authenticode-verified portable ZIP and its post-signing SHA-256 checksum; Microsoft Store/MSIX/MSI/installer channels are not currently claimed.
+- Android release-candidate validation verifies package identity and explicitly classifies hosted release-mode APK/AAB output as Android Debug-certificate **non-production** artifacts instead of calling them unsigned.
+- Initial Android public distribution policy: Google Play with Play App Signing and a separately protected maintainer-controlled upload key; hosted CI has no production Play signing credentials.
+- Initial Apple distribution policy: TestFlight/App Store for iOS and signed/notarized GitHub Releases for macOS; hosted Apple artifacts remain no-codesign/non-publication validation output.
 - Localization-ready presentation layer with primary Flutter surfaces centralized in the localization catalog; English is currently the shipped locale. Product-facing text is localized while raw backend diagnostics remain technical evidence.
 - Light, dark, and system themes; responsive phone/tablet/desktop navigation; reduced-motion preference; keyboard navigation and recorder/player shortcuts.
 - Offline-first local metadata and audio storage. No hidden upload, tracking, or analytics.
@@ -67,6 +70,10 @@ See `docs/BATCH_CONVERSION.md` for execution ordering, failure isolation, stop s
 ## Supported platforms
 
 The application architecture targets Android, iOS, macOS, Windows, and Linux. Platform host projects are generated with the installed Flutter SDK by `tool/bootstrap_platforms.sh` on Bash-capable environments or `tool/bootstrap_platforms.ps1` on Windows, then SonicNest-specific permissions/capabilities are applied. Native brand resources are generated after dependency resolution with `tool/apply_branding.sh` or `tool/apply_branding.ps1`. This keeps host scaffolding and native resources reproducible from repository source.
+
+Google Play is the initial Android public channel. Production distribution requires maintainer-owned Play Console/App Signing/upload-key configuration outside this repository. See `docs/ANDROID_DISTRIBUTION_POLICY.md`.
+
+iOS uses TestFlight/App Store as the initial Apple mobile channel; macOS initially uses signed/notarized GitHub Releases. See `docs/APPLE_DISTRIBUTION_POLICY.md`.
 
 Debian `.deb` is the initial repository-supported Linux installation package. It is built from the generated Flutter Linux release bundle rather than committed binary output. The initial public Linux channel is GitHub Releases; see `docs/LINUX_DISTRIBUTION_POLICY.md`.
 
@@ -108,11 +115,11 @@ flutter test
 
 The formatting step is an enforcement check and must not rewrite source during validation. If it reports drift, apply canonical `dart format` locally, review/commit that output, and rerun validation.
 
-GitHub Actions additionally compile representative debug builds for Android, Linux, Windows, macOS, and unsigned iOS host validation. The Linux package workflow builds a release-mode Linux bundle, creates a Debian package, verifies its payload/metadata/icon/checksum structure, installs it through the package manager, smoke-starts the installed application under a bounded virtual display, removes the package, verifies package-owned integration cleanup, and publishes a short-retention validation artifact. The Windows workflow also builds a release-mode Windows bundle, creates a versioned portable ZIP, verifies its required runtime/data layout and checksum, checks for common private/signing material, adds an explicit unsigned warning, and publishes a short-retention validation artifact.
+GitHub Actions additionally compile representative debug builds for Android, Linux, Windows, macOS, and unsigned iOS host validation. The Linux package workflow builds a release-mode Linux bundle, creates a Debian package, verifies its payload/metadata/icon/checksum structure, installs it through the package manager, smoke-starts the installed application under a bounded virtual display, removes the package, verifies package-owned integration cleanup, and publishes a short-retention validation artifact. The Windows workflow also builds a release-mode Windows bundle, creates a versioned portable ZIP, verifies its required runtime/data layout and checksum, checks for common private/signing material, smoke-starts the extracted package for a bounded interval, adds an explicit unsigned warning, and publishes a short-retention validation artifact. The manual release-candidate workflow validates Android package identity/debug-certificate non-production signing state and creates release-mode evidence for Android, Linux, Windows, macOS, and no-codesign iOS.
 
-The repository audit validates required project/policy files, sensitive-material rules, permanent-workflow read-only permissions, package/release invariants, Bash syntax, and PowerShell helper parsing.
+The repository audit validates required project/policy files, sensitive-material rules, permanent-workflow read-only permissions, package/release invariants, and parses all tracked `tool/*.sh` and `tool/*.ps1` helpers.
 
-Hardware-dependent recorder, interruption, background, routing, screen-wake, media-button, batch-performance, native-brand visual inspection, representative Linux installation, Windows real-system portable-package behavior, filesystem-failure, malformed-real-media, accessibility, production signing, and lock-screen behavior still require real target-system evidence. Exact latest validated source/workflow relationships are maintained in `PROJECT_STATE.md` and `what_changed.md`; older historical validation revisions remain in the repository history rather than being presented here as the current state.
+Hardware-dependent recorder, interruption, background, routing, screen-wake, media-button, batch-performance, native-brand visual inspection, representative Linux installation, Windows real-system portable-package behavior, filesystem-failure, malformed-real-media, accessibility, production signing, store submission, and lock-screen behavior still require real target-system or protected maintainer-environment evidence. Exact latest validated source/workflow relationships are maintained in `PROJECT_STATE.md` and `what_changed.md`; older historical validation revisions remain in the repository history rather than being presented here as the current state.
 
 ## Build a Windows portable package
 
@@ -126,9 +133,10 @@ flutter pub get
 flutter build windows --release
 ./tool/build_windows_portable.ps1 -Configuration release -ArtifactSuffix unsigned
 ./tool/verify_windows_portable.ps1
+./tool/smoke_test_windows_portable.ps1 -StartupSeconds 8
 ```
 
-The hosted/development path uses the `unsigned` label. A final public candidate must be packaged from the final signed binaries and must pass `./tool/verify_windows_portable.ps1 -ArchivePath '<final-portable-zip>' -RequireSignature` before its final SHA-256 is published. See `docs/WINDOWS_PACKAGING.md`.
+The hosted/development path uses the `unsigned` label. A final public candidate must be packaged from the final signed binaries and must pass `./tool/verify_windows_portable.ps1 -ArchivePath '<final-portable-zip>' -RequireSignature` plus the bounded package startup smoke before its final SHA-256 is published. See `docs/WINDOWS_PACKAGING.md`.
 
 ## Build a Linux Debian package
 
@@ -167,11 +175,14 @@ Native recording uses platform encoders through `record`. Formats requiring tran
 - `docs/BATCH_CONVERSION.md` — conversion ordering, failure isolation, stop behavior, and external-copy rules.
 - `docs/LOCALIZATION_POLICY.md` — user-facing translation versus raw technical diagnostic policy.
 - `docs/BRANDING.md` — deterministic native icon/splash generation.
+- `docs/ANDROID_DISTRIBUTION_POLICY.md` — Google Play, Play App Signing, upload-key, and Android candidate-signing boundary.
+- `docs/APPLE_DISTRIBUTION_POLICY.md` — TestFlight/App Store and macOS signed/notarized distribution boundary.
 - `docs/LINUX_PACKAGING.md` — Debian package construction and verification.
 - `docs/LINUX_DISTRIBUTION_POLICY.md` — initial GitHub Releases `.deb` distribution/signing boundary.
-- `docs/WINDOWS_PACKAGING.md` — initial Windows portable ZIP package/channel and verification contract.
+- `docs/WINDOWS_PACKAGING.md` — initial Windows portable ZIP package/channel, structural verification, and bounded startup-smoke contract.
 - `docs/WINDOWS_SIGNING_POLICY.md` — stable public Windows Authenticode policy and private-credential boundary.
 - `docs/STORE_LISTING.md` — source-controlled listing copy and privacy-declaration draft for distribution review.
+- `docs/UNSIGNED_ARTIFACTS.md` — platform-specific non-production candidate-artifact classification and boundaries.
 - `docs/QA_CHECKLIST.md` — hardware and stable-release evidence checklist.
 - `docs/RELEASING.md` — release procedure.
 - `RELEASE_NOTES.md` — development-preview release notes.
