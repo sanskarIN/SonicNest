@@ -142,7 +142,7 @@ Pinned entries can be prioritized in non-Trash sorting behavior, so visible orde
 
 ## 11. A file cannot be restored from Trash under its original name
 
-If another managed file already uses the original destination name, SonicNest allocates a non-colliding restored filename instead of overwriting the existing file.
+If another filesystem entity already uses the original destination name, SonicNest allocates a non-colliding restored filename instead of overwriting the existing path.
 
 This is expected safety behavior.
 
@@ -171,7 +171,7 @@ Deterministic unit tests cover copy/probe/waveform failure cleanup, but real mal
 
 ## 13. Export destination already contains the same filename
 
-SonicNest direct directory-copy behavior is collision-safe. Existing files are not intentionally overwritten; the next numbered filename is selected instead.
+SonicNest direct directory-copy behavior is collision-safe. Any existing filesystem entity at the candidate name—including an ordinary file, directory, symbolic link, or broken symbolic link—is treated as occupied rather than intentionally overwritten or followed. The next numbered filename is selected instead. A destination path that cannot be inspected safely is also treated as occupied.
 
 Example:
 
@@ -181,7 +181,7 @@ voice (2).wav
 voice (3).wav
 ```
 
-If an external path disappears or permission is revoked between selection and copy, the failing item should be reported independently from other successful copies.
+If an external path disappears or permission is revoked between selection and copy, the failing item should be reported independently from other successful copies. Real user-folder permission and destination-loss behavior remains a platform QA gate.
 
 ## 14. Batch conversion partially succeeds
 
@@ -203,13 +203,15 @@ For a reproducible failure, record:
 - available storage;
 - exact error.
 
+See `docs/BATCH_CONVERSION.md` for the deterministic execution contract.
+
 ## 15. Stop after current file seems delayed
 
 This control is designed to finish the current conversion safely. It does not intentionally terminate an output write mid-file.
 
-The stop takes effect before starting the next selected item.
+The stop takes effect before starting the next selected item. Leaving Batch Convert during active processing raises the same stop-after-current request rather than intentionally starting another item after the current one finishes.
 
-If the current conversion itself is very long, the UI can remain busy until that file finishes or fails.
+If the current conversion itself is very long, processing can remain active until that file finishes or fails. Real long-file and navigation/lifecycle behavior remains a manual validation gate.
 
 ## 16. Editor operation fails
 
@@ -230,9 +232,11 @@ Actions:
 4. Test another known-good source.
 5. For DSP quality problems rather than processing errors, record listening observations; do not label a preset as universally broken based on one source without reproduction.
 
-## 17. Managed storage number looks stale
+## 17. Managed storage number looks stale or unexpected
 
-Storage totals are calculated from the managed recording/Trash/temporary areas when the Settings storage section loads/rebuilds.
+Storage totals are recalculated from the managed recording/Trash/temporary areas when the Settings storage section loads/rebuilds.
+
+Recording and Trash counts/bytes intentionally include only supported top-level regular managed audio. Unsupported regular files, arbitrary nested files, directories, and symbolic links are not counted as Library recordings merely because they are under `Recordings` or `.trash`. Temporary processing storage is measured separately because backend work products can legitimately use different extensions or nested structures.
 
 If the filesystem changed outside SonicNest, return to/reopen Settings to refresh the view. Temporary files may also disappear as processing cleanup completes.
 
@@ -304,10 +308,10 @@ The repository release-candidate workflow intentionally avoids maintainer produc
 - iOS no-codesign output is not an App Store installable package;
 - macOS output is not a public notarized package;
 - Windows output is not a finalized signed installer;
-- Linux now includes a structurally verified Debian `.deb`, but that does not make it approved for public distribution before real installation/audio/accessibility/visual QA and the final distribution/signing policy are complete;
+- Linux includes a structurally verified Debian `.deb`, and the initial public Linux channel is GitHub Releases with the verified `.deb` plus SHA-256 checksum. A hosted CI package still is not an approved stable release until the real installation/audio/accessibility/visual and other stable-release gates are complete;
 - Android output is not evidence that Play production signing/review gates are complete.
 
-See `docs/UNSIGNED_ARTIFACTS.md` and `docs/RELEASING.md`.
+See `docs/UNSIGNED_ARTIFACTS.md`, `docs/LINUX_DISTRIBUTION_POLICY.md`, and `docs/RELEASING.md`.
 
 ## 24. Debian package build cannot find a Linux bundle
 
@@ -391,7 +395,7 @@ Expected automatic behavior:
 - a corrupt backup is preserved for diagnosis rather than silently treated as valid data;
 - if neither the primary nor backup is usable, the corrupt documents are preserved and SonicNest writes a clean structurally valid empty metadata document;
 - after that reset, the same corrupt primary is not repeatedly copied on every launch;
-- startup then reconciles the surviving metadata against SonicNest-managed storage and attempts managed orphan recovery.
+- startup then reconciles the surviving metadata against supported regular audio in SonicNest-managed storage and attempts active/Trash orphan recovery.
 
 Do not manually delete all metadata/recovery files as a first troubleshooting step. That can destroy evidence and organizer metadata even when the underlying audio files still exist. Preserve privacy-sensitive local files securely, capture the exact build/OS and error, and use `docs/METADATA_INTEGRITY.md` to understand the expected recovery sequence.
 
@@ -399,14 +403,14 @@ Automatic metadata recovery cannot recreate audio bytes that were deleted or irr
 
 ## 29. A recording appears as Recovered after restart
 
-A recording tagged **Recovered** means SonicNest found a supported audio file in its own managed `Recordings` directory but did not find a matching metadata entry after startup reconciliation.
+A recording tagged **Recovered** means SonicNest found a supported regular audio file at the top level of its managed `Recordings` or `.trash` storage but did not find a matching metadata entry after startup reconciliation.
 
 This can happen when:
 
 - the audio file was successfully written but the process stopped before metadata persistence completed;
 - metadata persistence failed after a managed audio file already existed;
 - the metadata document was unrecoverable and had to be reset after diagnostic preservation;
-- a previous permanent-delete attempt removed metadata first but the managed file deletion did not complete.
+- a previous permanent-delete attempt persisted metadata removal but the managed Trash file deletion did not complete.
 
 Expected behavior:
 
@@ -416,27 +420,43 @@ Expected behavior:
 - filesystem modification time and size are reused;
 - duration and waveform are recovered on a best-effort basis;
 - unknown bitrate/sample-rate/channel information remains unknown instead of being invented;
-- if media probing fails, the file can still remain visible so it can be inspected, exported, or deleted intentionally.
+- an orphan from active `Recordings` remains active;
+- an orphan from `.trash` remains in Trash rather than being silently promoted to the active Library;
+- if media probing fails, the file can still remain represented so it can be inspected, exported/restored, or deleted intentionally;
+- unsupported files, nested arbitrary files, directories, and symbolic links are not automatically reconstructed as recordings.
 
-If the recovered file plays normally, you can rename/reorganize it like another library item. If it is damaged or unexpectedly appears repeatedly, preserve the file and diagnostic metadata privately and report the exact build/platform/reproduction conditions. Real partially written and damaged-media recovery remains a physical/filesystem QA gate.
+If the recovered file plays normally, you can rename/reorganize an active recovered item like another Library item, or restore a recovered Trash item when intended. If it is damaged or unexpectedly appears repeatedly, preserve the file and diagnostic metadata privately and report the exact build/platform/reproduction conditions. Real partially written and damaged-media recovery remains a physical/filesystem QA gate.
 
 ## 30. A metadata item disappears after restart
 
-Startup intentionally removes metadata entries that are unsafe or stale when the referenced audio path is outside SonicNest-managed recording/Trash storage or the referenced managed file no longer exists.
+Startup intentionally removes metadata entries that are unsafe or stale when the referenced path is outside SonicNest-managed recording/Trash storage, uses an unsupported recording extension, no longer exists, or resolves to a symbolic link/non-regular filesystem entry.
 
 This prevents a tampered or obsolete metadata path from being trusted as an instruction for later rename/Trash/restore/delete operations.
 
 If an item disappears unexpectedly:
 
 1. Determine whether its underlying file was manually moved, renamed, or deleted outside SonicNest.
-2. Confirm whether the file is still inside the app's managed `Recordings` or `.trash` directory.
+2. Confirm whether the file is still a supported regular file inside the app's managed `Recordings` or `.trash` directory.
 3. Preserve metadata diagnostics and logs before making more filesystem changes.
-4. If a supported file still exists at the top level of managed `Recordings`, restart recovery should reconstruct a missing metadata entry.
+4. If a supported regular file still exists at the top level of managed `Recordings` or `.trash`, restart recovery should reconstruct a missing metadata entry in the matching active/Trash state.
 5. If the file exists only outside managed storage, do not manually rewrite metadata to point at it; import the file through SonicNest instead.
 
 The managed-path boundary is a data-safety guard, not a general-purpose filesystem sandbox.
 
-## 31. GitHub Actions build passes but the app fails on hardware
+## 31. A managed path is a symbolic link or non-audio file
+
+SonicNest does not treat path text alone as recording authority. A symbolic link placed under `Recordings`/`.trash`, a directory named with an audio extension, or an unsupported regular file such as `notes.txt` is not valid managed recording audio.
+
+Expected behavior:
+
+- startup does not keep such a path as a normal recording entry;
+- orphan recovery does not follow/index the symbolic link or arbitrary non-audio file;
+- rename, duplicate, move-to-Trash, restore, and permanent-delete guards refuse paths that do not satisfy the managed-audio contract;
+- filename allocation treats an existing directory/link/broken link as occupied and chooses a different numbered path.
+
+Do not bypass these checks by manually editing metadata. See `docs/MANAGED_STORAGE_BOUNDARY.md`.
+
+## 32. GitHub Actions build passes but the app fails on hardware
 
 Compilation is necessary but not sufficient for a recorder.
 
@@ -454,7 +474,7 @@ Create a **Device / Release QA report** using the repository issue form and incl
 
 Do not upload tokens, signing credentials, private certificates, personal recordings, device serial numbers, or other sensitive information.
 
-## 32. Before reporting a bug
+## 33. Before reporting a bug
 
 Check:
 
