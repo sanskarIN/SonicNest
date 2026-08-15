@@ -59,7 +59,13 @@ These generic checkboxes are intended to be executed again for the exact release
 - [x] Recorder-service construction no longer eagerly instantiates the native recorder method channel; the backend is created only when recorder functionality is actually used.
 - [x] Core Flutter CI run `31870224720` validated source/test revision `e47b290a7255f126cfcf1436444a90cc32d10823`: analyzer **SUCCESS**, complete **87/87** unit suite **SUCCESS**, Android debug build **SUCCESS**, and Linux debug build **SUCCESS**.
 - [x] Windows run `31870087266`, Apple run `31870087249`, and Linux Package CI run `31870087317` are **SUCCESS** on application-code revision `72797fa477b9d88e2138b7ddf1d0f845cdd549ca`, which contains the final application code changes; `e47b290...` is a later test-only correction.
-- [ ] Checked-in Dart formatting is not yet clean under the CI Flutter/Dart toolchain: core run `31870224720` formatted 30 of 54 Dart files before analysis/tests. This repository-hygiene gap is tracked in `TODO.md` and must not be represented as formatter-clean release evidence.
+- [x] Historical formatter drift exposed by core run `31870224720` is closed: canonical formatter output is committed in `22c1d46e077625d6e1964d56716700727d1800dc`, core CI uses a non-mutating `--set-exit-if-changed` gate from `704b0f60aae8f179f4f41875c336d2052b45391e`, and formatter-clean run `31870933447` passed formatting, analysis, the full unit suite, Android debug, and Linux debug on source revision `4e0fbf16534a60e2d3209c5ec5f54d4982903f8c`.
+
+- [x] Formatter-clean Windows run `31870933908` succeeded on source revision `4e0fbf16534a60e2d3209c5ec5f54d4982903f8c`.
+- [x] Formatter-clean Apple run `31870933903` succeeded for macOS debug and unsigned-iOS debug on source revision `4e0fbf16534a60e2d3209c5ec5f54d4982903f8c`.
+- [x] Formatter-clean Linux Package CI run `31870933982` succeeded on source revision `4e0fbf16534a60e2d3209c5ec5f54d4982903f8c`, including release bundle, `.deb` build/verification, install, installed-app smoke, uninstall, and artifact publication.
+- [x] Source-controlled cross-platform listing/privacy draft exists at `docs/STORE_LISTING.md`; final store-console answers still require exact-candidate and then-current platform-policy review.
+- [x] Windows public signing policy is decided in `docs/WINDOWS_SIGNING_POLICY.md`; actual Authenticode credential/service provisioning remains maintainer-owned release work.
 
 The automated entries above do **not** complete the unchecked real malformed-media corpus, real partially written orphan media, low-storage, permission-failure, abrupt process/power interruption, large-library UI/performance, accessibility, or physical-device gates later in this checklist.
 
