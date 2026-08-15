@@ -1789,3 +1789,53 @@ Do not convert those unchecked gates to completed status from hosted unit/build 
 ### Exact continuation point
 
 Do not reimplement the managed-path boundary, active/Trash orphan reconstruction, entity-aware collision rules, batch execution service, lazy recorder construction, Linux GitHub Releases policy, or diagnostic localization policy in the next continuation. The next repository-only task is the formatter-cleanup/enforcement item in `TODO.md`. After that, remaining work is primarily real-system evidence and maintainer-owned signing/release work unless a new reproducible repository defect is found.
+
+
+## 2026-08-15 — Canonical formatting, distribution copy, Windows signing policy, and final automated validation
+
+This additive section supersedes the earlier temporary formatter-hygiene warning while preserving the full history above.
+
+### Canonical Dart formatting is closed
+
+- `22c1d46e077625d6e1964d56716700727d1800dc` — `style: commit canonical Dart formatting`; the stable Flutter/Dart formatter output for `lib`, `test`, and `tool/generate_brand_assets_v2.dart` is now tracked.
+- `704b0f60aae8f179f4f41875c336d2052b45391e` — `ci: enforce Dart formatting without mutating source`; core CI now runs `dart format --output=none --set-exit-if-changed ...` and fails on drift instead of silently rewriting validation checkout source.
+- `6d379e23edce9eb0f09d65412426b678c01e900f` — formatter-hygiene TODOs closed.
+- The temporary format helper self-removed; no write-enabled formatter helper remains in the final repository.
+
+### Formatter-clean source revision and exact automated evidence
+
+Formatter-clean source revision: `4e0fbf16534a60e2d3209c5ec5f54d4982903f8c`. The final application changes from this continuation are included before this revision; later commits described below are documentation/policy only.
+
+- Core Flutter CI run `31870933447`: non-mutating Dart format check **SUCCESS**, static analysis **SUCCESS**, full unit suite **SUCCESS**, Android debug build **SUCCESS**, Linux debug build **SUCCESS**.
+- Windows run `31870933908`: Windows debug build **SUCCESS**.
+- Apple run `31870933903`: macOS debug build **SUCCESS** and unsigned-iOS debug build **SUCCESS**.
+- Linux Package CI run `31870933982`: Linux release bundle **SUCCESS**, Debian package build/verify **SUCCESS**, install **SUCCESS**, installed-app smoke **SUCCESS**, uninstall **SUCCESS**, artifact upload **SUCCESS**.
+- This closes the earlier repository-only formatting drift. No formatter-cleanliness limitation remains open in `TODO.md`.
+
+### Store/distribution listing and privacy copy
+
+- `a4c3068c5fb07a9d4f801ce9227188c58ea87950` — added `docs/STORE_LISTING.md` with source-controlled short/long descriptions, feature bullets, privacy statements, microphone/files/local-data/share declarations, Android/Apple/macOS/Windows/Linux distribution drafts, screenshot/privacy rules, and submission review checklist.
+- `40621aeb847ae5c21e9d9b825cd761947aac2a58` — marked the repository-side listing/privacy draft complete while retaining exact-candidate store-console review as release work.
+- `cd1a9b926c416a40101cca6f96993b1f24d71c28` and `ebf887c2b046429a864efd41678e8a39ed3eccb4` — release guide/README aligned with non-mutating formatting and listing review.
+
+### Windows public signing policy
+
+- `02af50f6ba7d59d2cc08838f9e5c230b0d096524` — added `docs/WINDOWS_SIGNING_POLICY.md`. Stable public Windows distributables should be Authenticode-signed with a maintainer-controlled identity.
+- `43556d9b313754812510cab9d97aaab361172086` — split the completed policy decision from the still-open private certificate/signing-service and final installer/package configuration work.
+- `6ac8b079c3ec002df87f3b001d22ab1cf48da359` — release guide aligned with that policy.
+- No signing private key, password, certificate bundle, or provider credential is committed.
+
+### Final state synchronization commits
+
+- `286ed75c1ec0f816a5ec983d6ec3781b244c0ce9` — `docs: record formatter-clean cross-platform QA evidence`.
+- `b32d96379ed2abcac207576818999a59d8a92ec8` — `docs: record formatter-clean release hardening changes`.
+- `77103bdba4f9bd1da1b9571f61eb08739d04afe5` — `docs: add formatter-clean development preview validation note`.
+- `fd4a21578724c6b822f421eda890941a80da4b8d` — `docs: set formatter-clean final automated project state`.
+- `c803d077b2aaeb95f7995470ab886b9429728853` — `docs: link Windows signing policy from README`.
+- this `what_changed.md` append commit follows those records.
+
+### Remaining boundary
+
+Repository-only implementation/policy work identified in this continuation is complete. Remaining unchecked items are intentionally evidence/credential dependent: physical microphone permissions/routing, interruptions/background/lock-screen behavior, low-storage and real permission/process/power-loss recovery, real partially written/damaged media, long-duration and large-library/batch profiling, accessibility audits, real branding/screenshots, representative Linux installation/audio/upgrade/desktop review, Android/Apple private signing, Windows Authenticode credential/service and final installer integration, signed candidate production, release checklist completion, and final `v1.0.0` approval.
+
+Do not mark those items complete from hosted CI alone.
