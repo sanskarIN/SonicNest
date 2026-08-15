@@ -149,3 +149,14 @@ The project also now has explicit policy decisions for future localization and L
 Validation evidence: core run `31870224720` is green on revision `e47b290a7255f126cfcf1436444a90cc32d10823` for static analysis, all 87 unit tests, Android debug, and Linux debug. Windows run `31870087266`, Apple run `31870087249`, and Linux Package CI run `31870087317` are green on application-code revision `72797fa477b9d88e2138b7ddf1d0f845cdd549ca`; the later `e47b290...` change corrects only a persistence test fixture.
 
 One repository-hygiene item remains explicit: the core job currently formats 30 of 54 checked-in Dart files before analysis/tests. Behavior validation is green on the formatted checkout, but the tracked tree is not yet claimed formatter-clean. Physical-device, filesystem-failure, accessibility, long-duration, representative-package, signing, and stable-release evidence remains intentionally incomplete.
+
+
+## 2026-08-15 — Formatter-clean source and distribution policy completion
+
+The earlier formatting-hygiene warning is now resolved. Canonical stable-toolchain Dart formatter output was committed in `22c1d46e077625d6e1964d56716700727d1800dc`, and core CI was changed in `704b0f60aae8f179f4f41875c336d2052b45391e` to verify formatting without rewriting the checkout.
+
+Formatter-clean source revision `4e0fbf16534a60e2d3209c5ec5f54d4982903f8c` passed the complete maintained automated matrix used in this continuation: core run `31870933447` passed the non-mutating format gate, static analysis, full unit suite, Android debug, and Linux debug; Windows run `31870933908` passed; Apple run `31870933903` passed macOS debug and unsigned-iOS debug; Linux Package CI run `31870933982` passed release-bundle creation, Debian package build/verification, installation, installed-app smoke, uninstall, and artifact publication.
+
+The repository also now contains `docs/STORE_LISTING.md` with cross-platform listing/privacy copy and `docs/WINDOWS_SIGNING_POLICY.md` defining Authenticode signing as the policy for stable public Windows distributables. Actual store-console submission, private signing credentials, final installer/package integration, and signed release candidates remain maintainer/release-candidate work.
+
+This does not change the release classification: SonicNest remains a development preview until the unchecked physical-device, real-filesystem, accessibility, long-duration/performance, visual-branding, representative-package, signing/notarization, and final stable-release gates are completed with evidence.
