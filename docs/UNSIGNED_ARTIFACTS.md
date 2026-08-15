@@ -1,8 +1,8 @@
-# Unsigned Release-Candidate Artifacts
+# Non-Production Release-Candidate Artifacts
 
 SonicNest includes `.github/workflows/release-candidate.yml` to exercise release-mode compilation and packaging without storing or using maintainer production signing credentials.
 
-These artifacts are **validation outputs**, not public/store-ready releases.
+These artifacts are **validation outputs**, not public/store-ready releases. Their signing state is platform-specific: Android hosted candidates are intentionally verified as Android Debug-certificate/non-production artifacts, Windows and macOS candidate archives are not production-signed, and iOS is built with `--no-codesign`.
 
 ## Why this workflow exists
 
@@ -30,10 +30,15 @@ Equivalent local commands are available in:
 
 - release-mode APK;
 - release-mode Android App Bundle;
+- explicit package/application identity validation;
+- APK/AAB signing-state inspection through `tool/verify_android_nonproduction_candidate.sh`;
+- `ANDROID_SIGNING_STATE.txt` containing non-secret certificate/digest evidence;
 - SHA-256 checksums;
 - explicit release-candidate warning text.
 
-The repository does not provide maintainer production signing credentials. A release-mode artifact produced by this workflow must not be uploaded as a public production build merely because it compiled.
+The generated hosted release APK/AAB are expected to use the generated **Android Debug** certificate and are therefore classified as **NON-PRODUCTION**, not “unsigned.” The verifier requires package ID `io.github.sanskarin.sonic_nest`, label `SonicNest`, valid archive/signature structure, and the expected debug certificate before the candidate is uploaded as workflow evidence.
+
+The repository does not provide the maintainer's Play upload key or Play App Signing private key. A hosted release-mode artifact must not be uploaded or described as a public Google Play production build merely because it compiled or has a debug certificate signature. See `docs/ANDROID_DISTRIBUTION_POLICY.md`.
 
 ### Linux
 
@@ -50,27 +55,28 @@ Debian `.deb` is the initial repository-supported Linux package target. Real-mac
 - release-mode Flutter Windows runner bundle packaged as the repository-selected versioned x64 portable ZIP through `tool/build_windows_portable.ps1`;
 - complete bundle checks for `sonic_nest.exe`, `flutter_windows.dll`, ICU data, and Flutter assets;
 - isolated ZIP extraction and package-layout verification through `tool/verify_windows_portable.ps1`;
+- bounded extracted-package startup smoke through `tool/smoke_test_windows_portable.ps1`;
 - common private/signing-material rejection inside the validation archive;
 - SHA-256 checksum and package-info record;
 - explicit unsigned/non-publication warning.
 
-The portable ZIP package format and initial GitHub Releases channel are repository decisions, not pending package choices. What remains open is the maintainer-owned Authenticode credential/protected-signing process and real-system Windows evidence. A final stable public ZIP must contain the final signed binaries, pass `tool/verify_windows_portable.ps1 -RequireSignature`, and use a SHA-256 generated after signing/package bytes are final. The unsigned CI ZIP must never be relabeled as signed or stable.
+The portable ZIP package format and initial GitHub Releases channel are repository decisions, not pending package choices. What remains open is the maintainer-owned Authenticode credential/protected-signing process and real-system Windows evidence. A final stable public ZIP must contain the final signed binaries, pass `tool/verify_windows_portable.ps1 -RequireSignature`, pass the bounded package startup smoke, and use a SHA-256 generated after signing/package bytes are final. The hosted unsigned ZIP must never be relabeled as signed or stable.
 
 ### macOS
 
 - release-mode `.app` bundle archived as ZIP;
 - SHA-256 checksum;
-- explicit unsigned/not-notarized warning.
+- explicit non-public signing/notarization warning.
 
-Public distribution still requires the maintainer's Apple signing and notarization process plus real-hardware QA.
+Public distribution still requires the maintainer's Apple Developer ID signing and notarization process plus real-hardware QA. See `docs/APPLE_DISTRIBUTION_POLICY.md`.
 
 ### iOS
 
 - release-mode application bundle built with `--no-codesign` and archived for validation;
 - SHA-256 checksum;
-- explicit warning that it is not an installable App Store package.
+- explicit warning that it is not an installable App Store/TestFlight package.
 
-An App Store/TestFlight candidate requires provisioning, signing, real-device testing, store metadata, privacy declarations, and the normal Apple distribution pipeline.
+An App Store/TestFlight candidate requires provisioning, signing, real-device testing, store metadata, privacy declarations, and the protected Apple distribution pipeline. See `docs/APPLE_DISTRIBUTION_POLICY.md`.
 
 ## Artifact retention
 
@@ -104,11 +110,11 @@ Get-FileHash -Algorithm SHA256 <artifact-file>
 
 Compare the result with the checksum recorded alongside the artifact.
 
-The Debian package builder also writes `<package>.deb.sha256` beside its direct build output under `build/linux-package/`; the package verifier compares that digest against the actual `.deb` bytes. The Windows portable builder writes the exact archive digest to `SHA256SUMS.txt`, and the Windows verifier checks that digest when the checksum file is present beside the archive.
+The Debian package builder also writes `<package>.deb.sha256` beside its direct build output under `build/linux-package/`; the package verifier compares that digest against the actual `.deb` bytes. The Windows portable builder writes the exact archive digest to `SHA256SUMS.txt`, and the Windows verifier checks that digest when the checksum file is present beside the archive. Android candidate verification writes the exact APK/AAB SHA-256 values into `ANDROID_SIGNING_STATE.txt` in addition to the candidate `SHA256SUMS.txt`.
 
 ## What successful automation does not prove
 
-A successful unsigned release-candidate workflow does not complete any of these gates:
+A successful non-production release-candidate workflow does not complete any of these gates:
 
 - microphone hardware behavior;
 - background/interruption/routing behavior;
@@ -119,8 +125,10 @@ A successful unsigned release-candidate workflow does not complete any of these 
 - Linux `.deb` install/upgrade/uninstall quality on representative real systems;
 - Windows portable extraction/launch/microphone/routing/accessibility/branding quality on representative real systems;
 - Windows Authenticode production signing;
-- Android/Apple production signing or Apple notarization;
+- Android Play upload-key/Play App Signing production identity;
+- iOS App Store/TestFlight signing/provisioning;
+- macOS Developer ID signing/notarization;
 - store privacy/listing review;
 - public distribution approval.
 
-Those remain governed by `docs/QA_CHECKLIST.md`, `docs/RELEASING.md`, `docs/WINDOWS_PACKAGING.md`, `docs/WINDOWS_SIGNING_POLICY.md`, and a completed copy of `docs/RELEASE_EVIDENCE_TEMPLATE.md`.
+Those remain governed by `docs/QA_CHECKLIST.md`, `docs/RELEASING.md`, the platform distribution/signing policies, and a completed copy of `docs/RELEASE_EVIDENCE_TEMPLATE.md`.
