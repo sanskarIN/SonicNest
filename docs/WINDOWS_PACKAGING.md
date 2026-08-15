@@ -4,6 +4,8 @@
 
 The initial repository-supported Windows distribution artifact is a **versioned x64 portable ZIP** containing the complete Flutter Windows release bundle.
 
+The initial public Windows distribution channel is **GitHub Releases**. A stable Windows release should attach the final Authenticode-verified portable ZIP and its SHA-256 checksum from the exact tagged source revision. The repository does not currently claim a Microsoft Store, MSIX, MSI, or installer channel.
+
 This decision keeps packaging reproducible and reviewable without introducing installer-specific registry, elevation, auto-update, or machine-wide mutation behavior before those behaviors have been selected and tested. A future installer or Microsoft Store package can be added as a separate channel without changing the portable package contract.
 
 The portable package decision does **not** weaken the signing policy. Public stable Windows artifacts remain subject to `docs/WINDOWS_SIGNING_POLICY.md`: the final public executable/package must use the maintainer-controlled Authenticode process selected for release. Hosted CI artifacts are unsigned validation outputs unless a protected signing environment is explicitly configured later.
@@ -68,7 +70,7 @@ The portable channel does not create Start-menu shortcuts, registry entries, fil
 
 Before a Windows portable ZIP can be called a stable public release:
 
-1. freeze the exact source revision;
+1. freeze the exact source revision and tag;
 2. build the release bundle from that revision;
 3. apply the maintainer-selected Authenticode process to the binaries that require signing;
 4. package the signed bytes;
@@ -76,7 +78,8 @@ Before a Windows portable ZIP can be called a stable public release:
 6. regenerate and publish the checksum **after** signing/package bytes are final;
 7. test extraction, launch, microphone capture/routing, playback, export, accessibility, branding, and cleanup on representative Windows systems;
 8. record the tested Windows versions/architectures and signature identity in release evidence;
-9. do not reuse an unsigned validation checksum for a signed artifact.
+9. attach only that verified ZIP and matching checksum to the corresponding GitHub Release;
+10. do not reuse an unsigned validation checksum for a signed artifact.
 
 ## Future installer/store channels
 
