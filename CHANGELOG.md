@@ -5,6 +5,11 @@ All notable project changes are documented here.
 ## [Unreleased]
 
 ### Added
+- `BatchConversionService` as the production sequential batch execution boundary with deterministic per-file conversion/export failure isolation and stop-after-current behavior.
+- Supported-regular-audio and symbolic-link/non-file regression coverage for managed storage, startup reconciliation, storage accounting, and external copy destinations.
+- `docs/LOCALIZATION_POLICY.md` defining localized product text versus intentionally raw technical diagnostic evidence.
+- `docs/LINUX_DISTRIBUTION_POLICY.md` selecting GitHub Releases with verified Debian `.deb` plus SHA-256 checksum as the initial public Linux channel, without an initial custom APT repository.
+- End-to-end controller startup reconciliation tests covering unsafe metadata removal plus active and Trash orphan reconstruction.
 - Cross-platform Flutter application foundation.
 - Recorder, library, player, editor, settings, About/support, and local metadata architecture.
 - Native and transcoded audio-format pipeline.
@@ -46,6 +51,13 @@ All notable project changes are documented here.
 - Expanded manual QA matrix covering recorder lifecycle, codec fallback, smart naming, A-B looping, storage, editor processing, accessibility, localization readiness, stress testing, packaging, and signing/release boundaries.
 
 ### Changed
+- Managed audio authority now requires a supported extension and a regular file inspected without following symbolic links; path text inside `Recordings`/`.trash` alone is insufficient.
+- Recording/Trash storage totals and automatic recording sequence counting now use the same supported top-level regular-audio definition as recovery.
+- External export collision detection now treats files, directories, symbolic links, broken links, and uninspectable destination paths as occupied.
+- Batch Convert now delegates its production loop to the tested `BatchConversionService`; leaving the screen raises the same stop-after-current request instead of intentionally starting another item.
+- `RecorderService` now lazily constructs `AudioRecorder`, eliminating constructor-time native method-channel side effects while preserving production recorder behavior when used.
+- Linux distribution policy is now decided: GitHub Releases is the initial `.deb` channel; maintainer signing credentials remain outside the repository.
+- Backend diagnostic localization policy is now decided: user-facing summaries are localized while raw OS/plugin/FFmpeg/filesystem details remain technical evidence.
 - Platform organization/namespace standardized on `io.github.sanskarin`.
 - File picker pinned to the Android-compatible `10.3.10` release and accessed through its platform API.
 - Recorder cleanup and library file/metadata mutations hardened to reduce orphaned-file and inconsistent-metadata states.
@@ -68,6 +80,10 @@ All notable project changes are documented here.
 - Startup reconciliation now accepts only existing files inside SonicNest-managed recording/Trash storage before orphan recovery reconstructs missing managed recording entries.
 
 ### Fixed
+- Controller recovery tests no longer instantiate the native recorder backend merely by constructing/disposal of a recorder service.
+- The stopped-recording metadata-persistence rollback test now creates its completed file after startup so it tests stop-time failure rather than being correctly consumed by startup orphan recovery.
+- Generated batch-output cleanup now checks managed-audio authority before deletion, preventing cleanup from deleting an external caller path.
+- External-copy filename allocation no longer selects a basename occupied by a directory or broken symbolic link.
 - Android namespace generation that previously used the reserved/invalid `in` prefix.
 - Android file-picker plugin registration/build incompatibility encountered with the prior dependency selection.
 - File-picker API mismatches across supported dependency versions.
@@ -95,6 +111,9 @@ All notable project changes are documented here.
 - Obsolete temporary/one-shot write-enabled continuation workflows were removed from `main`.
 
 ### Validation
+- Core Flutter CI run `31870224720` is fully green on source/test revision `e47b290a7255f126cfcf1436444a90cc32d10823`: static analysis, all 87 unit tests, Android debug APK, and Linux debug build succeeded.
+- Windows run `31870087266`, Apple run `31870087249`, and Linux Package CI run `31870087317` are green on application-code revision `72797fa477b9d88e2138b7ddf1d0f845cdd549ca`, covering Windows debug, macOS debug, unsigned-iOS debug, and the verified Debian package path.
+- CI currently formats 30 of 54 checked-in Dart files before analysis/tests; this is tracked as an unresolved repository-hygiene item and is not claimed as formatter-clean source evidence.
 - Source revision `985f2dd1500a03b0b65ee58b142cf31f545b0cc5` is green in core Flutter CI run `31772136038`: formatting, analyzer, unit tests, Android debug APK, and Linux debug build all succeeded.
 - The same source revision is green in Windows run `31772135970` and Apple run `31772136081` for Windows debug, macOS debug, and unsigned iOS debug builds.
 - Native branding source revision `40c4a758debef136c2d8c977c321446cca2697cd` is green in core run `31776174696`, Windows run `31776174725`, and Apple run `31776174715`; deterministic branding generation, analyzer/tests, Android/Linux/Windows/macOS debug builds, and unsigned iOS debug build all succeeded.
