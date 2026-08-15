@@ -129,12 +129,12 @@ class _FakeStorageService extends StorageService {
 
 class _FakeAudioProcessor extends AudioProcessor {
   _FakeAudioProcessor(
-    StorageService storage, {
+    super.storage, {
     this.durations = const {},
     this.waveforms = const {},
     this.probeFailures = const {},
     this.waveformFailures = const {},
-  }) : super(storage);
+  });
 
   final Map<String, Duration> durations;
   final Map<String, List<double>> waveforms;
