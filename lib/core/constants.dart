@@ -1,3 +1,4 @@
+/// Shared application constants that do not carry mutable runtime state.
 class AppConstants {
   const AppConstants._();
 
