@@ -38,7 +38,18 @@ completed_features:
   - structural metadata corruption preservation with timestamped diagnostic copies
   - interrupted metadata replacement recovery from recordings.json.bak
   - corrupt-primary fallback to a valid metadata backup
+  - invalid unrecoverable metadata reset to a clean valid store after preserving diagnostics
+  - duplicate metadata ID and normalized file-path isolation
+  - negative and non-finite numeric metadata normalization
+  - finite bounded recovered waveform metadata normalization
+  - managed-path startup reconciliation for metadata entries
   - deterministic 3000-entry metadata filesystem save/load regression coverage
+  - managed storage mutation guards protecting external paths from rename duplicate Trash restore and permanent delete
+  - persistence rollback for single and batch metadata edits settings changes generated-output registration rename Trash and restore
+  - metadata-first permanent delete with restoration when managed file deletion fails
+  - supported top-level managed recording-file discovery for recovery
+  - orphaned managed audio metadata reconstruction at startup with best-effort media probing and waveform extraction
+  - deterministic orphan recovery tests across every represented recording format including damaged-media best-effort behavior
   - start countdown pause resume stop cancel recording lifecycle
   - cancellable 0 3 5 10 second recording countdown
   - recorder transition guards and failed-capture cleanup
@@ -49,7 +60,7 @@ completed_features:
   - smart filename templates with prefix suffix category date time sequence and component date-time tokens
   - optional screen-wake behavior during active recording with stop cancel error cleanup
   - live waveform amplitude sampling and clipping indication
-  - persisted waveform envelopes for recorded imported and processed audio
+  - persisted waveform envelopes for recorded imported processed and recovered audio
   - bookmarks during recording and bookmark playback seeking
   - searchable sortable filterable recording library
   - format folder exact-tag and date-range filters
@@ -98,8 +109,9 @@ partial_features:
   - Windows and Linux do not yet expose a dedicated SonicNest system-wide media-session integration beyond the selected desktop playback backend
   - desktop secondary-click opens the complete action surface but a cursor-anchored platform-native context menu can still be evaluated after usability testing
   - advanced filter and audio-processing defaults require listening tests before claiming mastering-grade behavior
-  - deterministic corrupt-import failure isolation is covered but representative malformed-media corpus testing remains manual
+  - deterministic corrupt-import and orphan-recovery failure isolation is covered but representative malformed and partially written real-media corpus testing remains manual
   - deterministic 3000-entry metadata persistence is covered but real large-library UI memory and performance profiling remains manual
+  - managed-path and rollback behavior is deterministically covered but real permission revocation low-storage abrupt-process and power-loss filesystem behavior remains manual
   - Debian package structure and hosted-runner install/startup/uninstall smoke are automated but representative-system microphone routing desktop rendering accessibility upgrade and signing/distribution policy remain manual release gates
 pending_manual_validation:
   - microphone permission accepted denied revoked and permanently denied behavior on devices
@@ -110,6 +122,8 @@ pending_manual_validation:
   - headphone Bluetooth reconnect and media-button behavior
   - low-storage failure and recovery
   - disk and file permission failure recovery on target systems
+  - abrupt process device and power interruption during metadata and managed-audio mutations followed by recovery verification
+  - recovered-orphan behavior with real playable partially written and damaged audio on each maintained platform
   - malformed audio imports across supported operating systems using representative corpus files
   - batch conversion and direct export quality large-batch destination-loss and low-storage behavior on representative real recordings
   - desktop secondary-click ergonomics on Windows macOS and Linux
@@ -121,29 +135,29 @@ pending_manual_validation:
   - real screenshots final native icon launch asset review and store metadata
   - store packaging signing certificates provisioning notarization and release credentials
 latest_automated_validation:
-  application_source_commit: a88aeadadda017b0aced4dbc25c8426a27364b77
+  application_source_commit: f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe
   core_flutter_ci:
-    run_id: 31807193932
-    source_commit: a88aeadadda017b0aced4dbc25c8426a27364b77
+    run_id: 31867130926
+    source_commit: f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe
     brand_generation: success
     analyzer: success
     unit_tests: success
     android_debug_apk: success
     linux_debug_build: success
   windows_ci:
-    run_id: 31807141053
-    source_commit: 3bf63e69186a7a538f7d0587f3d361e00c2e29e9
+    run_id: 31867130920
+    source_commit: f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe
     brand_generation: success
     windows_debug_build: success
   apple_ci:
-    run_id: 31807141166
-    source_commit: 3bf63e69186a7a538f7d0587f3d361e00c2e29e9
+    run_id: 31867130998
+    source_commit: f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe
     brand_generation: success
     macos_debug_build: success
     ios_debug_no_codesign: success
   linux_package_ci:
-    validated_source_commit: a07468b4b7c14a76b9bce537bbe0455e4539e6bf
-    run_id: 31785105648
+    validated_source_commit: f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe
+    run_id: 31867130938
     linux_release_build: success
     debian_package_build: success
     desktop_entry_validation: success
@@ -157,24 +171,25 @@ latest_automated_validation:
     uninstall_cleanup_verification: success
     artifact_upload: success
   repository_integrity_audit:
-    validated_source_commit: c7b9c41a8afcf83ff03ae5a014c9968f2f09c5e4
-    run_id: 31807662729
+    validated_source_commit: 704220ecf254c91967648380f6efdb18a856e6a3
+    run_id: 31867491653
     result: success
   validation_relationship:
-    - core Flutter CI run 31807193932 validates metadata recovery and import-service tests through revision a88aeadadda017b0aced4dbc25c8426a27364b77 including Android and Linux debug builds
-    - Windows run 31807141053 and Apple run 31807141166 validate the cross-platform import-controller source revision 3bf63e69186a7a538f7d0587f3d361e00c2e29e9
-    - Linux package workflow validates package construction plus hosted-runner install startup smoke and uninstall behavior through revision a07468b4b7c14a76b9bce537bbe0455e4539e6bf
-    - repository audit run 31807662729 validates the cleaned permanent workflow set and workflow permission allowlist on current change records
-    - documentation-only synchronization commits after validated application source revisions do not trigger all application build workflows by design
+    - core Flutter CI run 31867130926 validates formatting analysis unit tests Android debug and Linux debug on the final recovery-hardening source revision f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe
+    - Windows run 31867130920 and Apple run 31867130998 validate Windows macOS and unsigned-iOS debug builds on the same final recovery-hardening source revision
+    - Linux Package CI run 31867130938 validates Linux release package construction verification install startup smoke uninstall and artifact upload on the same final recovery-hardening source revision
+    - repository audit run 31867491653 validates the permanent workflow allowlist and repository invariants after the full additive what_changed continuation was committed
+    - documentation-only synchronization commits after the validated application source revision do not trigger all application build workflows by design
 known_limitations:
   - codec availability and effective sample bitrate channel and DSP settings depend on OS device and runtime support
   - sharing silence-skip media-session input-device and screen-wake capabilities differ by platform backend
   - A-B loop is application-managed and requires real-device timing validation
   - generated platform hosts require the Flutter SDK and repository bootstrap tooling
   - batch conversion and direct export are sequential and non-destructive; very large batches require performance validation
-  - deterministic import failures use controlled test doubles and do not substitute for malformed real-media corpora on each platform
+  - deterministic import and orphan-recovery failures use controlled test doubles and do not substitute for malformed or partially written real-media corpora on each platform
   - deterministic 3000-entry metadata roundtrip proves persistence integrity rather than real UI latency memory pressure or filesystem performance
-  - metadata backup recovery does not recreate audio files deleted or damaged outside SonicNest and still requires low-storage abrupt-power and permission-failure evidence on real systems
+  - metadata and managed-storage rollback/recovery tests do not substitute for low-storage abrupt-power process-kill permission-revocation and filesystem-failure evidence on real systems
+  - metadata backup/orphan recovery cannot recreate audio bytes deleted or irreversibly damaged outside SonicNest
   - hosted-runner Linux package smoke proves install installed-payload startup-window and uninstall behavior only on the CI runner and does not prove representative real-system audio routing desktop integration accessibility upgrade or long-duration quality
   - automated compilation cannot substitute for microphone hardware interruption background lock-screen routing media-button accessibility storage-failure and long-duration QA
   - signed distributable packages require maintainer-owned signing material that must not be committed
@@ -185,9 +200,10 @@ commit_identity:
 next_exact_tasks:
   - execute docs/QA_CHECKLIST.md on representative Android iOS macOS Windows and Linux hardware
   - verify countdown screen-wake microphone routing interruption and media-session behavior on physical devices
+  - run abrupt process interruption permission failure and low-storage recovery scenarios against the managed metadata and orphan-recovery paths on representative systems
+  - run real playable partially written and damaged managed-audio orphan recovery scenarios on each maintained platform
   - run a privacy-safe malformed audio corpus through import on each maintained platform and record per-file results
   - profile thousands of Library entries in the real UI for latency memory and scrolling behavior rather than relying only on metadata serialization tests
-  - test low-storage abrupt-interruption and permission-failure metadata/filesystem recovery on representative systems
   - install the Debian package on representative Debian Ubuntu family systems and verify launcher icon microphone routing upgrade and uninstall behavior with release evidence
   - decide the public Linux distribution channel and any Debian repository/package signing policy
   - listen-test and tune advanced processing presets against representative recordings
@@ -272,4 +288,16 @@ next_exact_tasks:
 - Multi-file import now continues after isolated malformed/missing audio failures and reports partial success; a metadata persistence failure remains fail-fast and cleans the just-created unregistered managed file.
 - Repository Integrity Audit run `31807662729` on revision `c7b9c41a8afcf83ff03ae5a014c9968f2f09c5e4` passed after temporary/one-shot workflows were removed and the permanent workflow allowlist/read-only invariant was active.
 - Real malformed-media corpus testing, real large-library UI/memory profiling, low-storage/permission/power-loss recovery, and physical-device release QA remain evidence-dependent manual gates.
+- Release classification remains **development preview**.
+
+## Latest exact validation — managed storage and orphan recovery hardening
+
+- Application source revision: `f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe`.
+- Core Flutter CI run `31867130926`: formatting, static analysis, full unit-test suite, Android debug APK, and Linux debug build **SUCCESS**.
+- Windows CI run `31867130920`: Windows debug build **SUCCESS**.
+- Apple CI run `31867130998`: macOS debug build and unsigned-iOS debug build **SUCCESS**.
+- Linux Package CI run `31867130938`: Linux release build, Debian construction/verification, package-manager installation, installed-package startup smoke, package removal/cleanup, and artifact upload **SUCCESS**.
+- Repository Integrity Audit run `31867491653` on documentation revision `704220ecf254c91967648380f6efdb18a856e6a3`: **SUCCESS**.
+- New deterministic coverage includes managed-path mutation guards, protected external files, corrupt numeric/waveform normalization, corrupt-store reset, duplicate ID/path isolation, filesystem move rollback behavior, supported-file discovery, and orphan recovery across every represented format.
+- Real low-storage/permission/process-kill/power-loss scenarios, real damaged/partially written media recovery, large-library UI profiling, hardware audio routing, accessibility, signing, and public release approval remain evidence-dependent.
 - Release classification remains **development preview**.
