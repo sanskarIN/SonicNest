@@ -18,10 +18,12 @@ This file intentionally contains only work that is still incomplete, requires ph
 
 ## Reliability and stress validation
 
-Repository automation now provides a deterministic baseline for malformed metadata decoding, structural metadata corruption preservation, interrupted `.bak` recovery, a 3,000-entry metadata save/load round-trip, and isolated import copy/probe/waveform failures. The checks below intentionally remain incomplete because they require real filesystems, media corpora, devices, UI/performance profiling, or sustained workloads rather than synthetic regression coverage alone.
+Repository automation now provides deterministic baselines for malformed metadata decoding, non-finite/negative numeric normalization, bounded waveform recovery, duplicate ID/path isolation, structural metadata corruption preservation, interrupted `.bak` recovery, corrupt-store reset, a 3,000-entry metadata save/load round-trip, managed-path mutation guards, persistence rollback for library mutations, supported-file discovery, orphaned managed-audio reconstruction, and isolated import copy/probe/waveform failures. The checks below intentionally remain incomplete because they require real filesystems, media corpora, devices, UI/performance profiling, abrupt process/device interruption, or sustained workloads rather than synthetic regression coverage alone.
 
 - [ ] Low-storage recording and export failure tests.
 - [ ] Disk/file permission failure recovery tests.
+- [ ] Abrupt process/device interruption while metadata and managed audio are being updated, followed by recovery verification.
+- [ ] Verify recovered-orphan behavior with real playable, partially written, and damaged managed audio on every maintained platform.
 - [ ] Repeated start/stop stress test.
 - [ ] Repeated pause/resume stress test.
 - [ ] 30-minute recordings on representative platforms.
