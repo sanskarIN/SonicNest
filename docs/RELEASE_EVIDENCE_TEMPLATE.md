@@ -20,7 +20,8 @@ Use one copy of this template for each release candidate that is being considere
 - Android build workflow run:
 - Linux build workflow run:
 - Linux Debian package workflow run:
-- Windows build workflow run:
+- Windows debug/package workflow run:
+- Windows portable package verification result:
 - macOS build workflow run:
 - unsigned iOS build workflow run:
 - Repository integrity workflow run:
@@ -29,7 +30,8 @@ Use one copy of this template for each release candidate that is being considere
 - Linux raw-bundle artifact SHA-256:
 - Linux Debian `.deb` artifact SHA-256:
 - Linux package structural verification result:
-- Windows artifact SHA-256:
+- Windows portable artifact filename:
+- Windows portable artifact SHA-256:
 - macOS artifact SHA-256:
 - iOS validation artifact SHA-256:
 
@@ -213,11 +215,39 @@ Notes / evidence links:
 - iOS light/dark launch screen:
 - macOS Finder/Dock/Spotlight/app switcher:
 - Windows Explorer/taskbar/Start/shortcut:
+- Windows extracted portable-package icon surfaces:
 - Linux Debian desktop-entry icon:
 - Linux launcher/menu/task-switcher icon behavior:
 - Real screenshots captured from this exact candidate:
 
 Screenshot/evidence links:
+
+## Windows portable package evidence
+
+Record this separately from hosted build/package CI. A CI-created portable archive is not considered real-system validated until these observations exist on representative Windows systems.
+
+- Windows edition/version/build:
+- System architecture:
+- Exact portable ZIP filename:
+- SHA-256 matches candidate evidence:
+- `tool/verify_windows_portable.ps1` result:
+- Archive extracted completely before launch: Yes / No
+- `sonic_nest.exe` launch result:
+- Microphone permission/capture result:
+- Built-in/USB/Bluetooth routing result where available:
+- Playback/import/export result:
+- Batch conversion/export result:
+- Managed metadata/orphan recovery controlled test result:
+- Explorer/taskbar/Start/search branding result:
+- Narrator/keyboard accessibility result:
+- Portable folder removal/cleanup result after closing SonicNest:
+- Confirm no installer/registry/shortcut behavior was claimed by the portable channel:
+- Authenticode verification required for this candidate: Yes / No
+- `tool/verify_windows_portable.ps1 -RequireSignature` result, if required:
+- Signer certificate subject/issuer or secure signing identity metadata, if applicable:
+- Signing timestamp result, if applicable:
+
+Notes / evidence links:
 
 ## Linux Debian installation evidence
 
@@ -277,6 +307,7 @@ Leave blank until performed in the maintainer's secure environment.
 - Apple signing identity/team:
 - iOS provisioning result:
 - macOS notarization result:
+- Windows portable package Authenticode verification:
 - Windows signing identity/result:
 - Linux public distribution channel:
 - Linux package/repository signing identity/result:
