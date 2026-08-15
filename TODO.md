@@ -78,7 +78,8 @@ Repository automation now provides deterministic baselines for malformed metadat
 
 - [ ] Configure private Android upload/release signing outside the repository.
 - [ ] Configure Apple certificates/provisioning/notarization outside the repository.
-- [ ] Decide and configure Windows signing for public distribution.
+- [x] Decide Windows public signing policy: stable public Windows distributables should use maintainer-controlled Authenticode signing; unsigned CI/development artifacts remain clearly labeled. See `docs/WINDOWS_SIGNING_POLICY.md`.
+- [ ] Provision/configure the actual Windows signing certificate or secure signing service and final installer/package integration outside the repository.
 - [x] Select Debian `.deb` as the initial repository-supported Linux package target.
 - [x] Decide the public Linux distribution channel and repository/package signing policy. Initial channel: GitHub Releases with verified `.deb` + SHA-256 checksum; no initial APT repository. See `docs/LINUX_DISTRIBUTION_POLICY.md`.
 - [ ] Produce signed release candidates where the selected distribution channel requires signing.
