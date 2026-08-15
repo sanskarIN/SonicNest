@@ -2,7 +2,7 @@
 
 ## v0.1.0 — Development Preview
 
-SonicNest is an offline-first cross-platform sound and voice recorder built with Flutter. This development preview establishes the recorder, recording library, playback, editing, native branding, Linux packaging, metadata recovery, resilient import, platform bootstrap, CI, privacy, and open-source foundations required for later stable releases.
+SonicNest is an offline-first cross-platform sound and voice recorder built with Flutter. This development preview establishes the recorder, recording library, playback, editing, native branding, Linux packaging, metadata recovery, managed-audio orphan reconstruction, resilient import, platform bootstrap, CI, privacy, and open-source foundations required for later stable releases.
 
 ### Recorder
 
@@ -27,7 +27,13 @@ SonicNest is an offline-first cross-platform sound and voice recorder built with
 - Import, duplicate, export copy, and system sharing.
 - Multi-file import validates selections independently and cleans copied managed files when copy/probe/waveform processing fails, allowing later valid selections to continue.
 - Recording metadata tolerates malformed optional fields and malformed individual records instead of allowing one damaged object to block Library startup.
-- Structurally corrupt metadata is preserved to timestamped diagnostic copies, and valid `.bak` metadata can recover an interrupted replacement or a corrupt primary.
+- Unsafe negative/non-finite numeric metadata is normalized, malformed waveform members are filtered, and recovered waveform samples are bounded.
+- Structurally corrupt metadata is preserved to timestamped diagnostic copies, valid `.bak` metadata can recover an interrupted replacement or a corrupt primary, and an unrecoverable store is reset to a clean valid document after diagnostics are preserved.
+- Duplicate recording IDs and duplicate normalized file paths are isolated after the first valid entry.
+- Startup reconciliation rejects metadata entries outside SonicNest-managed recording/Trash paths or entries referencing missing files.
+- Managed-storage mutation guards prevent rename, duplicate, Trash, restore, and permanent-delete operations from acting on unrelated external paths.
+- Startup orphan recovery reconstructs metadata for supported audio that still exists in the managed `Recordings` directory but is missing from the JSON index, including best-effort recovery for damaged/partial media when probing or waveform extraction fails.
+- Library mutation persistence is rollback-aware: metadata-only updates restore prior state on save failure, file moves are rolled back when their metadata update fails, and permanent deletion persists metadata first so an interruption prefers a recoverable orphan over irreversible data loss.
 - Multi-recording batch format conversion with target-format selection, progress, per-file failure isolation, retained source recordings, and successful-output registration in the managed library.
 - Direct multi-file original export to a user-selected folder without transcoding, with collision-safe destination naming and per-file failure isolation.
 - Desktop secondary/right-click access to recording actions while preserving touch and explicit menu interactions.
@@ -73,18 +79,21 @@ SonicNest is an offline-first cross-platform sound and voice recorder built with
 - GitHub Actions for analyzer/unit tests plus representative platform debug builds that apply native branding before Android, Windows, macOS, and iOS compilation.
 - Dedicated Linux package CI builds a release-mode Flutter bundle, creates and structurally verifies the Debian package, installs it through the package manager, verifies installed metadata/payload, smoke-starts the packaged GUI under a bounded virtual display, removes the package, verifies package-owned integration cleanup, and publishes a short-retention validation artifact.
 - Manual release-candidate automation includes the Linux `.deb` alongside the raw Linux bundle archive without treating either as public-release approval.
-- Metadata regression tests cover invalid JSON, invalid document structure, malformed-record isolation, interrupted backup recovery, corrupt-primary fallback, and a deterministic 3,000-entry filesystem round-trip.
+- Metadata regression tests cover invalid JSON, invalid document structure, malformed-record isolation, corrupt numeric/waveform normalization, duplicate ID/path isolation, interrupted backup recovery, corrupt-primary fallback, clean reset when no valid store remains, and a deterministic 3,000-entry filesystem round-trip.
+- Managed-storage tests cover protected external paths, collision-safe path allocation, and supported managed-file discovery.
+- Orphan-recovery tests cover known-entry deduplication, damaged-media best-effort reconstruction, and every represented recording format.
 - Import regression tests cover successful managed import plus cleanup after selected-source copy, media-probe, and waveform-extraction failures.
-- Repository integrity now rejects unapproved temporary/one-shot workflow files and rejects maintained permanent workflows that request `contents: write`.
+- Repository integrity rejects unapproved temporary/one-shot workflow files and rejects maintained permanent workflows that request `contents: write`.
 - Native-branding source revision `40c4a758debef136c2d8c977c321446cca2697cd` passed deterministic branding generation, analyzer/unit tests, Android and Linux core builds in run `31776174696`, Windows debug build in run `31776174725`, and macOS/unsigned-iOS debug builds in run `31776174715`.
 - Linux Debian package source revision `a07468b4b7c14a76b9bce537bbe0455e4539e6bf` passed release Linux compilation, Debian package construction, structural verification, desktop/AppStream validation, checksum verification, package inspection, package-manager installation, installed-payload validation, virtual-display startup smoke, package-manager removal, uninstall cleanup verification, and artifact upload in run `31785105648`.
 - Metadata/import reliability revision `a88aeadadda017b0aced4dbc25c8426a27364b77` passed formatting, analyzer, unit tests, Android debug APK, and Linux debug build in core run `31807193932`; the cross-platform controller revision `3bf63e69186a7a538f7d0587f3d361e00c2e29e9` also passed Windows run `31807141053` and Apple run `31807141166` for Windows, macOS, and unsigned-iOS debug builds.
-- Repository integrity run `31807662729` passed on revision `c7b9c41a8afcf83ff03ae5a014c9968f2f09c5e4` after the permanent workflow allowlist/read-only invariant and cleanup of obsolete one-shot workflows were active.
+- Managed-storage/orphan-recovery source revision `f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe` passed formatting, static analysis, the complete unit-test suite, Android debug APK, and Linux debug build in core run `31867130926`; Windows run `31867130920` passed; Apple run `31867130998` passed for macOS and unsigned iOS; Linux Package CI run `31867130938` passed the release build, Debian verification/install/startup/uninstall path and artifact upload.
+- Repository Integrity Audit run `31867543888` passed after the managed-recovery documentation and project-state synchronization were committed.
 - Apache-2.0 license, contribution/security/privacy/support documentation, architecture/build/branding/codec/Linux-packaging/metadata-integrity/QA documentation, and release procedure.
 
 ## Before v1.0.0
 
-This preview must not be treated as a stable public recorder release until the physical-device, interruption, background, low-storage, long-recording, malformed-real-media corpus, large-library performance, batch-performance, accessibility, native-brand visual-inspection, representative Linux installation/upgrade, signed-packaging, and store-release gates in `docs/QA_CHECKLIST.md` and `docs/RELEASING.md` have been completed with real evidence.
+This preview must not be treated as a stable public recorder release until the physical-device, interruption, background, low-storage, abrupt-process/power-loss recovery, real damaged/partial-media recovery, long-recording, malformed-real-media corpus, large-library performance, batch-performance, accessibility, native-brand visual-inspection, representative Linux installation/upgrade, signed-packaging, and store-release gates in `docs/QA_CHECKLIST.md` and `docs/RELEASING.md` have been completed with real evidence.
 
 ### Batch export destination update
 
@@ -108,15 +117,20 @@ This preview must not be treated as a stable public recorder release until the p
 - Package construction derives the release version from `pubspec.yaml`, preserves architecture metadata, and writes a SHA-256 checksum beside the `.deb`.
 - A dedicated verifier checks package control metadata, executable permissions, desktop launcher identity, AppStream identity, icon presence, and checksum integrity, with `desktop-file-validate` and `appstreamcli` validation when available.
 - Linux Package CI additionally installs the generated package through `apt-get`, validates the installed payload, starts the packaged application under a bounded Xvfb display, removes the package, and verifies package-owned application/desktop/icon/AppStream cleanup.
-- The latest automated package source is `a07468b4b7c14a76b9bce537bbe0455e4539e6bf` from Linux Package CI run `31785105648`.
+- Recovery-hardening source `f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe` passed the complete current Linux package workflow in run `31867130938`.
 - Stable Linux release approval still requires representative real-system installation, launch, microphone/routing, accessibility, long-duration/low-storage, icon visual, upgrade/uninstall, and distribution/signing-policy evidence.
 
-### Metadata integrity and resilient import update
+### Metadata integrity, managed recovery, and resilient import update
 
-- Recording metadata deserialization now type-checks optional fields, filters malformed collection members, and isolates malformed nested markers and recording objects.
+- Recording metadata deserialization type-checks optional fields, filters malformed collection members, isolates malformed nested markers and recording objects, and normalizes unsafe numeric/waveform values.
 - Structurally corrupt metadata documents are preserved with timestamped diagnostic copies instead of being silently discarded.
 - Interrupted metadata replacement can recover a valid `recordings.json.bak`; a corrupt primary can also fall back to a valid backup after preserving the corrupt primary.
+- When no valid primary/backup remains, SonicNest preserves diagnostics and writes a clean empty metadata store so the same corrupt primary does not repeatedly re-trigger recovery on every startup.
+- Duplicate recording IDs and normalized file paths are isolated, and startup removes stale/out-of-bound metadata before managed orphan scanning.
 - The metadata regression suite exercises a real filesystem save/load path with 3,000 entries while checking ordering/identity samples and temporary/backup cleanup.
-- Audio import validation now has a dedicated service that owns managed-copy validation and cleanup after probe/waveform failures.
+- Audio import validation has a dedicated service that owns managed-copy validation and cleanup after probe/waveform failures.
 - Multi-file import continues after isolated missing/corrupt selections and reports partial success while keeping metadata persistence failures fail-fast and transactional for the just-created managed copy.
-- Real malformed-media corpora, abrupt-power/low-storage/filesystem-permission recovery, and real large-library UI/memory profiling remain manual release gates rather than being inferred from synthetic tests.
+- Managed-path mutation guards prevent metadata from directing destructive library operations at unrelated external paths.
+- Rename/Trash/restore and metadata-only updates roll back their in-memory/filesystem changes when metadata persistence fails; permanent delete uses metadata-first ordering so an interrupted operation leaves an orphan that can be rediscovered rather than silently destroying unindexed audio.
+- `LibraryRecoveryService` reconstructs missing metadata for supported managed recordings at startup and keeps damaged/partial preserved files visible even when duration/waveform probing cannot succeed.
+- Real malformed-media corpora, abrupt-power/process-kill, low-storage/filesystem-permission recovery, real damaged/partial orphan media, and real large-library UI/memory profiling remain manual release gates rather than being inferred from synthetic tests.
