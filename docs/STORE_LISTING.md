@@ -155,7 +155,9 @@ Use the same privacy-first core description as the Apple listing. Microphone per
 
 SonicNest is a local-first desktop sound and voice recorder with a searchable audio Library, playback, non-destructive processing, format conversion, batch tools, keyboard navigation, and export/share workflows.
 
-Before public distribution, verify Windows microphone capture/routing, shell branding, accessibility, installer/package behavior, and the chosen Authenticode/public-signing policy. Do not describe an unsigned development build as a signed release.
+The initial repository-supported Windows artifact is the versioned x64 portable ZIP documented in `docs/WINDOWS_PACKAGING.md`. A Microsoft Store package is not currently the selected Windows distribution channel and must not be claimed as available unless a separate store package has actually been built, reviewed, signed, and submitted.
+
+Before public distribution, verify Windows microphone capture/routing, shell branding, accessibility, portable-package behavior, and the chosen Authenticode/public-signing policy. Do not describe an unsigned development build as a signed release.
 
 ## Linux / GitHub Releases draft
 
