@@ -176,3 +176,15 @@ The same candidate produced Linux bundle SHA-256 `a5fe64b440bf19b1b8a74e5a5ff875
 Permanent Windows Build run `31872928500` independently passed the release portable build, verification, extracted startup smoke, and artifact publication path. Repository Integrity Audit run `31873122160` passed on the clean candidate SHA. A later hardening commit `64c121fa0e5c81531a3710b1d67b88fb3dfc93db` broadened workflow discovery to `.yaml` as well as `.yml` and rejects `permissions: write-all` plus permanent write scopes; audit run `31874506476` passed that strengthened policy.
 
 Exact workflow artifact digests and the full automated/manual boundary are preserved in `docs/AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md`. This evidence closes the currently identified repository-owned release-automation work; it does **not** close physical-device, real-system package, accessibility, sustained recording/performance, protected signing/notarization, store-console, or stable-release approval gates.
+
+## 2026-08-15 — Unified hosted release-candidate provenance
+
+SonicNest now produces a machine-readable provenance record after all five hosted release-mode platform jobs succeed. `tool/build_release_candidate_manifest.py` re-verifies each platform candidate's checksum evidence, requires Android's explicit Debug-certificate / NON-PRODUCTION classification, records evidence-file SHA-256 values and sizes, and binds the result to the exact full Git source SHA, application version, GitHub Actions run, and run attempt.
+
+The permanent Repository Integrity Audit compiles Python release helpers and runs the release-tool regression suite. Run `31876149473` passed all **10/10** Python tests together with repository invariants and Bash/PowerShell helper parsing.
+
+Hosted Release Candidate Validation run `31876035202` on source `b95d77c4b69c9798f1ecb48d5f69583c4e08de5c` passed Source preflight, Android, Linux, Windows, macOS, iOS, and the final **Unified candidate provenance manifest** job.
+
+The generated `RELEASE_CANDIDATE_MANIFEST.json` records application version `0.1.0+1`, release classification `development-preview`, and `stableReleaseApproved: false`. Its SHA-256 is `8a49759555cad26a60858025d82953ad0e3c3b429aa8138d67f7ef4f86d99b7e`; an independent post-download recomputation matched exactly. The manifest workflow artifact digest is `sha256:5fa654434ba304e7b67945250f7c8f4bec14eacbc87effefa5cd2d620885baa3`.
+
+This evidence proves hosted checksum/source/run consistency only. It does not complete physical microphone/routing/interruption/background validation, real storage/process-failure testing, accessibility, sustained performance/soak tests, real visual review/screenshots, representative-system package QA, protected production signing/notarization, store acceptance, or final `v1.0.0` approval. SonicNest remains a **development preview**.
