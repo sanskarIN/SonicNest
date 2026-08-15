@@ -104,9 +104,11 @@ All notable project changes are documented here.
 - Windows run `31807141053` and Apple run `31807141166` are green on import-controller source revision `3bf63e69186a7a538f7d0587f3d361e00c2e29e9` for Windows debug, macOS debug, and unsigned iOS debug builds.
 - Core Flutter CI run `31807193932` is fully green on import-test revision `a88aeadadda017b0aced4dbc25c8426a27364b77`: formatting, analyzer, unit tests, Android debug APK, and Linux debug build all succeeded.
 - Repository Integrity Audit run `31807662729` is green on revision `c7b9c41a8afcf83ff03ae5a014c9968f2f09c5e4` with the cleaned permanent workflow set and workflow allowlist/read-only invariant active.
-- Recovery-hardening source revision `f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe` has passed formatting, static analysis, the complete unit-test suite, Linux debug compilation, macOS debug compilation, and unsigned-iOS debug compilation in its current workflow cycle; remaining concurrently running platform jobs are recorded only after completion rather than being pre-claimed.
-- Linux Package CI run `31867130938` is green on recovery-hardening source revision `f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe`: Linux release build, Debian construction/verification, package-manager install, installed-package smoke, uninstall, and artifact upload succeeded.
-- The continuation intentionally does not convert representative-system microphone/background/interruption/routing/screen-wake/media-button/batch-performance/native-brand visual inspection/accessibility/upgrade/signing or malformed-real-media corpus checks into false automated claims.
+- Recovery-hardening source revision `f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe` is fully green in core run `31867130926`: formatting, static analysis, complete unit-test suite, Android debug APK, and Linux debug build all succeeded.
+- The same recovery-hardening source revision is green in Windows run `31867130920` and Apple run `31867130998` for Windows debug, macOS debug, and unsigned iOS debug builds.
+- Linux Package CI run `31867130938` is green on the same recovery-hardening source revision: Linux release build, Debian construction/verification, package-manager install, installed-package smoke, uninstall, and artifact upload succeeded.
+- Repository Integrity Audit run `31867543888` is green after recovery-hardening project-state/documentation synchronization and the permanent workflow invariants remained active.
+- The continuation intentionally does not convert representative-system microphone/background/interruption/routing/screen-wake/media-button/batch-performance/native-brand visual inspection/accessibility/upgrade/signing, real filesystem interruption, or malformed/partially written real-media checks into false automated claims.
 - Exact newest workflow/run results are also recorded in `what_changed.md` and `PROJECT_STATE.md`.
 
 ## [0.1.0] - 2026-08-14
