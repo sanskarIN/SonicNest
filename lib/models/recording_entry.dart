@@ -63,7 +63,7 @@ class RecordingEntry {
       format: format,
       bitRate: _nonNegativeIntValue(json['bitRate']),
       sampleRate: _nonNegativeIntValue(json['sampleRate']),
-      channels: _positiveIntValue(json['channels'], 1),
+      channels: _nonNegativeIntValue(json['channels'], 1),
       createdAt: _dateTimeValue(json['createdAt']) ?? now,
       modifiedAt: _dateTimeValue(json['modifiedAt']) ?? now,
       favorite: _boolValue(json['favorite']),
@@ -179,11 +179,6 @@ int _nonNegativeIntValue(Object? value, [int fallback = 0]) {
   return parsed < 0 ? fallback : parsed;
 }
 
-int _positiveIntValue(Object? value, [int fallback = 1]) {
-  final parsed = _nonNegativeIntValue(value, fallback);
-  return parsed > 0 ? parsed : fallback;
-}
-
 bool _boolValue(Object? value, [bool fallback = false]) =>
     value is bool ? value : fallback;
 
@@ -205,6 +200,7 @@ List<double> _doubleList(Object? value) {
       .whereType<num>()
       .map((number) => number.toDouble())
       .where((number) => number.isFinite)
+      .map((number) => number.clamp(0.0, 1.0).toDouble())
       .toList(growable: false);
 }
 
