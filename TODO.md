@@ -6,6 +6,20 @@ This file intentionally contains only work that is still incomplete, requires ph
 
 - [x] Commit the Dart formatter output for the CI Flutter/Dart toolchain. Historical core CI run `31870224720` exposed formatting drift; canonical stable-toolchain formatter output is now committed in `22c1d46e077625d6e1964d56716700727d1800dc`.
 - [x] After the tracked Dart tree is formatter-clean, change CI formatting from a mutating preparation step to a non-mutating enforcement gate. Core CI now uses `dart format --output=none --set-exit-if-changed lib test tool/generate_brand_assets_v2.dart` via `704b0f60aae8f179f4f41875c336d2052b45391e`.
+- [x] Audit both `.yml` and `.yaml` workflow files and reject permanent workflow write scopes including `permissions: write-all`; strengthened audit run `31874506476` passed on `64c121fa0e5c81531a3710b1d67b88fb3dfc93db`.
+- [x] Keep the exact hosted release-candidate evidence source-controlled and audit-required in `docs/AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md`.
+
+## Repository-owned release automation
+
+- [x] Run one clean cross-platform release-candidate matrix from a single source revision. Run `31873121457` on `048870ec8dc26a16e2451310460d3e03c9084dc7` passed Source preflight plus Android, Linux, Windows, macOS, and iOS release-mode jobs.
+- [x] Verify Android hosted release APK/AAB package identity and explicitly classify the generated Android Debug certificate as **NON-PRODUCTION** before artifact upload.
+- [x] Produce checksummed Android release-mode non-production APK/AAB evidence without storing production signing material in the repository.
+- [x] Produce and verify the Linux release bundle and Debian `.deb` in the release-candidate workflow.
+- [x] Produce, structurally verify, and bounded-startup-smoke the versioned Windows x64 portable ZIP in both permanent Windows CI and the release-candidate workflow.
+- [x] Produce macOS release-mode unsigned and iOS release-mode no-codesign validation archives.
+- [x] Record exact inner artifact SHA-256 values and workflow artifact digests for the final hosted candidate in `docs/AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md`.
+
+No additional repository-only release-automation gap is currently identified. The remaining unchecked tasks below require real devices/systems, sustained workloads, representative media, accessibility tooling, private signing credentials, distribution-console access, or final release approval.
 
 ## Hardware and lifecycle validation
 
