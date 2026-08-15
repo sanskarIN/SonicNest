@@ -6,7 +6,10 @@ Completed in the current codebase:
 - Cross-platform capture architecture and runtime codec fallback matrix.
 - Recording lifecycle guards, foreground-service bridge, local metadata safety, import/export, and processing pipeline.
 - Defensive recording-metadata decoding with malformed-record isolation.
-- Structural metadata corruption preservation and interrupted `.bak` replacement recovery.
+- Structural metadata corruption preservation, interrupted `.bak` replacement recovery, valid-backup fallback, and clean-store reset when no valid metadata source remains.
+- Corrupt numeric/waveform normalization plus duplicate ID/path isolation.
+- Managed storage path guards and persistence rollback for library mutations.
+- Startup orphan reconstruction for supported managed audio missing from metadata.
 - Configurable/cancellable recording countdown.
 - Smart recording-name templates with safe date/time/sequence/category/prefix/suffix tokens.
 - Optional active-recording screen-wake handling with lifecycle cleanup.
@@ -16,18 +19,24 @@ Completed in the current codebase:
 Still required before leaving the foundation stage:
 - Exercise permission-denied, interruption, low-storage, device-routing, screen-wake, and repeated pause/resume paths on physical devices.
 - Run 30-minute and multi-hour recording soak tests on representative hardware.
-- Exercise abrupt process/power interruption and filesystem-permission failures on real target systems even though deterministic metadata backup recovery is implemented.
+- Exercise abrupt process/power interruption and filesystem-permission failures on real target systems even though deterministic metadata backup, rollback, and orphan recovery are implemented.
+- Verify orphan reconstruction with real playable, partially written, and damaged managed audio on every maintained OS.
 
 ## v0.2.x — Library and playback polish
 
 Completed:
-- Persist generated waveform envelopes for imported and processed media.
+- Persist generated waveform envelopes for imported, processed, and recovered managed media.
 - Add multi-selection bulk favorite, pin, share, Trash, restore, and permanent-delete operations.
 - Add format, folder, exact-tag, and date-range filtering.
 - Add managed recording/Trash/temporary storage accounting and guarded temporary cleanup.
 - Add failure-isolated multi-file import so missing/corrupt selections can fail independently without blocking later valid files.
 - Add managed-copy cleanup after import copy/probe/waveform failures.
 - Add deterministic metadata persistence coverage with a 3,000-entry filesystem save/load round-trip.
+- Add managed-path mutation guards for rename, duplicate, Trash, restore, and permanent deletion.
+- Add duplicate metadata ID/file-path isolation and unsafe numeric/waveform normalization.
+- Add startup reconciliation that drops stale or out-of-bound metadata.
+- Add managed orphan-audio reconstruction after metadata loss/interruption.
+- Add persistence rollback for metadata-only and file-moving library operations.
 - Add desktop keyboard navigation shortcuts.
 - Add desktop secondary/right-click access to each recording's complete action surface while preserving touch and long-press behavior.
 - Add previous/next recording navigation.
@@ -36,6 +45,7 @@ Completed:
 
 Remaining:
 - Run a privacy-safe malformed/corrupt audio corpus through import on each maintained OS, including mixed valid/invalid selections.
+- Verify recovered managed-orphan behavior with real partial/damaged media and abrupt process interruption.
 - Profile real Library startup/search/filter/scroll/memory behavior with thousands of entries; the 3,000-entry metadata round-trip is persistence evidence, not UI performance approval.
 - Verify Android, iOS, and macOS media-session behavior on physical devices, including pause/resume, lock-screen transport controls, interruptions, and metadata refresh.
 - Evaluate dedicated Windows and Linux system media-session integration where maintained platform support is available and useful.
@@ -93,14 +103,17 @@ Completed/in progress:
 - Hosted-runner Debian installation, installed-payload/startup smoke, package removal, and uninstall cleanup validation implemented.
 - Permanent workflow allowlist/read-only integrity checks implemented; obsolete write-enabled one-shot workflows removed from `main`.
 - Metadata/import reliability revision `a88aeadadda017b0aced4dbc25c8426a27364b77` validated by core run `31807193932` for formatting, analyzer, tests, Android, and Linux; controller source `3bf63e69186a7a538f7d0587f3d361e00c2e29e9` validated by Windows run `31807141053` and Apple run `31807141166`.
+- Managed-storage/orphan-recovery source revision `f48fb1a11bc449bdcb6864e2bbae9fa86ab17abe` validated by core run `31867130926` for formatting, analyzer, full unit tests, Android, and Linux; Windows run `31867130920`; Apple run `31867130998`; and Linux Package CI run `31867130938`.
+- Repository Integrity Audit run `31867543888` passed after the recovery-hardening documentation/project-state synchronization.
 
 Remaining:
-- Keep Android/Linux/Windows/macOS/iOS build workflows green for the final source revision.
-- Keep the Linux Debian package workflow green for the final source revision.
+- Keep Android/Linux/Windows/macOS/iOS build workflows green for future source revisions.
+- Keep the Linux Debian package workflow green for future source revisions.
 - Validate microphone input switching and codec availability on each supported OS.
 - Verify background/lock-screen/interruption behavior against each platform's current policies.
 - Validate countdown, screen-wake, A-B loop, media buttons, batch conversion/export, desktop secondary-click interaction, and advanced editor outputs on physical target hardware.
 - Complete malformed-real-media corpus testing and real low-storage/filesystem-permission/interruption recovery evidence.
+- Verify real abrupt-process/power-loss and partially written managed-audio recovery behavior instead of inferring it from deterministic regression tests.
 - Visually inspect generated Android/iOS/macOS/Windows native icons and Android/iOS launch/splash resources on real release candidates.
 - Install and visually inspect the generated Linux `.deb` on representative Debian/Ubuntu-family systems, including launcher/menu/task-switcher icon surfaces and package uninstall behavior.
 - Decide the public Linux distribution channel and any package/repository signing policy.
@@ -125,9 +138,9 @@ Implemented: optional user-selected destination-folder copies, collision-safe de
 
 Primary Flutter presentation surfaces are centralized in the localization catalog and English remains the baseline locale. Remaining localization work is translation introduction, text-expansion testing, translation QA, and deciding how much backend diagnostic text should be localized versus retained as technical detail.
 
-## Metadata integrity and resilient import status
+## Metadata integrity, managed recovery, and resilient import status
 
-Implemented: defensive model decoding, structurally corrupt metadata preservation, per-record isolation, valid-backup recovery after interrupted/corrupt primary replacement, a deterministic 3,000-entry metadata round-trip, dedicated per-file import validation/cleanup, and controller-level continuation after isolated malformed/missing selections. Remaining work is real malformed-media corpus testing, real large-library UI/memory profiling, low-storage and filesystem-permission recovery, and abrupt process/power interruption evidence on target systems.
+Implemented: defensive model decoding, unsafe numeric/waveform normalization, structurally corrupt metadata preservation, per-record and duplicate ID/path isolation, valid-backup recovery after interrupted/corrupt primary replacement, clean-store reset when no valid metadata source remains, a deterministic 3,000-entry metadata round-trip, managed-path mutation guards, controller persistence rollback, supported-file discovery, startup orphan reconstruction, dedicated per-file import validation/cleanup, and controller-level continuation after isolated malformed/missing selections. Remaining work is real malformed/partially written media testing, abrupt-process/power-loss recovery evidence, real large-library UI/memory profiling, low-storage and filesystem-permission recovery, and representative target-system validation.
 
 ## Native branding and Linux packaging status
 
