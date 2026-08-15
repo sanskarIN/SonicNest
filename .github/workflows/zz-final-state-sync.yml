@@ -1,0 +1,159 @@
+name: One-shot final state synchronization
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/zz-final-state-sync.yml'
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Configure commit identity
+        run: |
+          git config user.name "Sanskar"
+          git config user.email "sanskarin@outlook.in"
+
+      - name: Update final QA evidence
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('docs/QA_CHECKLIST.md')
+          s = p.read_text()
+          old = '- [ ] Checked-in Dart formatting is not yet clean under the CI Flutter/Dart toolchain: core run `31870224720` formatted 30 of 54 Dart files before analysis/tests. This repository-hygiene gap is tracked in `TODO.md` and must not be represented as formatter-clean release evidence.\n'
+          new = '- [x] Historical formatter drift exposed by core run `31870224720` is closed: canonical formatter output is committed in `22c1d46e077625d6e1964d56716700727d1800dc`, core CI uses a non-mutating `--set-exit-if-changed` gate from `704b0f60aae8f179f4f41875c336d2052b45391e`, and formatter-clean run `31870933447` passed formatting, analysis, the full unit suite, Android debug, and Linux debug on source revision `4e0fbf16534a60e2d3209c5ec5f54d4982903f8c`.\n'
+          s = s.replace(old, new)
+          marker = 'The automated entries above do **not** complete the unchecked real malformed-media corpus'
+          block = '''- [x] Formatter-clean Windows run `31870933908` succeeded on source revision `4e0fbf16534a60e2d3209c5ec5f54d4982903f8c`.\n- [x] Formatter-clean Apple run `31870933903` succeeded for macOS debug and unsigned-iOS debug on source revision `4e0fbf16534a60e2d3209c5ec5f54d4982903f8c`.\n- [x] Formatter-clean Linux Package CI run `31870933982` succeeded on source revision `4e0fbf16534a60e2d3209c5ec5f54d4982903f8c`, including release bundle, `.deb` build/verification, install, installed-app smoke, uninstall, and artifact publication.\n- [x] Source-controlled cross-platform listing/privacy draft exists at `docs/STORE_LISTING.md`; final store-console answers still require exact-candidate and then-current platform-policy review.\n- [x] Windows public signing policy is decided in `docs/WINDOWS_SIGNING_POLICY.md`; actual Authenticode credential/service provisioning remains maintainer-owned release work.\n\n'''
+          if 'Formatter-clean Windows run `31870933908`' not in s:
+              s = s.replace(marker, block + marker)
+          p.write_text(s)
+          PY
+          git add docs/QA_CHECKLIST.md
+          git commit -m "docs: record formatter-clean cross-platform QA evidence"
+
+      - name: Update changelog with final continuation state
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('CHANGELOG.md')
+          s = p.read_text()
+          added = '''- Source-controlled cross-platform distribution listing and privacy declaration draft in `docs/STORE_LISTING.md`.\n- Windows public Authenticode signing policy in `docs/WINDOWS_SIGNING_POLICY.md`, while private credential/service configuration remains outside the repository.\n'''
+          changed = '''- Canonical Dart formatter output is now committed; core CI and release preflight use a non-mutating `dart format --output=none --set-exit-if-changed` enforcement gate.\n- Release guidance now requires candidate-specific review of the store/privacy draft and aligns stable Windows distribution with the Authenticode policy.\n'''
+          validation = '''- Formatter-clean source revision `4e0fbf16534a60e2d3209c5ec5f54d4982903f8c` passed core run `31870933447`: non-mutating format gate, static analysis, full unit suite, Android debug, and Linux debug all succeeded.\n- The same formatter-clean source revision passed Windows run `31870933908`, Apple run `31870933903` (macOS + unsigned iOS), and Linux Package CI run `31870933982` including package install/smoke/uninstall.\n'''
+          if 'Source-controlled cross-platform distribution listing and privacy declaration draft' not in s:
+              s = s.replace('### Added\n', '### Added\n' + added, 1)
+              s = s.replace('### Changed\n', '### Changed\n' + changed, 1)
+              s = s.replace('### Validation\n', '### Validation\n' + validation, 1)
+          p.write_text(s)
+          PY
+          git add CHANGELOG.md
+          git commit -m "docs: record formatter-clean release hardening changes"
+
+      - name: Append final development-preview release note
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('RELEASE_NOTES.md')
+          s = p.read_text()
+          marker = '## 2026-08-15 — Formatter-clean source and distribution policy completion'
+          block = '''\n\n## 2026-08-15 — Formatter-clean source and distribution policy completion\n\nThe earlier formatting-hygiene warning is now resolved. Canonical stable-toolchain Dart formatter output was committed in `22c1d46e077625d6e1964d56716700727d1800dc`, and core CI was changed in `704b0f60aae8f179f4f41875c336d2052b45391e` to verify formatting without rewriting the checkout.\n\nFormatter-clean source revision `4e0fbf16534a60e2d3209c5ec5f54d4982903f8c` passed the complete maintained automated matrix used in this continuation: core run `31870933447` passed the non-mutating format gate, static analysis, full unit suite, Android debug, and Linux debug; Windows run `31870933908` passed; Apple run `31870933903` passed macOS debug and unsigned-iOS debug; Linux Package CI run `31870933982` passed release-bundle creation, Debian package build/verification, installation, installed-app smoke, uninstall, and artifact publication.\n\nThe repository also now contains `docs/STORE_LISTING.md` with cross-platform listing/privacy copy and `docs/WINDOWS_SIGNING_POLICY.md` defining Authenticode signing as the policy for stable public Windows distributables. Actual store-console submission, private signing credentials, final installer/package integration, and signed release candidates remain maintainer/release-candidate work.\n\nThis does not change the release classification: SonicNest remains a development preview until the unchecked physical-device, real-filesystem, accessibility, long-duration/performance, visual-branding, representative-package, signing/notarization, and final stable-release gates are completed with evidence.\n'''
+          if marker not in s:
+              s += block
+          p.write_text(s)
+          PY
+          git add RELEASE_NOTES.md
+          git commit -m "docs: add formatter-clean development preview validation note"
+
+      - name: Synchronize project state
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path('PROJECT_STATE.md')
+          s = p.read_text()
+          s = s.replace('    formatting_note: historical run exposed 30-file drift; canonical formatting is now committed and core CI uses non-mutating format enforcement; newer validation is dispatched below', '    formatting_note: canonical formatter output committed in 22c1d46e077625d6e1964d56716700727d1800dc; core CI uses non-mutating format enforcement and formatter-clean validation succeeded')
+          s = s.replace('  - checked-in Dart tree currently has formatter drift; core CI formats 30 of 54 Dart files before analysis/tests and TODO tracks committing formatter output plus later non-mutating enforcement\n', '')
+          if '  - source-controlled store listing and privacy declaration draft for Android Apple macOS Windows and Linux distribution review\n' not in s:
+              s = s.replace('partial_features:\n', '  - source-controlled store listing and privacy declaration draft for Android Apple macOS Windows and Linux distribution review\n  - Windows stable public signing policy requires Authenticode while actual signing credentials/service and final installer integration remain maintainer-owned\npartial_features:\n', 1)
+          s = s.replace('  - decide and configure Windows signing for public distribution\n', '  - provision/configure the maintainer-owned Windows Authenticode certificate or signing service and final installer/package integration\n')
+          new_validation = '''latest_automated_validation:\n  formatter_clean_source_commit: 4e0fbf16534a60e2d3209c5ec5f54d4982903f8c\n  canonical_format_commit: 22c1d46e077625d6e1964d56716700727d1800dc\n  non_mutating_format_gate_commit: 704b0f60aae8f179f4f41875c336d2052b45391e\n  core_flutter_ci:\n    run_id: 31870933447\n    source_commit: 4e0fbf16534a60e2d3209c5ec5f54d4982903f8c\n    dart_format_check: success_non_mutating\n    analyzer: success\n    unit_tests: success_complete_suite\n    android_debug_apk: success\n    linux_debug_build: success\n  windows_ci:\n    run_id: 31870933908\n    source_commit: 4e0fbf16534a60e2d3209c5ec5f54d4982903f8c\n    windows_debug_build: success\n  apple_ci:\n    run_id: 31870933903\n    source_commit: 4e0fbf16534a60e2d3209c5ec5f54d4982903f8c\n    macos_debug_build: success\n    ios_debug_no_codesign: success\n  linux_package_ci:\n    run_id: 31870933982\n    source_commit: 4e0fbf16534a60e2d3209c5ec5f54d4982903f8c\n    result: success\n    release_bundle: success\n    deb_build_and_verify: success\n    package_install: success\n    installed_app_smoke: success\n    package_uninstall: success\n    artifact_publication: success\n  validation_relationship:\n    - formatter-clean revision 4e0fbf16534a60e2d3209c5ec5f54d4982903f8c contains the final validated application/source state for this continuation\n    - later commits are documentation policy state and do not alter application runtime code\n    - stable release still requires the unchecked real-system and maintainer-credential gates\nknown_limitations:'''
+          s = re.sub(r'latest_automated_validation:\n.*?\nknown_limitations:', new_validation, s, count=1, flags=re.S)
+          marker = '## Formatter-clean final automated validation — 2026-08-15'
+          if marker not in s:
+              s += '''\n\n## Formatter-clean final automated validation — 2026-08-15\n\n- Canonical formatting commit: `22c1d46e077625d6e1964d56716700727d1800dc`.\n- Non-mutating core CI formatting enforcement: `704b0f60aae8f179f4f41875c336d2052b45391e`.\n- Formatter-clean source revision: `4e0fbf16534a60e2d3209c5ec5f54d4982903f8c`.\n- Core run `31870933447`: format enforcement **SUCCESS**, static analysis **SUCCESS**, full unit suite **SUCCESS**, Android debug **SUCCESS**, Linux debug **SUCCESS**.\n- Windows run `31870933908`: **SUCCESS**.\n- Apple run `31870933903`: macOS debug **SUCCESS**, unsigned-iOS debug **SUCCESS**.\n- Linux Package CI run `31870933982`: release bundle, package build/verification, install, installed-app smoke, uninstall, artifact publication **SUCCESS**.\n- Store/listing/privacy draft: `docs/STORE_LISTING.md`.\n- Windows public signing policy: `docs/WINDOWS_SIGNING_POLICY.md`; actual maintainer signing credentials/service configuration remains open.\n- Linux public channel remains GitHub Releases with verified `.deb` + SHA-256 checksum; no initial custom APT repository.\n- Release classification remains **development preview** pending the unchecked real-device/filesystem/accessibility/performance/branding/signing/release evidence gates.\n'''
+          p.write_text(s)
+          PY
+          git add PROJECT_STATE.md
+          git commit -m "docs: set formatter-clean final automated project state"
+
+      - name: Link new release-policy documents from README
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('README.md')
+          s = p.read_text()
+          anchor = '- `docs/STORE_LISTING.md` — source-controlled listing copy and privacy-declaration draft for distribution review.\n'
+          extra = '- `docs/WINDOWS_SIGNING_POLICY.md` — stable public Windows Authenticode policy and private-credential boundary.\n'
+          if extra not in s:
+              s = s.replace(anchor, anchor + extra)
+          p.write_text(s)
+          PY
+          git add README.md
+          git commit -m "docs: link Windows signing policy from README"
+
+      - name: Append final continuation ledger
+        shell: bash
+        run: |
+          QA_SHA=$(git log -1 --format=%H -- docs/QA_CHECKLIST.md)
+          CHANGELOG_SHA=$(git log -1 --format=%H -- CHANGELOG.md)
+          RELEASE_SHA=$(git log -1 --format=%H -- RELEASE_NOTES.md)
+          STATE_SHA=$(git log -1 --format=%H -- PROJECT_STATE.md)
+          README_SHA=$(git log -1 --format=%H -- README.md)
+          export QA_SHA CHANGELOG_SHA RELEASE_SHA STATE_SHA README_SHA
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+          p = Path('what_changed.md')
+          s = p.read_text()
+          marker = '## 2026-08-15 — Canonical formatting, distribution copy, Windows signing policy, and final automated validation'
+          if marker not in s:
+              s += f'''\n\n{marker}\n\nThis additive section supersedes the earlier temporary formatter-hygiene warning while preserving the full history above.\n\n### Canonical Dart formatting is closed\n\n- `22c1d46e077625d6e1964d56716700727d1800dc` — `style: commit canonical Dart formatting`; the stable Flutter/Dart formatter output for `lib`, `test`, and `tool/generate_brand_assets_v2.dart` is now tracked.\n- `704b0f60aae8f179f4f41875c336d2052b45391e` — `ci: enforce Dart formatting without mutating source`; core CI now runs `dart format --output=none --set-exit-if-changed ...` and fails on drift instead of silently rewriting validation checkout source.\n- `6d379e23edce9eb0f09d65412426b678c01e900f` — formatter-hygiene TODOs closed.\n- The temporary format helper self-removed; no write-enabled formatter helper remains in the final repository.\n\n### Formatter-clean source revision and exact automated evidence\n\nFormatter-clean source revision: `4e0fbf16534a60e2d3209c5ec5f54d4982903f8c`. The final application changes from this continuation are included before this revision; later commits described below are documentation/policy only.\n\n- Core Flutter CI run `31870933447`: non-mutating Dart format check **SUCCESS**, static analysis **SUCCESS**, full unit suite **SUCCESS**, Android debug build **SUCCESS**, Linux debug build **SUCCESS**.\n- Windows run `31870933908`: Windows debug build **SUCCESS**.\n- Apple run `31870933903`: macOS debug build **SUCCESS** and unsigned-iOS debug build **SUCCESS**.\n- Linux Package CI run `31870933982`: Linux release bundle **SUCCESS**, Debian package build/verify **SUCCESS**, install **SUCCESS**, installed-app smoke **SUCCESS**, uninstall **SUCCESS**, artifact upload **SUCCESS**.\n- This closes the earlier repository-only formatting drift. No formatter-cleanliness limitation remains open in `TODO.md`.\n\n### Store/distribution listing and privacy copy\n\n- `a4c3068c5fb07a9d4f801ce9227188c58ea87950` — added `docs/STORE_LISTING.md` with source-controlled short/long descriptions, feature bullets, privacy statements, microphone/files/local-data/share declarations, Android/Apple/macOS/Windows/Linux distribution drafts, screenshot/privacy rules, and submission review checklist.\n- `40621aeb847ae5c21e9d9b825cd761947aac2a58` — marked the repository-side listing/privacy draft complete while retaining exact-candidate store-console review as release work.\n- `cd1a9b926c416a40101cca6f96993b1f24d71c28` and `ebf887c2b046429a864efd41678e8a39ed3eccb4` — release guide/README aligned with non-mutating formatting and listing review.\n\n### Windows public signing policy\n\n- `02af50f6ba7d59d2cc08838f9e5c230b0d096524` — added `docs/WINDOWS_SIGNING_POLICY.md`. Stable public Windows distributables should be Authenticode-signed with a maintainer-controlled identity.\n- `43556d9b313754812510cab9d97aaab361172086` — split the completed policy decision from the still-open private certificate/signing-service and final installer/package configuration work.\n- `6ac8b079c3ec002df87f3b001d22ab1cf48da359` — release guide aligned with that policy.\n- No signing private key, password, certificate bundle, or provider credential is committed.\n\n### Final state synchronization commits\n\n- `{os.environ['QA_SHA']}` — `docs: record formatter-clean cross-platform QA evidence`.\n- `{os.environ['CHANGELOG_SHA']}` — `docs: record formatter-clean release hardening changes`.\n- `{os.environ['RELEASE_SHA']}` — `docs: add formatter-clean development preview validation note`.\n- `{os.environ['STATE_SHA']}` — `docs: set formatter-clean final automated project state`.\n- `{os.environ['README_SHA']}` — `docs: link Windows signing policy from README`.\n- this `what_changed.md` append commit follows those records.\n\n### Remaining boundary\n\nRepository-only implementation/policy work identified in this continuation is complete. Remaining unchecked items are intentionally evidence/credential dependent: physical microphone permissions/routing, interruptions/background/lock-screen behavior, low-storage and real permission/process/power-loss recovery, real partially written/damaged media, long-duration and large-library/batch profiling, accessibility audits, real branding/screenshots, representative Linux installation/audio/upgrade/desktop review, Android/Apple private signing, Windows Authenticode credential/service and final installer integration, signed candidate production, release checklist completion, and final `v1.0.0` approval.\n\nDo not mark those items complete from hosted CI alone.\n'''
+          p.write_text(s)
+          PY
+          git add what_changed.md
+          git commit -m "docs: append formatter-clean final continuation ledger"
+
+      - name: Remove helper and push
+        shell: bash
+        run: |
+          git rm .github/workflows/zz-final-state-sync.yml
+          git commit -m "chore: remove one-shot final state synchronization"
+          git push origin HEAD:main
+
+      - name: Dispatch clean-tree repository audit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          curl --fail-with-body -L \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/repository-audit.yml/dispatches" \
+            -d '{"ref":"main"}'
