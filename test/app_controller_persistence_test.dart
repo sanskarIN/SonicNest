@@ -54,19 +54,23 @@ void main() {
   Future<AppController> createController({
     StorageService? storageOverride,
     List<RecordingEntry> entries = const [],
+    RecorderService Function(StorageService storage, AudioProcessor processor)?
+    recorderFactory,
   }) async {
     final selectedStorage = storageOverride ?? storage;
     metadata.entries = List.of(entries);
     final processor = AudioProcessor(selectedStorage);
+    final recorder = recorderFactory?.call(selectedStorage, processor) ??
+        RecorderService(
+          selectedStorage,
+          processor,
+          BackgroundServiceBridge(),
+        );
     controller = AppController(
       storage: selectedStorage,
       metadata: metadata,
       settingsService: settingsService,
-      recorder: RecorderService(
-        selectedStorage,
-        processor,
-        BackgroundServiceBridge(),
-      ),
+      recorder: recorder,
       player: PlayerService(),
       processor: processor,
       external: ExternalActions(),
@@ -127,6 +131,35 @@ void main() {
 
     expect(app.recordings, hasLength(2));
     expect(app.recordings.every((entry) => !entry.favorite), isTrue);
+  });
+
+  test('stopped recording stays on disk when metadata save fails', () async {
+    final path = await storage.uniqueRecordingPath('Stopped', 'wav');
+    final file = File(path);
+    await file.writeAsBytes(const [9, 8, 7, 6], flush: true);
+    final result = RecorderResult(
+      path: path,
+      title: 'Stopped',
+      duration: const Duration(seconds: 2),
+      settings: RecordingSettings.defaults(),
+      waveform: const [0.0, 0.5, 1.0],
+      markers: const [],
+    );
+    final app = await createController(
+      recorderFactory: (storage, processor) =>
+          FakeStopRecorderService(storage, processor, result),
+    );
+    metadata.failSaves = true;
+
+    await expectLater(
+      app.stopRecording(),
+      throwsA(isA<FileSystemException>()),
+    );
+
+    expect(app.recordings, isEmpty);
+    expect(app.selectedRecording, isNull);
+    expect(await file.exists(), isTrue);
+    expect(await storage.isManagedAudioPath(file.path, includeTrash: false), isTrue);
   });
 
   test('rename restores original file and metadata when save fails', () async {
@@ -312,4 +345,17 @@ class FailingDeleteStorageService extends StorageService {
   Future<void> deleteManagedAudioIfExists(String path) async {
     throw FileSystemException('Injected managed file deletion failure.', path);
   }
+}
+
+class FakeStopRecorderService extends RecorderService {
+  FakeStopRecorderService(
+    StorageService storage,
+    AudioProcessor processor,
+    this.result,
+  ) : super(storage, processor, BackgroundServiceBridge());
+
+  final RecorderResult result;
+
+  @override
+  Future<RecorderResult> stop() async => result;
 }
