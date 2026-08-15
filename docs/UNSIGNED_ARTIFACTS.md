@@ -78,6 +78,23 @@ Public distribution still requires the maintainer's Apple Developer ID signing a
 
 An App Store/TestFlight candidate requires provisioning, signing, real-device testing, store metadata, privacy declarations, and the protected Apple distribution pipeline. See `docs/APPLE_DISTRIBUTION_POLICY.md`.
 
+### Unified provenance manifest
+
+After all five platform candidate jobs succeed, the workflow downloads those exact artifact sets into a final provenance job and runs `tool/build_release_candidate_manifest.py`.
+
+The builder:
+
+- re-verifies every platform payload against its platform `SHA256SUMS.txt`;
+- requires all five platform evidence directories;
+- requires Android's explicit `ANDROID_SIGNING_STATE.txt` non-production markers;
+- binds the candidate evidence to the exact full Git source SHA and GitHub Actions run/attempt;
+- records the application version from `pubspec.yaml`;
+- records every downloaded evidence file with its SHA-256 and byte size;
+- preserves platform-specific signing/distribution classifications;
+- explicitly writes `stableReleaseApproved: false` for the hosted development-preview candidate.
+
+The resulting `RELEASE_CANDIDATE_MANIFEST.json`, its own checksum file, and an explicit warning are uploaded as `sonicnest-release-candidate-manifest`. See `docs/RELEASE_CANDIDATE_MANIFEST.md` for the provenance contract and regression coverage.
+
 ## Artifact retention
 
 The permanent manual workflow uses short-lived GitHub Actions artifacts. They exist to inspect release-mode packaging and should not be treated as a permanent download channel.
@@ -111,6 +128,8 @@ Get-FileHash -Algorithm SHA256 <artifact-file>
 Compare the result with the checksum recorded alongside the artifact.
 
 The Debian package builder also writes `<package>.deb.sha256` beside its direct build output under `build/linux-package/`; the package verifier compares that digest against the actual `.deb` bytes. The Windows portable builder writes the exact archive digest to `SHA256SUMS.txt`, and the Windows verifier checks that digest when the checksum file is present beside the archive. Android candidate verification writes the exact APK/AAB SHA-256 values into `ANDROID_SIGNING_STATE.txt` in addition to the candidate `SHA256SUMS.txt`.
+
+The unified provenance job re-verifies those per-platform checksum records after GitHub Actions artifact download and then writes a checksum for the final JSON manifest itself. That second verification layer binds the downloaded evidence bytes to one source SHA/run; it does not change the production-signing state of the platform artifacts.
 
 ## What successful automation does not prove
 
