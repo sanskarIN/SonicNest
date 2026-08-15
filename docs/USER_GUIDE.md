@@ -203,9 +203,9 @@ From Trash you can:
 - permanently delete individual/selected recordings;
 - empty Trash.
 
-Restored filenames are allocated safely if a file with the original name already exists.
+Restored filenames are allocated safely if any filesystem entity already occupies the original destination name.
 
-SonicNest also protects destructive library operations with a managed-storage boundary. Metadata cannot direct rename, duplicate, Trash, restore, or permanent-delete operations at unrelated files outside SonicNest's own managed audio locations.
+SonicNest protects destructive Library operations with a managed-storage boundary. A valid managed recording must be a supported regular audio file in SonicNest's active or Trash storage. Metadata cannot direct rename, duplicate, Trash, restore, or permanent-delete operations at unrelated external files, unsupported files, directories, or symbolic-link targets.
 
 ## 8. Import, share, and export
 
@@ -240,12 +240,12 @@ Open **Batch Convert**, select multiple saved recordings, then use the direct **
 Behavior:
 
 - originals stay unchanged;
-- existing destination files are not intentionally overwritten;
+- any existing destination entity—file, directory, symbolic link, or broken link—is treated as occupied rather than intentionally overwritten or followed;
 - numbered collision-safe names are allocated;
 - one missing/failed source does not intentionally roll back successful copies;
 - a summary reports completed/failed copies.
 
-Real platform directory-picker, permission-revocation, low-storage, and very-large-batch behavior remain release QA gates.
+Real platform directory-picker, permission-revocation, destination-loss, low-storage, and very-large-batch behavior remain release QA gates.
 
 ## 9. Batch conversion
 
@@ -256,17 +256,23 @@ Open **Batch Convert** from Home.
 3. Optionally choose an external destination folder.
 4. Start conversion.
 
-SonicNest processes the selected entries sequentially:
+SonicNest processes selected entries sequentially:
 
 - each successful conversion becomes a new managed Library entry;
 - the source recording remains unchanged;
 - markers are retained where appropriate;
+- known source bitrate/sample-rate/channel values are preferred, with current recording settings used as fallback when those values are unknown;
 - failures are isolated per file;
-- optional external-copy failures are reported independently from successful managed conversions.
+- optional external-copy failures are reported independently from successful managed conversions;
+- a generated managed output that cannot be registered is cleaned up, while a caller-supplied external path is not deleted by that cleanup.
 
 ### Stop after current file
 
 During conversion, **Stop after current file** asks SonicNest to finish the in-progress conversion safely and not begin another selected item. This is intentionally different from abruptly terminating an output write.
+
+Leaving the Batch Convert screen during active processing raises the same stop request so SonicNest does not intentionally begin another selected item after the current file finishes. Real long-file, navigation, process-lifecycle, and codec behavior still requires platform testing.
+
+See `docs/BATCH_CONVERSION.md` for the detailed execution contract.
 
 ## 10. Playback
 
@@ -363,6 +369,8 @@ Some recorder processing settings are requests to the native backend and can be 
 - managed recording/Trash/temporary storage statistics;
 - temporary-audio cleanup when safe.
 
+Recording and Trash totals include supported top-level regular managed audio. Unsupported files, nested arbitrary files, directories, and symbolic links are not counted as Library recordings merely because they are inside the managed directories. Temporary processing storage is measured separately because backend work products can legitimately use other extensions and structures.
+
 Temporary cleanup is disabled while an active recording could depend on temporary files.
 
 ## 13. Local metadata and managed recording recovery
@@ -380,29 +388,34 @@ On startup:
 - if an interrupted replacement left a valid `recordings.json.bak`, SonicNest can restore that backup to the primary metadata path;
 - a corrupt primary can fall back to a valid backup after preserving the corrupt primary for diagnosis;
 - if neither primary nor backup can be recovered, SonicNest preserves corrupt diagnostics and writes a clean valid empty metadata document rather than repeatedly loading the same corrupt primary;
-- metadata entries pointing outside SonicNest-managed recording/Trash storage, or to managed files that no longer exist, are removed during startup reconciliation;
-- supported audio files still present at the top level of SonicNest's managed `Recordings` directory but missing from metadata are reconstructed as recovered Library entries.
+- metadata entries pointing outside SonicNest-managed storage, using unsupported recording extensions, pointing to missing files, or resolving to symbolic links/non-regular entries are removed during startup reconciliation;
+- supported regular audio files still present at the top level of SonicNest's managed `Recordings` or `.trash` directory but missing from metadata are reconstructed as recovered entries in the matching active/Trash state.
 
 ### Recovered recordings
 
 A reconstructed entry receives the `Recovered` tag and a recovery note. SonicNest reuses the managed filename, filesystem size, and modification time, then best-effort probes duration and waveform information.
 
-If a preserved file is partially written or damaged enough that media probing fails, SonicNest can still keep the managed file visible with unknown technical metadata so it can be inspected, exported, renamed, or intentionally deleted rather than remaining a hidden orphan.
+An orphan discovered in active `Recordings` remains active. An orphan discovered in `.trash` remains in Trash so interruption during permanent deletion does not silently promote the preserved file back into the active Library.
 
-This recovery path is designed to preserve user audio after an interrupted metadata update. It does not recreate audio bytes that were externally deleted or irreversibly damaged.
+If a preserved file is partially written or damaged enough that media probing fails, SonicNest can still keep the supported managed file represented with unknown technical metadata so it can be inspected, exported/restored as appropriate, or intentionally deleted rather than remaining a hidden orphan.
+
+Recovery does not follow symbolic links, recurse into arbitrary nested directories, or turn unsupported files into recordings simply because they are located under a managed directory.
+
+This recovery path is designed to preserve user audio after an interrupted metadata update or managed deletion sequence. It does not recreate audio bytes that were externally deleted or irreversibly damaged.
 
 ### Persistence-safe mutations
 
 Library metadata and managed file operations are coordinated so avoidable split states can be rolled back:
 
+- a completed stopped recording whose metadata save fails is removed from the unsaved in-memory index while its managed audio remains available for startup recovery;
 - metadata-only edits restore their previous in-memory value if persistence fails;
 - rename, move-to-Trash, and restore move the file back when their matching metadata save fails;
 - settings restore their previous in-memory snapshot if persistence fails;
-- generated/processed output registration removes an unregistered output after persistence failure;
+- generated/processed output registration removes an unregistered managed output after persistence failure without deleting an unrelated external caller path;
 - permanent deletion persists metadata removal before deleting the managed file, preferring a recoverable orphan over irreversible loss if an interruption occurs between those steps;
 - if managed file deletion fails while the file still exists, the metadata entry is restored and persisted again.
 
-See `docs/METADATA_INTEGRITY.md` for the exact repository invariants and deterministic test coverage. Real low-storage, permission-revocation, abrupt-process/power-loss, and partially written-media behavior remains release QA work on representative target systems.
+See `docs/METADATA_INTEGRITY.md`, `docs/MANAGED_STORAGE_BOUNDARY.md`, and `docs/RECOVERY_TESTING.md` for the exact repository invariants and deterministic test coverage. Real low-storage, permission-revocation, abrupt-process/power-loss, and partially written-media behavior remains release QA work on representative target systems.
 
 ## 14. Desktop keyboard shortcuts
 
@@ -419,7 +432,7 @@ See `docs/METADATA_INTEGRITY.md` for the exact repository invariants and determi
 
 Keyboard behavior must be checked with actual text fields/focus/navigation during desktop release QA.
 
-## 15. Privacy
+## 15. Privacy and diagnostic text
 
 SonicNest is designed around local recording storage.
 
@@ -427,8 +440,12 @@ SonicNest is designed around local recording storage.
 - There is no intended hidden analytics/telemetry flow in the core project.
 - External sharing/export occurs through explicit user actions.
 - Signing credentials and store secrets must not be stored in the repository.
+- Product-facing explanations belong in the localization layer.
+- Raw operating-system, plugin, FFmpeg, filesystem, and backend diagnostic details intentionally remain technical evidence rather than being automatically translated or rewritten.
 
-See `PRIVACY.md` and `SECURITY.md` for project policy details.
+Technical diagnostics can contain filenames, paths, titles, tags, notes, or platform information. Remove private data and secrets before sharing diagnostic material.
+
+See `PRIVACY.md`, `SECURITY.md`, and `docs/LOCALIZATION_POLICY.md` for project policy details.
 
 ## 16. Native branding and startup
 
@@ -453,8 +470,10 @@ The current source has extensive automated compile/test coverage, but stable rel
 - TalkBack/VoiceOver/Narrator/Linux accessibility audits;
 - real native-brand visual inspection;
 - real screenshots;
-- production signing/notarization;
+- production signing/notarization where required;
 - final package/store review.
+
+The initial Linux public channel is GitHub Releases with the verified Debian `.deb` and SHA-256 checksum; choosing the channel does not make a hosted CI package a stable release.
 
 Do not treat a CI artifact as a stable public release solely because it compiled.
 
