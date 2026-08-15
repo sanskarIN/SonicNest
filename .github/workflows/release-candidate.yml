@@ -131,20 +131,23 @@ jobs:
       - shell: pwsh
         run: ./tool/apply_branding.ps1
       - run: flutter build windows --release
-      - name: Package release-mode bundle
+      - name: Build Windows portable package
+        shell: pwsh
+        run: ./tool/build_windows_portable.ps1 -Configuration release -ArtifactSuffix unsigned -OutputDirectory 'build\release-candidate\windows'
+      - name: Verify Windows portable package
         shell: pwsh
         run: |
-          $Out = 'build\release-candidate\windows'
-          New-Item -ItemType Directory -Force -Path $Out | Out-Null
-          $Zip = Join-Path $Out 'sonicnest-windows-release-unsigned.zip'
-          Compress-Archive -Path 'build\windows\x64\runner\Release\*' -DestinationPath $Zip -Force
+          $Archive = Get-ChildItem 'build\release-candidate\windows' -Filter 'sonicnest-windows-*.zip' -File | Select-Object -First 1
+          if (-not $Archive) { throw 'Windows release-candidate package was not created.' }
+          ./tool/verify_windows_portable.ps1 -ArchivePath $Archive.FullName
+      - name: Add release-candidate warning
+        shell: pwsh
+        run: |
           @'
           SonicNest release-candidate validation artifact.
-          This archive is unsigned and is not approved for public distribution.
-          Windows signing, installer/package selection, real-machine QA, and final visual review remain release gates.
-          '@ | Set-Content -Path (Join-Path $Out 'RELEASE_CANDIDATE_WARNING.txt') -Encoding UTF8
-          $Hash = (Get-FileHash -Algorithm SHA256 $Zip).Hash.ToLowerInvariant()
-          "$Hash  sonicnest-windows-release-unsigned.zip" | Set-Content -Path (Join-Path $Out 'SHA256SUMS.txt') -Encoding ASCII
+          This portable Windows archive is unsigned and is not approved for public distribution.
+          Authenticode, real-machine microphone/routing, accessibility, final visual review, and release-evidence gates remain incomplete.
+          '@ | Set-Content -Path 'build\release-candidate\windows\RELEASE_CANDIDATE_WARNING.txt' -Encoding UTF8
       - uses: actions/upload-artifact@v4
         with:
           name: sonicnest-windows-release-candidate
