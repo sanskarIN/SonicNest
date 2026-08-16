@@ -40,6 +40,8 @@ jobs:
         with:
           channel: stable
           cache: true
+      - name: Verify committed Dart formatting
+        run: dart format --output=none --set-exit-if-changed lib test tool/generate_brand_assets_v2.dart
       - name: Install Linux audio prerequisites
         run: sudo apt-get update && sudo apt-get install -y ffmpeg pulseaudio-utils libjson-glib-dev
       - name: Generate platform hosts
@@ -48,8 +50,6 @@ jobs:
         run: flutter pub get
       - name: Generate deterministic branding source images
         run: dart tool/generate_brand_assets_v2.dart
-      - name: Verify Dart formatting
-        run: dart format --output=none --set-exit-if-changed lib test tool/generate_brand_assets_v2.dart
       - name: Static analysis
         run: flutter analyze --no-fatal-infos
       - name: Unit tests
