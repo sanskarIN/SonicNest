@@ -155,9 +155,13 @@ class DiagnosticReport {
       ..writeln('## Storage')
       ..writeln()
       ..writeln('- Probe succeeded: $storageProbeSucceeded')
-      ..writeln('- Recordings bytes: ${storage?.recordingsBytes ?? 'unavailable'}')
+      ..writeln(
+        '- Recordings bytes: ${storage?.recordingsBytes ?? 'unavailable'}',
+      )
       ..writeln('- Trash bytes: ${storage?.trashBytes ?? 'unavailable'}')
-      ..writeln('- Temporary bytes: ${storage?.temporaryBytes ?? 'unavailable'}')
+      ..writeln(
+        '- Temporary bytes: ${storage?.temporaryBytes ?? 'unavailable'}',
+      )
       ..writeln(
         '- Total managed bytes: ${storage?.totalManagedBytes ?? 'unavailable'}',
       )
@@ -167,7 +171,9 @@ class DiagnosticReport {
       ..writeln('- Status: $recorderStatus')
       ..writeln('- Input probe succeeded: $inputProbeSucceeded')
       ..writeln('- Input-device count: ${inputDeviceCount ?? 'unavailable'}')
-      ..writeln('- Selected input: ${customInputSelected ? 'custom' : 'default'}')
+      ..writeln(
+        '- Selected input: ${customInputSelected ? 'custom' : 'default'}',
+      )
       ..writeln()
       ..writeln('## Recording settings')
       ..writeln()
