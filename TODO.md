@@ -27,6 +27,8 @@ No additional repository-only release-automation gap is currently identified. Th
 
 SonicNest now includes the user-initiated **Diagnostics & QA** report described in `docs/DIAGNOSTICS_AND_QA.md`. Use a fresh privacy-safe report as supporting evidence for relevant manual tests below. The report intentionally excludes recording content, recording titles, file paths, notes, tags, bookmarks, smart-naming text, and input-device names, and it does **not** close any physical-device, accessibility, filesystem, signing, or distribution gate by itself.
 
+SonicNest also includes **About → Manual QA evidence**, documented in `docs/MANUAL_QA_EVIDENCE.md`. The local ledger mirrors the manual evidence categories below and records only fixed check IDs, `Not run`/`Passed`/`Failed`/`Blocked` status values, and timestamps; it has no free-form tester-note field. Use it to make real-device/system testing reproducible and exportable. A status selected in the app is supporting evidence only: the unchecked tasks in this file remain unchecked until the corresponding test has actually been performed and its evidence reviewed.
+
 ## Hardware and lifecycle validation
 
 - [ ] Android microphone permission allow/deny/revoke tests on physical devices.
