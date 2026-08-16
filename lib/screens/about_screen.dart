@@ -6,6 +6,7 @@ import '../l10n/app_localizations.dart';
 import '../l10n/diagnostics_localizations.dart';
 import '../widgets/sonicnest_mark.dart';
 import 'diagnostics_screen.dart';
+import 'qa_evidence_screen.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key, required this.controller});
@@ -66,6 +67,17 @@ class AboutScreen extends StatelessWidget {
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => DiagnosticsScreen(controller: controller),
+                ),
+              ),
+            ),
+            _LinkTile(
+              icon: Icons.fact_check_outlined,
+              title: l10n.qaEvidenceOpen,
+              subtitle: l10n.qaEvidenceOpenSubtitle,
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => QaEvidenceScreen(controller: controller),
                 ),
               ),
             ),
