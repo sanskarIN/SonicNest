@@ -22,6 +22,7 @@ extension DiagnosticsLocalizations on AppLocalizations {
   String get diagnosticsRecorder => 'Recorder state';
   String get diagnosticsRecordingSettings => 'Recording settings';
   String get diagnosticsPlaybackUi => 'Playback & interface';
+  String get diagnosticsVersion => 'Version';
   String get diagnosticsPlatform => 'Platform';
   String get diagnosticsOsVersion => 'OS version';
   String get diagnosticsLocale => 'Locale';
