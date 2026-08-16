@@ -41,9 +41,8 @@ class _SonicNestMarkPainter extends CustomPainter {
     final rect = Offset.zero & size;
     final radius = Radius.circular(size.width * .22);
     final bg = Paint()
-      ..shader = LinearGradient(
-        colors: [primary, secondary],
-      ).createShader(rect);
+      ..shader = LinearGradient(colors: [primary, secondary])
+          .createShader(rect);
     canvas.drawRRect(RRect.fromRectAndRadius(rect, radius), bg);
 
     final stroke = Paint()
