@@ -1,6 +1,6 @@
 # SonicNest Privacy
 
-SonicNest is designed to work offline for its core recording, library, playback, and editing workflows.
+SonicNest is designed to work offline for its core recording, library, playback, editing, diagnostics, and manual QA-evidence workflows.
 
 - Microphone access is requested only for recording.
 - Recordings and metadata are stored locally by default.
@@ -9,5 +9,11 @@ SonicNest is designed to work offline for its core recording, library, playback,
 - Sharing/exporting is user initiated.
 - External links such as GitHub and Buy Me a Coffee open only after user action.
 - Optional future network/transcription features must disclose network use before sending audio.
+- Diagnostics are generated only after user action and exclude recording content, recording titles, file paths, notes, tags, bookmarks, smart-naming text, and input-device names.
+- Manual QA evidence is stored locally and contains only source-controlled check IDs, `Not run`/`Passed`/`Failed`/`Blocked` status values, and timestamps.
+- Manual QA evidence deliberately has no free-form tester-note field and does not collect recording/library content, paths, input-device names, or other user-entered recording metadata.
+- Diagnostics and manual QA evidence are copied or shared only through explicit user actions; SonicNest does not automatically upload either report type.
 
-The operating system may expose microphone, notification, file-picker, or background-audio permissions depending on platform and enabled features.
+The operating system may expose microphone, notification, file-picker, background-audio, or sharing permissions depending on platform and enabled features.
+
+See `docs/DIAGNOSTICS_AND_QA.md` for the diagnostics privacy contract and `docs/MANUAL_QA_EVIDENCE.md` for the manual QA evidence storage/export boundary.
