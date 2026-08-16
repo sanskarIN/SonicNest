@@ -5,6 +5,10 @@ All notable project changes are documented here.
 ## [Unreleased]
 
 ### Added
+- About-accessible Manual QA evidence sessions backed by a source-controlled release-check catalog, versioned local persistence, `Not run`/`Passed`/`Failed`/`Blocked` states, reset handling, and serialized status writes.
+- Deterministic Manual QA evidence JSON/Markdown export with explicit privacy flags, complete current-catalog status coverage, stale-ID removal, immutable persisted check IDs, and no free-form tester-note field.
+- Diagnostics-to-QA evidence navigation that explicitly carries the current privacy-safe diagnostic snapshot into the exported manual evidence bundle.
+- Regression coverage for QA session serialization, persistence sanitization/reset, catalog integrity/stable IDs, localization completeness, export privacy, diagnostics attachment labels, and bootstrap analyzer-configuration preservation.
 - Unified machine-readable release-candidate provenance manifest builder and final hosted aggregation job that re-verifies all five platform payload checksum records and binds them to the exact source SHA, application version, workflow run, and attempt.
 - Python regression coverage for release provenance tooling plus permanent repository-audit execution of the Python release-tool suite.
 - Exact hosted release-candidate evidence record in `docs/AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md`, including per-platform inner artifact SHA-256 values, workflow artifact digests, Android Debug-certificate fingerprints, Windows portable startup-smoke evidence, and explicit stable-release boundaries.
@@ -60,6 +64,9 @@ All notable project changes are documented here.
 - Expanded manual QA matrix covering recorder lifecycle, codec fallback, smart naming, A-B looping, storage, editor processing, accessibility, localization readiness, stress testing, packaging, and signing/release boundaries.
 
 ### Changed
+- Platform bootstrap now preserves the tracked `analysis_options.yaml` on Bash and PowerShell when `flutter create .` regenerates missing host folders.
+- Core CI validates committed Dart formatting before generated platform-host state, preventing bootstrap-generated analyzer configuration from changing formatter behavior for tracked source.
+- Manual QA evidence status persistence is serialized so simultaneous UI selections cannot race from the same previous session state.
 - Release-candidate validation now publishes a checksummed `sonicnest-release-candidate-manifest` artifact only after Android, Linux, Windows, macOS, and iOS candidate jobs succeed.
 - Release evidence now preserves unified manifest/payload hashes, workflow artifact digests, platform signing classifications, and an explicit `stableReleaseApproved: false` boundary.
 - The release-candidate workflow now produces Android release-mode **non-production** APK/AAB artifacts with explicit signing-state evidence instead of inaccurately describing Debug-certificate output as unsigned.
