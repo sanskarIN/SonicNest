@@ -89,9 +89,9 @@ class _QaEvidenceScreenState extends State<QaEvidenceScreen> {
         return;
       }
       final l10n = AppLocalizations.of(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.qaEvidenceSaveFailed(error))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.qaEvidenceSaveFailed(error))));
     } finally {
       if (mounted) {
         setState(() => _savingCheckId = null);
@@ -132,16 +132,15 @@ class _QaEvidenceScreenState extends State<QaEvidenceScreen> {
         return;
       }
       setState(() => _session = session);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.qaEvidenceResetDone)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.qaEvidenceResetDone)));
     } catch (error) {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.qaEvidenceSaveFailed(error))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.qaEvidenceSaveFailed(error))));
     } finally {
       if (mounted) {
         setState(() => _resetting = false);
@@ -171,9 +170,8 @@ class _QaEvidenceScreenState extends State<QaEvidenceScreen> {
       return;
     }
     final l10n = AppLocalizations.of(context);
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.qaEvidenceCopied)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(l10n.qaEvidenceCopied)));
   }
 
   Future<void> _shareMarkdown() async {
@@ -195,9 +193,8 @@ class _QaEvidenceScreenState extends State<QaEvidenceScreen> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.qaEvidenceShared)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.qaEvidenceShared)));
     } catch (error) {
       if (!mounted) {
         return;
@@ -217,8 +214,7 @@ class _QaEvidenceScreenState extends State<QaEvidenceScreen> {
         actions: [
           IconButton(
             tooltip: l10n.qaEvidenceReset,
-            onPressed:
-                _session == null || _resetting || _savingCheckId != null
+            onPressed: _session == null || _resetting || _savingCheckId != null
                 ? null
                 : _reset,
             icon: _resetting
@@ -374,9 +370,8 @@ class _SummaryCard extends StatelessWidget {
                       bundle.assessedChecks,
                       bundle.totalChecks,
                     ),
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                    style: Theme.of(context).textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w800),
                   ),
                 ),
               ],
@@ -429,10 +424,8 @@ class _CountChip extends StatelessWidget {
   final IconData icon;
 
   @override
-  Widget build(BuildContext context) => Chip(
-    avatar: Icon(icon, size: 18),
-    label: Text('$label: $value'),
-  );
+  Widget build(BuildContext context) =>
+      Chip(avatar: Icon(icon, size: 18), label: Text('$label: $value'));
 }
 
 class _CategoryCard extends StatelessWidget {
@@ -455,7 +448,9 @@ class _CategoryCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final checks = QaCheckCatalog.checksForCategory(category.id);
     final assessed = checks
-        .where((check) => session.statusFor(check.id) != QaEvidenceStatus.notRun)
+        .where(
+          (check) => session.statusFor(check.id) != QaEvidenceStatus.notRun,
+        )
         .length;
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -466,7 +461,9 @@ class _CategoryCard extends StatelessWidget {
           l10n.qaEvidenceCategoryTitle(category.id),
           style: const TextStyle(fontWeight: FontWeight.w800),
         ),
-        subtitle: Text(l10n.qaEvidenceCategoryProgress(assessed, checks.length)),
+        subtitle: Text(
+          l10n.qaEvidenceCategoryProgress(assessed, checks.length),
+        ),
         children: [
           for (final check in checks)
             _QaCheckTile(
