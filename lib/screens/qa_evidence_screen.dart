@@ -32,7 +32,7 @@ class _QaEvidenceScreenState extends State<QaEvidenceScreen> {
 
   QaEvidenceSession? _session;
   Object? _loadError;
-  final Set<String> _savingChecks = <String>{};
+  String? _savingCheckId;
   bool _resetting = false;
 
   @override
@@ -66,7 +66,8 @@ class _QaEvidenceScreenState extends State<QaEvidenceScreen> {
   ) async {
     final session = _session;
     if (session == null ||
-        _savingChecks.contains(check.id) ||
+        _savingCheckId != null ||
+        _resetting ||
         session.statusFor(check.id) == status) {
       return;
     }
@@ -76,7 +77,7 @@ class _QaEvidenceScreenState extends State<QaEvidenceScreen> {
       status: status,
       changedAt: DateTime.now(),
     );
-    setState(() => _savingChecks.add(check.id));
+    setState(() => _savingCheckId = check.id);
     try {
       await _store.save(next);
       if (!mounted) {
@@ -93,13 +94,13 @@ class _QaEvidenceScreenState extends State<QaEvidenceScreen> {
       );
     } finally {
       if (mounted) {
-        setState(() => _savingChecks.remove(check.id));
+        setState(() => _savingCheckId = null);
       }
     }
   }
 
   Future<void> _reset() async {
-    if (_resetting) {
+    if (_resetting || _savingCheckId != null) {
       return;
     }
     final l10n = AppLocalizations.of(context);
@@ -216,7 +217,10 @@ class _QaEvidenceScreenState extends State<QaEvidenceScreen> {
         actions: [
           IconButton(
             tooltip: l10n.qaEvidenceReset,
-            onPressed: _session == null || _resetting ? null : _reset,
+            onPressed:
+                _session == null || _resetting || _savingCheckId != null
+                ? null
+                : _reset,
             icon: _resetting
                 ? const SizedBox.square(
                     dimension: 20,
@@ -334,7 +338,7 @@ class _QaEvidenceScreenState extends State<QaEvidenceScreen> {
             category: QaCheckCatalog.categories[index],
             session: session,
             initiallyExpanded: index == 0,
-            savingChecks: _savingChecks,
+            savingCheckId: _savingCheckId,
             onChanged: _setStatus,
           ),
         const SizedBox(height: 20),
@@ -436,14 +440,14 @@ class _CategoryCard extends StatelessWidget {
     required this.category,
     required this.session,
     required this.initiallyExpanded,
-    required this.savingChecks,
+    required this.savingCheckId,
     required this.onChanged,
   });
 
   final QaCheckCategory category;
   final QaEvidenceSession session;
   final bool initiallyExpanded;
-  final Set<String> savingChecks;
+  final String? savingCheckId;
   final Future<void> Function(QaCheckDefinition, QaEvidenceStatus) onChanged;
 
   @override
@@ -469,7 +473,8 @@ class _CategoryCard extends StatelessWidget {
               definition: check,
               status: session.statusFor(check.id),
               updatedAt: session.resultFor(check.id)?.updatedAtUtc,
-              saving: savingChecks.contains(check.id),
+              saving: savingCheckId == check.id,
+              enabled: savingCheckId == null,
               onChanged: (status) => onChanged(check, status),
             ),
         ],
@@ -484,6 +489,7 @@ class _QaCheckTile extends StatelessWidget {
     required this.status,
     required this.updatedAt,
     required this.saving,
+    required this.enabled,
     required this.onChanged,
   });
 
@@ -491,6 +497,7 @@ class _QaCheckTile extends StatelessWidget {
   final QaEvidenceStatus status;
   final DateTime? updatedAt;
   final bool saving;
+  final bool enabled;
   final ValueChanged<QaEvidenceStatus> onChanged;
 
   @override
@@ -537,6 +544,7 @@ class _QaCheckTile extends StatelessWidget {
                   )
                 else
                   PopupMenuButton<QaEvidenceStatus>(
+                    enabled: enabled,
                     tooltip: '$title: $statusLabel',
                     onSelected: onChanged,
                     itemBuilder: (context) => [
