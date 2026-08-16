@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../controllers/app_controller.dart';
 import '../core/constants.dart';
 import '../l10n/app_localizations.dart';
+import '../l10n/diagnostics_localizations.dart';
 import '../widgets/sonicnest_mark.dart';
+import 'diagnostics_screen.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key, required this.controller});
@@ -32,7 +34,10 @@ class AboutScreen extends StatelessWidget {
             const SizedBox(height: 6),
             Text(l10n.aboutTagline, textAlign: TextAlign.center),
             const SizedBox(height: 6),
-            Text(l10n.versionLabel('0.1.0 (1)'), textAlign: TextAlign.center),
+            Text(
+              l10n.versionLabel(AppConstants.appDisplayVersion),
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 28),
             Card(
               child: Padding(
@@ -53,6 +58,17 @@ class AboutScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 14),
+            _LinkTile(
+              icon: Icons.monitor_heart_outlined,
+              title: l10n.diagnostics,
+              subtitle: l10n.diagnosticsAboutTileSubtitle,
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => DiagnosticsScreen(controller: controller),
+                ),
+              ),
+            ),
             _LinkTile(
               icon: Icons.code,
               title: l10n.sonicNestOnGitHub,
@@ -103,7 +119,7 @@ class AboutScreen extends StatelessWidget {
               onTap: () => showLicensePage(
                 context: context,
                 applicationName: l10n.appName,
-                applicationVersion: '0.1.0',
+                applicationVersion: AppConstants.appVersion,
                 applicationLegalese: AppConstants.developerCredit,
               ),
             ),
@@ -157,12 +173,14 @@ class _LinkTile extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.onTap,
+    this.trailing = const Icon(Icons.open_in_new),
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
+  final Widget trailing;
 
   @override
   Widget build(BuildContext context) => Card(
@@ -170,7 +188,7 @@ class _LinkTile extends StatelessWidget {
       leading: Icon(icon),
       title: Text(title),
       subtitle: Text(subtitle),
-      trailing: const Icon(Icons.open_in_new),
+      trailing: trailing,
       onTap: onTap,
     ),
   );
