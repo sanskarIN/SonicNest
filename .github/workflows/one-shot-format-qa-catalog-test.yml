@@ -25,15 +25,26 @@ jobs:
         run: |
           git config user.name "Sanskar"
           git config user.email "sanskarin@outlook.in"
-      - name: Format QA catalog regression
-        run: dart format test/qa_check_catalog_test.dart
-      - name: Commit formatter output
+      - name: Apply exact permanent-gate formatting scope
+        run: dart format lib test tool/generate_brand_assets_v2.dart
+      - name: Record formatter changes
         shell: bash
         run: |
-          if git diff --quiet -- test/qa_check_catalog_test.dart; then
-            echo "No formatter changes were required."
-            exit 0
+          git diff --name-only -- lib test tool/generate_brand_assets_v2.dart > .github/manual-qa-format-result.txt
+          if [[ ! -s .github/manual-qa-format-result.txt ]]; then
+            printf '%s\n' 'NO_FORMAT_CHANGES' > .github/manual-qa-format-result.txt
           fi
-          git add test/qa_check_catalog_test.dart
-          git commit -m "style: format stable QA identifier regression"
-          git push origin HEAD:main
+      - name: Commit each formatted source file
+        shell: bash
+        run: |
+          while IFS= read -r file; do
+            [[ -z "$file" || "$file" == "NO_FORMAT_CHANGES" ]] && continue
+            git add -- "$file"
+            git commit -m "style: apply canonical Dart formatting to $file"
+          done < .github/manual-qa-format-result.txt
+      - name: Commit formatter result
+        run: |
+          git add .github/manual-qa-format-result.txt
+          git commit -m "ci: record manual QA formatter result"
+      - name: Push canonical formatting
+        run: git push origin HEAD:main
