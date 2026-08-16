@@ -42,9 +42,8 @@ void main() {
         final source = File(p.join(root.path, 'lecture.mp3'));
         await source.writeAsBytes([7, 8, 9]);
         await File(p.join(destination.path, 'lecture.mp3')).writeAsBytes([1]);
-        await File(
-          p.join(destination.path, 'lecture (2).mp3'),
-        ).writeAsBytes([2]);
+        await File(p.join(destination.path, 'lecture (2).mp3'))
+            .writeAsBytes([2]);
 
         final copiedPath = await actions.copyFileToDirectoryCollisionSafe(
           sourcePath: source.path,
