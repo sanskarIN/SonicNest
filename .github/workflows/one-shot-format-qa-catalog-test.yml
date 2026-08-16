@@ -46,5 +46,7 @@ jobs:
         run: |
           git add .github/manual-qa-format-result.txt
           git commit -m "ci: record manual QA formatter result"
-      - name: Push canonical formatting
-        run: git push origin HEAD:main
+      - name: Rebase onto current main and push
+        run: |
+          git pull --rebase origin main
+          git push origin HEAD:main
