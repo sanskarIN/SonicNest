@@ -12,14 +12,13 @@ void main() {
     const service = DiagnosticReportService();
 
     DiagnosticReport buildReport({StorageStats? storageStats}) {
-      final recording = RecordingSettings.forPreset(
-        QualityPreset.podcast,
-      ).copyWith(
-        namingPrefix: 'PRIVATE_PREFIX_DO_NOT_EXPORT',
-        namingTemplate: 'PRIVATE_TEMPLATE_DO_NOT_EXPORT',
-        namingSuffix: 'PRIVATE_SUFFIX_DO_NOT_EXPORT',
-        namingCategory: 'PRIVATE_CATEGORY_DO_NOT_EXPORT',
-      );
+      final recording = RecordingSettings.forPreset(QualityPreset.podcast)
+          .copyWith(
+            namingPrefix: 'PRIVATE_PREFIX_DO_NOT_EXPORT',
+            namingTemplate: 'PRIVATE_TEMPLATE_DO_NOT_EXPORT',
+            namingSuffix: 'PRIVATE_SUFFIX_DO_NOT_EXPORT',
+            namingCategory: 'PRIVATE_CATEGORY_DO_NOT_EXPORT',
+          );
       final settings = SettingsSnapshot.defaults().copyWith(
         recording: recording,
         themeMode: ThemeMode.dark,
@@ -68,9 +67,18 @@ void main() {
       expect(decoded['generatedAtUtc'], '2026-08-16T06:30:00.000Z');
       expect((decoded['app'] as Map<String, dynamic>)['name'], 'SonicNest');
       expect((decoded['app'] as Map<String, dynamic>)['version'], '0.1.0+1');
-      expect((decoded['library'] as Map<String, dynamic>)['savedRecordings'], 12);
-      expect((decoded['storage'] as Map<String, dynamic>)['totalManagedBytes'], 1250);
-      expect((decoded['recorder'] as Map<String, dynamic>)['selectedInput'], 'custom');
+      expect(
+        (decoded['library'] as Map<String, dynamic>)['savedRecordings'],
+        12,
+      );
+      expect(
+        (decoded['storage'] as Map<String, dynamic>)['totalManagedBytes'],
+        1250,
+      );
+      expect(
+        (decoded['recorder'] as Map<String, dynamic>)['selectedInput'],
+        'custom',
+      );
       expect(
         ((decoded['settings'] as Map<String, dynamic>)['recording']
             as Map<String, dynamic>)['preset'],
@@ -79,8 +87,8 @@ void main() {
     });
 
     test('explicitly declares every privacy-sensitive field as excluded', () {
-      final privacy = buildReport().toJsonObject()['privacy']
-          as Map<String, Object?>;
+      final privacy =
+          buildReport().toJsonObject()['privacy'] as Map<String, Object?>;
 
       expect(
         privacy,
@@ -116,37 +124,40 @@ void main() {
       expect(markdown, contains('Input-device names: not included'));
     });
 
-    test('represents failed storage and input probes without inventing values', () {
-      final settings = SettingsSnapshot.defaults();
-      final report = service.build(
-        generatedAt: DateTime.utc(2026, 8, 16),
-        appVersion: '0.1.0+1',
-        platform: 'linux',
-        operatingSystemVersion: 'test',
-        localeName: 'en_US',
-        dartVersion: 'test',
-        processorCount: 2,
-        savedRecordings: 0,
-        trashRecordings: 0,
-        favoriteRecordings: 0,
-        pinnedRecordings: 0,
-        storageStats: null,
-        storageProbeSucceeded: false,
-        recorderStatus: 'idle',
-        inputDeviceCount: null,
-        inputProbeSucceeded: false,
-        customInputSelected: false,
-        settings: settings,
-      );
-      final decoded = report.toJsonObject();
-      final storage = decoded['storage'] as Map<String, Object?>;
-      final recorder = decoded['recorder'] as Map<String, Object?>;
+    test(
+      'represents failed storage and input probes without inventing values',
+      () {
+        final settings = SettingsSnapshot.defaults();
+        final report = service.build(
+          generatedAt: DateTime.utc(2026, 8, 16),
+          appVersion: '0.1.0+1',
+          platform: 'linux',
+          operatingSystemVersion: 'test',
+          localeName: 'en_US',
+          dartVersion: 'test',
+          processorCount: 2,
+          savedRecordings: 0,
+          trashRecordings: 0,
+          favoriteRecordings: 0,
+          pinnedRecordings: 0,
+          storageStats: null,
+          storageProbeSucceeded: false,
+          recorderStatus: 'idle',
+          inputDeviceCount: null,
+          inputProbeSucceeded: false,
+          customInputSelected: false,
+          settings: settings,
+        );
+        final decoded = report.toJsonObject();
+        final storage = decoded['storage'] as Map<String, Object?>;
+        final recorder = decoded['recorder'] as Map<String, Object?>;
 
-      expect(storage['probeSucceeded'], isFalse);
-      expect(storage['totalManagedBytes'], isNull);
-      expect(recorder['inputProbeSucceeded'], isFalse);
-      expect(recorder['inputDeviceCount'], isNull);
-      expect(report.toMarkdown(), contains('unavailable'));
-    });
+        expect(storage['probeSucceeded'], isFalse);
+        expect(storage['totalManagedBytes'], isNull);
+        expect(recorder['inputProbeSucceeded'], isFalse);
+        expect(recorder['inputDeviceCount'], isNull);
+        expect(report.toMarkdown(), contains('unavailable'));
+      },
+    );
   });
 }
