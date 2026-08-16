@@ -21,6 +21,7 @@ on:
       - 'what_changed.md'
       - 'docs/**'
       - '.github/workflows/**'
+      - '.github/scripts/**'
       - '.github/ISSUE_TEMPLATE/**'
   pull_request:
     branches: [main]
@@ -42,6 +43,7 @@ on:
       - 'what_changed.md'
       - 'docs/**'
       - '.github/workflows/**'
+      - '.github/scripts/**'
       - '.github/ISSUE_TEMPLATE/**'
   workflow_dispatch:
 
