@@ -86,6 +86,14 @@ Smart-naming text is intentionally excluded.
 - reduced-motion preference;
 - permanent-delete confirmation preference.
 
+## Manual QA evidence companion
+
+**About → Manual QA evidence** is the companion surface for recording a tester's observation status against the remaining source-controlled release checks. It stores only fixed check IDs, `notRun`/`passed`/`failed`/`blocked` status values, and timestamps. It does not collect free-form tester notes.
+
+Use Diagnostics for the runtime/app-state snapshot and Manual QA evidence for the observation status. These are deliberately separate evidence types: a diagnostic snapshot cannot prove a physical behavior passed, and a manually selected `Passed` status is not an automated assertion by SonicNest.
+
+The manual evidence workflow can export JSON or Markdown and is documented in `docs/MANUAL_QA_EVIDENCE.md`. Its export model can also carry an already collected `DiagnosticReport` when a caller explicitly supplies one; the normal About entry remains usable without collecting diagnostics first.
+
 ## Using diagnostics during physical QA
 
 Capture a fresh report at the start of a test case and again after a meaningful state change when the comparison matters. Keep the report with the corresponding manual QA evidence rather than treating it as proof that the hardware behavior itself passed.
@@ -102,7 +110,9 @@ Recommended examples:
 
 ## What diagnostics do not prove
 
-A generated report does **not** close any physical-device QA gate by itself. It does not prove microphone quality, audio routing, Bluetooth behavior, interruption handling, background execution, accessibility-tool compatibility, low-storage recovery, signed-package behavior, or store readiness. Those items still require the real tests described in `docs/MANUAL_QA.md`, `TODO.md`, and the release documentation.
+A generated report does **not** close any physical-device QA gate by itself. It does not prove microphone quality, audio routing, Bluetooth behavior, interruption handling, background execution, accessibility-tool compatibility, low-storage recovery, signed-package behavior, or store readiness. Those items still require the real tests described in `docs/MANUAL_QA_EVIDENCE.md`, `docs/QA_CHECKLIST.md`, `TODO.md`, and the release documentation.
+
+Likewise, a status entered in Manual QA evidence is only a record of the tester's reported observation. Repository release checkboxes and stable-release approval change only after the required evidence has actually been reviewed.
 
 ## Support sharing
 
