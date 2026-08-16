@@ -184,13 +184,12 @@ void main() {
         ],
         format: RecordingFormat.ogg,
         fallbackSettings: RecordingSettings.defaults(),
-        registerOutput:
-            ({
-              required path,
-              required title,
-              required format,
-              required markers,
-            }) async {},
+        registerOutput: ({
+          required path,
+          required title,
+          required format,
+          required markers,
+        }) async {},
         shouldStop: () => stop,
         onProgress: (completed, total) {
           if (completed == 1) {
@@ -211,13 +210,12 @@ void main() {
       entries: [_entry('one', '/input/one.wav')],
       format: RecordingFormat.wav,
       fallbackSettings: RecordingSettings.defaults(),
-      registerOutput:
-          ({
-            required path,
-            required title,
-            required format,
-            required markers,
-          }) async {},
+      registerOutput: ({
+        required path,
+        required title,
+        required format,
+        required markers,
+      }) async {},
       shouldStop: () => true,
     );
 
@@ -242,13 +240,12 @@ void main() {
         entries: [source],
         format: RecordingFormat.flac,
         fallbackSettings: RecordingSettings.defaults(),
-        registerOutput:
-            ({
-              required path,
-              required title,
-              required format,
-              required markers,
-            }) async {},
+        registerOutput: ({
+          required path,
+          required title,
+          required format,
+          required markers,
+        }) async {},
       );
 
       final call = processor.calls.single;
