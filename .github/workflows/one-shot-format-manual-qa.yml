@@ -1,0 +1,43 @@
+name: One-shot manual QA formatter
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/one-shot-format-manual-qa.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Configure commit identity
+        run: |
+          git config user.name "Sanskar"
+          git config user.email "sanskarin@outlook.in"
+      - name: Apply canonical Dart formatting
+        run: dart format lib test
+      - name: Commit each formatted file separately
+        shell: bash
+        run: |
+          git diff --name-only -- lib test > /tmp/sonicnest-formatted-files.txt
+          if [[ ! -s /tmp/sonicnest-formatted-files.txt ]]; then
+            echo "No formatter changes were required."
+            exit 0
+          fi
+          while IFS= read -r file; do
+            [[ -z "$file" ]] && continue
+            git add -- "$file"
+            git commit -m "style: apply canonical Dart formatting to $file"
+          done < /tmp/sonicnest-formatted-files.txt
+          git push origin HEAD:main
