@@ -224,7 +224,7 @@ pending_manual_validation:
   - stable release approval and v1.0.0 tag only after all required evidence gates complete
 latest_automated_validation:
   formatter_clean_source_commit: 00e78d27ebc68f9aa743d8fab5f2ef11f3ee6910
-  canonical_format_commit: 3d91ace5814e908dbf9c66d556e528042debfa52
+  canonical_format_commit: 403aee21f783cc78e3c8eaa7a3ca2de0184379c1
   non_mutating_format_gate_commit: 32ced086fac27fd2f4f808674afa511647a863e9
   core_flutter_ci:
     run_id: 31932491771
