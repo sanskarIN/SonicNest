@@ -81,24 +81,27 @@ void main() {
       expect(unsupported.results, isEmpty);
     });
 
-    test('keepingOnly removes stale catalog IDs without changing timestamps', () {
-      final changedAt = startedAt.add(const Duration(minutes: 2));
-      var session = QaEvidenceSession.fresh(startedAt).withStatus(
-        checkId: 'valid',
-        status: QaEvidenceStatus.passed,
-        changedAt: changedAt,
-      );
-      session = session.withStatus(
-        checkId: 'stale',
-        status: QaEvidenceStatus.failed,
-        changedAt: changedAt,
-      );
+    test(
+      'keepingOnly removes stale catalog IDs without changing timestamps',
+      () {
+        final changedAt = startedAt.add(const Duration(minutes: 2));
+        var session = QaEvidenceSession.fresh(startedAt).withStatus(
+          checkId: 'valid',
+          status: QaEvidenceStatus.passed,
+          changedAt: changedAt,
+        );
+        session = session.withStatus(
+          checkId: 'stale',
+          status: QaEvidenceStatus.failed,
+          changedAt: changedAt,
+        );
 
-      final filtered = session.keepingOnly({'valid'});
+        final filtered = session.keepingOnly({'valid'});
 
-      expect(filtered.results.keys, ['valid']);
-      expect(filtered.startedAtUtc, startedAt);
-      expect(filtered.updatedAtUtc, changedAt);
-    });
+        expect(filtered.results.keys, ['valid']);
+        expect(filtered.startedAtUtc, startedAt);
+        expect(filtered.updatedAtUtc, changedAt);
+      },
+    );
   });
 }
