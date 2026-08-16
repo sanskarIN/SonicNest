@@ -40,7 +40,10 @@ class QaEvidenceBundle {
       'containsInputDeviceNames': false,
       'containsFreeFormTesterNotes': false,
     },
-    'app': {'name': AppConstants.appName, 'version': AppConstants.appVersionWithBuild},
+    'app': {
+      'name': AppConstants.appName,
+      'version': AppConstants.appVersionWithBuild,
+    },
     'summary': {
       'totalChecks': totalChecks,
       'assessedChecks': assessedChecks,
@@ -56,8 +59,7 @@ class QaEvidenceBundle {
       'updatedAtUtc': session.updatedAtUtc.toUtc().toIso8601String(),
     },
     'checks': [
-      for (final definition in QaCheckCatalog.checks)
-        _checkJson(definition),
+      for (final definition in QaCheckCatalog.checks) _checkJson(definition),
     ],
     if (diagnostics != null) 'diagnostics': diagnostics!.toJsonObject(),
   };
@@ -83,8 +85,12 @@ class QaEvidenceBundle {
       ..writeln()
       ..writeln('Generated (UTC): ${generatedAtUtc.toUtc().toIso8601String()}')
       ..writeln('App version: ${AppConstants.appVersionWithBuild}')
-      ..writeln('Session started (UTC): ${session.startedAtUtc.toUtc().toIso8601String()}')
-      ..writeln('Session updated (UTC): ${session.updatedAtUtc.toUtc().toIso8601String()}')
+      ..writeln(
+        'Session started (UTC): ${session.startedAtUtc.toUtc().toIso8601String()}',
+      )
+      ..writeln(
+        'Session updated (UTC): ${session.updatedAtUtc.toUtc().toIso8601String()}',
+      )
       ..writeln()
       ..writeln('## Privacy')
       ..writeln()
