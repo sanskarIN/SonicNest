@@ -76,25 +76,29 @@ void main() {
       return session;
     }
 
-    test('serializes every catalog check with deterministic summary counts', () {
-      final bundle = service.build(
-        generatedAt: DateTime.utc(2026, 8, 16, 9, 30),
-        session: sampleSession(),
-      );
-      final decoded = jsonDecode(bundle.toPrettyJson()) as Map<String, dynamic>;
-      final summary = decoded['summary'] as Map<String, dynamic>;
-      final checks = decoded['checks'] as List<dynamic>;
+    test(
+      'serializes every catalog check with deterministic summary counts',
+      () {
+        final bundle = service.build(
+          generatedAt: DateTime.utc(2026, 8, 16, 9, 30),
+          session: sampleSession(),
+        );
+        final decoded =
+            jsonDecode(bundle.toPrettyJson()) as Map<String, dynamic>;
+        final summary = decoded['summary'] as Map<String, dynamic>;
+        final checks = decoded['checks'] as List<dynamic>;
 
-      expect(decoded['schemaVersion'], QaEvidenceBundle.schemaVersion);
-      expect(summary['totalChecks'], QaCheckCatalog.checks.length);
-      expect(summary['assessedChecks'], 3);
-      expect(summary['passed'], 1);
-      expect(summary['failed'], 1);
-      expect(summary['blocked'], 1);
-      expect(summary['notRun'], QaCheckCatalog.checks.length - 3);
-      expect(summary['allPassed'], isFalse);
-      expect(checks.length, QaCheckCatalog.checks.length);
-    });
+        expect(decoded['schemaVersion'], QaEvidenceBundle.schemaVersion);
+        expect(summary['totalChecks'], QaCheckCatalog.checks.length);
+        expect(summary['assessedChecks'], 3);
+        expect(summary['passed'], 1);
+        expect(summary['failed'], 1);
+        expect(summary['blocked'], 1);
+        expect(summary['notRun'], QaCheckCatalog.checks.length - 3);
+        expect(summary['allPassed'], isFalse);
+        expect(checks.length, QaCheckCatalog.checks.length);
+      },
+    );
 
     test('declares the evidence bundle privacy boundary explicitly', () {
       final bundle = service.build(
