@@ -2301,7 +2301,7 @@ The first analyzer pass then exposed two constructor-order informational lints i
 
 ## Cross-platform evidence
 
-- Core Flutter CI run `31934843541`, source `0eb56abad482c8c296d9f80ef060ebddbba95e7b`: committed-source formatting **SUCCESS**, static analysis **SUCCESS**, complete unit suite **SUCCESS**, Linux debug build **SUCCESS**; Android debug build remained in progress at the exact moment this ledger section was generated and is not falsely recorded as complete here.
+- Core Flutter CI run `31934843541`, source `0eb56abad482c8c296d9f80ef060ebddbba95e7b`: committed-source formatting **SUCCESS**, static analysis **SUCCESS**, complete unit suite **SUCCESS**, Android debug build **SUCCESS**, and Linux debug build **SUCCESS**. Android completed after the first ledger generation and this line was then corrected to the confirmed final result.
 - Apple run `31934094160`, production revision `87c91697c9b11358e03334b3e642cbcb3959dc1c`: macOS debug **SUCCESS**, iOS no-codesign debug **SUCCESS**.
 - Windows run `31934094196`, production revision `87c91697c9b11358e03334b3e642cbcb3959dc1c`: Windows debug **SUCCESS**; release build, portable ZIP construction, verification, bounded extracted startup smoke, warning, and artifact upload **SUCCESS**.
 - Linux Package CI run `31934094139`, production revision `87c91697c9b11358e03334b3e642cbcb3959dc1c`: Linux release build, Debian package build/verification, install, installed startup smoke, uninstall, and artifact upload **SUCCESS**.
