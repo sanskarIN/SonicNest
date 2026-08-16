@@ -405,7 +405,9 @@ abstract final class QaCheckCatalog {
     ),
   ];
 
-  static final Set<String> checkIds = checks.map((check) => check.id).toSet();
+  static final Set<String> checkIds = Set<String>.unmodifiable(
+    checks.map((check) => check.id),
+  );
 
   static List<QaCheckDefinition> checksForCategory(String categoryId) => checks
       .where((check) => check.categoryId == categoryId)
