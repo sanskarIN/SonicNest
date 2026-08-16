@@ -2194,14 +2194,14 @@ Each repository write continued to use `Sanskar <sanskarin@outlook.in>`.
 - `617b7e8b4caa5faa50d9f2d0acf5a0f53d621659` — `docs: add privacy-safe diagnostics QA guide`
 - `384b3a50bf85f31b6f7bea81e4a22537c1012bb0` — `docs: document in-app diagnostics and QA reports`
 - `0f3661d7198f0285c550267cb3f02c2ffbcbb0ad` — `ci: expose canonical diagnostics formatting diff` (temporary hosted formatter-diff revision)
-- `80ab45ed55da6a66fc849ac5f1b72ca049634ea2` — `style: format diagnostics localization`
-- `95d86c2d82beb0a43b6304d1c058c58cbe62f694` — `style: format diagnostics screen`
-- `b510b205dfff59110399b3e60db3c903c7f8669b` — `style: format diagnostic report service`
-- `3d91ace5814e908dbf9c66d556e528042debfa52` — `style: format diagnostic report tests`
+- `417d65463191f5fdd0c6db62ae3a69dfe64de7ba` — `style: format diagnostics localization`
+- `4f147c917542ba734cb9795049dc2b76299eec0f` — `style: format diagnostics screen`
+- `ef5cdaedb956dd80263d640d9213692a3179e416` — `style: format diagnostic report service`
+- `403aee21f783cc78e3c8eaa7a3ca2de0184379c1` — `style: format diagnostic report tests`
 - `32ced086fac27fd2f4f808674afa511647a863e9` — `ci: restore non-mutating Dart formatting gate`
 - `ec9495ce66586c7e150d98a3dd6b3dcfa84f36eb` — `docs: connect diagnostics to remaining QA gates`
 - `8658eadd12f83a3cfa56e2a7741a27d938d8b764` — `docs: record diagnostics QA milestone in roadmap`
-- `b782ca8bf58fe614c8bcc708039c7a4f28457ed8` — `fix: use canonical package name in diagnostics report tests`
+- `b782689e8d4c6ddade972d08dd74467674980229` — `fix: use canonical package name in diagnostics report tests`
 - `00e78d27ebc68f9aa743d8fab5f2ef11f3ee6910` — `fix: use canonical package name in diagnostics localization tests`
 
 ### Validation-run ledger
@@ -2214,3 +2214,21 @@ Each repository write continued to use `Sanskar <sanskarin@outlook.in>`.
 ### Remaining release boundary
 
 No physical-device, real-filesystem, accessibility, production-signing, notarization, store-console, package-visual, sustained-performance, or stable-release gate is marked complete merely because diagnostics now exists. `TODO.md`, `docs/QA_CHECKLIST.md`, and `docs/RELEASING.md` remain the authority for those evidence requirements. Diagnostics improves reproducibility and support evidence; it does not substitute synthetic metadata for a test that must occur on real hardware or in a protected maintainer release environment.
+
+
+### Documentation-ledger maintenance commits for this continuation
+
+The authoritative Git history was re-read after the first ledger append. Five stale intermediate SHA references in the newly appended commit list were corrected to the actual commits shown by GitHub history. No production code, tests, privacy behavior, or validation result changed during this correction.
+
+Documentation/helper commits created after the main diagnostics source validation were:
+
+- `b21e0cfa0202a3689f69ad796585a88fc7fce38e` — staged the first temporary documentation workflow; it was syntactically invalid and executed no jobs or document changes.
+- `00c73533b49cfde03d42dfb2d2e6018f8612528d` — added the temporary repository-side ledger updater.
+- `073181fbe53c3660d5e9d6b3f82df27daa6f5e3e` — corrected the temporary workflow so the updater could run.
+- `4fd9c41e6d6e102b17793c3afd37fe1ffb6739db` — `docs: add diagnostics QA release notes`.
+- `af611101792dc3c208b2ce092e34f126f025afe9` — `docs: sync diagnostics project state`.
+- `ef24bb09490c47c18cbdf580d4ffee4eac269358` — `docs: record diagnostics and QA continuation`.
+- `f8f3769bccb76677a15f4b8dba4018a83b222881` — removed the temporary one-shot documentation workflow.
+- `fdb82d78310ec2c61a2d50b18d84dd2e1d28a7f5` — removed the temporary documentation updater.
+
+The cleaned repository must not retain either temporary helper after ledger correction. The permanent Repository Integrity Audit remains the authority for enforcing that cleanup.
