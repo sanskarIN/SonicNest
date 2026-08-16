@@ -93,9 +93,8 @@ class _EditorScreenState extends State<EditorScreen> {
               children: [
                 Text(
                   entry.title,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: Theme.of(context).textTheme.headlineSmall
+                      ?.copyWith(fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 6),
                 Text(l10n.editorNonDestructiveHint),
@@ -920,9 +919,8 @@ class _EditorScreenState extends State<EditorScreen> {
         return;
       }
       setState(() => _status = success);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(success)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(success)));
     } catch (error) {
       if (!mounted) {
         return;
