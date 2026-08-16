@@ -1,0 +1,57 @@
+name: One-shot diagnose formatting after bootstrap
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/one-shot-diagnose-format-after-bootstrap.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install Linux audio prerequisites
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg pulseaudio-utils libjson-glib-dev
+      - name: Generate platform hosts
+        run: bash tool/bootstrap_platforms.sh
+      - name: Resolve dependencies
+        run: flutter pub get
+      - name: Generate deterministic branding source images
+        run: dart tool/generate_brand_assets_v2.dart
+      - name: Record pre-format diff
+        shell: bash
+        run: |
+          {
+            echo 'PRE_FORMAT_DIFF:'
+            git diff --name-status
+            echo 'UNTRACKED:'
+            git ls-files --others --exclude-standard
+          } > .github/manual-qa-bootstrap-format-diagnosis.txt
+      - name: Apply formatter for diagnosis
+        run: dart format lib test tool/generate_brand_assets_v2.dart
+      - name: Record formatter-touched Dart paths
+        shell: bash
+        run: |
+          {
+            echo 'POST_FORMAT_DIFF:'
+            git diff --name-status -- lib test tool/generate_brand_assets_v2.dart
+          } >> .github/manual-qa-bootstrap-format-diagnosis.txt
+      - name: Commit diagnosis only
+        run: |
+          git config user.name "Sanskar"
+          git config user.email "sanskarin@outlook.in"
+          git add .github/manual-qa-bootstrap-format-diagnosis.txt
+          git commit -m "ci: record post-bootstrap formatting diagnosis"
+          git pull --rebase origin main
+          git push origin HEAD:main
