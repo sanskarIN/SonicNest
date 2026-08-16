@@ -1,0 +1,39 @@
+name: One-shot QA catalog formatter
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/one-shot-format-qa-catalog-test.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Configure commit identity
+        run: |
+          git config user.name "Sanskar"
+          git config user.email "sanskarin@outlook.in"
+      - name: Format QA catalog regression
+        run: dart format test/qa_check_catalog_test.dart
+      - name: Commit formatter output
+        shell: bash
+        run: |
+          if git diff --quiet -- test/qa_check_catalog_test.dart; then
+            echo "No formatter changes were required."
+            exit 0
+          fi
+          git add test/qa_check_catalog_test.dart
+          git commit -m "style: format stable QA identifier regression"
+          git push origin HEAD:main
