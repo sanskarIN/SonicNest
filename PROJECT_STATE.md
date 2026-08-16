@@ -182,6 +182,37 @@ diagnostics_qa:
   active_recording_input_probe: skipped
   documentation: docs/DIAGNOSTICS_AND_QA.md
   release_gate_effect: supporting_evidence_only_no_manual_gate_closed
+manual_qa_evidence:
+  implementation_source_commit: 87c91697c9b11358e03334b3e642cbcb3959dc1c
+  validated_core_source_commit: 0eb56abad482c8c296d9f80ef060ebddbba95e7b
+  core_ci_run_id: 31934843541
+  access:
+    - About -> Manual QA evidence
+    - Diagnostics & QA -> Open QA evidence with this snapshot
+  storage_key: sonicnest.qaEvidenceSession.v1
+  schema_version: 1
+  statuses:
+    - notRun
+    - passed
+    - failed
+    - blocked
+  serialized_status_writes: true
+  immutable_current_catalog_ids: true
+  stale_check_ids_dropped: true
+  free_form_tester_notes: false
+  automatic_upload: false
+  diagnostic_snapshot_attachment: explicit_user_navigation_only
+  exports:
+    - deterministic JSON clipboard copy
+    - privacy-safe Markdown share file
+  release_gate_effect: supporting_evidence_only_no_manual_gate_closed
+  documentation: docs/MANUAL_QA_EVIDENCE.md
+platform_bootstrap_integrity:
+  preserves_analysis_options_bash: true
+  preserves_analysis_options_powershell: true
+  committed_format_check_precedes_generated_host_bootstrap: true
+  regression_test: test/bootstrap_integrity_test.dart
+
 release_evidence_boundary:
   diagnostics_feature_date: 2026-08-16
   note: The 2026-08-15 five-platform release-candidate and unified provenance artifacts predate Diagnostics & QA and are evidence only for their exact historical source revisions.
@@ -223,16 +254,16 @@ pending_manual_validation:
   - Windows Authenticode signing and trust verification on the exact final public package
   - stable release approval and v1.0.0 tag only after all required evidence gates complete
 latest_automated_validation:
-  formatter_clean_source_commit: 00e78d27ebc68f9aa743d8fab5f2ef11f3ee6910
+  formatter_clean_source_commit: 0eb56abad482c8c296d9f80ef060ebddbba95e7b
   canonical_format_commit: 403aee21f783cc78e3c8eaa7a3ca2de0184379c1
   non_mutating_format_gate_commit: 32ced086fac27fd2f4f808674afa511647a863e9
   core_flutter_ci:
-    run_id: 31932491771
-    source_commit: 00e78d27ebc68f9aa743d8fab5f2ef11f3ee6910
-    dart_format_check: success_non_mutating_59_files_0_changed
+    run_id: 31934843541
+    source_commit: 0eb56abad482c8c296d9f80ef060ebddbba95e7b
+    dart_format_check: success_non_mutating_committed_source_before_bootstrap
     analyzer: success_no_issues
-    unit_tests: success_complete_suite_94_tests
-    android_debug_apk: success
+    unit_tests: success_complete_suite
+    android_debug_apk: pending_same_run_at_ledger_generation
     linux_debug_build: success
   release_candidate:
     run_id: 31873121457
