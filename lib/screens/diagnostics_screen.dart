@@ -11,6 +11,7 @@ import '../l10n/diagnostics_localizations.dart';
 import '../models/recording_settings.dart';
 import '../services/diagnostic_report_service.dart';
 import '../services/storage_service.dart';
+import 'qa_evidence_screen.dart';
 
 class DiagnosticsScreen extends StatefulWidget {
   const DiagnosticsScreen({super.key, required this.controller});
@@ -154,6 +155,21 @@ class _DiagnosticsScreenState extends State<DiagnosticsScreen> {
     }
   }
 
+  void _openQaEvidenceWithSnapshot() {
+    final report = _report;
+    if (report == null) {
+      return;
+    }
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => QaEvidenceScreen(
+          controller: widget.controller,
+          diagnosticReport: report,
+        ),
+      ),
+    );
+  }
+
   String _boolLabel(AppLocalizations l10n, bool value) =>
       value ? l10n.diagnosticsEnabled : l10n.diagnosticsDisabled;
 
@@ -260,6 +276,11 @@ class _DiagnosticsScreenState extends State<DiagnosticsScreen> {
                       onPressed: _shareMarkdown,
                       icon: const Icon(Icons.share_outlined),
                       label: Text(l10n.diagnosticsShareMarkdown),
+                    ),
+                    FilledButton.tonalIcon(
+                      onPressed: _openQaEvidenceWithSnapshot,
+                      icon: const Icon(Icons.fact_check_outlined),
+                      label: Text(l10n.qaEvidenceOpenWithDiagnostics),
                     ),
                   ],
                 ),
