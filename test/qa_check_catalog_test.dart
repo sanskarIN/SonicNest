@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sonic_nest/models/qa_check_catalog.dart';
 
+// Persisted QA identifiers are part of the local-storage compatibility contract.
 void main() {
   group('QaCheckCatalog', () {
     test('category IDs and check IDs are unique', () {
