@@ -8,6 +8,7 @@ import '../core/constants.dart';
 import '../core/formatters.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/diagnostics_localizations.dart';
+import '../models/recording_settings.dart';
 import '../services/diagnostic_report_service.dart';
 import '../services/storage_service.dart';
 
@@ -222,6 +223,11 @@ class _DiagnosticsScreenState extends State<DiagnosticsScreen> {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
+        Text(
+          l10n.diagnosticsSubtitle,
+          style: Theme.of(context).textTheme.bodyLarge,
+        ),
+        const SizedBox(height: 12),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(18),
@@ -270,7 +276,7 @@ class _DiagnosticsScreenState extends State<DiagnosticsScreen> {
           title: l10n.diagnosticsRuntime,
           icon: Icons.computer_outlined,
           rows: [
-            (l10n.versionLabel(AppConstants.appDisplayVersion), ''),
+            (l10n.diagnosticsVersion, AppConstants.appDisplayVersion),
             (l10n.diagnosticsPlatform, report.platform),
             (l10n.diagnosticsOsVersion, report.operatingSystemVersion),
             (l10n.diagnosticsLocale, report.localeName),
