@@ -82,6 +82,8 @@ Completed/in progress:
 - Backend diagnostic/error localization policy is explicitly decided: product-facing summaries are localized while raw backend diagnostics remain technical evidence.
 - Deterministic metadata stress coverage exercises 3,000 entries through the real JSON persistence path.
 - User-initiated Diagnostics & QA reports provide privacy-safe runtime, aggregate library/storage, recorder-state, and settings evidence without recording content, titles, paths, notes, tags, bookmarks, smart-naming text, or input-device names.
+- About-accessible Manual QA evidence sessions persist fixed release-check IDs with `notRun`/`passed`/`failed`/`blocked` statuses and timestamps, with no free-form tester-note field.
+- Manual QA evidence JSON/Markdown exports include explicit privacy flags, complete current-catalog status coverage, progress counts, and stale-check filtering without converting manual observations into automated assertions.
 
 Remaining:
 - Add additional locales only with translation review, text-expansion testing, and translation QA.
@@ -121,6 +123,7 @@ Completed/in progress:
 - First complete release-candidate matrix run `31872389283` passed preflight, Android, Linux, Windows, macOS, and iOS release-mode validation on source `8096d45bb0ea09cf3107e8fd80e05bf6844baf9b`; inspection of its Android artifact exposed the inaccurate historical `unsigned` label and directly led to the non-production certificate-verification correction.
 - Clean repository audit run `31873122160` passed on final-validation candidate SHA `048870ec8dc26a16e2451310460d3e03c9084dc7`, including all repository invariants and top-level Bash/PowerShell helper parsing.
 - Privacy-safe in-app diagnostics are documented in `docs/DIAGNOSTICS_AND_QA.md` and are intended to accompany real-device/support evidence without replacing the manual release gates.
+- Privacy-safe manual QA evidence capture is documented in `docs/MANUAL_QA_EVIDENCE.md`; the in-app status ledger mirrors open evidence categories while release checkboxes stay unchanged until evidence is reviewed.
 
 Remaining:
 - Keep Android/Linux/Windows/macOS/iOS build and release-candidate workflows green for future source revisions.
@@ -168,6 +171,10 @@ Implemented: deterministic brand source generation, Android adaptive/monochrome/
 
 Implemented: an About-accessible, user-initiated diagnostics screen; deterministic JSON and Markdown report serialization; explicit privacy flags; aggregate library/storage evidence; recorder-state and input-count evidence without device names; non-content recording/playback/interface settings; copy/share actions; and regression tests that inject private smart-naming text and verify it cannot appear in exported diagnostics. The report is supporting evidence only. Physical microphone/routing, interruption, background, filesystem, performance, accessibility, package, signing, and store gates remain manual or credential-dependent.
 
+## Manual QA evidence status
+
+Implemented: an About-accessible manual evidence ledger backed by a source-controlled release-check catalog; local versioned persistence; `notRun`, `passed`, `failed`, and `blocked` states; serialized status writes; reset handling; complete-catalog progress counts; deterministic JSON/Markdown export; fixed privacy flags; stale-check removal; and regression coverage for the model, persistence, catalog, localization, and export privacy boundary. The ledger deliberately has no free-form tester-note field. A manually selected status is evidence entered by the tester and does not automatically close the corresponding repository or stable-release gate.
+
 ## Unified release-candidate provenance milestone — completed 2026-08-15
 
 - [x] Add a standard-library Python builder for one machine-readable release-candidate provenance manifest.
@@ -180,4 +187,4 @@ Implemented: an About-accessible, user-initiated diagnostics screen; determinist
 - [x] Preserve exact manifest/payload hashes in source-controlled release evidence.
 - [x] Return the maintained release-candidate workflow to manual dispatch after the controlled validation trigger.
 
-No further repository-only release-automation milestone is currently identified. Next milestones remain evidence-driven: physical-device audio/lifecycle QA, real filesystem/storage recovery, accessibility, sustained performance/soak testing, representative desktop/package QA, protected production signing/notarization, store review, and final stable-release approval.
+No further repository-only release-automation milestone is currently identified. The new manual evidence ledger reduces handwritten QA ambiguity but does not convert the remaining gates into repository-only work. Next milestones remain evidence-driven: physical-device audio/lifecycle QA, real filesystem/storage recovery, accessibility, sustained performance/soak testing, representative desktop/package QA, protected production signing/notarization, store review, and final stable-release approval.
