@@ -10,6 +10,12 @@ Selected initial public channels:
 - **Windows:** GitHub Releases with a versioned x64 portable ZIP containing the final Authenticode-verified binaries and a checksum generated after signing/package bytes are final. See `docs/WINDOWS_PACKAGING.md` and `docs/WINDOWS_SIGNING_POLICY.md`.
 - **Linux:** GitHub Releases with the verified Debian `.deb` and its SHA-256 checksum. See `docs/LINUX_DISTRIBUTION_POLICY.md`.
 
+## In-app manual evidence ledger
+
+For candidate QA, use **About → Manual QA evidence** to record the tester-reported state of the source-controlled manual checks. When runtime/storage/recorder/settings context matters, first open **About → Diagnostics & QA** and choose **Open QA evidence with this snapshot** so the current privacy-safe diagnostic report travels with the exported manual evidence bundle.
+
+The ledger stores only fixed check IDs, `notRun`/`passed`/`failed`/`blocked` status values, and timestamps. It has no free-form tester-note field and does not automatically upload evidence. The exact candidate source/artifact, target hardware/OS, signing state, and any external observations still need to be identified in the release evidence record. A manually selected `Passed` status never overrides the required hardware, accessibility, filesystem, signing, notarization, store-console, or final approval gates.
+
 ## 1. Prepare the source tree
 
 1. Update the version in `pubspec.yaml`.
