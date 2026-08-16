@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import '../core/constants.dart';
 import 'settings_service.dart';
 import 'storage_service.dart';
 
@@ -59,7 +60,7 @@ class DiagnosticReport {
         'containsNotesTagsOrBookmarks': false,
         'containsInputDeviceNames': false,
       },
-      'app': {'name': 'SonicNest', 'version': appVersion},
+      'app': {'name': AppConstants.appName, 'version': appVersion},
       'runtime': {
         'platform': platform,
         'operatingSystemVersion': operatingSystemVersion,
@@ -123,7 +124,7 @@ class DiagnosticReport {
     final recording = settings.recording;
     final storage = storageStats;
     final buffer = StringBuffer()
-      ..writeln('# SonicNest Diagnostics')
+      ..writeln('# ${AppConstants.appName} Diagnostics')
       ..writeln()
       ..writeln('Generated (UTC): ${generatedAtUtc.toUtc().toIso8601String()}')
       ..writeln('App version: $appVersion')
@@ -131,7 +132,9 @@ class DiagnosticReport {
       ..writeln('## Privacy')
       ..writeln()
       ..writeln('- Recording content: not included')
-      ..writeln('- Recording titles, file paths, notes, tags, and bookmarks: not included')
+      ..writeln(
+        '- Recording titles, file paths, notes, tags, and bookmarks: not included',
+      )
       ..writeln('- Input-device names: not included')
       ..writeln()
       ..writeln('## Runtime')
@@ -155,7 +158,9 @@ class DiagnosticReport {
       ..writeln('- Recordings bytes: ${storage?.recordingsBytes ?? 'unavailable'}')
       ..writeln('- Trash bytes: ${storage?.trashBytes ?? 'unavailable'}')
       ..writeln('- Temporary bytes: ${storage?.temporaryBytes ?? 'unavailable'}')
-      ..writeln('- Total managed bytes: ${storage?.totalManagedBytes ?? 'unavailable'}')
+      ..writeln(
+        '- Total managed bytes: ${storage?.totalManagedBytes ?? 'unavailable'}',
+      )
       ..writeln()
       ..writeln('## Recorder')
       ..writeln()
