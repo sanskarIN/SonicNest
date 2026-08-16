@@ -57,12 +57,6 @@ class QaEvidenceSession {
     required Map<String, QaCheckResult> results,
   }) : results = Map.unmodifiable(results);
 
-  static const schemaVersion = 1;
-
-  final DateTime startedAtUtc;
-  final DateTime updatedAtUtc;
-  final Map<String, QaCheckResult> results;
-
   factory QaEvidenceSession.fresh(DateTime now) {
     final utc = now.toUtc();
     return QaEvidenceSession._(
@@ -104,6 +98,12 @@ class QaEvidenceSession {
       results: parsedResults,
     );
   }
+
+  static const schemaVersion = 1;
+
+  final DateTime startedAtUtc;
+  final DateTime updatedAtUtc;
+  final Map<String, QaCheckResult> results;
 
   static QaEvidenceSession fromJson(
     String source, {
