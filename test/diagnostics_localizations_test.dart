@@ -36,6 +36,10 @@ void main() {
 
   test('QA evidence workflow is localized and avoids free-form notes', () {
     expect(l10n.qaEvidenceTitle, 'Manual QA evidence');
+    expect(
+      l10n.qaEvidenceOpenWithDiagnostics,
+      'Open QA evidence with this snapshot',
+    );
     expect(l10n.qaEvidenceStatusLabel('passed'), l10n.qaEvidencePassed);
     expect(l10n.qaEvidenceStatusLabel('failed'), l10n.qaEvidenceFailed);
     expect(l10n.qaEvidenceStatusLabel('blocked'), l10n.qaEvidenceBlocked);
