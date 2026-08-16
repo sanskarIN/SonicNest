@@ -244,9 +244,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.bulkActionFailed(error))));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.bulkActionFailed(error))));
     }
   }
 
@@ -646,9 +645,8 @@ class _SelectionToolbar extends StatelessWidget {
             Expanded(
               child: Text(
                 l10n.selectedCount(count),
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                style: Theme.of(context).textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w700),
               ),
             ),
             TextButton(onPressed: onSelectAll, child: Text(l10n.selectAll)),
@@ -1047,9 +1045,8 @@ class _EmptyLibrary extends StatelessWidget {
             const SizedBox(height: 14),
             Text(
               title,
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+              style: Theme.of(context).textTheme.titleLarge
+                  ?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 6),
             ConstrainedBox(
