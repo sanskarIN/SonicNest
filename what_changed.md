@@ -2232,3 +2232,168 @@ Documentation/helper commits created after the main diagnostics source validatio
 - `fdb82d78310ec2c61a2d50b18d84dd2e1d28a7f5` — removed the temporary documentation updater.
 
 The cleaned repository must not retain either temporary helper after ledger correction. The permanent Repository Integrity Audit remains the authority for enforcing that cleanup.
+
+# Continuation — 2026-08-16 — Manual QA Evidence Sessions
+
+## Milestone selected
+
+The previous repository-only release automation and provenance work was already complete. The remaining release gates are dominated by physical-device audio/lifecycle behavior, real filesystem/storage failures, sustained workloads, accessibility tooling, representative package behavior, protected signing/notarization, store-console review, and final release approval. This continuation therefore added a repository-supported **manual QA evidence session** so those real tests can be recorded consistently without falsely converting them into automation.
+
+## Manual QA evidence model and catalog
+
+- Added `QaEvidenceStatus` with `notRun`, `passed`, `failed`, and `blocked`.
+- Added versioned `QaEvidenceSession`/`QaCheckResult` serialization with UTC session and per-check timestamps.
+- `notRun` is represented by absence from persisted results rather than redundant explicit records.
+- Malformed or unsupported persisted sessions fall back to a fresh local session.
+- Added a source-controlled six-category check catalog: microphone/lifecycle, reliability/stress, desktop interaction, accessibility/UX, branding/package validation, and external batch export.
+- The catalog mirrors the still-open evidence areas in `TODO.md` while deliberately leaving protected signing/store approval outside an artificial in-app completion percentage.
+- Persisted check IDs are unique snake_case compatibility identifiers; the current ID set is immutable at runtime and unknown/stale IDs are dropped.
+
+## Persistence and privacy
+
+- Added `QaEvidenceStore` using `SharedPreferences` key `sonicnest.qaEvidenceSession.v1`.
+- Load/save/reset are explicit and persistence failures surface instead of being silently ignored.
+- Status writes in the screen are globally serialized; a race found during this continuation was fixed so two rapid selections cannot save from the same previous session state.
+- Reset is locked while a status write is active.
+- The evidence model has no free-form tester-note field.
+- JSON explicitly records privacy flags showing no recording content, titles, file paths, notes/tags/bookmarks, input-device names, or free-form tester notes.
+- Evidence is generated/copied/shared only after user actions and is never automatically uploaded.
+
+## Evidence export and UI
+
+- Added deterministic JSON and Markdown evidence bundles with total/assessed/pass/fail/blocked/not-run counts.
+- Every current catalog check appears in exports, including `notRun`, so incomplete sessions cannot masquerade as smaller completed catalogs.
+- Markdown uses explicit `[PASS]`, `[FAIL]`, `[BLOCKED]`, and `[NOT RUN]` markers.
+- Added About → **Manual QA evidence** with expandable categories, progress, status selectors, reset, JSON copy, Markdown share, and accessibility semantics.
+- Added Diagnostics & QA → **Open QA evidence with this snapshot**. The current in-memory privacy-safe `DiagnosticReport` is passed explicitly into the manual evidence screen and included in its bundle.
+- The direct About entry remains usable without collecting diagnostics first.
+- A manually selected `Passed` state remains tester-entered supporting evidence only; no repository checkbox or stable-release gate is changed automatically.
+
+## Regression coverage
+
+Added/expanded tests for:
+
+- QA session JSON round-trip, malformed fallback, status removal, and stale-ID filtering;
+- SharedPreferences load/save/reset and current-catalog sanitization;
+- deterministic bundle counts and privacy flags;
+- sentinel smart-naming text proving attached diagnostics cannot leak private naming data;
+- category/check uniqueness and category references;
+- stable persisted snake_case IDs, lookup behavior, and immutable ID-set behavior;
+- localization coverage for every source-controlled category/check and the Diagnostics attachment action;
+- platform bootstrap analyzer-configuration preservation and CI format-order invariants.
+
+## Bootstrap/formatter root cause found and fixed
+
+Validation initially produced contradictory formatting results: source-only hosted formatting reported no changes while permanent core CI failed its formatting gate. A controlled reproduction of the permanent pre-format sequence proved that `flutter create .` inside platform bootstrap rewrote tracked `analysis_options.yaml`. Under that generated analyzer configuration, Dart formatting then wanted to rewrite 18 unrelated tracked source/test files.
+
+The repository boundary was corrected rather than accepting those unrelated rewrites:
+
+- Bash platform bootstrap now backs up and restores tracked `analysis_options.yaml` on exit (or removes a generated copy if the file did not originally exist).
+- PowerShell bootstrap now performs the same preservation through `try/finally`.
+- Core CI validates committed Dart formatting immediately after Flutter setup, before platform-host generation can introduce generated state.
+- `test/bootstrap_integrity_test.dart` locks all three invariants.
+
+After that correction the permanent committed-source formatting gate passed.
+
+## Analyzer issues found and fixed
+
+The first analyzer pass then exposed two constructor-order informational lints in `QaEvidenceSession` and a real Dart test bug where PowerShell `$AnalysisOptionsBackup`/`$AnalysisOptions` text was accidentally parsed as Dart interpolation. Constructors were reordered and the PowerShell assertion was changed to a raw Dart string. The subsequent analyzer passed with no issues.
+
+## Cross-platform evidence
+
+- Core Flutter CI run `31934843541`, source `0eb56abad482c8c296d9f80ef060ebddbba95e7b`: committed-source formatting **SUCCESS**, static analysis **SUCCESS**, complete unit suite **SUCCESS**, Linux debug build **SUCCESS**; Android debug build remained in progress at the exact moment this ledger section was generated and is not falsely recorded as complete here.
+- Apple run `31934094160`, production revision `87c91697c9b11358e03334b3e642cbcb3959dc1c`: macOS debug **SUCCESS**, iOS no-codesign debug **SUCCESS**.
+- Windows run `31934094196`, production revision `87c91697c9b11358e03334b3e642cbcb3959dc1c`: Windows debug **SUCCESS**; release build, portable ZIP construction, verification, bounded extracted startup smoke, warning, and artifact upload **SUCCESS**.
+- Linux Package CI run `31934094139`, production revision `87c91697c9b11358e03334b3e642cbcb3959dc1c`: Linux release build, Debian package build/verification, install, installed startup smoke, uninstall, and artifact upload **SUCCESS**.
+
+## Release boundary preserved
+
+No physical-device microphone/routing, background/interruption, low-storage/filesystem, long-duration, accessibility, representative package, protected signing/notarization, store-console, or stable-release checkbox was marked complete merely because the evidence ledger exists. `TODO.md` intentionally retains those unchecked gates.
+
+## Commit history for this continuation through ledger generation
+
+- `b7f0a46ae7d1df061066cac309786bf433e67841` — feat: add manual QA evidence session model
+- `6bc3e6ec8f1e9c03705b071e4d0d163ce4d0defb` — feat: add release QA evidence catalog
+- `eb0c207b301c23bc848d72a4b390d40cbd0d0ad0` — feat: persist manual QA evidence sessions
+- `997f2cf9d14898ed75806b9906b09b65deb374c6` — feat: add privacy-safe QA evidence bundle export
+- `a06d5d18a9ff3263f4ce7be6df5debd98a88390f` — feat: localize manual QA evidence workflow
+- `63d3992c8a50a31ef670642e7ec60dad0b8455e8` — feat: add manual QA evidence screen
+- `152685b50a3933ab867de96394e024a56869b499` — feat: expose manual QA evidence from About
+- `b272e9416ed4177995ba9ee530283f08d9530e72` — test: cover QA evidence session serialization
+- `738383f7cbc7c6c6d1ef0ea902a34a485c457ad5` — test: cover persisted QA evidence sanitization
+- `e24c2469764e216e6699df399665c60711a82f89` — test: enforce QA evidence bundle privacy contract
+- `8582b841d1f85da25f363a3a69cd2af3dc622ebc` — test: cover QA evidence localization catalog
+- `780dade79b019b24da98c6dcf7104ee36add8095` — test: enforce QA check catalog invariants
+- `182c22f5d19ccff93b21328d902fbe43becd4bce` — docs: add manual QA evidence workflow guide
+- `b652e9f665146df10649384478b95a51bb8f6dbc` — fix: serialize QA evidence status persistence
+- `0a305e17c081540fff1ec0c6de9d5860db4add20` — docs: connect diagnostics to manual QA evidence
+- `db29170b69b0acae0e821a14b977a742a7bf0f7e` — docs: add manual QA evidence milestone to roadmap
+- `57e2bb401180f6603d9ced8962ae13e6573a2845` — docs: connect remaining gates to manual evidence ledger
+- `b4a7b5679e8c2f14e9222fdb480a3c1d2cd29869` — ci: stage one-shot manual QA formatter
+- `f3894f058cd587a42c622d456012ac102312f334` — style: apply canonical Dart formatting to lib/models/qa_check_catalog.dart
+- `2915a9b82ed0bc060042d84d1a4c683b05b8e01b` — style: apply canonical Dart formatting to lib/models/qa_evidence.dart
+- `e41da6d663b1c9cc3d1b0e16277fd868db0e854a` — style: apply canonical Dart formatting to lib/screens/about_screen.dart
+- `90bb08c61ca0f734ccd5041750c06616c7bbf33e` — style: apply canonical Dart formatting to lib/screens/diagnostics_screen.dart
+- `acbff6b813fd127caae3e11bbce9b6b15566961e` — style: apply canonical Dart formatting to lib/screens/editor_screen.dart
+- `a2f202d05f62eb178c26b6d7e035b885d9c318e4` — style: apply canonical Dart formatting to lib/screens/home_screen.dart
+- `358d4dce6d70723fcd6eff7c6dd65a4ae626fa60` — style: apply canonical Dart formatting to lib/screens/library_screen.dart
+- `2e0aa7e4ce1c75f4d33376ff6fb9d5d87145ea71` — style: apply canonical Dart formatting to lib/screens/player_screen.dart
+- `9d8407945cd625ebf49abcc4d624d5c730a80a67` — style: apply canonical Dart formatting to lib/screens/qa_evidence_screen.dart
+- `7208eb211a495d836bbefa04d7e67990d0bc2f51` — style: apply canonical Dart formatting to lib/screens/recorder_screen.dart
+- `46d179e1bb86c002fcc051731c0f8c96a1682078` — style: apply canonical Dart formatting to lib/screens/settings_screen.dart
+- `da9ff344b91414e439ee15b5ecb26aa20212af92` — style: apply canonical Dart formatting to lib/screens/splash_screen.dart
+- `3e0448ed1302aff233bad66f1ff8f3016a398a79` — style: apply canonical Dart formatting to lib/services/advanced_audio_processor.dart
+- `918a865c6699cdc2027c19e0cd882198375a213e` — style: apply canonical Dart formatting to lib/services/audio_processor.dart
+- `fb3047000b64cf1d2d3e29680f0d21e1fb3be638` — style: apply canonical Dart formatting to lib/services/batch_conversion_service.dart
+- `1076bb1f0a5efbf89905c3c7d7666fe5b7a9696f` — style: apply canonical Dart formatting to lib/services/qa_evidence_report_service.dart
+- `045531cf310b92396e6cb985e7375cc4e6f64eec` — style: apply canonical Dart formatting to lib/widgets/recording_tile.dart
+- `abdb0ae6e0dc227bd3214bac8da4907e1593dfb1` — style: apply canonical Dart formatting to lib/widgets/sonicnest_mark.dart
+- `ad243e0a6523edd930d5456923e52c0704a1c22e` — style: apply canonical Dart formatting to test/batch_conversion_service_test.dart
+- `a16f4ac4d6056c14f6a15d9cbe7126ea9e6ef7f8` — style: apply canonical Dart formatting to test/external_actions_test.dart
+- `2ee36b52dfeacface654fd25ca56b7a3490a2ea1` — style: apply canonical Dart formatting to test/qa_check_catalog_test.dart
+- `e56b6c215778138d4203467ef3db53c3eb02e316` — style: apply canonical Dart formatting to test/qa_evidence_model_test.dart
+- `9218dca0f5c1bed9af5bdd3d0f8e0fadb9b6b261` — style: apply canonical Dart formatting to test/qa_evidence_report_service_test.dart
+- `ce94990021ae570858fef0cd6eaa7ef991750df8` — style: apply canonical Dart formatting to test/qa_evidence_store_test.dart
+- `7adaaffc46193822485b0af4a32a6d787b0a5e36` — docs: document manual QA evidence workflow
+- `154e0b9a525e90431dbd68fd166309144697c40c` — chore: remove one-shot manual QA formatter
+- `044ce8a0fc640226a5e79931d31d8e0385815708` — test: enforce stable persisted QA check identifiers
+- `e8554b30bb84fdfb5fab732665cb2b19653358a2` — docs: document QA evidence privacy boundary
+- `309cc6fb1319303e6f380170e6c872e5766ad022` — ci: stage one-shot QA catalog formatter
+- `5d88b5e6b8e46bec31e3cac43fa5a68ae227a826` — ci: diagnose complete Dart formatting drift
+- `2ce9c404e8d4a24124223a98112e48170471e616` — docs: index manual QA evidence guidance
+- `5ddae27ddd0363597406b091cd439f67eeaa01d9` — fix: rebase formatter output before push
+- `ca7b0830e55630dec788a4d75f06b9ae832f1d5b` — ci: record manual QA formatter result
+- `affe76f6cd7770c7db0d665069e08e0679819219` — chore: remove QA catalog formatter workflow
+- `c8eff53dd6e53a1289344a6f44875d9e65738b54` — chore: remove manual QA formatter result
+- `8ac458f8d4deabb69136614fc86aaed228235780` — test: document persisted QA identifier compatibility contract
+- `d394ddcd9b7016b8c8637f2a0b57ca99f3091024` — docs: guide support reports through privacy-safe evidence
+- `587e39ba6201a2b1483c355686e34d66c1a3205f` — feat: attach diagnostics snapshot to manual QA evidence
+- `e9e53d4d7da133b32524469fd51b81196bd19bdd` — feat: localize diagnostics evidence attachment action
+- `aea924c21512423e73275b9fae92c59495c50003` — test: cover diagnostics-to-QA evidence action label
+- `87c91697c9b11358e03334b3e642cbcb3959dc1c` — refactor: make persisted QA check ID set immutable
+- `1f02f7ab8c8a4bdc5b6c8cd3c2ab91a74c9761d2` — test: prove persisted QA check IDs are immutable
+- `44f6383c1bf7e5865c41559a4fa03526f7542f69` — ci: stage final manual QA canonical formatter
+- `9a3cf77ae8de0259e574be05148e7249ff8a8ad9` — ci: record final manual QA formatter result
+- `055ef01935ccca685dae59c10c6ad37a4a255c59` — chore: remove final manual QA formatter
+- `69914e921d3043f65bc0b8713d1b9e7a8dc5dc03` — chore: remove final manual QA formatter evidence
+- `c44ceca50b74e2ed7ffc0f12e0af362a72a15db8` — test: document manual QA presentation contract
+- `1c5e0232bbfb9e434da52769b80327427ffe27cf` — ci: diagnose formatting after platform bootstrap
+- `91097fd0985d8bc3d4887f05828626f39bc46803` — fix: force-add temporary formatting diagnosis
+- `2115d3547a90b203efb25c4a9e18a0a994c684a8` — fix: clean formatter diagnosis worktree before push
+- `3e0efce4b3f94dd4713f1b42d3aae930f8200002` — ci: record post-bootstrap formatting diagnosis
+- `76fc2fa887abf0d1feae2971ef53251f458f9324` — fix: preserve analyzer config during Bash platform bootstrap
+- `76209b4544cbc658b3c36665b5372c87ed287ae8` — fix: preserve analyzer config during PowerShell platform bootstrap
+- `0bc5f1b92dae04277d994965655b5ae6ce2169e7` — ci: validate Dart formatting before generated bootstrap state
+- `a18c039eef415f7fafbaf326231d8f58078fb8bb` — test: lock platform bootstrap analyzer-config preservation
+- `5597bdf7d0495671d3f13f7316eb3b3f22887392` — chore: remove post-bootstrap format diagnosis workflow
+- `b9fdb566a785d4e6974631517662b73092ade89d` — chore: remove post-bootstrap format diagnosis evidence
+- `04217539b9866d9289facb7d5a52ef9506d059ba` — style: format bootstrap integrity regression
+- `81717f4de26dfbb8aefded99be29d8f08d30992b` — ci: stage analyzer diagnostic capture
+- `213137e8615c38092e5d2ca1eb7e8c8bf2c5fe23` — ci: record manual QA analyzer diagnosis
+- `f53028eb7cb2ae976c08179783767e61210c9a6f` — style: order QA evidence constructors before members
+- `0eb56abad482c8c296d9f80ef060ebddbba95e7b` — fix: treat PowerShell bootstrap contract as literal text
+- `36f514b8667740998fa064b7b76fbb6af4ffb2a1` — chore: remove analyzer diagnostic capture workflow
+- `22713af007096ed2b577884aaba9a9efe1f7c05b` — chore: remove analyzer diagnostic evidence
+- `8c5e8a1d14d4ff5f594eed376799fd3175ef910e` — chore: add one-shot manual QA documentation updater
+- `a617bf77c4a79d315085e62a1f4a9c5cdf584299` — ci: stage one-shot manual QA ledger sync
+
