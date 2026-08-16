@@ -17,13 +17,31 @@ foreach ($HostDirectory in $RequiredHosts) {
 }
 
 if ($MissingHost) {
-    flutter create . `
-        --project-name sonic_nest `
-        --org io.github.sanskarin `
-        --platforms=android,ios,macos,linux,windows `
-        --no-pub
-    if ($LASTEXITCODE -ne 0) {
-        throw "Flutter platform generation failed with exit code $LASTEXITCODE."
+    $AnalysisOptions = Join-Path $Root 'analysis_options.yaml'
+    $AnalysisOptionsExisted = Test-Path $AnalysisOptions -PathType Leaf
+    $AnalysisOptionsBackup = [System.IO.Path]::GetTempFileName()
+    if ($AnalysisOptionsExisted) {
+        Copy-Item $AnalysisOptions $AnalysisOptionsBackup -Force
+    }
+
+    try {
+        flutter create . `
+            --project-name sonic_nest `
+            --org io.github.sanskarin `
+            --platforms=android,ios,macos,linux,windows `
+            --no-pub
+        if ($LASTEXITCODE -ne 0) {
+            throw "Flutter platform generation failed with exit code $LASTEXITCODE."
+        }
+    }
+    finally {
+        if ($AnalysisOptionsExisted) {
+            Copy-Item $AnalysisOptionsBackup $AnalysisOptions -Force
+        }
+        elseif (Test-Path $AnalysisOptions) {
+            Remove-Item $AnalysisOptions -Force
+        }
+        Remove-Item $AnalysisOptionsBackup -Force -ErrorAction SilentlyContinue
     }
 }
 
