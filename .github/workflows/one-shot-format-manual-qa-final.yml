@@ -1,0 +1,52 @@
+name: One-shot final manual QA formatter
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/one-shot-format-manual-qa-final.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Configure commit identity
+        run: |
+          git config user.name "Sanskar"
+          git config user.email "sanskarin@outlook.in"
+      - name: Apply exact permanent-gate formatting scope
+        run: dart format lib test tool/generate_brand_assets_v2.dart
+      - name: Record formatter changes
+        shell: bash
+        run: |
+          git diff --name-only -- lib test tool/generate_brand_assets_v2.dart > .github/manual-qa-final-format-result.txt
+          if [[ ! -s .github/manual-qa-final-format-result.txt ]]; then
+            printf '%s\n' 'NO_FORMAT_CHANGES' > .github/manual-qa-final-format-result.txt
+          fi
+      - name: Commit each formatted source file separately
+        shell: bash
+        run: |
+          while IFS= read -r file; do
+            [[ -z "$file" || "$file" == "NO_FORMAT_CHANGES" ]] && continue
+            git add -- "$file"
+            git commit -m "style: apply final canonical formatting to $file"
+          done < .github/manual-qa-final-format-result.txt
+      - name: Commit formatter evidence
+        run: |
+          git add .github/manual-qa-final-format-result.txt
+          git commit -m "ci: record final manual QA formatter result"
+      - name: Rebase and push
+        run: |
+          git pull --rebase origin main
+          git push origin HEAD:main
