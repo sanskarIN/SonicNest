@@ -1,0 +1,35 @@
+name: One-shot diagnostics ledger correction
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/one-shot-diagnostics-ledger-correction.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  correct-ledgers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Configure commit identity
+        run: |
+          git config user.name "Sanskar"
+          git config user.email "sanskarin@outlook.in"
+      - name: Correct ledger references
+        run: python3 tool/one_shot_correct_diagnostics_ledger.py
+      - name: Commit project-state correction
+        run: |
+          git add PROJECT_STATE.md
+          git diff --cached --quiet || git commit -m "docs: correct diagnostics validation commit references"
+      - name: Commit change-ledger correction
+        run: |
+          git add what_changed.md
+          git diff --cached --quiet || git commit -m "docs: correct diagnostics continuation ledger references"
+      - name: Push corrections
+        run: git push origin HEAD:main
