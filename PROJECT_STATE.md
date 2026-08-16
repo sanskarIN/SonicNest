@@ -263,7 +263,7 @@ latest_automated_validation:
     dart_format_check: success_non_mutating_committed_source_before_bootstrap
     analyzer: success_no_issues
     unit_tests: success_complete_suite
-    android_debug_apk: pending_same_run_at_ledger_generation
+    android_debug_apk: success
     linux_debug_build: success
   release_candidate:
     run_id: 31873121457
