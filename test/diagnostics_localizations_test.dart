@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sonicnest/l10n/app_localizations.dart';
-import 'package:sonicnest/l10n/diagnostics_localizations.dart';
+import 'package:sonic_nest/l10n/app_localizations.dart';
+import 'package:sonic_nest/l10n/diagnostics_localizations.dart';
 
 void main() {
   const l10n = AppLocalizations(Locale('en'));
