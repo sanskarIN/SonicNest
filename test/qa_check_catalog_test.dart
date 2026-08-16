@@ -4,7 +4,9 @@ import 'package:sonic_nest/models/qa_check_catalog.dart';
 void main() {
   group('QaCheckCatalog', () {
     test('category IDs and check IDs are unique', () {
-      final categoryIds = QaCheckCatalog.categories.map((item) => item.id).toList();
+      final categoryIds = QaCheckCatalog.categories
+          .map((item) => item.id)
+          .toList();
       final checkIds = QaCheckCatalog.checks.map((item) => item.id).toList();
 
       expect(categoryIds.toSet().length, categoryIds.length);
@@ -13,7 +15,9 @@ void main() {
     });
 
     test('every check references an existing category', () {
-      final categoryIds = QaCheckCatalog.categories.map((item) => item.id).toSet();
+      final categoryIds = QaCheckCatalog.categories
+          .map((item) => item.id)
+          .toSet();
 
       for (final check in QaCheckCatalog.checks) {
         expect(categoryIds, contains(check.categoryId), reason: check.id);
