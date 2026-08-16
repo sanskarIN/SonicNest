@@ -36,6 +36,13 @@ void main() {
       expect(QaCheckCatalog.checkById('unknown_check'), isNull);
     });
 
+    test('persisted check ID set is immutable', () {
+      expect(
+        () => QaCheckCatalog.checkIds.add('mutated_check'),
+        throwsUnsupportedError,
+      );
+    });
+
     test('every check references an existing category', () {
       final categoryIds = QaCheckCatalog.categories
           .map((item) => item.id)
