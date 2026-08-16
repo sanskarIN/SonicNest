@@ -28,9 +28,8 @@ class HomeScreen extends StatelessWidget {
       children: [
         Text(
           l10n.welcomeToSonicNest,
-          style: Theme.of(
-            context,
-          ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
+          style: Theme.of(context).textTheme.headlineMedium
+              ?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 6),
         Text(
@@ -174,9 +173,8 @@ class HomeScreen extends StatelessWidget {
             Expanded(
               child: Text(
                 l10n.recentRecordings,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                style: Theme.of(context).textTheme.titleLarge
+                    ?.copyWith(fontWeight: FontWeight.w700),
               ),
             ),
             TextButton(
@@ -238,9 +236,8 @@ class _SummaryCard extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                style: Theme.of(context).textTheme.titleLarge
+                    ?.copyWith(fontWeight: FontWeight.w800),
               ),
               Text(subtitle),
             ],
@@ -302,9 +299,8 @@ class _MiniPlayer extends StatelessWidget {
           children: [
             Text(
               entry.title,
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+              style: Theme.of(context).textTheme.titleLarge
+                  ?.copyWith(fontWeight: FontWeight.w700),
             ),
             Slider(
               value: progress.clamp(0.0, 1.0).toDouble(),
