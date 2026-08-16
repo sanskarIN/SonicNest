@@ -2,6 +2,18 @@
 
 Do not mark SonicNest release-ready until these checks have been executed on representative target hardware. Automated compilation is necessary but it is not a substitute for microphone, storage, interruption, routing, accessibility, or long-duration validation.
 
+## Manual evidence capture in the app
+
+SonicNest now provides two complementary, user-initiated evidence surfaces:
+
+- **About → Diagnostics & QA** captures privacy-safe runtime, aggregate Library/storage, recorder-state, and non-content settings context.
+- From a collected Diagnostics report, **Open QA evidence with this snapshot** opens the manual evidence ledger while carrying that exact in-memory privacy-safe `DiagnosticReport` into the exported evidence bundle.
+- **About → Manual QA evidence** opens the same status ledger without first collecting diagnostics.
+- Each source-controlled manual check can be marked **Not run**, **Passed**, **Failed**, or **Blocked**. The local session stores only fixed check IDs, status values, and timestamps; it has no free-form tester-note field.
+- Evidence can be copied as deterministic JSON or explicitly shared as Markdown. SonicNest never automatically uploads either evidence type.
+
+An in-app status is supporting evidence entered by the tester, **not** an automated assertion and **not** an automatic release-gate closure. The unchecked hardware, storage, accessibility, package, signing, and distribution checks below remain unchecked until the corresponding real test has actually been performed and reviewed. See `docs/MANUAL_QA_EVIDENCE.md` and `docs/DIAGNOSTICS_AND_QA.md`.
+
 ## Automated source checks
 
 - [ ] `dart format --output=none --set-exit-if-changed lib test`
