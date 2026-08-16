@@ -25,6 +25,8 @@ This file intentionally contains only work that is still incomplete, requires ph
 
 No additional repository-only release-automation gap is currently identified. The remaining unchecked tasks below require real devices/systems, sustained workloads, representative media, accessibility tooling, private signing credentials, distribution-console access, or final release approval.
 
+SonicNest now includes the user-initiated **Diagnostics & QA** report described in `docs/DIAGNOSTICS_AND_QA.md`. Use a fresh privacy-safe report as supporting evidence for relevant manual tests below. The report intentionally excludes recording content, recording titles, file paths, notes, tags, bookmarks, smart-naming text, and input-device names, and it does **not** close any physical-device, accessibility, filesystem, signing, or distribution gate by itself.
+
 ## Hardware and lifecycle validation
 
 - [ ] Android microphone permission allow/deny/revoke tests on physical devices.
