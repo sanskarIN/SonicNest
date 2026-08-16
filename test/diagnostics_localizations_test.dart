@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sonic_nest/l10n/app_localizations.dart';
 import 'package:sonic_nest/l10n/diagnostics_localizations.dart';
+import 'package:sonic_nest/models/qa_check_catalog.dart';
 
 void main() {
   const l10n = AppLocalizations(Locale('en'));
@@ -31,5 +32,31 @@ void main() {
     expect(l10n.diagnosticsHertz(48000), '48000 Hz');
     expect(l10n.diagnosticsBitsPerSecond(128000), '128000 bps');
     expect(l10n.diagnosticsCount(7), '7');
+  });
+
+  test('QA evidence workflow is localized and avoids free-form notes', () {
+    expect(l10n.qaEvidenceTitle, 'Manual QA evidence');
+    expect(l10n.qaEvidenceStatusLabel('passed'), l10n.qaEvidencePassed);
+    expect(l10n.qaEvidenceStatusLabel('failed'), l10n.qaEvidenceFailed);
+    expect(l10n.qaEvidenceStatusLabel('blocked'), l10n.qaEvidenceBlocked);
+    expect(l10n.qaEvidenceStatusLabel('notRun'), l10n.qaEvidenceNotRun);
+    expect(
+      l10n.qaEvidencePrivacyDescription.toLowerCase(),
+      contains('free-form tester notes are not collected'),
+    );
+  });
+
+  test('every QA category and check has a user-facing localized label', () {
+    for (final category in QaCheckCatalog.categories) {
+      final label = l10n.qaEvidenceCategoryTitle(category.id);
+      expect(label, isNot(category.id));
+      expect(label.trim(), isNotEmpty);
+    }
+
+    for (final check in QaCheckCatalog.checks) {
+      final label = l10n.qaEvidenceCheckTitle(check.id);
+      expect(label, isNot(check.id));
+      expect(label.trim(), isNotEmpty);
+    }
   });
 }
