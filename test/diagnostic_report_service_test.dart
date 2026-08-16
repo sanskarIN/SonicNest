@@ -2,10 +2,10 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sonicnest/models/recording_settings.dart';
-import 'package:sonicnest/services/diagnostic_report_service.dart';
-import 'package:sonicnest/services/settings_service.dart';
-import 'package:sonicnest/services/storage_service.dart';
+import 'package:sonic_nest/models/recording_settings.dart';
+import 'package:sonic_nest/services/diagnostic_report_service.dart';
+import 'package:sonic_nest/services/settings_service.dart';
+import 'package:sonic_nest/services/storage_service.dart';
 
 void main() {
   group('DiagnosticReportService', () {
