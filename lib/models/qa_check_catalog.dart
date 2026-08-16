@@ -77,19 +77,22 @@ abstract final class QaCheckCatalog {
     QaCheckDefinition(
       id: 'linux_microphone_capture',
       categoryId: 'microphone_lifecycle',
-      evidenceLabel: 'Linux microphone capture and routing on PulseAudio or PipeWire',
+      evidenceLabel:
+          'Linux microphone capture and routing on PulseAudio or PipeWire',
       requiresPhysicalTarget: true,
     ),
     QaCheckDefinition(
       id: 'input_switching',
       categoryId: 'microphone_lifecycle',
-      evidenceLabel: 'Built-in, wired, USB, Bluetooth, and external input switching',
+      evidenceLabel:
+          'Built-in, wired, USB, Bluetooth, and external input switching',
       requiresPhysicalTarget: true,
     ),
     QaCheckDefinition(
       id: 'audio_interruption',
       categoryId: 'microphone_lifecycle',
-      evidenceLabel: 'Incoming call, alarm, and audio-focus interruption behavior',
+      evidenceLabel:
+          'Incoming call, alarm, and audio-focus interruption behavior',
       requiresPhysicalTarget: true,
     ),
     QaCheckDefinition(
@@ -101,7 +104,8 @@ abstract final class QaCheckCatalog {
     QaCheckDefinition(
       id: 'android_foreground_service_variation',
       categoryId: 'microphone_lifecycle',
-      evidenceLabel: 'Android foreground-service behavior across OEM/device variations',
+      evidenceLabel:
+          'Android foreground-service behavior across OEM/device variations',
       requiresPhysicalTarget: true,
     ),
     QaCheckDefinition(
@@ -167,7 +171,8 @@ abstract final class QaCheckCatalog {
     QaCheckDefinition(
       id: 'large_library_ui',
       categoryId: 'reliability_stress',
-      evidenceLabel: 'Large-library startup, search, filter, scroll, and memory profiling',
+      evidenceLabel:
+          'Large-library startup, search, filter, scroll, and memory profiling',
       requiresExternalTooling: true,
     ),
     QaCheckDefinition(
@@ -268,7 +273,8 @@ abstract final class QaCheckCatalog {
     QaCheckDefinition(
       id: 'large_text_scaling',
       categoryId: 'accessibility_ux',
-      evidenceLabel: 'Large text and scaling review on small phones and desktop windows',
+      evidenceLabel:
+          'Large text and scaling review on small phones and desktop windows',
       requiresPhysicalTarget: true,
     ),
     QaCheckDefinition(
@@ -286,7 +292,8 @@ abstract final class QaCheckCatalog {
     QaCheckDefinition(
       id: 'batch_large_text_keyboard',
       categoryId: 'accessibility_ux',
-      evidenceLabel: 'Batch conversion with large text and keyboard-only interaction',
+      evidenceLabel:
+          'Batch conversion with large text and keyboard-only interaction',
       requiresPhysicalTarget: true,
     ),
     QaCheckDefinition(
@@ -304,7 +311,8 @@ abstract final class QaCheckCatalog {
     QaCheckDefinition(
       id: 'windows_icon_visual_review',
       categoryId: 'branding_package',
-      evidenceLabel: 'Windows icon review in Explorer, taskbar, Start, and shortcuts',
+      evidenceLabel:
+          'Windows icon review in Explorer, taskbar, Start, and shortcuts',
       requiresPhysicalTarget: true,
     ),
     QaCheckDefinition(
@@ -316,7 +324,8 @@ abstract final class QaCheckCatalog {
     QaCheckDefinition(
       id: 'native_launch_splash_review',
       categoryId: 'branding_package',
-      evidenceLabel: 'Android and iOS release launch/splash assets including dark mode',
+      evidenceLabel:
+          'Android and iOS release launch/splash assets including dark mode',
       requiresPhysicalTarget: true,
     ),
     QaCheckDefinition(
@@ -340,7 +349,8 @@ abstract final class QaCheckCatalog {
     QaCheckDefinition(
       id: 'direct_multi_export_cross_platform',
       categoryId: 'external_export',
-      evidenceLabel: 'Direct original-file multi-export on every supported platform',
+      evidenceLabel:
+          'Direct original-file multi-export on every supported platform',
       requiresPhysicalTarget: true,
     ),
     QaCheckDefinition(
@@ -364,7 +374,8 @@ abstract final class QaCheckCatalog {
     QaCheckDefinition(
       id: 'destination_permission_revocation',
       categoryId: 'external_export',
-      evidenceLabel: 'Destination disappearance or permission revocation after selection',
+      evidenceLabel:
+          'Destination disappearance or permission revocation after selection',
       requiresPhysicalTarget: true,
     ),
     QaCheckDefinition(
@@ -382,7 +393,8 @@ abstract final class QaCheckCatalog {
     QaCheckDefinition(
       id: 'navigate_away_batch_conversion',
       categoryId: 'external_export',
-      evidenceLabel: 'Closing or navigating away from Batch Convert while processing',
+      evidenceLabel:
+          'Closing or navigating away from Batch Convert while processing',
       requiresPhysicalTarget: true,
     ),
     QaCheckDefinition(
@@ -395,8 +407,9 @@ abstract final class QaCheckCatalog {
 
   static final Set<String> checkIds = checks.map((check) => check.id).toSet();
 
-  static List<QaCheckDefinition> checksForCategory(String categoryId) =>
-      checks.where((check) => check.categoryId == categoryId).toList(growable: false);
+  static List<QaCheckDefinition> checksForCategory(String categoryId) => checks
+      .where((check) => check.categoryId == categoryId)
+      .toList(growable: false);
 
   static QaCheckDefinition? checkById(String id) {
     for (final check in checks) {
