@@ -20,10 +20,7 @@ enum QaEvidenceStatus {
 }
 
 class QaCheckResult {
-  const QaCheckResult({
-    required this.status,
-    required this.updatedAtUtc,
-  });
+  const QaCheckResult({required this.status, required this.updatedAtUtc});
 
   final QaEvidenceStatus status;
   final DateTime updatedAtUtc;
@@ -40,7 +37,9 @@ class QaCheckResult {
     final map = Map<String, Object?>.from(value);
     final status = QaEvidenceStatus.tryParse(map['status']);
     final timestamp = map['updatedAtUtc'];
-    if (status == null || status == QaEvidenceStatus.notRun || timestamp is! String) {
+    if (status == null ||
+        status == QaEvidenceStatus.notRun ||
+        timestamp is! String) {
       return null;
     }
     final updatedAt = DateTime.tryParse(timestamp);
@@ -139,10 +138,7 @@ class QaEvidenceSession {
     if (status == QaEvidenceStatus.notRun) {
       next.remove(checkId);
     } else {
-      next[checkId] = QaCheckResult(
-        status: status,
-        updatedAtUtc: changedAtUtc,
-      );
+      next[checkId] = QaCheckResult(status: status, updatedAtUtc: changedAtUtc);
     }
     return QaEvidenceSession._(
       startedAtUtc: startedAtUtc,
@@ -170,7 +166,8 @@ class QaEvidenceSession {
     'startedAtUtc': startedAtUtc.toUtc().toIso8601String(),
     'updatedAtUtc': updatedAtUtc.toUtc().toIso8601String(),
     'results': {
-      for (final entry in results.entries) entry.key: entry.value.toJsonObject(),
+      for (final entry in results.entries)
+        entry.key: entry.value.toJsonObject(),
     },
   };
 
