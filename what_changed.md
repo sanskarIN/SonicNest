@@ -2094,3 +2094,123 @@ No additional repository-only release-automation gap is currently identified. Re
 Still intentionally open are microphone permission/capture/routing, wired/USB/Bluetooth/external-interface behavior, interruption/background/lock-screen/media buttons, low-storage/permission/process/power-loss recovery, real damaged/malformed media, long-duration/stress/performance profiling, desktop interaction/accessibility audits, native visual review and real screenshots, representative Linux/Windows package QA, Android Play production signing, Apple provisioning/signing/notarization/TestFlight/App Store, Windows Authenticode, final release checklist approval, and `v1.0.0` tagging.
 
 SonicNest therefore remains a **development preview**. The provenance manifest proves hosted artifact checksum/source/run consistency; it does not replace those real-world or protected-signing gates.
+
+
+## 2026-08-16 — Privacy-safe in-app diagnostics and QA evidence
+
+### Continuation objective
+
+The previous repository state had no remaining repository-only release-automation gap; the unchecked release list was dominated by physical-device microphone/routing/lifecycle tests, sustained recording and batch workloads, real filesystem/storage failures, accessibility audits, protected signing/notarization, distribution-console work, and final release approval. This continuation therefore implemented the next code-side feature that materially improves those remaining evidence workflows without pretending to replace them: a privacy-safe in-app Diagnostics & QA report.
+
+### Diagnostic report model and privacy contract
+
+- Added `lib/services/diagnostic_report_service.dart` with deterministic `DiagnosticReport` JSON and Markdown serialization plus schema versioning.
+- Added canonical app/runtime evidence: app version/build, OS family, OS version string, locale, Dart runtime, and logical processor count.
+- Added aggregate Library evidence only: saved, Trash, favorite, and pinned counts.
+- Added aggregate managed-storage evidence through `StorageStats`: recordings, Trash, temporary bytes/file counts, total managed bytes, and an explicit probe-success flag.
+- Added recorder-state evidence: recorder status, input-probe success, input-device count when safely available, and system-default-versus-custom input classification.
+- Added non-content recording configuration: format, preset, bit rate, sample rate, channels, automatic gain, echo cancellation, noise suppression, countdown, and keep-screen-awake.
+- Added non-content playback/interface evidence: default speed, skip interval, skip-silence, theme, reduced motion, and permanent-delete confirmation.
+- The report deliberately does **not** receive or serialize recording objects, recording titles, recording paths, recording/audio content, notes, tags, bookmarks, smart-naming prefix/template/suffix/category text, or input-device names.
+- JSON contains an explicit privacy object with every sensitive-content flag set to `false`.
+
+### In-app Diagnostics & QA surface
+
+- Added `lib/screens/diagnostics_screen.dart` and an **About -> Diagnostics & QA** entry in `lib/screens/about_screen.dart`.
+- Diagnostics are generated only when the user opens or refreshes the surface; no automatic upload path was added.
+- Storage and input-device probes fail independently and render as unavailable rather than fabricating values.
+- Input-device enumeration is deliberately skipped while the recorder is active, avoiding a new recorder-backend enumeration during capture.
+- Added **Copy JSON** through the system clipboard and **Share report** through a temporary Markdown file plus the existing explicit system-share service.
+- The report surface uses constrained responsive layout, selectable diagnostic values, semantic loading text, retry behavior, and existing Material 3 conventions.
+
+### Localization and canonical application metadata
+
+- Added `lib/l10n/diagnostics_localizations.dart` for Diagnostics & QA product-facing text.
+- Added `test/diagnostics_localizations_test.dart` for catalog labels, privacy copy, and helper formatting.
+- Centralized `appVersion`, `appBuildNumber`, `appVersionWithBuild`, and `appDisplayVersion` in `lib/core/constants.dart`.
+- Updated About and diagnostics to consume the same canonical application version source.
+- Kept raw runtime/OS/backend values technical, consistent with the existing localization policy.
+
+### Privacy and serialization regression coverage
+
+- Added `test/diagnostic_report_service_test.dart`.
+- The suite verifies deterministic machine-readable sections and expected app/library/storage/recorder/settings values.
+- The suite verifies the exact privacy object rather than checking only one field.
+- The suite injects sentinel values into smart-naming prefix, template, suffix, and category and proves those secret values cannot occur in JSON or Markdown output.
+- The suite proves smart-naming field keys are absent from JSON.
+- The suite verifies failed storage/input probes remain `null` / unavailable rather than being represented by invented metrics.
+- Diagnostics localization tests verify privacy copy explicitly names recording content, titles, paths, notes, tags, bookmarks, and input-device names as excluded.
+
+### Documentation and QA integration
+
+- Added `docs/DIAGNOSTICS_AND_QA.md` with access instructions, privacy contract, report-field definitions, physical-QA usage, support-sharing guidance, and explicit evidence limitations.
+- Updated `README.md` with the Diagnostics & QA feature, privacy behavior, and documentation link.
+- Updated `TODO.md` so remaining hardware/lifecycle/reliability/accessibility/signing tasks can use diagnostics as supporting evidence without checking any manual gate off.
+- Updated `ROADMAP.md` with the v0.4/v0.5 diagnostics milestone and a dedicated diagnostics evidence status section.
+- Updated `RELEASE_NOTES.md` with the 2026-08-16 diagnostics continuation and exact core-CI evidence.
+- Updated `PROJECT_STATE.md` with the current diagnostics contract, validated source revision, and explicit historical-release-artifact boundary.
+
+### Formatter discovery, exact repair, and permanent gate restoration
+
+The first hosted validation exposed canonical Dart-format drift in four new files. Rather than weakening the existing read-only formatter gate or guessing at formatting, a temporary CI revision ran the same hosted Dart formatter, printed its exact diff, and intentionally failed. That exact output was then committed file-by-file. The temporary formatter-diff step was removed, and `.github/workflows/ci.yml` was restored to the permanent non-mutating command:
+
+`dart format --output=none --set-exit-if-changed lib test tool/generate_brand_assets_v2.dart`
+
+The final validated source passes this gate with **59 files, 0 changed**.
+
+### Analyzer defect found and fixed
+
+After formatting was repaired, hosted static analysis found one integration error limited to the two new test files: they imported `package:sonicnest/...`, while `pubspec.yaml` canonically declares `name: sonic_nest`. Production diagnostics code was not changed for this issue. Both test import sets were corrected to `package:sonic_nest/...`, then the complete validation suite was rerun.
+
+### Final automated validation
+
+Final diagnostics source revision: `00e78d27ebc68f9aa743d8fab5f2ef11f3ee6910`.
+
+Flutter CI run `31932491771` validates that exact source:
+
+- Dart formatting enforcement: **success**, 59 files checked, 0 changed.
+- Static analysis: **success**, `No issues found!`.
+- Unit tests: **success**, complete suite **94/94**.
+- Linux debug build: **success**.
+- Android debug APK build: **success**.
+
+The 2026-08-15 cross-platform release-candidate and provenance artifacts remain historical evidence for their exact older source revisions. They predate the Diagnostics & QA implementation and are intentionally **not** described as artifacts containing this feature. Windows/macOS/iOS/package/signing evidence for this newer source is not invented or inferred from those older artifacts.
+
+### Commit ledger for this continuation
+
+Each repository write continued to use `Sanskar <sanskarin@outlook.in>`.
+
+- `e1bf8a67039e15fecad29ec133aab0c22086f69b` — `feat: add privacy-safe diagnostic report model`
+- `e50c606bc7dd084e7999ca2d4307f1f595cf0d73` — `test: cover diagnostic report privacy and serialization`
+- `c5af027198ec97498ea04833a30d85ef94f42341` — `refactor: centralize SonicNest version metadata`
+- `953276429cb11468d35ca348bcaae343af17a72e` — `feat: localize diagnostics and QA evidence strings`
+- `820d5cd09145f1e25d386a6a07cb2b7e12d4630d` — `feat: add in-app diagnostics and QA evidence screen`
+- `db9319721629f5efa9e79ce3323e61b9a1f43a76` — `feat: expose diagnostics from About screen`
+- `6513333cfce625a40864179eea02b74d7a43fd91` — `fix: complete diagnostics labels`
+- `601e913e45da78077390946c5824e68ee62c07b3` — `fix: complete diagnostics screen integration`
+- `f70a5f41cdbbc48b6559e7d2b429bac01bfaffcb` — `refactor: reuse canonical app metadata in diagnostics`
+- `51ce8005a3f284f321f3039036bcd06f777f21ec` — `test: cover diagnostics localization catalog`
+- `6d39b5354a413a14f6d0985c997875ccfebd1d42` — `test: enforce diagnostics privacy contract`
+- `617b7e8b4caa5faa50d9f2d0acf5a0f53d621659` — `docs: add privacy-safe diagnostics QA guide`
+- `384b3a50bf85f31b6f7bea81e4a22537c1012bb0` — `docs: document in-app diagnostics and QA reports`
+- `0f3661d7198f0285c550267cb3f02c2ffbcbb0ad` — `ci: expose canonical diagnostics formatting diff` (temporary hosted formatter-diff revision)
+- `80ab45ed55da6a66fc849ac5f1b72ca049634ea2` — `style: format diagnostics localization`
+- `95d86c2d82beb0a43b6304d1c058c58cbe62f694` — `style: format diagnostics screen`
+- `b510b205dfff59110399b3e60db3c903c7f8669b` — `style: format diagnostic report service`
+- `3d91ace5814e908dbf9c66d556e528042debfa52` — `style: format diagnostic report tests`
+- `32ced086fac27fd2f4f808674afa511647a863e9` — `ci: restore non-mutating Dart formatting gate`
+- `ec9495ce66586c7e150d98a3dd6b3dcfa84f36eb` — `docs: connect diagnostics to remaining QA gates`
+- `8658eadd12f83a3cfa56e2a7741a27d938d8b764` — `docs: record diagnostics QA milestone in roadmap`
+- `b782ca8bf58fe614c8bcc708039c7a4f28457ed8` — `fix: use canonical package name in diagnostics report tests`
+- `00e78d27ebc68f9aa743d8fab5f2ef11f3ee6910` — `fix: use canonical package name in diagnostics localization tests`
+
+### Validation-run ledger
+
+- Run `31932084698` exposed the initial formatting drift in the diagnostics source.
+- Run `31932234819` printed the hosted formatter's exact four-file canonical diff from the temporary formatter-diff revision.
+- Run `31932376857` confirmed the restored formatting gate and Linux build, then exposed the two test-only package-name imports during analyzer validation.
+- Run `31932491771` is the final clean diagnostics validation run: formatter, analyzer, 94 tests, Android debug, and Linux debug all succeeded on `00e78d27ebc68f9aa743d8fab5f2ef11f3ee6910`.
+
+### Remaining release boundary
+
+No physical-device, real-filesystem, accessibility, production-signing, notarization, store-console, package-visual, sustained-performance, or stable-release gate is marked complete merely because diagnostics now exists. `TODO.md`, `docs/QA_CHECKLIST.md`, and `docs/RELEASING.md` remain the authority for those evidence requirements. Diagnostics improves reproducibility and support evidence; it does not substitute synthetic metadata for a test that must occur on real hardware or in a protected maintainer release environment.
