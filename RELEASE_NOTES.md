@@ -188,3 +188,20 @@ Hosted Release Candidate Validation run `31876035202` on source `b95d77c4b69c979
 The generated `RELEASE_CANDIDATE_MANIFEST.json` records application version `0.1.0+1`, release classification `development-preview`, and `stableReleaseApproved: false`. Its SHA-256 is `8a49759555cad26a60858025d82953ad0e3c3b429aa8138d67f7ef4f86d99b7e`; an independent post-download recomputation matched exactly. The manifest workflow artifact digest is `sha256:5fa654434ba304e7b67945250f7c8f4bec14eacbc87effefa5cd2d620885baa3`.
 
 This evidence proves hosted checksum/source/run consistency only. It does not complete physical microphone/routing/interruption/background validation, real storage/process-failure testing, accessibility, sustained performance/soak tests, real visual review/screenshots, representative-system package QA, protected production signing/notarization, store acceptance, or final `v1.0.0` approval. SonicNest remains a **development preview**.
+
+
+## 2026-08-16 — Privacy-safe Diagnostics & QA evidence
+
+SonicNest now includes an About-accessible **Diagnostics & QA** screen for reproducible physical-device, support, storage, lifecycle, and accessibility evidence. Diagnostics are generated only when the user opens or refreshes the screen. SonicNest does not automatically upload a report.
+
+The report can be copied as deterministic JSON or shared as Markdown. It records the SonicNest version/build, platform/runtime information, aggregate Library counts, managed-storage totals and probe status, recorder state, input-device count when safely available, default-versus-custom input selection, and non-content recording/playback/interface preferences needed to reproduce behavior.
+
+The privacy contract intentionally excludes recording/audio content, recording titles, file paths, notes, tags, bookmarks, smart-naming prefix/template/suffix/category text, and input-device names. Input enumeration contributes only a count and selected-input class, and SonicNest skips that probe while recording is active so opening diagnostics does not introduce another recorder-backend enumeration during capture.
+
+App version metadata is centralized in `AppConstants`, and About plus diagnostics now consume the same canonical version/build source. `docs/DIAGNOSTICS_AND_QA.md`, `README.md`, `TODO.md`, and `ROADMAP.md` document the evidence workflow and clearly state that a generated report does not close microphone, routing, interruption, background, low-storage/filesystem, performance, accessibility, signing, package, store, or other real-target release gates.
+
+Regression coverage injects private smart-naming sentinel text and verifies that neither JSON nor Markdown can serialize it; verifies the exact explicit privacy flags; verifies deterministic report sections; verifies unavailable probe behavior without invented values; and covers the diagnostics localization catalog.
+
+Hosted validation for source `00e78d27ebc68f9aa743d8fab5f2ef11f3ee6910` is Flutter CI run `31932491771`: the non-mutating Dart formatter gate passed with **59 files / 0 changed**, static analysis reported **No issues found**, the complete unit suite passed **94/94 tests**, the Linux debug build passed, and the Android debug APK build passed.
+
+The 2026-08-15 five-platform release-candidate/provenance artifacts predate this diagnostics feature. Their hashes and signing classifications remain valid evidence for their exact historical source revisions, but they are not presented as release artifacts containing the 2026-08-16 diagnostics implementation. Stable-release approval remains blocked on the existing real-device, sustained-workload, accessibility, protected-signing, distribution-console, and final-approval gates.
