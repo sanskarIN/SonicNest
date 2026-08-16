@@ -24,9 +24,8 @@ class SettingsScreen extends StatelessWidget {
           children: [
             Text(
               l10n.settings,
-              style: Theme.of(
-                context,
-              ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
+              style: Theme.of(context).textTheme.headlineMedium
+                  ?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 18),
             _Section(
@@ -195,9 +194,8 @@ class SettingsScreen extends StatelessWidget {
                 const Divider(height: 28),
                 Text(
                   l10n.smartNaming,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: Theme.of(context).textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 10),
                 TextFormField(
@@ -529,9 +527,8 @@ class _Section extends StatelessWidget {
                   const SizedBox(width: 10),
                   Text(
                     title,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: Theme.of(context).textTheme.titleLarge
+                        ?.copyWith(fontWeight: FontWeight.w700),
                   ),
                 ],
               ),
