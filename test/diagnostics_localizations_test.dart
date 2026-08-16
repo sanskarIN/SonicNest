@@ -4,6 +4,7 @@ import 'package:sonic_nest/l10n/app_localizations.dart';
 import 'package:sonic_nest/l10n/diagnostics_localizations.dart';
 import 'package:sonic_nest/models/qa_check_catalog.dart';
 
+// Evidence labels are part of the release-QA presentation contract.
 void main() {
   const l10n = AppLocalizations(Locale('en'));
 
