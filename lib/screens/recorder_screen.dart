@@ -23,9 +23,8 @@ class RecorderScreen extends StatelessWidget {
       children: [
         Text(
           l10n.recorder,
-          style: Theme.of(
-            context,
-          ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
+          style: Theme.of(context).textTheme.headlineMedium
+              ?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 4),
         Text(
@@ -48,9 +47,8 @@ class RecorderScreen extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       _statusText(recorder, l10n),
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                      style: Theme.of(context).textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w700),
                     ),
                   ],
                 ),
@@ -61,17 +59,15 @@ class RecorderScreen extends StatelessWidget {
                     label: l10n.recordingStartsIn(recorder.countdownRemaining),
                     child: Text(
                       '${recorder.countdownRemaining}',
-                      style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                        fontWeight: FontWeight.w900,
-                      ),
+                      style: Theme.of(context).textTheme.displayLarge
+                          ?.copyWith(fontWeight: FontWeight.w900),
                     ),
                   )
                 else
                   Text(
                     formatDuration(recorder.elapsed),
-                    style: Theme.of(
-                      context,
-                    ).textTheme.displaySmall?.copyWith(fontFeatures: const []),
+                    style: Theme.of(context).textTheme.displaySmall
+                        ?.copyWith(fontFeatures: const []),
                   ),
                 const SizedBox(height: 18),
                 WaveformView(samples: recorder.waveform, height: 150),
@@ -239,9 +235,8 @@ class _Controls extends StatelessWidget {
               await controller.startRecording();
             } catch (error) {
               if (context.mounted) {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text('$error')));
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(SnackBar(content: Text('$error')));
               }
             }
           },
@@ -277,9 +272,8 @@ class _Controls extends StatelessWidget {
               controller.setNavigationIndex(2);
             } catch (error) {
               if (context.mounted) {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text('$error')));
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(SnackBar(content: Text('$error')));
               }
             }
           },
@@ -313,9 +307,8 @@ class _PresetSelector extends StatelessWidget {
           children: [
             Text(
               l10n.qualityPreset,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              style: Theme.of(context).textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<QualityPreset>(
