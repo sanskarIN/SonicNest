@@ -19,6 +19,8 @@ This directory contains the maintained technical, user, QA, branding, packaging,
 
 ## Quality assurance
 
+- [`DIAGNOSTICS_AND_QA.md`](DIAGNOSTICS_AND_QA.md) — user-initiated privacy-safe runtime/storage/recorder/settings diagnostics and the boundary between diagnostic context and real-device proof.
+- [`MANUAL_QA_EVIDENCE.md`](MANUAL_QA_EVIDENCE.md) — local fixed-ID manual-test status sessions, privacy contract, persistence, JSON/Markdown export, and release-evidence usage without automatic gate closure.
 - [`QA_CHECKLIST.md`](QA_CHECKLIST.md) — complete evidence-based automated/manual QA matrix, including metadata/import automation evidence and intentionally unchecked real malformed-media, storage, performance, accessibility, hardware, and release gates.
 - [`RELEASE_EVIDENCE_TEMPLATE.md`](RELEASE_EVIDENCE_TEMPLATE.md) — structured record for exact commit, workflow, artifact, device, OS, microphone, routing, codec, accessibility, branding, performance, signing, and final-release evidence.
 - [`AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md`](AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md) — exact hosted release-candidate run, per-platform artifact checksums/digests, Android Debug-certificate classification, Windows portable startup-smoke evidence, repository-audit evidence, and the explicit boundary between automation and stable-release approval.
@@ -36,7 +38,7 @@ This directory contains the maintained technical, user, QA, branding, packaging,
 
 ## Privacy, security, support, and open source
 
-- [`../PRIVACY.md`](../PRIVACY.md) — local-first recording/data expectations and explicit external-action boundaries.
+- [`../PRIVACY.md`](../PRIVACY.md) — local-first recording/data expectations plus diagnostics/manual-evidence storage and explicit external-action boundaries.
 - [`../SECURITY.md`](../SECURITY.md) — security reporting and project security expectations.
 - [`../SUPPORT.md`](../SUPPORT.md) — support/contact guidance.
 - [`../CONTRIBUTING.md`](../CONTRIBUTING.md) — contribution workflow, focused metadata/import regression requirements, packaging validation, and quality expectations.
@@ -57,4 +59,4 @@ Documentation must distinguish these states clearly:
 3. **Manually validated** — observed on specified real hardware/OS/artifact with evidence.
 4. **Release approved** — all required gates for the exact signed/tagged artifact are complete.
 
-Do not use automated compilation alone to claim microphone, routing, malformed-real-media compatibility, low-storage recovery, large-library UI performance, background behavior, accessibility, visual-branding, signing, store, or stable-release success.
+Do not use automated compilation, a diagnostic snapshot, or a manually selected in-app status alone to claim microphone, routing, malformed-real-media compatibility, low-storage recovery, large-library UI performance, background behavior, accessibility, visual-branding, signing, store, or stable-release success.
