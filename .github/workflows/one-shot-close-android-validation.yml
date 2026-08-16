@@ -1,0 +1,43 @@
+name: One-shot Android validation ledger close
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/one-shot-close-android-validation.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  close:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Configure commit identity
+        run: |
+          git config user.name "Sanskar"
+          git config user.email "sanskarin@outlook.in"
+      - name: Correct final Android validation status
+        run: python3 .github/scripts/one_shot_close_android_validation.py
+      - name: Commit corrected ledgers separately
+        shell: bash
+        run: |
+          for file in PROJECT_STATE.md RELEASE_NOTES.md what_changed.md; do
+            if ! git diff --quiet -- "$file"; then
+              git add -- "$file"
+              case "$file" in
+                PROJECT_STATE.md) msg="docs: close Android core validation state" ;;
+                RELEASE_NOTES.md) msg="docs: record complete core manual QA validation" ;;
+                what_changed.md) msg="docs: close Android result in manual QA ledger" ;;
+              esac
+              git commit -m "$msg"
+            fi
+          done
+      - name: Rebase and push
+        run: |
+          git pull --rebase origin main
+          git push origin HEAD:main
