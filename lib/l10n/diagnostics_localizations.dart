@@ -12,7 +12,8 @@ extension DiagnosticsLocalizations on AppLocalizations {
   String get diagnosticsShareMarkdown => 'Share report';
   String get diagnosticsCopied => 'Diagnostics JSON copied.';
   String get diagnosticsShared => 'Diagnostics report prepared for sharing.';
-  String diagnosticsFailed(Object error) => 'Could not collect diagnostics: $error';
+  String diagnosticsFailed(Object error) =>
+      'Could not collect diagnostics: $error';
   String diagnosticsShareFailed(Object error) =>
       'Could not share diagnostics: $error';
   String get diagnosticsLoading => 'Collecting diagnostics…';
