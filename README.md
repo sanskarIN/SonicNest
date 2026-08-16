@@ -37,6 +37,7 @@ Current development version: **0.1.0**. The repository is structured as a produc
 - Integrated player with seek, jump controls, volume, speed, repeat-one, previous/next recording navigation, A-B selection looping, bookmarks, and silence-skip support where available.
 - Android, iOS, and macOS media-session metadata plus notification/lock-screen playback integration using `just_audio_background` and tagged media sources.
 - Non-destructive FFmpeg-backed editing: keep selection, cut selection, split, merge, normalize, fades, silence removal/insertion, gain changes, basic noise cleanup, compressor, limiter, high-pass/low-pass filters, format conversion, draggable selection handles, selection undo/redo, and export presets.
+- In-app **Diagnostics & QA** reports provide privacy-safe runtime, aggregate library/storage, recorder-state, and settings evidence for physical-device/support testing. Reports exclude recording content, titles, paths, notes, tags, bookmarks, smart-naming text, and input-device names; they are created only on user request and are never automatically uploaded.
 - Native launcher/splash branding generated reproducibly from project-controlled SonicNest mark geometry, plus branded Flutter startup UI with startup-error recovery.
 - Debian `.deb` packaging for Linux with desktop entry, AppStream metadata, generated SonicNest icon integration, package checksums, structural verification, hosted-runner installation/startup smoke, and uninstall cleanup verification.
 - Initial public Linux distribution policy: verified `.deb` + SHA-256 checksum through GitHub Releases; no initial custom APT repository.
@@ -160,7 +161,7 @@ SonicNest separates models, services, controllers, presentation, reusable widget
 
 ## Privacy
 
-Recordings remain on-device by default. SonicNest does not upload microphone data or recordings without an explicit user-initiated action. See `PRIVACY.md`.
+Recordings remain on-device by default. SonicNest does not upload microphone data or recordings without an explicit user-initiated action. Diagnostics are generated only on request, exclude recording/library content and file paths, and are not automatically uploaded. See `PRIVACY.md` and `docs/DIAGNOSTICS_AND_QA.md`.
 
 ## Codec notes
 
@@ -174,6 +175,7 @@ Native recording uses platform encoders through `record`. Formats requiring tran
 - `docs/RECOVERY_TESTING.md` — reproducible recovery validation scenarios.
 - `docs/BATCH_CONVERSION.md` — conversion ordering, failure isolation, stop behavior, and external-copy rules.
 - `docs/LOCALIZATION_POLICY.md` — user-facing translation versus raw technical diagnostic policy.
+- `docs/DIAGNOSTICS_AND_QA.md` — privacy contract, report fields, sharing behavior, and physical-QA evidence guidance.
 - `docs/BRANDING.md` — deterministic native icon/splash generation.
 - `docs/ANDROID_DISTRIBUTION_POLICY.md` — Google Play, Play App Signing, upload-key, and Android candidate-signing boundary.
 - `docs/APPLE_DISTRIBUTION_POLICY.md` — TestFlight/App Store and macOS signed/notarized distribution boundary.
