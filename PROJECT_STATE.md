@@ -115,6 +115,11 @@ completed_features:
   - desktop Ctrl+1 through Ctrl+5 navigation shortcuts
   - desktop F9 F10 Ctrl+Alt+P and Ctrl+Alt+Arrow recorder/player shortcuts
   - English localization-ready delegate with primary Flutter presentation surfaces migrated to the localization catalog
+  - About-accessible user-initiated Diagnostics & QA screen with deterministic JSON copy and Markdown sharing
+  - privacy-safe diagnostics contract excluding recording content titles paths notes tags bookmarks smart-naming text and input-device names
+  - aggregate diagnostics for runtime Library managed storage recorder state input count and non-content settings
+  - diagnostics input enumeration skipped while recording is active to avoid a concurrent recorder-backend probe
+  - regression coverage enforcing diagnostics serialization privacy unavailable-probe behavior and localization labels
   - About privacy support GitHub email and Buy Me a Coffee links
   - original vector branding assets
   - deterministic native branding source raster generation
@@ -150,6 +155,36 @@ completed_features:
   - Android distribution policy selects Google Play and Play App Signing with a separate upload key
   - Apple distribution policy selects TestFlight/App Store for iOS and signed/notarized GitHub Releases for initial macOS public distribution
   - Windows stable public signing policy requires Authenticode while actual signing credentials/service remain maintainer-owned
+diagnostics_qa:
+  implementation_source_commit: 00e78d27ebc68f9aa743d8fab5f2ef11f3ee6910
+  core_ci_run_id: 31932491771
+  access: About -> Diagnostics & QA
+  generation: user_initiated_only
+  automatic_upload: false
+  exports:
+    - deterministic JSON clipboard copy
+    - privacy-safe Markdown share file
+  privacy_excludes:
+    - recording content
+    - recording titles
+    - file paths
+    - notes tags and bookmarks
+    - smart-naming prefix template suffix and category text
+    - input-device names
+  evidence_includes:
+    - canonical app version and build
+    - platform OS locale Dart runtime and logical processor count
+    - aggregate saved Trash favorite and pinned counts
+    - aggregate managed storage bytes and file counts with probe status
+    - recorder state input-probe status and input count
+    - default-versus-custom selected input classification
+    - non-content recording playback appearance and delete-confirmation settings
+  active_recording_input_probe: skipped
+  documentation: docs/DIAGNOSTICS_AND_QA.md
+  release_gate_effect: supporting_evidence_only_no_manual_gate_closed
+release_evidence_boundary:
+  diagnostics_feature_date: 2026-08-16
+  note: The 2026-08-15 five-platform release-candidate and unified provenance artifacts predate Diagnostics & QA and are evidence only for their exact historical source revisions.
 partial_features:
   - English is the only shipped locale; diagnostic-text policy is decided, while additional locales still require translation review, text-expansion testing, and accessibility QA
   - Windows and Linux do not yet expose a dedicated SonicNest system-wide media-session integration beyond the selected desktop playback backend
@@ -188,15 +223,15 @@ pending_manual_validation:
   - Windows Authenticode signing and trust verification on the exact final public package
   - stable release approval and v1.0.0 tag only after all required evidence gates complete
 latest_automated_validation:
-  formatter_clean_source_commit: 4e0fbf16534a60e2d3209c5ec5f54d4982903f8c
-  canonical_format_commit: 22c1d46e077625d6e1964d56716700727d1800dc
-  non_mutating_format_gate_commit: 704b0f60aae8f179f4f41875c336d2052b45391e
+  formatter_clean_source_commit: 00e78d27ebc68f9aa743d8fab5f2ef11f3ee6910
+  canonical_format_commit: 3d91ace5814e908dbf9c66d556e528042debfa52
+  non_mutating_format_gate_commit: 32ced086fac27fd2f4f808674afa511647a863e9
   core_flutter_ci:
-    run_id: 31870933447
-    source_commit: 4e0fbf16534a60e2d3209c5ec5f54d4982903f8c
-    dart_format_check: success_non_mutating
-    analyzer: success
-    unit_tests: success_complete_suite
+    run_id: 31932491771
+    source_commit: 00e78d27ebc68f9aa743d8fab5f2ef11f3ee6910
+    dart_format_check: success_non_mutating_59_files_0_changed
+    analyzer: success_no_issues
+    unit_tests: success_complete_suite_94_tests
     android_debug_apk: success
     linux_debug_build: success
   release_candidate:
