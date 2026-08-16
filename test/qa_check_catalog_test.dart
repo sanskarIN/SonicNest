@@ -14,6 +14,27 @@ void main() {
       expect(QaCheckCatalog.checkIds.length, checkIds.length);
     });
 
+    test('persisted IDs use stable machine-readable snake case', () {
+      final stableId = RegExp(r'^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$');
+
+      for (final category in QaCheckCatalog.categories) {
+        expect(
+          stableId.hasMatch(category.id),
+          isTrue,
+          reason: 'Invalid persisted category ID: ${category.id}',
+        );
+      }
+      for (final check in QaCheckCatalog.checks) {
+        expect(
+          stableId.hasMatch(check.id),
+          isTrue,
+          reason: 'Invalid persisted check ID: ${check.id}',
+        );
+        expect(QaCheckCatalog.checkById(check.id), same(check));
+      }
+      expect(QaCheckCatalog.checkById('unknown_check'), isNull);
+    });
+
     test('every check references an existing category', () {
       final categoryIds = QaCheckCatalog.categories
           .map((item) => item.id)
