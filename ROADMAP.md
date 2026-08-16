@@ -81,6 +81,7 @@ Completed/in progress:
 - Primary Flutter presentation surfaces are centralized in the localization catalog; English is the currently supported locale.
 - Backend diagnostic/error localization policy is explicitly decided: product-facing summaries are localized while raw backend diagnostics remain technical evidence.
 - Deterministic metadata stress coverage exercises 3,000 entries through the real JSON persistence path.
+- User-initiated Diagnostics & QA reports provide privacy-safe runtime, aggregate library/storage, recorder-state, and settings evidence without recording content, titles, paths, notes, tags, bookmarks, smart-naming text, or input-device names.
 
 Remaining:
 - Add additional locales only with translation review, text-expansion testing, and translation QA.
@@ -119,6 +120,7 @@ Completed/in progress:
 - Windows portable package path validated by Windows run `31872155143`: debug build, release build, portable ZIP construction, package verification, checksum/package-info generation, explicit unsigned warning, and artifact upload all succeeded.
 - First complete release-candidate matrix run `31872389283` passed preflight, Android, Linux, Windows, macOS, and iOS release-mode validation on source `8096d45bb0ea09cf3107e8fd80e05bf6844baf9b`; inspection of its Android artifact exposed the inaccurate historical `unsigned` label and directly led to the non-production certificate-verification correction.
 - Clean repository audit run `31873122160` passed on final-validation candidate SHA `048870ec8dc26a16e2451310460d3e03c9084dc7`, including all repository invariants and top-level Bash/PowerShell helper parsing.
+- Privacy-safe in-app diagnostics are documented in `docs/DIAGNOSTICS_AND_QA.md` and are intended to accompany real-device/support evidence without replacing the manual release gates.
 
 Remaining:
 - Keep Android/Linux/Windows/macOS/iOS build and release-candidate workflows green for future source revisions.
@@ -162,6 +164,9 @@ Implemented: defensive model decoding, unsafe numeric/waveform normalization, st
 
 Implemented: deterministic brand source generation, Android adaptive/monochrome/full launcher inputs, Android/iOS native splash resources, Android/iOS/macOS/Windows icon generation integrated into build workflows, Debian `.deb` packaging with desktop/AppStream integration and hosted install/smoke/uninstall validation, Windows versioned portable ZIP packaging with release-mode hosted build/verify/startup-smoke validation, and Android hosted release-mode package/signing-state inspection. Selected initial public channels are Google Play for Android (Play App Signing + protected upload key), TestFlight/App Store for iOS, signed/notarized GitHub Releases for macOS, GitHub Releases for Linux (`.deb` + SHA-256), and GitHub Releases for Windows (final Authenticode-verified portable ZIP + post-signing SHA-256). Remaining work is real OS-level visual/audio/accessibility inspection, representative package/install/device evidence, private signing/provisioning/notarization configuration, store submissions, real screenshots, and stable-release approval.
 
+## Diagnostics and QA evidence status
+
+Implemented: an About-accessible, user-initiated diagnostics screen; deterministic JSON and Markdown report serialization; explicit privacy flags; aggregate library/storage evidence; recorder-state and input-count evidence without device names; non-content recording/playback/interface settings; copy/share actions; and regression tests that inject private smart-naming text and verify it cannot appear in exported diagnostics. The report is supporting evidence only. Physical microphone/routing, interruption, background, filesystem, performance, accessibility, package, signing, and store gates remain manual or credential-dependent.
 
 ## Unified release-candidate provenance milestone — completed 2026-08-15
 
