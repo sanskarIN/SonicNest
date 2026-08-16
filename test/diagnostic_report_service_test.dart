@@ -12,8 +12,16 @@ void main() {
     const service = DiagnosticReportService();
 
     DiagnosticReport buildReport({StorageStats? storageStats}) {
+      final recording = RecordingSettings.forPreset(
+        QualityPreset.podcast,
+      ).copyWith(
+        namingPrefix: 'PRIVATE_PREFIX_DO_NOT_EXPORT',
+        namingTemplate: 'PRIVATE_TEMPLATE_DO_NOT_EXPORT',
+        namingSuffix: 'PRIVATE_SUFFIX_DO_NOT_EXPORT',
+        namingCategory: 'PRIVATE_CATEGORY_DO_NOT_EXPORT',
+      );
       final settings = SettingsSnapshot.defaults().copyWith(
-        recording: RecordingSettings.forPreset(QualityPreset.podcast),
+        recording: recording,
         themeMode: ThemeMode.dark,
         defaultPlaybackSpeed: 1.25,
         skipIntervalSeconds: 15,
@@ -58,6 +66,7 @@ void main() {
 
       expect(decoded['schemaVersion'], DiagnosticReport.schemaVersion);
       expect(decoded['generatedAtUtc'], '2026-08-16T06:30:00.000Z');
+      expect((decoded['app'] as Map<String, dynamic>)['name'], 'SonicNest');
       expect((decoded['app'] as Map<String, dynamic>)['version'], '0.1.0+1');
       expect((decoded['library'] as Map<String, dynamic>)['savedRecordings'], 12);
       expect((decoded['storage'] as Map<String, dynamic>)['totalManagedBytes'], 1250);
@@ -69,16 +78,40 @@ void main() {
       );
     });
 
-    test('explicitly excludes user recording content and device names', () {
+    test('explicitly declares every privacy-sensitive field as excluded', () {
+      final privacy = buildReport().toJsonObject()['privacy']
+          as Map<String, Object?>;
+
+      expect(
+        privacy,
+        equals(const {
+          'containsRecordingContent': false,
+          'containsRecordingTitles': false,
+          'containsFilePaths': false,
+          'containsNotesTagsOrBookmarks': false,
+          'containsInputDeviceNames': false,
+        }),
+      );
+    });
+
+    test('does not serialize private naming text or recording metadata', () {
       final report = buildReport();
       final json = report.toPrettyJson();
       final markdown = report.toMarkdown();
 
-      expect(json, isNot(contains('recordingTitle')));
-      expect(json, isNot(contains('filePath')));
-      expect(json, isNot(contains('inputDeviceName')));
+      for (final secret in const [
+        'PRIVATE_PREFIX_DO_NOT_EXPORT',
+        'PRIVATE_TEMPLATE_DO_NOT_EXPORT',
+        'PRIVATE_SUFFIX_DO_NOT_EXPORT',
+        'PRIVATE_CATEGORY_DO_NOT_EXPORT',
+      ]) {
+        expect(json, isNot(contains(secret)));
+        expect(markdown, isNot(contains(secret)));
+      }
       expect(json, isNot(contains('namingPrefix')));
       expect(json, isNot(contains('namingTemplate')));
+      expect(json, isNot(contains('namingSuffix')));
+      expect(json, isNot(contains('namingCategory')));
       expect(markdown, contains('Recording content: not included'));
       expect(markdown, contains('Input-device names: not included'));
     });
