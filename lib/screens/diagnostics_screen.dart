@@ -119,9 +119,8 @@ class _DiagnosticsScreenState extends State<DiagnosticsScreen> {
       return;
     }
     final l10n = AppLocalizations.of(context);
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.diagnosticsCopied)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(l10n.diagnosticsCopied)));
   }
 
   Future<void> _shareMarkdown() async {
@@ -143,9 +142,8 @@ class _DiagnosticsScreenState extends State<DiagnosticsScreen> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.diagnosticsShared)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.diagnosticsShared)));
     } catch (error) {
       if (!mounted) {
         return;
@@ -461,9 +459,8 @@ class _DiagnosticSection extends StatelessWidget {
                 Expanded(
                   child: Text(
                     title,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                    style: Theme.of(context).textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w800),
                   ),
                 ),
               ],
