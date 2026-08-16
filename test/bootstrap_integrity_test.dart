@@ -27,7 +27,7 @@ void main() {
     expect(script, contains('finally'));
     expect(
       script,
-      contains('Copy-Item $AnalysisOptionsBackup $AnalysisOptions -Force'),
+      contains(r'Copy-Item $AnalysisOptionsBackup $AnalysisOptions -Force'),
     );
   });
 }
