@@ -71,6 +71,8 @@ extension DiagnosticsLocalizations on AppLocalizations {
   String get qaEvidenceOpen => 'Manual QA evidence';
   String get qaEvidenceOpenSubtitle =>
       'Track the remaining real-device and release validation checks';
+  String get qaEvidenceOpenWithDiagnostics =>
+      'Open QA evidence with this snapshot';
   String get qaEvidenceTitle => 'Manual QA evidence';
   String get qaEvidenceSubtitle =>
       'Record pass, fail, blocked, or not-run status for release checks. This does not automate or close a manual gate.';
