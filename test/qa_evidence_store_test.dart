@@ -51,7 +51,10 @@ void main() {
       final loaded = await store.load(now: now);
 
       expect(loaded.results.containsKey('talkback_audit'), isTrue);
-      expect(loaded.results.containsKey('removed_future_or_stale_check'), isFalse);
+      expect(
+        loaded.results.containsKey('removed_future_or_stale_check'),
+        isFalse,
+      );
     });
 
     test('malformed persisted JSON becomes a fresh session', () async {
