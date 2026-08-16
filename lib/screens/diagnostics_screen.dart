@@ -79,7 +79,9 @@ class _DiagnosticsScreenState extends State<DiagnosticsScreen> {
         favoriteRecordings: activeRecordings
             .where((entry) => entry.favorite)
             .length,
-        pinnedRecordings: activeRecordings.where((entry) => entry.pinned).length,
+        pinnedRecordings: activeRecordings
+            .where((entry) => entry.pinned)
+            .length,
         storageStats: storageStats,
         storageProbeSucceeded: storageProbeSucceeded,
         recorderStatus: widget.controller.recorder.status.name,
@@ -201,10 +203,7 @@ class _DiagnosticsScreenState extends State<DiagnosticsScreen> {
             children: [
               const Icon(Icons.error_outline, size: 44),
               const SizedBox(height: 12),
-              Text(
-                l10n.diagnosticsFailed(error),
-                textAlign: TextAlign.center,
-              ),
+              Text(l10n.diagnosticsFailed(error), textAlign: TextAlign.center),
               const SizedBox(height: 16),
               FilledButton.icon(
                 onPressed: _collect,
@@ -241,9 +240,8 @@ class _DiagnosticsScreenState extends State<DiagnosticsScreen> {
                     Expanded(
                       child: Text(
                         l10n.diagnosticsPrivacyTitle,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w800),
                       ),
                     ),
                   ],
@@ -291,13 +289,22 @@ class _DiagnosticsScreenState extends State<DiagnosticsScreen> {
           title: l10n.diagnosticsLibrary,
           icon: Icons.library_music_outlined,
           rows: [
-            (l10n.diagnosticsSaved, l10n.diagnosticsCount(report.savedRecordings)),
-            (l10n.diagnosticsTrash, l10n.diagnosticsCount(report.trashRecordings)),
+            (
+              l10n.diagnosticsSaved,
+              l10n.diagnosticsCount(report.savedRecordings),
+            ),
+            (
+              l10n.diagnosticsTrash,
+              l10n.diagnosticsCount(report.trashRecordings),
+            ),
             (
               l10n.diagnosticsFavorites,
               l10n.diagnosticsCount(report.favoriteRecordings),
             ),
-            (l10n.diagnosticsPinned, l10n.diagnosticsCount(report.pinnedRecordings)),
+            (
+              l10n.diagnosticsPinned,
+              l10n.diagnosticsCount(report.pinnedRecordings),
+            ),
           ],
         ),
         _DiagnosticSection(
@@ -371,7 +378,10 @@ class _DiagnosticsScreenState extends State<DiagnosticsScreen> {
               l10n.diagnosticsSampleRate,
               l10n.diagnosticsHertz(recording.sampleRate),
             ),
-            (l10n.diagnosticsChannels, l10n.diagnosticsCount(recording.channels)),
+            (
+              l10n.diagnosticsChannels,
+              l10n.diagnosticsCount(recording.channels),
+            ),
             (l10n.diagnosticsAutoGain, _boolLabel(l10n, recording.autoGain)),
             (
               l10n.diagnosticsEchoCancellation,
@@ -475,10 +485,7 @@ class _DiagnosticSection extends StatelessWidget {
                     const SizedBox(width: 16),
                     Expanded(
                       flex: 3,
-                      child: SelectableText(
-                        row.$2,
-                        textAlign: TextAlign.end,
-                      ),
+                      child: SelectableText(row.$2, textAlign: TextAlign.end),
                     ),
                   ],
                 ),
