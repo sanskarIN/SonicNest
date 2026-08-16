@@ -92,7 +92,7 @@ Smart-naming text is intentionally excluded.
 
 Use Diagnostics for the runtime/app-state snapshot and Manual QA evidence for the observation status. These are deliberately separate evidence types: a diagnostic snapshot cannot prove a physical behavior passed, and a manually selected `Passed` status is not an automated assertion by SonicNest.
 
-The manual evidence workflow can export JSON or Markdown and is documented in `docs/MANUAL_QA_EVIDENCE.md`. Its export model can also carry an already collected `DiagnosticReport` when a caller explicitly supplies one; the normal About entry remains usable without collecting diagnostics first.
+After a Diagnostics report is collected, choose **Open QA evidence with this snapshot** to pass that exact in-memory privacy-safe `DiagnosticReport` into the manual evidence screen and its JSON/Markdown bundle. The normal **About → Manual QA evidence** entry remains available without collecting diagnostics first. The manual evidence workflow is documented in `docs/MANUAL_QA_EVIDENCE.md`.
 
 ## Using diagnostics during physical QA
 
