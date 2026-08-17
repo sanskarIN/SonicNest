@@ -71,6 +71,8 @@ jobs:
             | xargs -0 -r python3 -m py_compile
       - name: Run repository integrity audit
         run: python3 tool/repository_audit.py
+      - name: Audit every tracked text/source line
+        run: python3 tool/source_line_audit.py
       - name: Run Python tooling regression tests
         run: python3 -m unittest discover -s tool/tests -p 'test_*.py' -v
       - name: Validate Bash helper syntax
