@@ -46,6 +46,22 @@ class AdvancedAudioProcessor {
     }
   }
 
+  Future<T> _withOutputCleanup<T>(
+    String output,
+    Future<T> Function() operation,
+  ) async {
+    try {
+      return await operation();
+    } catch (_) {
+      try {
+        await _storage.deleteIfExists(output);
+      } on FileSystemException {
+        // Preserve the processing failure as the primary error.
+      }
+      rethrow;
+    }
+  }
+
   Future<String> cutSelection({
     required String inputPath,
     required String outputTitle,
@@ -67,11 +83,13 @@ class AdvancedAudioProcessor {
         '[0:a]atrim=0:$startSeconds,asetpts=PTS-STARTPTS[a0];'
         '[0:a]atrim=start=$endSeconds,asetpts=PTS-STARTPTS[a1];'
         '[a0][a1]concat=n=2:v=0:a=1[out]';
-    await _run(
-      '-y -i ${_q(inputPath)} -filter_complex "$filter" -map "[out]" '
-      '${_codecArgs(format, bitRate)} ${_q(output)}',
-    );
-    return _requireOutput(output);
+    return _withOutputCleanup(output, () async {
+      await _run(
+        '-y -i ${_q(inputPath)} -filter_complex "$filter" -map "[out]" '
+        '${_codecArgs(format, bitRate)} ${_q(output)}',
+      );
+      return _requireOutput(output);
+    });
   }
 
   Future<String> insertSilence({
@@ -101,11 +119,13 @@ class AdvancedAudioProcessor {
         'anullsrc=r=$sampleRate:cl=$channelLayout:d=$silenceSeconds[s];'
         '[0:a]atrim=start=$atSeconds,asetpts=PTS-STARTPTS[a1];'
         '[a0][s][a1]concat=n=3:v=0:a=1[out]';
-    await _run(
-      '-y -i ${_q(inputPath)} -filter_complex "$filter" -map "[out]" '
-      '${_codecArgs(format, bitRate)} ${_q(output)}',
-    );
-    return _requireOutput(output);
+    return _withOutputCleanup(output, () async {
+      await _run(
+        '-y -i ${_q(inputPath)} -filter_complex "$filter" -map "[out]" '
+        '${_codecArgs(format, bitRate)} ${_q(output)}',
+      );
+      return _requireOutput(output);
+    });
   }
 
   Future<String> adjustVolume({
@@ -215,11 +235,13 @@ class AdvancedAudioProcessor {
       outputTitle,
       format.extension,
     );
-    await _run(
-      '-y -i ${_q(inputPath)} -vn -filter:a "$audioFilter" '
-      '${_codecArgs(format, bitRate)} ${_q(output)}',
-    );
-    return _requireOutput(output);
+    return _withOutputCleanup(output, () async {
+      await _run(
+        '-y -i ${_q(inputPath)} -vn -filter:a "$audioFilter" '
+        '${_codecArgs(format, bitRate)} ${_q(output)}',
+      );
+      return _requireOutput(output);
+    });
   }
 
   Future<String> _requireOutput(String path) async {
