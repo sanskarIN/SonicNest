@@ -5,6 +5,8 @@ All notable project changes are documented here.
 ## [Unreleased]
 
 ### Added
+- Offline `tool/verify_manual_qa_evidence.py` structural review for exported Manual QA JSON, including current-catalog membership, timestamp/status rules, privacy flags, recomputed summaries, optional exact-version/diagnostics/freshness policy, and optional all-pass enforcement without claiming the represented physical tests occurred.
+- Python unit and CLI regressions for Manual QA evidence verification plus `docs/MANUAL_QA_REVIEW_TOOLING.md` and release-evidence template fields for reproducible human review.
 - About-accessible Manual QA evidence sessions backed by a source-controlled release-check catalog, versioned local persistence, `Not run`/`Passed`/`Failed`/`Blocked` states, reset handling, and serialized status writes.
 - Deterministic Manual QA evidence JSON/Markdown export with explicit privacy flags, complete current-catalog status coverage, stale-ID removal, immutable persisted check IDs, and no free-form tester-note field.
 - Diagnostics-to-QA evidence navigation that explicitly carries the current privacy-safe diagnostic snapshot into the exported manual evidence bundle.
@@ -64,6 +66,7 @@ All notable project changes are documented here.
 - Expanded manual QA matrix covering recorder lifecycle, codec fallback, smart naming, A-B looping, storage, editor processing, accessibility, localization readiness, stress testing, packaging, and signing/release boundaries.
 
 ### Changed
+- Release guidance now requires accepted Manual QA JSON to pass the repository structural verifier under the candidate-specific version/diagnostics/freshness policy while preserving the distinction between internally consistent evidence and an actually performed manual observation.
 - Platform bootstrap now preserves the tracked `analysis_options.yaml` on Bash and PowerShell when `flutter create .` regenerates missing host folders.
 - Core CI validates committed Dart formatting before generated platform-host state, preventing bootstrap-generated analyzer configuration from changing formatter behavior for tracked source.
 - Manual QA evidence status persistence is serialized so simultaneous UI selections cannot race from the same previous session state.
