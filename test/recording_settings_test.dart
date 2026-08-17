@@ -43,6 +43,30 @@ void main() {
     expect(restored.countdownSeconds, 10);
   });
 
+  test('deserialization rejects unsupported and malformed values', () {
+    final restored = RecordingSettings.fromJson({
+      'format': 42,
+      'preset': false,
+      'bitRate': -1,
+      'sampleRate': 12345,
+      'channels': 'stereo',
+      'autoGain': 'yes',
+      'namingPrefix': 9,
+      'countdownSeconds': 7,
+      'keepScreenAwake': 'true',
+    });
+
+    expect(restored.format, RecordingFormat.m4a);
+    expect(restored.preset, QualityPreset.custom);
+    expect(restored.bitRate, 128000);
+    expect(restored.sampleRate, 44100);
+    expect(restored.channels, 1);
+    expect(restored.autoGain, isFalse);
+    expect(restored.namingPrefix, 'Recording');
+    expect(restored.countdownSeconds, 0);
+    expect(restored.keepScreenAwake, isFalse);
+  });
+
   test('transcoded formats are marked correctly', () {
     expect(RecordingFormat.mp3.needsTranscode, isTrue);
     expect(RecordingFormat.ogg.needsTranscode, isTrue);
