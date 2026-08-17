@@ -10,6 +10,8 @@ SonicNest is still a development preview. Do not publish this copy as a stable-r
 
 **Developer credit:** Made by the Sanskar
 
+**Gumroad storefront:** https://ramsandesh.gumroad.com
+
 **Repository:** https://github.com/sanskarIN/SonicNest
 
 **Support:** supportramsandesh@gmail.com
@@ -85,7 +87,7 @@ SonicNest stores local recording metadata such as title, tags, folder, notes, bo
 
 ### Network and analytics
 
-The core repository does not intentionally include a SonicNest analytics, advertising, tracking, telemetry, account, or cloud-sync service. External links such as repository, support, business contact, or Buy Me a Coffee open only when the user chooses them and are then handled by the destination application/service under its own privacy terms.
+The core repository does not intentionally include a SonicNest analytics, advertising, tracking, telemetry, account, or cloud-sync service. External links such as the Gumroad storefront (https://ramsandesh.gumroad.com), repository, support, business contact, or Buy Me a Coffee open only when the user chooses them and are then handled by the destination application/service under its own privacy terms.
 
 ### Sharing
 
@@ -195,6 +197,6 @@ Before copying this material into any distribution console:
 5. Re-check the channel's current privacy/data definitions; store questionnaires change over time.
 6. Replace generic tested-platform language with the exact devices/OS versions recorded in release evidence.
 7. Attach only real candidate screenshots.
-8. Verify support/business links and email addresses.
+8. Verify the highlighted Gumroad storefront, support/business links, and email addresses.
 9. Verify the Privacy Policy, Security Policy, license, notices, release notes, and checksums match the published artifact.
 10. Keep any submission credentials, certificates, signing keys, API keys, or private store-console data outside this repository.
