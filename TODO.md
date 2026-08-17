@@ -9,6 +9,7 @@ This file intentionally contains only work that is still incomplete, requires ph
 - [x] Audit both `.yml` and `.yaml` workflow files and reject permanent workflow write scopes including `permissions: write-all`; strengthened audit run `31874506476` passed on `64c121fa0e5c81531a3710b1d67b88fb3dfc93db`.
 - [x] Keep the exact hosted release-candidate evidence source-controlled and audit-required in `docs/AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md`.
 - [x] Compile Python release helpers and run repository-owned release-tool regressions in the permanent Repository Integrity Audit. Run `31876149473` passed all **10/10** Python tests plus repository, Bash, and PowerShell checks.
+- [x] Add an offline structural verifier for exported manual-QA JSON so release review can detect malformed evidence, catalog drift, inconsistent summaries, privacy-contract regressions, version mismatch, and optional staleness without claiming the underlying physical/manual tests were performed.
 
 ## Repository-owned release automation
 
@@ -27,7 +28,7 @@ No additional repository-only release-automation gap is currently identified. Th
 
 SonicNest now includes the user-initiated **Diagnostics & QA** report described in `docs/DIAGNOSTICS_AND_QA.md`. Use a fresh privacy-safe report as supporting evidence for relevant manual tests below. The report intentionally excludes recording content, recording titles, file paths, notes, tags, bookmarks, smart-naming text, and input-device names, and it does **not** close any physical-device, accessibility, filesystem, signing, or distribution gate by itself.
 
-SonicNest also includes **About → Manual QA evidence**, documented in `docs/MANUAL_QA_EVIDENCE.md`. The local ledger mirrors the manual evidence categories below and records only fixed check IDs, `Not run`/`Passed`/`Failed`/`Blocked` status values, and timestamps; it has no free-form tester-note field. Use it to make real-device/system testing reproducible and exportable. A status selected in the app is supporting evidence only: the unchecked tasks in this file remain unchecked until the corresponding test has actually been performed and its evidence reviewed.
+SonicNest also includes **About → Manual QA evidence**, documented in `docs/MANUAL_QA_EVIDENCE.md`. The local ledger mirrors the manual evidence categories below and records only fixed check IDs, `Not run`/`Passed`/`Failed`/`Blocked` status values, and timestamps; it has no free-form tester-note field. Use it to make real-device/system testing reproducible and exportable. JSON exports can be reviewed offline with `tool/verify_manual_qa_evidence.py`; structural verification is supporting evidence only. A status selected in the app or a successful verifier result does not close a task here until the corresponding test has actually been performed and its evidence reviewed.
 
 ## Hardware and lifecycle validation
 
