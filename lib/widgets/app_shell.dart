@@ -11,6 +11,7 @@ import '../screens/library_screen.dart';
 import '../screens/recorder_screen.dart';
 import '../screens/settings_screen.dart';
 import '../services/recorder_service.dart';
+import 'gumroad_promo_bar.dart';
 import 'sonicnest_mark.dart';
 
 class AppShell extends StatelessWidget {
@@ -116,33 +117,43 @@ class AppShell extends StatelessWidget {
                       ),
                     ),
               body: SafeArea(
-                child: wide
-                    ? Row(
-                        children: [
-                          NavigationRail(
-                            selectedIndex: controller.navigationIndex,
-                            onDestinationSelected:
-                                controller.setNavigationIndex,
-                            labelType: NavigationRailLabelType.all,
-                            leading: const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 16),
-                              child: SonicNestMark(size: 48),
-                            ),
-                            destinations: destinations
-                                .map(
-                                  (destination) => NavigationRailDestination(
-                                    icon: destination.icon,
-                                    selectedIcon: destination.selectedIcon,
-                                    label: Text(destination.label),
+                child: Column(
+                  children: [
+                    GumroadPromoBar(controller: controller),
+                    const Divider(height: 1),
+                    Expanded(
+                      child: wide
+                          ? Row(
+                              children: [
+                                NavigationRail(
+                                  selectedIndex: controller.navigationIndex,
+                                  onDestinationSelected:
+                                      controller.setNavigationIndex,
+                                  labelType: NavigationRailLabelType.all,
+                                  leading: const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 16),
+                                    child: SonicNestMark(size: 48),
                                   ),
-                                )
-                                .toList(),
-                          ),
-                          const VerticalDivider(width: 1),
-                          Expanded(child: content),
-                        ],
-                      )
-                    : content,
+                                  destinations: destinations
+                                      .map(
+                                        (destination) =>
+                                            NavigationRailDestination(
+                                              icon: destination.icon,
+                                              selectedIcon:
+                                                  destination.selectedIcon,
+                                              label: Text(destination.label),
+                                            ),
+                                      )
+                                      .toList(),
+                                ),
+                                const VerticalDivider(width: 1),
+                                Expanded(child: content),
+                              ],
+                            )
+                          : content,
+                    ),
+                  ],
+                ),
               ),
               bottomNavigationBar: wide
                   ? null
