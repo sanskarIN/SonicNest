@@ -74,6 +74,9 @@ SonicNest is an offline-first cross-platform sound and voice recorder built with
 
 ### Project quality
 
+- Manual QA JSON can now be reviewed offline with `tool/verify_manual_qa_evidence.py`, which verifies the current source-controlled QA catalog, schema/timestamps, privacy contract, recomputed summary counts, and optional candidate-version/diagnostics/freshness/all-pass policy without treating the ledger as proof of a physical test.
+- Manual-QA verifier unit and CLI tests are included in the permanent Python tooling regression discovery; Repository Integrity Audit run `32016347023` passed on verifier/test revision `c65f01e62dcca9c250e6b304fcc137e9a78c8b84`.
+- `docs/MANUAL_QA_REVIEW_TOOLING.md`, `docs/RELEASING.md`, `CONTRIBUTING.md`, and the release evidence template now share the same structural-review and non-overclaiming contract.
 - Reproducible host-project bootstrap for Android, iOS, macOS, Windows, and Linux.
 - Reproducible native-brand generation via Bash and PowerShell helpers.
 - GitHub Actions for analyzer/unit tests plus representative platform debug builds that apply native branding before Android, Windows, macOS, and iOS compilation.
