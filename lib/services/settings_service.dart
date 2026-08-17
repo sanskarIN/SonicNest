@@ -63,7 +63,7 @@ class SettingsService {
   static const _skipSilenceKey = 'skip_silence';
   static const _confirmDeleteKey = 'confirm_delete';
   static const _reducedMotionKey = 'reduced_motion';
-  static const _supportedPlaybackSpeeds = <double>{
+  static const _supportedPlaybackSpeeds = <double>[
     .5,
     .75,
     1.0,
@@ -71,29 +71,45 @@ class SettingsService {
     1.5,
     1.75,
     2.0,
-  };
+  ];
   static const _supportedSkipIntervals = <int>{5, 10, 15, 30};
 
   Future<SettingsSnapshot> load() async {
     final prefs = await SharedPreferences.getInstance();
     final defaults = SettingsSnapshot.defaults();
+
+    Object? stored(String key) => prefs.get(key);
+    bool storedBool(String key, bool fallback) {
+      final value = stored(key);
+      return value is bool ? value : fallback;
+    }
+
     RecordingSettings recording = defaults.recording;
-    final rawRecording = prefs.getString(_recordingKey);
-    if (rawRecording != null) {
+    final rawRecordingValue = stored(_recordingKey);
+    if (rawRecordingValue is String) {
       try {
-        recording = RecordingSettings.fromJson(
-          jsonDecode(rawRecording) as Map<String, dynamic>,
-        );
+        final decoded = jsonDecode(rawRecordingValue);
+        if (decoded is Map<String, dynamic>) {
+          recording = RecordingSettings.fromJson(decoded);
+        }
       } catch (_) {
         recording = defaults.recording;
       }
     }
-    final themeName = prefs.getString(_themeKey);
+
+    final themeValue = stored(_themeKey);
+    final themeName = themeValue is String ? themeValue : null;
     final theme =
         ThemeMode.values.where((mode) => mode.name == themeName).firstOrNull ??
         defaults.themeMode;
-    final storedPlaybackSpeed = prefs.getDouble(_speedKey);
-    final storedSkipInterval = prefs.getInt(_skipKey);
+
+    final speedValue = stored(_speedKey);
+    final storedPlaybackSpeed = speedValue is num && speedValue.isFinite
+        ? speedValue.toDouble()
+        : null;
+    final skipValue = stored(_skipKey);
+    final storedSkipInterval = skipValue is int ? skipValue : null;
+
     return SettingsSnapshot(
       recording: recording,
       themeMode: theme,
@@ -104,9 +120,9 @@ class SettingsService {
       skipIntervalSeconds: _supportedSkipIntervals.contains(storedSkipInterval)
           ? storedSkipInterval!
           : defaults.skipIntervalSeconds,
-      skipSilence: prefs.getBool(_skipSilenceKey) ?? defaults.skipSilence,
-      confirmDelete: prefs.getBool(_confirmDeleteKey) ?? defaults.confirmDelete,
-      reducedMotion: prefs.getBool(_reducedMotionKey) ?? defaults.reducedMotion,
+      skipSilence: storedBool(_skipSilenceKey, defaults.skipSilence),
+      confirmDelete: storedBool(_confirmDeleteKey, defaults.confirmDelete),
+      reducedMotion: storedBool(_reducedMotionKey, defaults.reducedMotion),
     );
   }
 
