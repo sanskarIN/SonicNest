@@ -479,4 +479,6 @@ Do not treat a CI artifact as a stable public release solely because it compiled
 
 ## 18. Getting help
 
+The shared SonicNest application shell highlights the optional **Gumroad Store** at https://ramsandesh.gumroad.com across Home, Recorder, Library, Settings, and About. About also provides a dedicated storefront link, and startup shows the canonical address. Opening it is always an explicit user action and is never required to record, manage, play, edit, export, recover, or share local audio.
+
 Use the support/contact links shown in the application About screen and repository `SUPPORT.md`. When reporting a hardware or release-QA problem, include the exact commit SHA, platform/OS version, device description, build source, steps performed, expected result, and actual result. The repository includes a structured **Device / Release QA report** issue form and `docs/RELEASE_EVIDENCE_TEMPLATE.md` for this purpose.
