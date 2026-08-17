@@ -212,6 +212,51 @@ void main() {
     expect(resetDocument['recordings'], isEmpty);
   });
 
+  test('unsupported metadata schema is preserved without rewrite', () async {
+    await metadataFile.parent.create(recursive: true);
+    final original = jsonEncode(<String, Object>{
+      'schemaVersion': 999,
+      'recordings': <Object>[_entry(5).toJson()],
+    });
+    await metadataFile.writeAsString(original);
+
+    await expectLater(
+      createStore().load(),
+      throwsA(isA<UnsupportedMetadataSchemaException>()),
+    );
+
+    expect(await metadataFile.readAsString(), original);
+    expect(await File('${metadataFile.path}.bak').exists(), isFalse);
+    expect(
+      metadataFile.parent
+          .listSync()
+          .whereType<File>()
+          .where((file) => p.basename(file.path).contains('.corrupt.')),
+      isEmpty,
+    );
+  });
+
+  test('malformed metadata schema type is preserved then reset', () async {
+    await metadataFile.parent.create(recursive: true);
+    await metadataFile.writeAsString(
+      jsonEncode(<String, Object>{
+        'schemaVersion': '1',
+        'recordings': <Object>[_entry(6).toJson()],
+      }),
+    );
+
+    final entries = await createStore().load();
+
+    expect(entries, isEmpty);
+    final corruptCopy = File(
+      '${metadataFile.path}.corrupt.${fixedClock.millisecondsSinceEpoch}',
+    );
+    expect(await corruptCopy.exists(), isTrue);
+    final reset = jsonDecode(await metadataFile.readAsString()) as Map;
+    expect(reset['schemaVersion'], 1);
+    expect(reset['recordings'], isEmpty);
+  });
+
   test('save and load roundtrip supports thousands of entries', () async {
     const entryCount = 3000;
     final original = List<RecordingEntry>.generate(
