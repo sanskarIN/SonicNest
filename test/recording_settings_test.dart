@@ -52,7 +52,7 @@ void main() {
       'channels': 'stereo',
       'autoGain': 'yes',
       'namingPrefix': 9,
-      'countdownSeconds': 7,
+      'countdownSeconds': 'seven',
       'keepScreenAwake': 'true',
     });
 

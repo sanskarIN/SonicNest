@@ -217,6 +217,13 @@ class RecordingSettings {
       return supported.contains(parsed) ? parsed : fallback;
     }
 
+    int boundedInt(Object? value, int fallback, int min, int max) {
+      if (value is! num || !value.isFinite) {
+        return fallback;
+      }
+      return value.toInt().clamp(min, max).toInt();
+    }
+
     bool boolValue(Object? value, bool fallback) =>
         value is bool ? value : fallback;
     String stringValue(Object? value, String fallback) =>
@@ -243,7 +250,7 @@ class RecordingSettings {
         const {8000, 16000, 22050, 44100, 48000, 96000},
         44100,
       ),
-      channels: supportedInt(json['channels'], const {1, 2}, 1),
+      channels: boundedInt(json['channels'], 1, 1, 2),
       autoGain: boolValue(json['autoGain'], false),
       echoCancel: boolValue(json['echoCancel'], false),
       noiseSuppress: boolValue(json['noiseSuppress'], false),
@@ -254,11 +261,7 @@ class RecordingSettings {
       ),
       namingSuffix: stringValue(json['namingSuffix'], ''),
       namingCategory: stringValue(json['namingCategory'], ''),
-      countdownSeconds: supportedInt(
-        json['countdownSeconds'],
-        const {0, 3, 5, 10},
-        0,
-      ),
+      countdownSeconds: boundedInt(json['countdownSeconds'], 0, 0, 10),
       keepScreenAwake: boolValue(json['keepScreenAwake'], false),
     );
   }
