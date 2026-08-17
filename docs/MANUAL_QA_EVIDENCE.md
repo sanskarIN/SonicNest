@@ -89,6 +89,18 @@ The JSON deliberately includes every current catalog check, including `notRun`, 
 
 The Markdown file is created only after a user action and handed to SonicNest's existing explicit share surface. There is no automatic upload.
 
+## Offline structural review
+
+Repository reviewers can validate exported JSON with:
+
+```bash
+python3 tool/verify_manual_qa_evidence.py path/to/evidence.json
+```
+
+The verifier checks the current source-controlled catalog, timestamps, privacy flags, app identity, status values, summary consistency, and optional diagnostics/version/freshness requirements. It can also enforce an all-pass ledger when a particular release policy calls for that state.
+
+See `docs/MANUAL_QA_REVIEW_TOOLING.md` for the complete command and review contract. A successful verifier result means the evidence file is internally consistent with the requested policy; it does **not** prove that the underlying physical/manual checks were actually performed correctly.
+
 ## Using the evidence during release QA
 
 1. Build or install the exact candidate being tested.
@@ -97,8 +109,9 @@ The Markdown file is created only after a user action and handed to SonicNest's 
 4. Perform only the checks that match the current target/environment.
 5. Mark each performed check `Passed`, `Failed`, or `Blocked` immediately after the observation.
 6. Export the JSON or Markdown evidence before resetting the session.
-7. Store evidence with the release/issue record and identify the exact source/build separately where required by `docs/QA_CHECKLIST.md` and `docs/RELEASING.md`.
-8. Do not mark a repository task complete merely because the in-app status says `Passed`; the project release ledger is updated only after the required evidence has actually been reviewed.
+7. For JSON evidence, run `tool/verify_manual_qa_evidence.py` with the version/diagnostic/freshness requirements appropriate to the release review.
+8. Store evidence with the release/issue record and identify the exact source/build separately where required by `docs/QA_CHECKLIST.md` and `docs/RELEASING.md`.
+9. Do not mark a repository task complete merely because the in-app status says `Passed` or the structural verifier succeeds; the project release ledger is updated only after the required evidence has actually been reviewed.
 
 ## Relationship to Diagnostics & QA
 
@@ -122,6 +135,7 @@ Repository tests enforce:
 - deterministic summary counts,
 - stale-ID removal from exported bundles,
 - explicit privacy flags including `containsFreeFormTesterNotes: false`,
-- preservation of the existing Diagnostics privacy contract when a diagnostic snapshot is attached.
+- preservation of the existing Diagnostics privacy contract when a diagnostic snapshot is attached,
+- offline verifier rejection of catalog drift, summary drift, stale evidence, privacy-contract regressions, and incomplete all-pass requirements.
 
 These tests protect the evidence mechanism. They do not replace the manual checks represented by the catalog.
