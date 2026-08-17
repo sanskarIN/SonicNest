@@ -63,6 +63,16 @@ class SettingsService {
   static const _skipSilenceKey = 'skip_silence';
   static const _confirmDeleteKey = 'confirm_delete';
   static const _reducedMotionKey = 'reduced_motion';
+  static const _supportedPlaybackSpeeds = <double>{
+    .5,
+    .75,
+    1.0,
+    1.25,
+    1.5,
+    1.75,
+    2.0,
+  };
+  static const _supportedSkipIntervals = <int>{5, 10, 15, 30};
 
   Future<SettingsSnapshot> load() async {
     final prefs = await SharedPreferences.getInstance();
@@ -82,13 +92,18 @@ class SettingsService {
     final theme =
         ThemeMode.values.where((mode) => mode.name == themeName).firstOrNull ??
         defaults.themeMode;
+    final storedPlaybackSpeed = prefs.getDouble(_speedKey);
+    final storedSkipInterval = prefs.getInt(_skipKey);
     return SettingsSnapshot(
       recording: recording,
       themeMode: theme,
       defaultPlaybackSpeed:
-          prefs.getDouble(_speedKey) ?? defaults.defaultPlaybackSpeed,
-      skipIntervalSeconds:
-          prefs.getInt(_skipKey) ?? defaults.skipIntervalSeconds,
+          _supportedPlaybackSpeeds.contains(storedPlaybackSpeed)
+          ? storedPlaybackSpeed!
+          : defaults.defaultPlaybackSpeed,
+      skipIntervalSeconds: _supportedSkipIntervals.contains(storedSkipInterval)
+          ? storedSkipInterval!
+          : defaults.skipIntervalSeconds,
       skipSilence: prefs.getBool(_skipSilenceKey) ?? defaults.skipSilence,
       confirmDelete: prefs.getBool(_confirmDeleteKey) ?? defaults.confirmDelete,
       reducedMotion: prefs.getBool(_reducedMotionKey) ?? defaults.reducedMotion,
@@ -97,7 +112,7 @@ class SettingsService {
 
   Future<void> save(SettingsSnapshot snapshot) async {
     final prefs = await SharedPreferences.getInstance();
-    await Future.wait([
+    final results = await Future.wait<bool>([
       prefs.setString(_recordingKey, jsonEncode(snapshot.recording.toJson())),
       prefs.setString(_themeKey, snapshot.themeMode.name),
       prefs.setDouble(_speedKey, snapshot.defaultPlaybackSpeed),
@@ -106,6 +121,9 @@ class SettingsService {
       prefs.setBool(_confirmDeleteKey, snapshot.confirmDelete),
       prefs.setBool(_reducedMotionKey, snapshot.reducedMotion),
     ]);
+    if (results.any((stored) => !stored)) {
+      throw StateError('Shared preferences rejected settings persistence.');
+    }
   }
 }
 
