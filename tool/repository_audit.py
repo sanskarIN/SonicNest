@@ -61,6 +61,8 @@ REQUIRED_FILES = (
     "tool/apply_branding.sh",
     "tool/apply_branding.ps1",
     "tool/generate_brand_assets_v2.dart",
+    "tool/source_line_audit.py",
+    "tool/tests/test_source_line_audit.py",
     "tool/build_linux_deb.sh",
     "tool/verify_linux_deb.sh",
     "tool/smoke_test_installed_linux_deb.sh",
@@ -478,6 +480,16 @@ def audit() -> list[str]:
             "flutter test",
         ),
         "ci.yml",
+    )
+    require_fragments(
+        errors,
+        ROOT / ".github/workflows/repository-audit.yml",
+        (
+            "python3 tool/repository_audit.py",
+            "python3 tool/source_line_audit.py",
+            "python3 -m unittest discover -s tool/tests -p 'test_*.py' -v",
+        ),
+        "repository-audit.yml",
     )
 
     require_fragments_casefold(
