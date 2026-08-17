@@ -31,3 +31,5 @@ jobs:
             git commit -m "style: apply canonical Gumroad Dart formatting"
             git push origin HEAD:main
           fi
+
+# One-shot trigger refreshed after activation.
