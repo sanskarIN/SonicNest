@@ -1,0 +1,33 @@
+name: One-shot Gumroad Dart formatter
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/gumroad-format-sync.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Apply canonical Dart formatting
+        run: dart format lib/widgets/gumroad_promo_bar.dart test/gumroad_integration_test.dart
+      - name: Commit formatter output
+        run: |
+          git config user.name "Sanskar"
+          git config user.email "sanskarin@outlook.in"
+          if ! git diff --quiet -- lib/widgets/gumroad_promo_bar.dart test/gumroad_integration_test.dart; then
+            git add lib/widgets/gumroad_promo_bar.dart test/gumroad_integration_test.dart
+            git commit -m "style: apply canonical Gumroad Dart formatting"
+            git push origin HEAD:main
+          fi
