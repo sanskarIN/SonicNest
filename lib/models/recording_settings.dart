@@ -202,37 +202,64 @@ class RecordingSettings {
   }
 
   factory RecordingSettings.fromJson(Map<String, dynamic> json) {
-    T enumValue<T extends Enum>(List<T> values, String? name, T fallback) {
-      return values.where((value) => value.name == name).firstOrNull ??
-          fallback;
+    T enumValue<T extends Enum>(List<T> values, Object? name, T fallback) {
+      if (name is! String) {
+        return fallback;
+      }
+      return values.where((value) => value.name == name).firstOrNull ?? fallback;
     }
+
+    int supportedInt(Object? value, Set<int> supported, int fallback) {
+      if (value is! num || !value.isFinite) {
+        return fallback;
+      }
+      final parsed = value.toInt();
+      return supported.contains(parsed) ? parsed : fallback;
+    }
+
+    bool boolValue(Object? value, bool fallback) =>
+        value is bool ? value : fallback;
+    String stringValue(Object? value, String fallback) =>
+        value is String ? value : fallback;
 
     return RecordingSettings(
       format: enumValue(
         RecordingFormat.values,
-        json['format'] as String?,
+        json['format'],
         RecordingFormat.m4a,
       ),
       preset: enumValue(
         QualityPreset.values,
-        json['preset'] as String?,
+        json['preset'],
         QualityPreset.custom,
       ),
-      bitRate: (json['bitRate'] as num?)?.toInt() ?? 128000,
-      sampleRate: (json['sampleRate'] as num?)?.toInt() ?? 44100,
-      channels: ((json['channels'] as num?)?.toInt() ?? 1).clamp(1, 2).toInt(),
-      autoGain: json['autoGain'] as bool? ?? false,
-      echoCancel: json['echoCancel'] as bool? ?? false,
-      noiseSuppress: json['noiseSuppress'] as bool? ?? false,
-      namingPrefix: json['namingPrefix'] as String? ?? 'Recording',
-      namingTemplate:
-          json['namingTemplate'] as String? ?? defaultRecordingNameTemplate,
-      namingSuffix: json['namingSuffix'] as String? ?? '',
-      namingCategory: json['namingCategory'] as String? ?? '',
-      countdownSeconds: ((json['countdownSeconds'] as num?)?.toInt() ?? 0)
-          .clamp(0, 10)
-          .toInt(),
-      keepScreenAwake: json['keepScreenAwake'] as bool? ?? false,
+      bitRate: supportedInt(
+        json['bitRate'],
+        const {64000, 96000, 128000, 192000, 256000, 320000},
+        128000,
+      ),
+      sampleRate: supportedInt(
+        json['sampleRate'],
+        const {8000, 16000, 22050, 44100, 48000, 96000},
+        44100,
+      ),
+      channels: supportedInt(json['channels'], const {1, 2}, 1),
+      autoGain: boolValue(json['autoGain'], false),
+      echoCancel: boolValue(json['echoCancel'], false),
+      noiseSuppress: boolValue(json['noiseSuppress'], false),
+      namingPrefix: stringValue(json['namingPrefix'], 'Recording'),
+      namingTemplate: stringValue(
+        json['namingTemplate'],
+        defaultRecordingNameTemplate,
+      ),
+      namingSuffix: stringValue(json['namingSuffix'], ''),
+      namingCategory: stringValue(json['namingCategory'], ''),
+      countdownSeconds: supportedInt(
+        json['countdownSeconds'],
+        const {0, 3, 5, 10},
+        0,
+      ),
+      keepScreenAwake: boolValue(json['keepScreenAwake'], false),
     );
   }
 
