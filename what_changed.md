@@ -2397,3 +2397,93 @@ No physical-device microphone/routing, background/interruption, low-storage/file
 - `8c5e8a1d14d4ff5f594eed376799fd3175ef910e` — chore: add one-shot manual QA documentation updater
 - `a617bf77c4a79d315085e62a1f4a9c5cdf584299` — ci: stage one-shot manual QA ledger sync
 
+
+
+# Continuation — 2026-08-17 — Offline manual QA evidence verification
+
+## Continuation objective
+
+The remaining unchecked SonicNest release work is dominated by real-device microphone/routing/lifecycle behavior, accessibility tooling, long-duration and low-storage stress, representative package behavior, protected signing/notarization/store-console work, and final release approval. The in-app Manual QA evidence ledger already made those observations exportable, but the repository had no strict offline reviewer that could detect a malformed, stale-catalog, privacy-regressed, summary-inconsistent, or wrong-candidate JSON export before it was accepted into release evidence.
+
+This continuation closes that repository-side evidence-review gap without marking any physical/manual release gate complete.
+
+## Offline Manual QA evidence verifier
+
+Added `tool/verify_manual_qa_evidence.py`, a Python-standard-library-only structural verifier for JSON exported from **About → Manual QA evidence**.
+
+The verifier checks:
+
+- bundle and session schema versions;
+- timezone-aware generation/session timestamps and ordering;
+- the explicit privacy flags for recording content, titles, file paths, notes/tags/bookmarks, input-device names, and free-form tester notes all remain `false`;
+- canonical SonicNest app identity plus optional exact application-version binding;
+- every current source-controlled `QaCheckCatalog` check appears exactly once;
+- no unknown or removed check ID is accepted;
+- status values remain `notRun`, `passed`, `failed`, or `blocked`;
+- `notRun` versus assessed timestamp rules;
+- boolean physical-target/external-tooling metadata;
+- summary totals recomputed from the check list;
+- optional Diagnostics attachment and runtime platform;
+- optional maximum evidence age;
+- optional strict all-current-checks-passed policy.
+
+The current QA check identifiers are parsed from `lib/models/qa_check_catalog.dart`, so an older export cannot silently appear complete after the source-controlled catalog grows.
+
+CLI exit behavior is deterministic: `0` for valid evidence under the requested policy, `1` for invalid evidence, and `2` for command/catalog usage failure.
+
+## Regression coverage
+
+Added unit-level and CLI-level Python coverage for:
+
+- a consistent current-catalog evidence bundle;
+- summary drift;
+- missing and unknown catalog checks;
+- strict all-pass policy behavior;
+- stale evidence rejection;
+- privacy-contract regression;
+- exact application-version mismatch;
+- required Diagnostics policy;
+- nonpositive freshness-policy usage errors;
+- QA catalog ID extraction.
+
+The existing permanent Repository Integrity Audit automatically compiles Python under `tool/` and discovers every `tool/tests/test_*.py` regression. Run `32016347023` completed **SUCCESS** on source `c65f01e62dcca9c250e6b304fcc137e9a78c8b84`, confirming the new verifier/test path passes the maintained repository-owned audit.
+
+The Flutter, Windows, and Apple workflows triggered for the same test revision were still running when this ledger synchronization was generated, so no unconfirmed platform result is pre-claimed here. The verifier itself does not change Flutter runtime application code.
+
+## Release and contribution integration
+
+Documentation now requires structural review of accepted Manual QA JSON while preserving the real-world evidence boundary:
+
+- `docs/MANUAL_QA_REVIEW_TOOLING.md` documents basic, candidate-bound, freshness, diagnostics-required, all-pass, and multi-export review commands plus exit codes and limitations;
+- `docs/MANUAL_QA_EVIDENCE.md` connects exported evidence to the offline verifier;
+- `docs/RELEASING.md` requires candidate-appropriate structural verification before a Manual QA JSON ledger is accepted into release evidence;
+- `docs/RELEASE_EVIDENCE_TEMPLATE.md` records the exact verifier command/policy, version/freshness requirements, pass/fail/blocked/not-run counts, human reviewer, and archived evidence identity;
+- `CONTRIBUTING.md` requires verifier/catalog changes to preserve the privacy/evidence contract and forbids weakening the verifier merely to accept stale or malformed exports;
+- `docs/README.md` indexes the new review tooling;
+- `TODO.md` marks only the repository-side verifier gap complete while every physical-device, accessibility, stress, branding-visual, signing, store-console, and stable-release gate remains unchanged and unchecked.
+
+## Focused commits created before state synchronization
+
+- `b40af1c6996da2809f25ed6300b6abbdb2f84220` — `feat: add manual QA evidence verifier`
+- `b69b78658d0b2f0e5967bd4ac2eb95db33a01305` — `test: cover manual QA evidence verifier`
+- `6d8cf4f9d7d9c134fe693e4758a8c8b74304c696` — `docs: add manual QA evidence review guide`
+- `0def2b43004dce3e58f0483fbfb77d1fc63e2315` — `docs: document offline QA evidence verification`
+- `6e592a37cbea988a2d187ac99a106b5070807604` — `docs: close manual QA verifier repository gap`
+- `3092241b910ffdfd6fc5565c5dffefd1650dc6ef` — `docs: require structural review of QA evidence`
+- `c65f01e62dcca9c250e6b304fcc137e9a78c8b84` — `test: cover manual QA verifier CLI policy`
+- `ff0d6b5da09ad8053729142e58d2d0c89bf68043` — `docs: index manual QA review tooling`
+- `2c1c291defddb1f61e4e14c0c39be2e64a04ae17` — `docs: add QA evidence verifier contribution contract`
+- `698f6bb1c31900131be29922401b8a5304eb5696` — `docs: add manual QA verifier evidence fields`
+
+State-synchronization commits immediately preceding this ledger append:
+
+- `9aba132028e1842d9c58d60977688ffc47ae6b0d` — `docs: record offline QA review milestone [skip ci]`
+- `a5eef467849ff5ebf632a7bbba037f8eee96648a` — `docs: add manual QA verifier release notes [skip ci]`
+- `b7b370461b43f70c82b0293d19528a064af37417` — `docs: record manual QA verifier in changelog [skip ci]`
+- `347aebb189daa2af3bbb436d64e6419f7c8195c0` — `docs: sync manual QA verifier project state [skip ci]`
+
+## Completion boundary
+
+The offline verifier proves only that an exported ledger is internally consistent with the current source-controlled review contract and any explicit candidate policy supplied to the command. It does not authenticate who performed a check, reproduce an observation, validate microphone quality/routing, execute accessibility tooling, create storage failures, perform soak tests, inspect native visual surfaces, sign/notarize an artifact, interact with store consoles, or approve a stable release.
+
+SonicNest therefore remains a **development preview**. The remaining unchecked items in `TODO.md`, `docs/QA_CHECKLIST.md`, and `docs/RELEASING.md` still require real systems, sustained workloads, representative media, assistive technologies, protected maintainer credentials, or final release approval.
