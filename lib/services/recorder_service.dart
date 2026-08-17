@@ -455,6 +455,7 @@ class RecorderService extends ChangeNotifier {
     }
   }
 
+  // Only delete paths created or returned by the active recorder lifecycle.
   Future<void> _safeDeleteCaptureFile(String path) async {
     try {
       await _storage.deleteIfExists(path);
