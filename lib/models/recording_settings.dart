@@ -206,7 +206,8 @@ class RecordingSettings {
       if (name is! String) {
         return fallback;
       }
-      return values.where((value) => value.name == name).firstOrNull ?? fallback;
+      return values.where((value) => value.name == name).firstOrNull ??
+          fallback;
     }
 
     int supportedInt(Object? value, Set<int> supported, int fallback) {
@@ -240,16 +241,22 @@ class RecordingSettings {
         json['preset'],
         QualityPreset.custom,
       ),
-      bitRate: supportedInt(
-        json['bitRate'],
-        const {64000, 96000, 128000, 192000, 256000, 320000},
+      bitRate: supportedInt(json['bitRate'], const {
+        64000,
+        96000,
         128000,
-      ),
-      sampleRate: supportedInt(
-        json['sampleRate'],
-        const {8000, 16000, 22050, 44100, 48000, 96000},
+        192000,
+        256000,
+        320000,
+      }, 128000),
+      sampleRate: supportedInt(json['sampleRate'], const {
+        8000,
+        16000,
+        22050,
         44100,
-      ),
+        48000,
+        96000,
+      }, 44100),
       channels: boundedInt(json['channels'], 1, 1, 2),
       autoGain: boolValue(json['autoGain'], false),
       echoCancel: boolValue(json['echoCancel'], false),

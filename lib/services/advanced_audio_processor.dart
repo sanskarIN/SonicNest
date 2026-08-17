@@ -190,7 +190,8 @@ class AdvancedAudioProcessor {
       outputTitle: outputTitle,
       format: format,
       bitRate: bitRate,
-      audioFilter: 'acompressor=threshold=-18dB:ratio=3:attack=20:release=250:makeup=2dB',
+      audioFilter:
+          'acompressor=threshold=-18dB:ratio=3:attack=20:release=250:makeup=2dB',
     );
   }
 

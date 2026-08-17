@@ -228,10 +228,9 @@ void main() {
     expect(await metadataFile.readAsString(), original);
     expect(await File('${metadataFile.path}.bak').exists(), isFalse);
     expect(
-      metadataFile.parent
-          .listSync()
-          .whereType<File>()
-          .where((file) => p.basename(file.path).contains('.corrupt.')),
+      metadataFile.parent.listSync().whereType<File>().where(
+        (file) => p.basename(file.path).contains('.corrupt.'),
+      ),
       isEmpty,
     );
   });

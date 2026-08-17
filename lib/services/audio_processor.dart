@@ -211,12 +211,8 @@ class AudioProcessor {
     final args = _codecArgs(format, bitRate);
     final seconds = at.inMilliseconds / 1000;
     return _withOutputCleanup([first, second], () async {
-      await _run(
-        '-y -i ${_q(inputPath)} -t $seconds -vn $args ${_q(first)}',
-      );
-      await _run(
-        '-y -ss $seconds -i ${_q(inputPath)} -vn $args ${_q(second)}',
-      );
+      await _run('-y -i ${_q(inputPath)} -t $seconds -vn $args ${_q(first)}');
+      await _run('-y -ss $seconds -i ${_q(inputPath)} -vn $args ${_q(second)}');
       await _requireOutput(first);
       await _requireOutput(second);
       return [first, second];
@@ -303,7 +299,8 @@ class AudioProcessor {
     outputTitle: outputTitle,
     format: format,
     bitRate: bitRate,
-    audioFilter: 'silenceremove=start_periods=1:start_duration=0.2:start_threshold=-45dB:stop_periods=-1:stop_duration=0.6:stop_threshold=-45dB',
+    audioFilter:
+        'silenceremove=start_periods=1:start_duration=0.2:start_threshold=-45dB:stop_periods=-1:stop_duration=0.6:stop_threshold=-45dB',
   );
 
   Future<String> _filter({

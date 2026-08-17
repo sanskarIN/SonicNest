@@ -400,7 +400,8 @@ class RecorderService extends ChangeNotifier {
       }
       _resetState();
       if (cancelError != null) {
-        lastError = 'Recorder cancellation required fallback stop: $cancelError';
+        lastError =
+            'Recorder cancellation required fallback stop: $cancelError';
         notifyListeners();
       }
     } finally {
