@@ -537,3 +537,13 @@ next_exact_tasks:
 - Permanent Repository Integrity Audit run `31876149473` passed Python compilation, repository invariants, **10/10** Python release-tool tests, Bash syntax, and PowerShell syntax.
 - The temporary narrow documentation-path push trigger used to obtain this validation was removed in commit `79b5195e7f207ebc1076e38faecb5c4c9c2447e7`; the permanent release-candidate workflow is again manual `workflow_dispatch` only.
 - This provenance evidence proves hosted checksum/source/run consistency. It does not complete physical-device, real-system, accessibility, protected signing/notarization, store, or stable-release gates.
+
+
+## Latest source-line hardening — 2026-08-17
+
+- Added a permanent tracked-text/source line audit to the Repository Integrity Audit workflow.
+- Removed recorder cleanup ownership of an uncreated target candidate path; cleanup now targets only recorder-owned capture/output files.
+- Recorder cancellation now attempts a backend stop fallback when backend cancellation fails and always releases background/wake state through cleanup paths.
+- Core and advanced FFmpeg processing remove partial managed outputs when processing or output validation fails.
+- Metadata loading now refuses unsupported integer schema versions without rewriting or classifying newer metadata as corruption; malformed schema types remain corruption-isolated.
+- Stable-release classification remains unchanged: physical-device, accessibility, stress, protected-signing, store, and final approval gates remain manual/credential-dependent.
