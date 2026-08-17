@@ -120,6 +120,9 @@ completed_features:
   - aggregate diagnostics for runtime Library managed storage recorder state input count and non-content settings
   - diagnostics input enumeration skipped while recording is active to avoid a concurrent recorder-backend probe
   - regression coverage enforcing diagnostics serialization privacy unavailable-probe behavior and localization labels
+  - About-accessible Manual QA evidence sessions with fixed source-controlled check IDs versioned local persistence deterministic JSON/Markdown export and optional privacy-safe diagnostics attachment
+  - offline manual-QA JSON structural verifier that binds evidence to the current QA catalog and checks schema timestamps privacy flags summary consistency optional exact version diagnostics freshness and all-pass review policy
+  - unit and CLI regression coverage for manual-QA evidence verification executed by the permanent Repository Integrity Audit
   - About privacy support GitHub email and Buy Me a Coffee links
   - original vector branding assets
   - deterministic native branding source raster generation
@@ -207,6 +210,26 @@ manual_qa_evidence:
     - privacy-safe Markdown share file
   release_gate_effect: supporting_evidence_only_no_manual_gate_closed
   documentation: docs/MANUAL_QA_EVIDENCE.md
+manual_qa_review_tooling:
+  verifier_source_commit: b40af1c6996da2809f25ed6300b6abbdb2f84220
+  regression_source_commit: c65f01e62dcca9c250e6b304fcc137e9a78c8b84
+  verifier: tool/verify_manual_qa_evidence.py
+  documentation: docs/MANUAL_QA_REVIEW_TOOLING.md
+  current_catalog_source: lib/models/qa_check_catalog.dart
+  checks:
+    - bundle and session schema versions
+    - timezone-aware generation and session timestamp ordering
+    - sensitive-data privacy flags remain false
+    - exact current catalog membership with no missing unknown or duplicate IDs
+    - status and assessed/notRun timestamp rules
+    - recomputed summary consistency
+    - optional exact application version
+    - optional diagnostics runtime platform
+    - optional evidence freshness
+    - optional all-current-checks-passed policy
+  release_gate_effect: structural_supporting_evidence_only_no_manual_gate_closed
+  repository_integrity_run_id: 32016347023
+  repository_integrity_result: success
 platform_bootstrap_integrity:
   preserves_analysis_options_bash: true
   preserves_analysis_options_powershell: true
@@ -326,11 +349,15 @@ latest_automated_validation:
     python_release_tooling_run_id: 31876149473
     python_release_tooling_result: success
     python_release_tool_tests: 10_of_10_passed
+    manual_qa_verifier_run_id: 32016347023
+    manual_qa_verifier_source_commit: c65f01e62dcca9c250e6b304fcc137e9a78c8b84
+    manual_qa_verifier_result: success
   validation_relationship:
     - formatter-clean revision 4e0fbf16534a60e2d3209c5ec5f54d4982903f8c remains the exact debug/source-quality baseline with analysis tests Android and Linux debug validation
     - release-candidate revision 048870ec8dc26a16e2451310460d3e03c9084dc7 remains the earlier fully green cross-platform release-mode hosted artifact baseline
     - provenance release-candidate revision b95d77c4b69c9798f1ecb48d5f69583c4e08de5c validates the unified machine-readable checksum/source/run binding on a complete five-platform hosted matrix
     - commits after b95d77c4 are documentation tests audit-policy and trigger-restoration changes and do not alter the runtime application code represented by the candidate
+    - manual-QA verifier revision c65f01e62dcca9c250e6b304fcc137e9a78c8b84 passed permanent Repository Integrity Audit run 32016347023 including Python compilation and tool regression discovery
     - stable release still requires the unchecked real-system and maintainer-credential gates
 known_limitations:
   - codec availability and effective sample bitrate channel and DSP settings depend on OS device and runtime support
@@ -347,6 +374,7 @@ known_limitations:
   - hosted Android release-mode artifacts are signed by the Android Debug certificate and are intentionally non-production
   - hosted macOS and iOS release-mode artifacts are unsigned/no-codesign validation artifacts and are not public Apple distributables
   - unified provenance manifest proves hosted artifact checksum/source/run consistency only and does not convert validation artifacts into stable signed distributables
+  - manual-QA structural verification proves export/catalog/privacy/summary consistency only and does not authenticate the tester or reproduce the physical accessibility stress filesystem branding signing or distribution observation
   - automated compilation cannot substitute for microphone hardware interruption background lock-screen routing media-button accessibility storage-failure and long-duration QA
   - signed distributable packages require maintainer-owned signing material that must not be committed
 branch: main
