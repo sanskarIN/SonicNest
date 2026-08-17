@@ -84,6 +84,7 @@ Completed/in progress:
 - User-initiated Diagnostics & QA reports provide privacy-safe runtime, aggregate library/storage, recorder-state, and settings evidence without recording content, titles, paths, notes, tags, bookmarks, smart-naming text, or input-device names.
 - About-accessible Manual QA evidence sessions persist fixed release-check IDs with `notRun`/`passed`/`failed`/`blocked` statuses and timestamps, with no free-form tester-note field.
 - Manual QA evidence JSON/Markdown exports include explicit privacy flags, complete current-catalog status coverage, progress counts, and stale-check filtering without converting manual observations into automated assertions.
+- Offline Manual QA JSON structural review is implemented with source-controlled catalog membership, schema/timestamp/privacy/summary checks, optional exact-version/diagnostics/freshness/all-pass policy, and permanent Python regression coverage.
 
 Remaining:
 - Add additional locales only with translation review, text-expansion testing, and translation QA.
@@ -97,7 +98,7 @@ Remaining:
 Completed/in progress:
 - Reproducible Bash and PowerShell platform bootstrapping.
 - Android/Linux/Windows/macOS/iOS no-codesign automated build workflows.
-- Detailed manual QA checklist, release procedure, preview release notes, release evidence template, and evidence-based remaining-work file.
+- Detailed manual QA checklist, release procedure, preview release notes, release evidence template, evidence-based remaining-work file, and offline structural verification of exported manual-QA JSON before release evidence acceptance.
 - Deterministic native brand raster generation from repository-controlled SonicNest geometry.
 - Reproducible Android/iOS native splash resources and Android/iOS/macOS/Windows launcher/application icon generation.
 - Permanent Android/Windows/Apple workflows apply generated native branding before compiling representative builds.
