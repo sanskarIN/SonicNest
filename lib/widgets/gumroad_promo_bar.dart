@@ -18,10 +18,9 @@ class GumroadPromoBar extends StatelessWidget {
       if (!context.mounted) {
         return;
       }
-      final l10n = AppLocalizations.of(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.couldNotOpenGumroadStore(error))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
     }
   }
 
@@ -29,10 +28,11 @@ class GumroadPromoBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
+    final openStoreLabel = '${l10n.open} Gumroad Store';
 
     return Semantics(
       button: true,
-      label: l10n.gumroadStoreAccessibilityLabel,
+      label: '$openStoreLabel: ${AppConstants.gumroadStoreUrl}',
       child: Material(
         color: scheme.tertiaryContainer,
         child: InkWell(
@@ -41,7 +41,10 @@ class GumroadPromoBar extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
             child: Row(
               children: [
-                Icon(Icons.storefront_outlined, color: scheme.onTertiaryContainer),
+                Icon(
+                  Icons.storefront_outlined,
+                  color: scheme.onTertiaryContainer,
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -49,7 +52,7 @@ class GumroadPromoBar extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        l10n.visitGumroadStore,
+                        openStoreLabel,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -72,7 +75,11 @@ class GumroadPromoBar extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Icon(Icons.open_in_new, size: 18, color: scheme.onTertiaryContainer),
+                Icon(
+                  Icons.open_in_new,
+                  size: 18,
+                  color: scheme.onTertiaryContainer,
+                ),
               ],
             ),
           ),
