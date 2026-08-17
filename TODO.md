@@ -4,6 +4,7 @@ This file intentionally contains only work that is still incomplete, requires ph
 
 ## Repository hygiene
 
+- [x] Keep the canonical Gumroad storefront (`https://ramsandesh.gumroad.com`) highlighted across the shared app shell, About/startup surfaces, README/support/public docs, and protect the integration with repository regression coverage.
 - [x] Commit the Dart formatter output for the CI Flutter/Dart toolchain. Historical core CI run `31870224720` exposed formatting drift; canonical stable-toolchain formatter output is now committed in `22c1d46e077625d6e1964d56716700727d1800dc`.
 - [x] After the tracked Dart tree is formatter-clean, change CI formatting from a mutating preparation step to a non-mutating enforcement gate. Core CI now uses `dart format --output=none --set-exit-if-changed lib test tool/generate_brand_assets_v2.dart` via `704b0f60aae8f179f4f41875c336d2052b45391e`.
 - [x] Audit both `.yml` and `.yaml` workflow files and reject permanent workflow write scopes including `permissions: write-all`; strengthened audit run `31874506476` passed on `64c121fa0e5c81531a3710b1d67b88fb3dfc93db`.
