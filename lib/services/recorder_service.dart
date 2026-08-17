@@ -396,7 +396,7 @@ class RecorderService extends ChangeNotifier {
       }
       await _deleteCaptureFiles();
       if (fallbackPath != null && fallbackPath != _capturePath) {
-        await _safeDeleteCaptureFile(fallbackPath!);
+        await _safeDeleteCaptureFile(fallbackPath);
       }
       _resetState();
       if (cancelError != null) {
