@@ -2511,3 +2511,8 @@ This continuation reviewed the current repository-owned runtime, persistence, pr
 ## Evidence boundary
 
 These changes improve deterministic repository and failure-path safety. They do not close microphone hardware, routing, accessibility, long-duration, low-storage, protected signing/notarization, store-console, or final stable-release gates.
+
+
+## Additional settings persistence findings
+
+The same semantic line review found that `SettingsService.save()` ignored the boolean success results returned by SharedPreferences writes. The save path now throws when any write is rejected so the controller can keep its rollback contract. Persisted playback speed and jump interval values are restricted to the supported UI values, and recording-setting deserialization now rejects malformed or unsupported enum, bitrate, sample-rate, channel, countdown, boolean, and naming-field values instead of allowing corrupt preferences to leak into recorder configuration.
