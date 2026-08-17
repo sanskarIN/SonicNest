@@ -34,11 +34,15 @@ class ReleaseCandidateIntegrationTest(unittest.TestCase):
             with self.subTest(marker=marker):
                 self.assertIn(marker, workflow)
 
-    def test_repository_audit_runs_python_tooling_tests(self) -> None:
+    def test_repository_audit_runs_python_tooling_tests_on_every_change(self) -> None:
         workflow = (ROOT / ".github/workflows/repository-audit.yml").read_text(
             encoding="utf-8"
         )
-        self.assertIn("tool/tests/**", workflow)
+        self.assertIn("push:\n    branches: [main]", workflow)
+        self.assertIn("pull_request:\n    branches: [main]", workflow)
+        self.assertNotIn("paths:", workflow)
+        self.assertIn("python3 tool/repository_audit.py", workflow)
+        self.assertIn("python3 tool/source_line_audit.py", workflow)
         self.assertIn("python3 -m unittest discover", workflow)
         self.assertIn("python3 -m py_compile", workflow)
 
