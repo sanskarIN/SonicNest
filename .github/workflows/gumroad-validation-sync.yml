@@ -25,3 +25,5 @@ jobs:
         run: python3 .github/gumroad_validation_sync.py
       - name: Push evidence commits
         run: git push origin HEAD:main
+
+# One-shot trigger refreshed after activation.
