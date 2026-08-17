@@ -3,6 +3,7 @@
 ## v0.1.x — Foundation and recorder
 
 Completed in the current codebase:
+- Canonical Gumroad storefront promotion at `https://ramsandesh.gumroad.com` across the shared app shell, About/startup surfaces, README/public docs, with a source-controlled badge and automated regression protection.
 - Cross-platform capture architecture and runtime codec fallback matrix.
 - Recording lifecycle guards, foreground-service bridge, local metadata safety, import/export, and processing pipeline.
 - Defensive recording-metadata decoding with malformed-record isolation.
