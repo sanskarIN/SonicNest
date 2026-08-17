@@ -1,0 +1,85 @@
+name: One-shot QA review state sync
+
+on:
+  push:
+    branches:
+      - automation/qa-review-ledger-20260817
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out temporary synchronization branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: automation/qa-review-ledger-20260817
+
+      - name: Configure commit identity
+        run: |
+          git config user.name "Sanskar"
+          git config user.email "sanskarin@outlook.in"
+
+      - name: Confirm main has not moved
+        env:
+          EXPECTED_MAIN: 698f6bb1c31900131be29922401b8a5304eb5696
+        run: |
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
+
+      - name: Synchronize PROJECT_STATE.md
+        run: |
+          python3 .github/qa_review_sync.py project_state
+          git add PROJECT_STATE.md
+          git commit -m "docs: sync manual QA verifier project state [skip ci]"
+          git push origin HEAD:automation/qa-review-ledger-20260817
+
+      - name: Synchronize CHANGELOG.md
+        run: |
+          python3 .github/qa_review_sync.py changelog
+          git add CHANGELOG.md
+          git commit -m "docs: record manual QA verifier in changelog [skip ci]"
+          git push origin HEAD:automation/qa-review-ledger-20260817
+
+      - name: Synchronize RELEASE_NOTES.md
+        run: |
+          python3 .github/qa_review_sync.py release_notes
+          git add RELEASE_NOTES.md
+          git commit -m "docs: add manual QA verifier release notes [skip ci]"
+          git push origin HEAD:automation/qa-review-ledger-20260817
+
+      - name: Synchronize ROADMAP.md
+        run: |
+          python3 .github/qa_review_sync.py roadmap
+          git add ROADMAP.md
+          git commit -m "docs: record offline QA review milestone [skip ci]"
+          git push origin HEAD:automation/qa-review-ledger-20260817
+
+      - name: Append what_changed.md continuation ledger
+        run: |
+          python3 .github/qa_review_sync.py ledger
+          git add what_changed.md
+          git commit -m "docs: record offline manual QA verifier continuation [skip ci]"
+          git push origin HEAD:automation/qa-review-ledger-20260817
+
+      - name: Remove temporary synchronization automation
+        run: |
+          git rm .github/qa_review_sync.py .github/workflows/qa-review-state-sync.yml
+          git commit -m "chore: remove temporary QA review state sync"
+          git push origin HEAD:automation/qa-review-ledger-20260817
+
+      - name: Publish clean synchronized history to main
+        env:
+          EXPECTED_MAIN: 698f6bb1c31900131be29922401b8a5304eb5696
+        run: |
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
+          git push origin HEAD:main
+
+      - name: Delete temporary synchronization branch
+        if: success()
+        run: git push origin --delete automation/qa-review-ledger-20260817
