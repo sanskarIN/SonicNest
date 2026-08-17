@@ -2546,3 +2546,15 @@ The Gumroad storefront is optional. SonicNest does not require a purchase to rec
 
 Repository and platform validation for the final Gumroad-integrated head is recorded by the permanent CI workflows. This integration does not alter or close any remaining physical-device, accessibility, stress, signing, notarization, store-console, or stable-release approval gate.
 
+## Final validation evidence — Gumroad storefront integration
+
+Validated source revision: `2c5f8c137af393bc37a89dd1f9ddcf78218a7c81`
+
+- Repository Integrity Audit `32030915095` — **SUCCESS**: repository invariants, every tracked text/source line, Python tooling regressions, Bash syntax, and PowerShell syntax.
+- Flutter CI `32030915177` — **SUCCESS**: committed Dart formatting, static analysis, full Flutter unit tests, Android debug APK, and Linux debug build.
+- Windows Build `32030915108` — **SUCCESS**: Windows debug build plus release portable package build, verification, extracted-package startup smoke, validation warning, and artifact upload.
+- Apple Builds `32030915143` — **SUCCESS**: macOS debug and iOS no-codesign debug builds.
+- Linux Package CI `32030915109` — **SUCCESS**: Linux release bundle, Debian package build/verification/metadata, package-manager installation, installed startup smoke, uninstall cleanup, and artifact upload.
+
+The validation confirms the repository-owned Gumroad integration and supported automated build/test/package paths. It does **not** replace remaining physical-device microphone/routing/lifecycle/background tests, real accessibility audits, destructive storage/power/process recovery tests, large-library/long-duration soak tests, protected signing/notarization/store-console validation, or stable-release approval.
+
