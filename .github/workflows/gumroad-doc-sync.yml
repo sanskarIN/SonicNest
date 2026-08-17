@@ -25,3 +25,5 @@ jobs:
         run: python3 .github/gumroad_docs_sync.py
       - name: Push focused documentation commits
         run: git push origin HEAD:main
+
+# One-shot trigger refreshed after the workflow became active.
