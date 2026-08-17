@@ -11,6 +11,7 @@ class AppConstants {
   static const githubProfileUrl = 'https://www.github.com/sanskarIN';
   static const githubProfile = githubProfileUrl;
   static const repositoryUrl = 'https://github.com/sanskarIN/SonicNest';
+  static const gumroadStoreUrl = 'https://ramsandesh.gumroad.com';
   static const buyMeACoffeeUrl = 'https://buymeacoffee.com/sanskarIN';
   static const businessEmailPrimary = 'sanskarin@outlook.in';
   static const businessEmailSecondary = 'sanskarin.business@gmail.com';
