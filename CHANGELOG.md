@@ -5,6 +5,7 @@ All notable project changes are documented here.
 ## [Unreleased]
 
 ### Added
+- Permanent line-by-line tracked-text hygiene auditing for merge-conflict markers, invalid UTF-8, source/config trailing whitespace, UTF-8 BOMs, and missing final newlines.
 - Offline `tool/verify_manual_qa_evidence.py` structural review for exported Manual QA JSON, including current-catalog membership, timestamp/status rules, privacy flags, recomputed summaries, optional exact-version/diagnostics/freshness policy, and optional all-pass enforcement without claiming the represented physical tests occurred.
 - Python unit and CLI regressions for Manual QA evidence verification plus `docs/MANUAL_QA_REVIEW_TOOLING.md` and release-evidence template fields for reproducible human review.
 - About-accessible Manual QA evidence sessions backed by a source-controlled release-check catalog, versioned local persistence, `Not run`/`Passed`/`Failed`/`Blocked` states, reset handling, and serialized status writes.
