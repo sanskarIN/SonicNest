@@ -21,6 +21,28 @@ void main() {
     expect(snapshot.skipIntervalSeconds, 10);
   });
 
+  test('wrong-type legacy preference values fall back safely', () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'recording_settings': 7,
+      'theme_mode': 42,
+      'playback_speed': 'fast',
+      'skip_interval': 'ten',
+      'skip_silence': 'yes',
+      'confirm_delete': 1,
+      'reduced_motion': <String>['no'],
+    });
+
+    final snapshot = await SettingsService().load();
+
+    expect(snapshot.recording, isA<RecordingSettings>());
+    expect(snapshot.themeMode, ThemeMode.system);
+    expect(snapshot.defaultPlaybackSpeed, 1.0);
+    expect(snapshot.skipIntervalSeconds, 10);
+    expect(snapshot.skipSilence, isFalse);
+    expect(snapshot.confirmDelete, isTrue);
+    expect(snapshot.reducedMotion, isFalse);
+  });
+
   test('settings save and load roundtrip preserves supported values', () async {
     final service = SettingsService();
     final snapshot = SettingsSnapshot.defaults().copyWith(
