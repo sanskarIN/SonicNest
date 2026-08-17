@@ -8,6 +8,15 @@ public_links:
   buy_me_a_coffee: https://buymeacoffee.com/sanskarIN
   github_profile: https://www.github.com/sanskarIN
   gumroad_badge: assets/branding/gumroad_store_badge.svg
+gumroad_integration_validation:
+  source_revision: 2c5f8c137af393bc37a89dd1f9ddcf78218a7c81
+  repository_integrity_run: 32030915095
+  flutter_ci_run: 32030915177
+  windows_build_run: 32030915108
+  apple_builds_run: 32030915143
+  linux_package_run: 32030915109
+  result: success
+  scope: formatter + static analysis + Flutter tests + Android/Linux/Windows/macOS/iOS builds + Windows portable smoke + Debian build/install/smoke/uninstall + repository line/tooling audit
 current_phase: Cross-platform release hardening
 current_version: 0.1.0
 release_classification: development_preview_until_manual_release_gates_are_complete
