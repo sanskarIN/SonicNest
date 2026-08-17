@@ -3,10 +3,7 @@ import 'package:sonic_nest/core/constants.dart';
 
 void main() {
   test('Gumroad storefront URL is the canonical HTTPS destination', () {
-    expect(
-      AppConstants.gumroadStoreUrl,
-      'https://ramsandesh.gumroad.com',
-    );
+    expect(AppConstants.gumroadStoreUrl, 'https://ramsandesh.gumroad.com');
 
     final uri = Uri.parse(AppConstants.gumroadStoreUrl);
     expect(uri.scheme, 'https');
