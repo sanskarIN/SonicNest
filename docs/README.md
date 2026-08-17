@@ -2,6 +2,8 @@
 
 This directory contains the maintained technical, user, QA, branding, packaging, reliability, and release documentation for SonicNest.
 
+**🛍️ Gumroad Store:** https://ramsandesh.gumroad.com
+
 ## Start here
 
 - [`../README.md`](../README.md) — project overview, major features, quick start, supported platforms, and project links.
@@ -39,6 +41,7 @@ This directory contains the maintained technical, user, QA, branding, packaging,
 
 ## Privacy, security, support, and open source
 
+- [`LINKS_AND_PROMOTION.md`](LINKS_AND_PROMOTION.md) — canonical Gumroad/storefront, support, repository, business, promotion, and external-link behavior.
 - [`../PRIVACY.md`](../PRIVACY.md) — local-first recording/data expectations plus diagnostics/manual-evidence storage and explicit external-action boundaries.
 - [`../SECURITY.md`](../SECURITY.md) — security reporting and project security expectations.
 - [`../SUPPORT.md`](../SUPPORT.md) — support/contact guidance.
