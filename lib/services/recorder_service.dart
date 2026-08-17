@@ -49,7 +49,6 @@ class RecorderService extends ChangeNotifier {
   Timer? _timer;
   bool _transitioning = false;
   String? _capturePath;
-  String? _targetPath;
   String? _title;
   RecordingSettings? _settings;
   InputDevice? _selectedDevice;
@@ -179,12 +178,6 @@ class RecorderService extends ChangeNotifier {
       _capturePath = _postTranscode
           ? await _storage.uniqueTempPath('${_title}_capture', captureExtension)
           : await _storage.uniqueRecordingPath(_title!, captureExtension);
-      _targetPath = _postTranscode
-          ? await _storage.uniqueRecordingPath(
-              _title!,
-              settings.format.extension,
-            )
-          : _capturePath;
 
       await _recorderBackend.setOnConfigChanged((config) {
         effectiveConfig = config;
@@ -336,7 +329,7 @@ class RecorderService extends ChangeNotifier {
           sampleRate: settings.sampleRate,
           channels: settings.channels,
         );
-        await _storage.deleteIfExists(capturePath);
+        await _safeDeleteCaptureFile(capturePath);
       }
       if (!await File(finalPath).exists()) {
         throw StateError('Recorded file was not saved.');
@@ -376,16 +369,40 @@ class RecorderService extends ChangeNotifier {
       return;
     }
     _transitioning = true;
+    Object? cancelError;
+    String? fallbackPath;
     try {
       _timer?.cancel();
       _stopwatch.stop();
       await _amplitudeSubscription?.cancel();
       _amplitudeSubscription = null;
-      await _recorderBackend.cancel();
-      await _safeStopBackground();
-      await _safeDisableScreenWake();
+      try {
+        await _recorderBackend.cancel();
+      } catch (error) {
+        cancelError = error;
+        try {
+          fallbackPath = await _recorderBackend.stop();
+        } catch (stopError, stopStackTrace) {
+          lastError =
+              'Recorder cancellation failed ($error) and fallback stop '
+              'also failed ($stopError).';
+          status = RecorderStatus.error;
+          notifyListeners();
+          Error.throwWithStackTrace(stopError, stopStackTrace);
+        }
+      } finally {
+        await _safeStopBackground();
+        await _safeDisableScreenWake();
+      }
       await _deleteCaptureFiles();
+      if (fallbackPath != null && fallbackPath != _capturePath) {
+        await _safeDeleteCaptureFile(fallbackPath!);
+      }
       _resetState();
+      if (cancelError != null) {
+        lastError = 'Recorder cancellation required fallback stop: $cancelError';
+        notifyListeners();
+      }
     } finally {
       _transitioning = false;
     }
@@ -411,6 +428,8 @@ class RecorderService extends ChangeNotifier {
     }
     try {
       await WakelockPlus.disable();
+    } catch (error) {
+      lastError = 'Screen wake cleanup failed: $error';
     } finally {
       _screenWakeEnabled = false;
     }
@@ -430,12 +449,16 @@ class RecorderService extends ChangeNotifier {
 
   Future<void> _deleteCaptureFiles() async {
     final capturePath = _capturePath;
-    final targetPath = _targetPath;
     if (capturePath != null) {
-      await _storage.deleteIfExists(capturePath);
+      await _safeDeleteCaptureFile(capturePath);
     }
-    if (targetPath != null && targetPath != capturePath) {
-      await _storage.deleteIfExists(targetPath);
+  }
+
+  Future<void> _safeDeleteCaptureFile(String path) async {
+    try {
+      await _storage.deleteIfExists(path);
+    } on FileSystemException catch (error) {
+      lastError = 'Temporary capture cleanup failed: $error';
     }
   }
 
@@ -445,7 +468,6 @@ class RecorderService extends ChangeNotifier {
       ..stop()
       ..reset();
     _capturePath = null;
-    _targetPath = null;
     _title = null;
     _settings = null;
     _postTranscode = false;
