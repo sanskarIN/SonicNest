@@ -3,6 +3,11 @@
 ```yaml
 project: SonicNest
 repository: https://github.com/sanskarIN/SonicNest
+public_links:
+  gumroad_store: https://ramsandesh.gumroad.com
+  buy_me_a_coffee: https://buymeacoffee.com/sanskarIN
+  github_profile: https://www.github.com/sanskarIN
+  gumroad_badge: assets/branding/gumroad_store_badge.svg
 current_phase: Cross-platform release hardening
 current_version: 0.1.0
 release_classification: development_preview_until_manual_release_gates_are_complete
@@ -56,6 +61,7 @@ linux_distribution:
   apt_repository: not initially operated
   signing_credentials: maintainer-owned and outside repository
 completed_features:
+  - canonical Gumroad storefront highlighted in the shared app shell About startup README support and maintained public documentation with regression protection
   - project architecture and Material 3 design system
   - branded Flutter startup screen with recoverable startup failure state
   - local-first recording metadata and cross-platform-safe filename allocation
