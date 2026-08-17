@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/constants.dart';
 import '../l10n/app_localizations.dart';
 import '../widgets/sonicnest_mark.dart';
 
@@ -82,6 +83,15 @@ class SplashScreen extends StatelessWidget {
                   Text(
                     strings.madeBy,
                     style: Theme.of(context).textTheme.labelLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    AppConstants.gumroadStoreUrl,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: scheme.tertiary,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ],
               ),
