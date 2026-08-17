@@ -4,6 +4,14 @@
   <img src="assets/logo/sonicnest_logo.svg" alt="SonicNest logo" width="420" />
 </p>
 
+<p align="center">
+  <a href="https://ramsandesh.gumroad.com">
+    <img src="assets/branding/gumroad_store_badge.svg" alt="Visit the Ram Sandesh Gumroad storefront" width="720" />
+  </a>
+</p>
+
+<p align="center"><strong>🛍️ Gumroad Store:</strong> <a href="https://ramsandesh.gumroad.com">https://ramsandesh.gumroad.com</a></p>
+
 **SonicNest** is a privacy-first, cross-platform sound and voice recorder built with Flutter. It combines reliable capture, a searchable recording library, playback, bookmarks, non-destructive editing/export, input-device awareness, theme/accessibility support, and a clean open-source architecture.
 
 **Made by the Sanskar**
@@ -198,6 +206,7 @@ Please read `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, and `SECURITY.md` before co
 
 ## Support and links
 
+- 🛍️ **Gumroad Store:** https://ramsandesh.gumroad.com
 - GitHub profile: https://www.github.com/sanskarIN
 - Repository: https://github.com/sanskarIN/SonicNest
 - Business: sanskarin@outlook.in
