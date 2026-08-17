@@ -106,6 +106,10 @@ Those remain real QA/release responsibilities.
 - `1`: one or more evidence files are invalid for the requested review policy.
 - `2`: command usage or repository/catalog loading failed.
 
+## Repository validation
+
+The verifier and its unit/CLI regression path were exercised by permanent **Repository Integrity Audit** run `32016347023` on source revision `c65f01e62dcca9c250e6b304fcc137e9a78c8b84`, which completed successfully. Later documentation/state synchronization does not change the verifier implementation represented by that validated source revision.
+
 ## Privacy note
 
 The verifier fails if the manual-QA privacy flags no longer state that recording content, recording titles, file paths, notes/tags/bookmarks, input-device names, and free-form tester notes are excluded. It does not inspect arbitrary external attachments; reviewers must apply the same privacy discipline to any files stored beside the exported evidence.
