@@ -59,6 +59,14 @@ class AboutScreen extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             _LinkTile(
+              icon: Icons.storefront_outlined,
+              title: '${l10n.open} Gumroad Store',
+              subtitle: AppConstants.gumroadStoreUrl,
+              onTap: () => controller.external.launchExternal(
+                AppConstants.gumroadStoreUrl,
+              ),
+            ),
+            _LinkTile(
               icon: Icons.monitor_heart_outlined,
               title: l10n.diagnostics,
               subtitle: l10n.diagnosticsAboutTileSubtitle,
