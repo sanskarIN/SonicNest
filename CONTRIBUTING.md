@@ -43,6 +43,18 @@ python -m unittest discover -s tool/tests -p 'test_*.py' -v
 
 Do not weaken checksum, path, signing-state, or source-identity validation merely to make a hosted candidate pass. Fix the producing package step or the verifier instead.
 
+## Manual QA evidence changes
+
+Changes to `QaCheckCatalog`, QA evidence serialization, the Diagnostics attachment contract, or `tool/verify_manual_qa_evidence.py` must preserve the evidence/privacy rules in `docs/MANUAL_QA_EVIDENCE.md` and `docs/MANUAL_QA_REVIEW_TOOLING.md`.
+
+The offline verifier must continue to reject missing/unknown catalog IDs, inconsistent summary totals, invalid status/timestamp combinations, privacy flags that no longer state sensitive recording metadata is excluded, and requested candidate-version/freshness/all-pass policy violations. Run the Python tooling regressions after changing this path:
+
+```bash
+python -m unittest discover -s tool/tests -p 'test_*.py' -v
+```
+
+Do not loosen the verifier merely to accept an old or malformed QA export. Migrate/recollect evidence or intentionally version the evidence contract instead. A structurally valid export is still tester-reported supporting evidence and must never be documented as proof that the represented physical/accessibility/stress test actually occurred.
+
 ## Audio changes
 
 Audio code must preserve originals unless the user explicitly chooses destructive deletion. New codecs must have documented platform support and a licensing review in `docs/CODECS.md`. Recorder, routing, interruption, long-duration, and DSP-quality claims that depend on physical hardware must remain evidence-based rather than inferred from successful compilation.
