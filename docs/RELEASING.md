@@ -16,6 +16,8 @@ For candidate QA, use **About → Manual QA evidence** to record the tester-repo
 
 The ledger stores only fixed check IDs, `notRun`/`passed`/`failed`/`blocked` status values, and timestamps. It has no free-form tester-note field and does not automatically upload evidence. The exact candidate source/artifact, target hardware/OS, signing state, and any external observations still need to be identified in the release evidence record. A manually selected `Passed` status never overrides the required hardware, accessibility, filesystem, signing, notarization, store-console, or final approval gates.
 
+Before accepting an exported JSON ledger into release evidence, run `python3 tool/verify_manual_qa_evidence.py <evidence.json>`. For candidate-bound review, use the applicable `--expected-version`, `--require-diagnostics`, and freshness policy described in `docs/MANUAL_QA_REVIEW_TOOLING.md`. The verifier detects structural/catalog/privacy/summary inconsistencies; it does not prove that the tester performed the underlying check.
+
 ## 1. Prepare the source tree
 
 1. Update the version in `pubspec.yaml`.
@@ -91,7 +93,7 @@ Complete `docs/QA_CHECKLIST.md` on representative physical hardware. At minimum 
 - large-library and large-batch profiling;
 - screen-reader and keyboard navigation checks.
 
-Record evidence and device/OS versions. Do not check off an item without actually testing it.
+Record evidence and device/OS versions. Export the corresponding manual-QA JSON where the in-app ledger is used, structurally verify it with `tool/verify_manual_qa_evidence.py`, and preserve the verified file with the candidate evidence. Do not check off an item without actually testing it; structural verification is not a substitute for the observation.
 
 ## 4. Required native-brand visual review
 
@@ -242,8 +244,9 @@ Before tagging/publishing:
 - verify macOS signing/notarization evidence where macOS is being shipped;
 - capture real screenshots from the tested release candidate;
 - review `docs/STORE_LISTING.md` against the exact tested build and current distribution-console requirements;
+- structurally verify every accepted manual-QA JSON export with `tool/verify_manual_qa_evidence.py` and the candidate-specific version/diagnostics/freshness policy;
 - confirm no known critical/high-priority reproducible defects remain;
-- confirm all manual release gates are documented;
+- confirm all manual release gates are documented and backed by reviewed evidence rather than ledger status alone;
 - review generated package sizes and included permissions;
 - confirm every published artifact comes from the exact tested/tagged source revision and every signing claim matches the exact distributed bytes.
 
