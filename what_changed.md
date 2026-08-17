@@ -2487,3 +2487,27 @@ State-synchronization commits immediately preceding this ledger append:
 The offline verifier proves only that an exported ledger is internally consistent with the current source-controlled review contract and any explicit candidate policy supplied to the command. It does not authenticate who performed a check, reproduce an observation, validate microphone quality/routing, execute accessibility tooling, create storage failures, perform soak tests, inspect native visual surfaces, sign/notarize an artifact, interact with store consoles, or approve a stable release.
 
 SonicNest therefore remains a **development preview**. The remaining unchecked items in `TODO.md`, `docs/QA_CHECKLIST.md`, and `docs/RELEASING.md` still require real systems, sustained workloads, representative media, assistive technologies, protected maintainer credentials, or final release approval.
+
+
+# Continuation — 2026-08-17 — Line-level audit and failure-path hardening
+
+## Scope
+
+This continuation reviewed the current repository-owned runtime, persistence, processing, automation, and release-support paths line by line where deterministic review is possible. Existing analyzer/tests were supplemented with a permanent tracked-text line hygiene audit so future commits are checked rather than relying only on a one-time review.
+
+## Concrete defects fixed
+
+- Removed `RecorderService._targetPath`. It represented only an available filename candidate and did not reserve or create that path. Treating it as owned during cleanup could delete an unrelated file created at the same path while a recording was still active.
+- Hardened recorder cancellation so a backend `cancel()` failure attempts a backend `stop()` fallback, background-service and wake-lock cleanup still runs, and only recorder-returned/created capture paths are eligible for deletion.
+- Screen-wake disable failures no longer mask the primary recording lifecycle result.
+- Core FFmpeg transcode/trim/split/merge/filter operations now clean partial managed outputs when FFmpeg fails or returns an empty/missing file.
+- Advanced cut/silence/filter operations now apply the same partial-output cleanup rule.
+- Metadata documents carrying a newer/unsupported integer schema version are no longer rewritten as corrupt data. Loading stops with an explicit compatibility exception so the original metadata stays untouched. Invalid schema types are still preserved as corrupt diagnostics and reset through the existing recovery policy.
+
+## Permanent line audit
+
+`tool/source_line_audit.py` now reads every Git-tracked file and, for text candidates, checks line-level repository hygiene. Source/config files are checked for trailing whitespace, UTF-8 BOMs, and final newlines; all tracked text candidates are checked for invalid UTF-8 and unresolved Git merge-conflict markers. Binary files are skipped safely. The permanent Repository Integrity Audit executes this tool and its Python regression tests.
+
+## Evidence boundary
+
+These changes improve deterministic repository and failure-path safety. They do not close microphone hardware, routing, accessibility, long-duration, low-storage, protected signing/notarization, store-console, or final stable-release gates.
