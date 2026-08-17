@@ -7,6 +7,17 @@ import 'package:path_provider/path_provider.dart';
 import '../core/constants.dart';
 import '../models/recording_entry.dart';
 
+class UnsupportedMetadataSchemaException implements Exception {
+  const UnsupportedMetadataSchemaException(this.schemaVersion);
+
+  final int schemaVersion;
+
+  @override
+  String toString() =>
+      'UnsupportedMetadataSchemaException: metadata schema '
+      '$schemaVersion is not supported by this SonicNest build.';
+}
+
 class MetadataStore {
   MetadataStore({
     Future<Directory> Function()? supportDirectoryProvider,
@@ -99,6 +110,16 @@ class MetadataStore {
       root = Map<String, dynamic>.from(decoded);
     } on Object {
       return (valid: false, entries: const <RecordingEntry>[]);
+    }
+
+    final schemaVersion = root['schemaVersion'];
+    if (schemaVersion != null) {
+      if (schemaVersion is! int) {
+        return (valid: false, entries: const <RecordingEntry>[]);
+      }
+      if (schemaVersion != AppConstants.metadataSchemaVersion) {
+        throw UnsupportedMetadataSchemaException(schemaVersion);
+      }
     }
 
     final rawEntries = root['recordings'];
