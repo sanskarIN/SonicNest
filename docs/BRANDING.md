@@ -7,6 +7,7 @@ SonicNest keeps its approved brand geometry in source control and generates nati
 - `assets/logo/sonicnest_mark.svg`: human-readable vector mark.
 - `assets/logo/sonicnest_logo.svg`: wider repository/application logo.
 - `tool/generate_brand_assets_v2.dart`: deterministic raster implementation used for native build tooling.
+- `assets/branding/gumroad_store_badge.svg`: source-controlled promotional storefront badge for https://ramsandesh.gumroad.com; separate from SonicNest native launcher/splash identity.
 
 The raster generator reproduces the SonicNest gradient, microphone mark, stand, and surrounding sound bars. It writes:
 
@@ -65,6 +66,12 @@ The packaged icon still requires visual review on representative Linux desktop e
 ## Native splash versus Flutter startup UI
 
 The native splash exists only to cover the time before Flutter paints its first frame. After Flutter starts, `SplashScreen` provides the branded in-app startup/loading and recoverable failure experience. The two layers intentionally use the same visual identity.
+
+## Gumroad storefront badge
+
+The repository also includes `assets/branding/gumroad_store_badge.svg` as an original promotional badge highlighting **https://ramsandesh.gumroad.com**. It is used in public-facing project documentation and complements the compact in-app storefront strip. It is intentionally separate from the SonicNest launcher icon, native splash, and application mark.
+
+The promotional badge must keep the destination readable, remain optional, and must not be presented as an exact copy of Gumroad's official trademark artwork. Opening the storefront remains an explicit user action; the badge itself performs no network request inside SonicNest.
 
 ## Validation rule
 
