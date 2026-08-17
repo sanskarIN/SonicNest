@@ -3,48 +3,8 @@ name: Repository Integrity Audit
 on:
   push:
     branches: [main]
-    paths:
-      - 'tool/*.py'
-      - 'tool/tests/**'
-      - 'pubspec.yaml'
-      - '.gitignore'
-      - 'LICENSE'
-      - 'NOTICE'
-      - 'README.md'
-      - 'CHANGELOG.md'
-      - 'PRIVACY.md'
-      - 'SECURITY.md'
-      - 'SUPPORT.md'
-      - 'ROADMAP.md'
-      - 'PROJECT_STATE.md'
-      - 'TODO.md'
-      - 'what_changed.md'
-      - 'docs/**'
-      - '.github/workflows/**'
-      - '.github/scripts/**'
-      - '.github/ISSUE_TEMPLATE/**'
   pull_request:
     branches: [main]
-    paths:
-      - 'tool/*.py'
-      - 'tool/tests/**'
-      - 'pubspec.yaml'
-      - '.gitignore'
-      - 'LICENSE'
-      - 'NOTICE'
-      - 'README.md'
-      - 'CHANGELOG.md'
-      - 'PRIVACY.md'
-      - 'SECURITY.md'
-      - 'SUPPORT.md'
-      - 'ROADMAP.md'
-      - 'PROJECT_STATE.md'
-      - 'TODO.md'
-      - 'what_changed.md'
-      - 'docs/**'
-      - '.github/workflows/**'
-      - '.github/scripts/**'
-      - '.github/ISSUE_TEMPLATE/**'
   workflow_dispatch:
 
 permissions:
