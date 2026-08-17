@@ -1,0 +1,27 @@
+name: One-shot Gumroad documentation sync
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/gumroad_docs_sync.py'
+      - '.github/workflows/gumroad-doc-sync.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Configure commit identity
+        run: |
+          git config user.name "Sanskar"
+          git config user.email "sanskarin@outlook.in"
+      - name: Synchronize Gumroad documentation and state
+        run: python3 .github/gumroad_docs_sync.py
+      - name: Push focused documentation commits
+        run: git push origin HEAD:main
