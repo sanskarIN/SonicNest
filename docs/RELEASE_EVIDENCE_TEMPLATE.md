@@ -53,6 +53,31 @@ Use one copy of this template for each release candidate that is being considere
 
 The unified hosted provenance manifest is an additional consistency/evidence layer. It does not replace per-platform signing verification, real-system QA, protected production signing, notarization, or store validation.
 
+## Manual QA ledger review evidence
+
+Create a fresh **About → Manual QA evidence** session for the exact candidate/target being tested. Where runtime context is relevant, attach a fresh **Diagnostics & QA** snapshot before export.
+
+- Manual-QA JSON evidence filename:
+- Evidence collected from candidate version:
+- Evidence target platform/device/OS:
+- Diagnostics attached: Yes / No
+- `tool/verify_manual_qa_evidence.py` structural result: Pass / Fail
+- Exact verifier command/policy used:
+- `--expected-version` value, if required:
+- `--max-age-hours` value, if required:
+- `--require-diagnostics` used: Yes / No
+- `--require-all-passed` used: Yes / No
+- Verifier-reported passed count:
+- Verifier-reported failed count:
+- Verifier-reported blocked count:
+- Verifier-reported not-run count:
+- Evidence JSON SHA-256, if archived:
+- Human reviewer:
+- Review date/time and timezone:
+- Underlying manual observations/evidence reviewed separately: Yes / No
+
+A passing structural verifier result means the exported ledger matches the current source-controlled schema/catalog and the selected review policy. It does **not** prove that any represented microphone, accessibility, stress, filesystem, branding, package, signing, or distribution test was actually performed correctly.
+
 ## Device matrix
 
 Add a row for every tested target. Never reuse a pass from an older source revision.
@@ -333,6 +358,7 @@ Notes / evidence links:
 - Permissions match documented need:
 - Managed-path guards reviewed against the candidate source:
 - Corrupt/recovery diagnostic files handled as privacy-sensitive local data:
+- Manual-QA evidence privacy flags structurally verified: Yes / No
 - Privacy document matches behavior:
 - Security document reviewed:
 - Dependency/license notices reviewed:
