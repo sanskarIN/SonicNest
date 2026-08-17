@@ -2521,3 +2521,28 @@ The same semantic line review found that `SettingsService.save()` ignored the bo
 ## Final line-review protections
 
 The line review also hardened settings loading against legacy or externally-corrupted SharedPreferences values with the wrong stored type. Numeric channel and countdown values retain the repository's existing bounded-clamping compatibility contract, while malformed types fall back safely. The permanent repository audit now requires the source-line audit implementation/tests and requires the Repository Integrity Audit workflow to execute it, preventing the new guard from being silently removed together with its invocation.
+
+# Continuation — 2026-08-17 — Gumroad storefront integration
+
+## Objective
+
+Highlight the canonical Ram Sandesh Gumroad storefront `https://ramsandesh.gumroad.com` throughout SonicNest's public-facing application and documentation surfaces while keeping promotion optional, non-blocking, privacy-safe, and separate from core recorder functionality.
+
+## Implemented
+
+- Added `AppConstants.gumroadStoreUrl` as the single application-source canonical storefront URL.
+- Added reusable `GumroadPromoBar` to the shared application shell, making the storefront visible across Home, Recorder, Library, Settings, and About without obscuring primary content.
+- Added a dedicated About storefront tile and visible startup storefront address; neither surface auto-opens the destination.
+- Added original source-controlled promotional badge `assets/branding/gumroad_store_badge.svg` with the storefront URL clearly rendered.
+- Added `docs/LINKS_AND_PROMOTION.md` defining canonical project links, storefront prominence, external-action privacy boundaries, and maintenance expectations.
+- Highlighted the storefront in README, support/privacy documentation, documentation index, branding guide, distribution listing draft, user guide, release notes, roadmap, TODO repository-hygiene record, and project state.
+- Added Dart regression coverage for the canonical HTTPS storefront URI and Python repository-integration coverage for required app/documentation surfaces and badge presence.
+
+## Privacy and product boundary
+
+The Gumroad storefront is optional. SonicNest does not require a purchase to record, manage, play, edit, recover, export, or share audio. The app never auto-opens Gumroad and never automatically attaches/transmits recordings, Library metadata, diagnostics, or Manual QA evidence to the storefront. External navigation occurs only after explicit user action.
+
+## Validation boundary
+
+Repository and platform validation for the final Gumroad-integrated head is recorded by the permanent CI workflows. This integration does not alter or close any remaining physical-device, accessibility, stress, signing, notarization, store-console, or stable-release approval gate.
+
