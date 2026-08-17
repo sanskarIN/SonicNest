@@ -37,6 +37,34 @@ class AudioProcessor {
     }
   }
 
+  Future<T> _withOutputCleanup<T>(
+    Iterable<String> outputs,
+    Future<T> Function() operation,
+  ) async {
+    try {
+      return await operation();
+    } catch (_) {
+      for (final output in outputs) {
+        try {
+          await _storage.deleteIfExists(output);
+        } on FileSystemException {
+          // Preserve the processing failure as the primary error.
+        }
+      }
+      rethrow;
+    }
+  }
+
+  Future<String> _requireOutput(String path) async {
+    final file = File(path);
+    if (!await file.exists() || await file.length() == 0) {
+      throw const AudioProcessingException(
+        'The processed audio file was not created.',
+      );
+    }
+    return path;
+  }
+
   Future<Duration> probeDuration(String inputPath) async {
     final session = await FFprobeKit.getMediaInformation(inputPath);
     final information = session.getMediaInformation();
@@ -126,13 +154,12 @@ class AudioProcessor {
       format.extension,
     );
     final args = _codecArgs(format, bitRate);
-    await _run(
-      '-y -i ${_q(inputPath)} -vn -ar $sampleRate -ac $channels $args ${_q(output)}',
-    );
-    if (!await File(output).exists()) {
-      throw const AudioProcessingException('Output file was not created.');
-    }
-    return output;
+    return _withOutputCleanup([output], () async {
+      await _run(
+        '-y -i ${_q(inputPath)} -vn -ar $sampleRate -ac $channels $args ${_q(output)}',
+      );
+      return _requireOutput(output);
+    });
   }
 
   Future<String> trim({
@@ -153,10 +180,12 @@ class AudioProcessor {
     final args = _codecArgs(format, bitRate);
     final startSeconds = start.inMilliseconds / 1000;
     final durationSeconds = (end - start).inMilliseconds / 1000;
-    await _run(
-      '-y -ss $startSeconds -i ${_q(inputPath)} -t $durationSeconds -vn $args ${_q(output)}',
-    );
-    return output;
+    return _withOutputCleanup([output], () async {
+      await _run(
+        '-y -ss $startSeconds -i ${_q(inputPath)} -t $durationSeconds -vn $args ${_q(output)}',
+      );
+      return _requireOutput(output);
+    });
   }
 
   Future<List<String>> split({
@@ -181,9 +210,17 @@ class AudioProcessor {
     );
     final args = _codecArgs(format, bitRate);
     final seconds = at.inMilliseconds / 1000;
-    await _run('-y -i ${_q(inputPath)} -t $seconds -vn $args ${_q(first)}');
-    await _run('-y -ss $seconds -i ${_q(inputPath)} -vn $args ${_q(second)}');
-    return [first, second];
+    return _withOutputCleanup([first, second], () async {
+      await _run(
+        '-y -i ${_q(inputPath)} -t $seconds -vn $args ${_q(first)}',
+      );
+      await _run(
+        '-y -ss $seconds -i ${_q(inputPath)} -vn $args ${_q(second)}',
+      );
+      await _requireOutput(first);
+      await _requireOutput(second);
+      return [first, second];
+    });
   }
 
   Future<String> merge({
@@ -210,8 +247,12 @@ class AudioProcessor {
     );
     try {
       final args = _codecArgs(format, bitRate);
-      await _run('-y -f concat -safe 0 -i ${_q(temp)} -vn $args ${_q(output)}');
-      return output;
+      return await _withOutputCleanup([output], () async {
+        await _run(
+          '-y -f concat -safe 0 -i ${_q(temp)} -vn $args ${_q(output)}',
+        );
+        return _requireOutput(output);
+      });
     } finally {
       await _storage.deleteIfExists(temp);
     }
@@ -277,9 +318,11 @@ class AudioProcessor {
       format.extension,
     );
     final args = _codecArgs(format, bitRate);
-    await _run(
-      '-y -i ${_q(inputPath)} -vn -af ${_q(audioFilter)} $args ${_q(output)}',
-    );
-    return output;
+    return _withOutputCleanup([output], () async {
+      await _run(
+        '-y -i ${_q(inputPath)} -vn -af ${_q(audioFilter)} $args ${_q(output)}',
+      );
+      return _requireOutput(output);
+    });
   }
 }
