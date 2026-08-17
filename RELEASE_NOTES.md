@@ -4,6 +4,12 @@
 
 SonicNest is an offline-first cross-platform sound and voice recorder built with Flutter. This development preview establishes the recorder, recording library, playback, editing, native branding, Linux packaging, metadata recovery, managed-audio orphan reconstruction, resilient import, platform bootstrap, CI, privacy, and open-source foundations required for later stable releases.
 
+### Project links and storefront
+
+- **Gumroad Store:** https://ramsandesh.gumroad.com
+- The storefront is highlighted through a compact optional strip across primary app tabs, a dedicated About entry, the startup address, and public project documentation.
+- A source-controlled promotional badge lives at `assets/branding/gumroad_store_badge.svg`. Storefront access is explicit and never required for core recording or local-library functionality.
+
 ### Recorder
 
 - Start, configurable/cancellable countdown, pause, resume, stop, save, and discard recordings.
