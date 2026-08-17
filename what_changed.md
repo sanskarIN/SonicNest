@@ -2516,3 +2516,8 @@ These changes improve deterministic repository and failure-path safety. They do 
 ## Additional settings persistence findings
 
 The same semantic line review found that `SettingsService.save()` ignored the boolean success results returned by SharedPreferences writes. The save path now throws when any write is rejected so the controller can keep its rollback contract. Persisted playback speed and jump interval values are restricted to the supported UI values, and recording-setting deserialization now rejects malformed or unsupported enum, bitrate, sample-rate, channel, countdown, boolean, and naming-field values instead of allowing corrupt preferences to leak into recorder configuration.
+
+
+## Final line-review protections
+
+The line review also hardened settings loading against legacy or externally-corrupted SharedPreferences values with the wrong stored type. Numeric channel and countdown values retain the repository's existing bounded-clamping compatibility contract, while malformed types fall back safely. The permanent repository audit now requires the source-line audit implementation/tests and requires the Repository Integrity Audit workflow to execute it, preventing the new guard from being silently removed together with its invocation.
