@@ -92,7 +92,7 @@ jobs:
           Hosted startup smoke only confirms that the extracted release executable remained alive during a bounded launch check; it does not validate microphone, audio routing, accessibility, real desktop branding, or Authenticode trust.
           Public release still requires the Authenticode, real-machine, accessibility, microphone, branding, and release-evidence gates documented by the repository.
           '@ | Set-Content -Path 'build\windows-package\RELEASE_CANDIDATE_WARNING.txt' -Encoding UTF8
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: sonicnest-windows-portable-validation
           path: build/windows-package

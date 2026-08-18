@@ -96,7 +96,7 @@ jobs:
           test ! -e /usr/share/applications/sonicnest.desktop
           test ! -e /usr/share/icons/hicolor/512x512/apps/sonicnest.png
           test ! -e /usr/share/metainfo/io.github.sanskarIN.SonicNest.metainfo.xml
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: sonicnest-linux-debian-package-ci
           path: |
