@@ -1,12 +1,22 @@
 import 'package:path/path.dart' as p;
 
 String sanitizeFileStem(String input, {String fallback = 'Recording'}) {
-  var value = input.trim();
-  value = value.replaceAll(RegExp(r'[\\/:*?"<>|\x00-\x1F]'), '_');
-  value = value.replaceAll(RegExp(r'\s+'), ' ');
-  value = value.replaceAll(RegExp(r'[. ]+$'), '');
-  value = value.replaceAll(RegExp(r'^\.+'), '');
-  if (value.isEmpty) value = fallback;
+  String clean(String candidate) {
+    var value = candidate.trim();
+    value = value.replaceAll(RegExp(r'[\\/:*?"<>|\x00-\x1F]'), '_');
+    value = value.replaceAll(RegExp(r'\s+'), ' ');
+    value = value.replaceAll(RegExp(r'[. ]+$'), '');
+    value = value.replaceAll(RegExp(r'^\.+'), '');
+    return value;
+  }
+
+  var value = clean(input);
+  if (value.isEmpty) {
+    value = clean(fallback);
+  }
+  if (value.isEmpty) {
+    value = 'Recording';
+  }
 
   const windowsReserved = <String>{
     'CON',
@@ -32,8 +42,19 @@ String sanitizeFileStem(String input, {String fallback = 'Recording'}) {
     'LPT8',
     'LPT9',
   };
-  if (windowsReserved.contains(value.toUpperCase())) value = '_$value';
-  if (value.length > 120) value = value.substring(0, 120).trimRight();
+  final firstComponent = value.split('.').first.toUpperCase();
+  if (windowsReserved.contains(firstComponent)) {
+    value = '_$value';
+  }
+
+  const maxRunes = 120;
+  final runes = value.runes;
+  if (runes.length > maxRunes) {
+    value = String.fromCharCodes(runes.take(maxRunes)).trimRight();
+  }
+  if (value.isEmpty) {
+    value = 'Recording';
+  }
   return value;
 }
 
