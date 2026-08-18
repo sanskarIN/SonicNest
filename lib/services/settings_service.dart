@@ -56,6 +56,12 @@ class SettingsSnapshot {
 }
 
 class SettingsService {
+  static const _snapshotKey = 'settings_snapshot_v1';
+  static const _snapshotSchemaVersion = 1;
+
+  // Legacy per-field keys remain readable so existing installations migrate
+  // without losing preferences. New writes use the single snapshot above so a
+  // failed multi-key update cannot leave a partially new settings state.
   static const _recordingKey = 'recording_settings';
   static const _themeKey = 'theme_mode';
   static const _speedKey = 'playback_speed';
@@ -63,6 +69,7 @@ class SettingsService {
   static const _skipSilenceKey = 'skip_silence';
   static const _confirmDeleteKey = 'confirm_delete';
   static const _reducedMotionKey = 'reduced_motion';
+
   static const _supportedPlaybackSpeeds = <double>[
     .5,
     .75,
@@ -78,37 +85,82 @@ class SettingsService {
     final prefs = await SharedPreferences.getInstance();
     final defaults = SettingsSnapshot.defaults();
 
-    Object? stored(String key) => prefs.get(key);
-    bool storedBool(String key, bool fallback) {
-      final value = stored(key);
-      return value is bool ? value : fallback;
+    final rawSnapshot = prefs.get(_snapshotKey);
+    if (rawSnapshot is String) {
+      try {
+        final decoded = jsonDecode(rawSnapshot);
+        if (decoded is Map<String, dynamic> &&
+            decoded['schemaVersion'] == _snapshotSchemaVersion) {
+          return _decodeValues(
+            defaults: defaults,
+            recordingValue: decoded['recording'],
+            themeValue: decoded['themeMode'],
+            speedValue: decoded['defaultPlaybackSpeed'],
+            skipValue: decoded['skipIntervalSeconds'],
+            skipSilenceValue: decoded['skipSilence'],
+            confirmDeleteValue: decoded['confirmDelete'],
+            reducedMotionValue: decoded['reducedMotion'],
+          );
+        }
+      } catch (_) {
+        // Fall through to the legacy keys. They are retained as a migration
+        // safety net for installations whose canonical snapshot is damaged.
+      }
     }
 
+    return _decodeValues(
+      defaults: defaults,
+      recordingValue: prefs.get(_recordingKey),
+      themeValue: prefs.get(_themeKey),
+      speedValue: prefs.get(_speedKey),
+      skipValue: prefs.get(_skipKey),
+      skipSilenceValue: prefs.get(_skipSilenceKey),
+      confirmDeleteValue: prefs.get(_confirmDeleteKey),
+      reducedMotionValue: prefs.get(_reducedMotionKey),
+    );
+  }
+
+  SettingsSnapshot _decodeValues({
+    required SettingsSnapshot defaults,
+    required Object? recordingValue,
+    required Object? themeValue,
+    required Object? speedValue,
+    required Object? skipValue,
+    required Object? skipSilenceValue,
+    required Object? confirmDeleteValue,
+    required Object? reducedMotionValue,
+  }) {
     RecordingSettings recording = defaults.recording;
-    final rawRecordingValue = stored(_recordingKey);
-    if (rawRecordingValue is String) {
+    Object? decodedRecording = recordingValue;
+    if (recordingValue is String) {
       try {
-        final decoded = jsonDecode(rawRecordingValue);
-        if (decoded is Map<String, dynamic>) {
-          recording = RecordingSettings.fromJson(decoded);
-        }
+        decodedRecording = jsonDecode(recordingValue);
+      } catch (_) {
+        decodedRecording = null;
+      }
+    }
+    if (decodedRecording is Map) {
+      try {
+        recording = RecordingSettings.fromJson(
+          Map<String, dynamic>.from(decodedRecording),
+        );
       } catch (_) {
         recording = defaults.recording;
       }
     }
 
-    final themeValue = stored(_themeKey);
     final themeName = themeValue is String ? themeValue : null;
     final theme =
         ThemeMode.values.where((mode) => mode.name == themeName).firstOrNull ??
         defaults.themeMode;
 
-    final speedValue = stored(_speedKey);
     final storedPlaybackSpeed = speedValue is num && speedValue.isFinite
         ? speedValue.toDouble()
         : null;
-    final skipValue = stored(_skipKey);
     final storedSkipInterval = skipValue is int ? skipValue : null;
+
+    bool boolValue(Object? value, bool fallback) =>
+        value is bool ? value : fallback;
 
     return SettingsSnapshot(
       recording: recording,
@@ -120,24 +172,26 @@ class SettingsService {
       skipIntervalSeconds: _supportedSkipIntervals.contains(storedSkipInterval)
           ? storedSkipInterval!
           : defaults.skipIntervalSeconds,
-      skipSilence: storedBool(_skipSilenceKey, defaults.skipSilence),
-      confirmDelete: storedBool(_confirmDeleteKey, defaults.confirmDelete),
-      reducedMotion: storedBool(_reducedMotionKey, defaults.reducedMotion),
+      skipSilence: boolValue(skipSilenceValue, defaults.skipSilence),
+      confirmDelete: boolValue(confirmDeleteValue, defaults.confirmDelete),
+      reducedMotion: boolValue(reducedMotionValue, defaults.reducedMotion),
     );
   }
 
   Future<void> save(SettingsSnapshot snapshot) async {
     final prefs = await SharedPreferences.getInstance();
-    final results = await Future.wait<bool>([
-      prefs.setString(_recordingKey, jsonEncode(snapshot.recording.toJson())),
-      prefs.setString(_themeKey, snapshot.themeMode.name),
-      prefs.setDouble(_speedKey, snapshot.defaultPlaybackSpeed),
-      prefs.setInt(_skipKey, snapshot.skipIntervalSeconds),
-      prefs.setBool(_skipSilenceKey, snapshot.skipSilence),
-      prefs.setBool(_confirmDeleteKey, snapshot.confirmDelete),
-      prefs.setBool(_reducedMotionKey, snapshot.reducedMotion),
-    ]);
-    if (results.any((stored) => !stored)) {
+    final payload = <String, Object>{
+      'schemaVersion': _snapshotSchemaVersion,
+      'recording': snapshot.recording.toJson(),
+      'themeMode': snapshot.themeMode.name,
+      'defaultPlaybackSpeed': snapshot.defaultPlaybackSpeed,
+      'skipIntervalSeconds': snapshot.skipIntervalSeconds,
+      'skipSilence': snapshot.skipSilence,
+      'confirmDelete': snapshot.confirmDelete,
+      'reducedMotion': snapshot.reducedMotion,
+    };
+    final stored = await prefs.setString(_snapshotKey, jsonEncode(payload));
+    if (!stored) {
       throw StateError('Shared preferences rejected settings persistence.');
     }
   }
