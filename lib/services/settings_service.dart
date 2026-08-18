@@ -5,6 +5,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/recording_settings.dart';
 
+class UnsupportedSettingsSchemaException implements Exception {
+  const UnsupportedSettingsSchemaException(this.schemaVersion);
+
+  final int schemaVersion;
+
+  @override
+  String toString() =>
+      'UnsupportedSettingsSchemaException: settings schema '
+      '$schemaVersion is not supported by this SonicNest build.';
+}
+
 class SettingsSnapshot {
   const SettingsSnapshot({
     required this.recording,
@@ -89,19 +100,27 @@ class SettingsService {
     if (rawSnapshot is String) {
       try {
         final decoded = jsonDecode(rawSnapshot);
-        if (decoded is Map<String, dynamic> &&
-            decoded['schemaVersion'] == _snapshotSchemaVersion) {
-          return _decodeValues(
-            defaults: defaults,
-            recordingValue: decoded['recording'],
-            themeValue: decoded['themeMode'],
-            speedValue: decoded['defaultPlaybackSpeed'],
-            skipValue: decoded['skipIntervalSeconds'],
-            skipSilenceValue: decoded['skipSilence'],
-            confirmDeleteValue: decoded['confirmDelete'],
-            reducedMotionValue: decoded['reducedMotion'],
-          );
+        if (decoded is Map<String, dynamic>) {
+          final schemaVersion = decoded['schemaVersion'];
+          if (schemaVersion is int &&
+              schemaVersion != _snapshotSchemaVersion) {
+            throw UnsupportedSettingsSchemaException(schemaVersion);
+          }
+          if (schemaVersion == _snapshotSchemaVersion) {
+            return _decodeValues(
+              defaults: defaults,
+              recordingValue: decoded['recording'],
+              themeValue: decoded['themeMode'],
+              speedValue: decoded['defaultPlaybackSpeed'],
+              skipValue: decoded['skipIntervalSeconds'],
+              skipSilenceValue: decoded['skipSilence'],
+              confirmDeleteValue: decoded['confirmDelete'],
+              reducedMotionValue: decoded['reducedMotion'],
+            );
+          }
         }
+      } on UnsupportedSettingsSchemaException {
+        rethrow;
       } catch (_) {
         // Fall through to the legacy keys. They are retained as a migration
         // safety net for installations whose canonical snapshot is damaged.
