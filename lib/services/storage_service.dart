@@ -121,10 +121,9 @@ class StorageService {
   }
 
   String _normalizeExtension(String extension) {
-    final value = (extension.startsWith('.')
-            ? extension.substring(1)
-            : extension)
-        .toLowerCase();
+    final value =
+        (extension.startsWith('.') ? extension.substring(1) : extension)
+            .toLowerCase();
     if (!RegExp(r'^[a-z0-9]{1,16}$').hasMatch(value)) {
       throw const FormatException('Unsafe or invalid file extension.');
     }
