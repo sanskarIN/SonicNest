@@ -99,7 +99,11 @@ class ExternalActions {
   ) async {
     final safeName = p.basename(fileName);
     if (safeName.isEmpty || safeName == '.' || safeName == '..') {
-      throw ArgumentError.value(fileName, 'fileName', 'Invalid export filename.');
+      throw ArgumentError.value(
+        fileName,
+        'fileName',
+        'Invalid export filename.',
+      );
     }
     final stem = p.basenameWithoutExtension(safeName);
     final extension = p.extension(safeName);
