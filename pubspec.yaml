@@ -21,7 +21,7 @@ dependencies:
   path: ^1.9.1
   path_provider: ^2.1.6
   record: ^7.1.1
-  share_plus: ^12.0.2
+  share_plus: 13.3.0
   shared_preferences: ^2.5.5
   url_launcher: ^6.3.2
   uuid: ^4.6.0
