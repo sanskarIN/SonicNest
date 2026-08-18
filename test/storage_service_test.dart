@@ -97,22 +97,25 @@ void main() {
     expect(await managed.exists(), isFalse);
   });
 
-  test('temporary cleanup is restricted to SonicNest temporary storage', () async {
-    final managedPath = await storage.uniqueTempPath('waveform', 'pcm');
-    final managed = File(managedPath);
-    final external = File('${sandbox.path}/external.tmp');
-    await managed.writeAsBytes(const [1, 2], flush: true);
-    await external.writeAsBytes(const [3, 4], flush: true);
+  test(
+    'temporary cleanup is restricted to SonicNest temporary storage',
+    () async {
+      final managedPath = await storage.uniqueTempPath('waveform', 'pcm');
+      final managed = File(managedPath);
+      final external = File('${sandbox.path}/external.tmp');
+      await managed.writeAsBytes(const [1, 2], flush: true);
+      await external.writeAsBytes(const [3, 4], flush: true);
 
-    await storage.deleteManagedTemporaryIfExists(managed.path);
-    expect(await managed.exists(), isFalse);
+      await storage.deleteManagedTemporaryIfExists(managed.path);
+      expect(await managed.exists(), isFalse);
 
-    await expectLater(
-      storage.deleteManagedTemporaryIfExists(external.path),
-      throwsA(isA<FileSystemException>()),
-    );
-    expect(await external.exists(), isTrue);
-  });
+      await expectLater(
+        storage.deleteManagedTemporaryIfExists(external.path),
+        throwsA(isA<FileSystemException>()),
+      );
+      expect(await external.exists(), isTrue);
+    },
+  );
 
   test('capture cleanup accepts only managed regular audio files', () async {
     final active = await createManagedRecording('Active Capture');
