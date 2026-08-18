@@ -69,7 +69,7 @@ class AudioImportService {
       Object? cleanupError;
       if (importedPath != null) {
         try {
-          await storage.deleteIfExists(importedPath);
+          await storage.deleteManagedAudioIfExists(importedPath);
         } catch (error) {
           cleanupError = error;
         }
