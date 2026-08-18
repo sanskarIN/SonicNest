@@ -206,23 +206,26 @@ class RecordingSettings {
       if (name is! String) {
         return fallback;
       }
-      return values.where((value) => value.name == name).firstOrNull ??
-          fallback;
+      return values.where((value) => value.name == name).firstOrNull ?? fallback;
+    }
+
+    bool isFiniteWholeNumber(Object? value) {
+      return value is num && value.isFinite && value == value.truncate();
     }
 
     int supportedInt(Object? value, Set<int> supported, int fallback) {
-      if (value is! num || !value.isFinite) {
+      if (!isFiniteWholeNumber(value)) {
         return fallback;
       }
-      final parsed = value.toInt();
+      final parsed = (value as num).toInt();
       return supported.contains(parsed) ? parsed : fallback;
     }
 
     int boundedInt(Object? value, int fallback, int min, int max) {
-      if (value is! num || !value.isFinite) {
+      if (!isFiniteWholeNumber(value)) {
         return fallback;
       }
-      return value.toInt().clamp(min, max).toInt();
+      return (value as num).toInt().clamp(min, max).toInt();
     }
 
     bool boolValue(Object? value, bool fallback) =>
