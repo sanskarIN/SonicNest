@@ -60,7 +60,7 @@ jobs:
           TXT
           cd build/release-candidate/android
           sha256sum sonicnest-android-release-nonproduction.apk sonicnest-android-release-nonproduction.aab > SHA256SUMS.txt
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: sonicnest-android-release-candidate
           path: build/release-candidate/android
@@ -109,7 +109,7 @@ jobs:
           These artifacts are still not approved for public distribution until real-machine audio, accessibility, long-duration, low-storage, final visual, and release-policy gates are complete.
           TXT
           (cd "$OUT" && sha256sum sonicnest-linux-release-unsigned.tar.gz sonicnest_*.deb > SHA256SUMS.txt)
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: sonicnest-linux-release-candidate
           path: build/release-candidate/linux
@@ -158,7 +158,7 @@ jobs:
           Hosted startup smoke only confirms that the extracted release executable remained alive during a bounded launch check; it does not validate microphone, audio routing, accessibility, real desktop branding, or Authenticode trust.
           Authenticode, real-machine microphone/routing, accessibility, final visual review, and release-evidence gates remain incomplete.
           '@ | Set-Content -Path 'build\release-candidate\windows\RELEASE_CANDIDATE_WARNING.txt' -Encoding UTF8
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: sonicnest-windows-release-candidate
           path: build/release-candidate/windows
@@ -195,7 +195,7 @@ jobs:
           Real-hardware QA, Apple signing, notarization, accessibility, and final visual review remain release gates.
           TXT
           (cd "$OUT" && shasum -a 256 sonicnest-macos-release-unsigned.zip > SHA256SUMS.txt)
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: sonicnest-macos-release-candidate
           path: build/release-candidate/macos
@@ -231,7 +231,7 @@ jobs:
           Provisioning, signing, real-device QA, accessibility, store metadata, and final visual review remain release gates.
           TXT
           (cd "$OUT" && shasum -a 256 sonicnest-ios-release-unsigned.zip > SHA256SUMS.txt)
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: sonicnest-ios-release-candidate
           path: build/release-candidate/ios
@@ -273,7 +273,7 @@ jobs:
           Physical-device, accessibility, protected production signing, notarization, store review, and final visual gates remain incomplete.
           TXT
           (cd "$OUT" && sha256sum RELEASE_CANDIDATE_MANIFEST.json > SHA256SUMS.txt)
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: sonicnest-release-candidate-manifest
           path: build/release-candidate/manifest
