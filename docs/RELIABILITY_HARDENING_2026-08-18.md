@@ -46,3 +46,7 @@ SonicNest remains a **development preview**. Manual/credential-dependent gates r
 ## Validation update — 2026-08-18
 
 The restored-head PR #1 matrix completed successfully for Repository Integrity Audit, Linux package CI, Windows build/package CI, Apple iOS/macOS builds, and the Flutter Linux debug build. Flutter analyze/test stopped at the committed-format gate because hosted Flutter stable 3.47.0 found only `test/audio_import_service_test.dart` and `test/settings_service_test.dart` still non-canonical. PR #2 applies the hosted stable formatter exactly, adds persisted numeric-integrity hardening, and restores the permanent non-mutating formatting workflow before final validation.
+
+## PR #2 permanent-workflow validation trigger
+
+The hosted formatter/ledger synchronization commit restored the permanent read-only CI workflow and removed its temporary helper files. Because that synchronization commit was pushed by GitHub Actions using `GITHUB_TOKEN`, its automatically created pull-request workflow runs required approval instead of executing. This repository-authored documentation commit intentionally retriggers PR #2 from the same clean source state under the permanent workflow contract; validation results are recorded only from the resulting executable run set.
