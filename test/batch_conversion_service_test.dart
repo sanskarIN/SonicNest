@@ -138,6 +138,51 @@ void main() {
   );
 
   test(
+    'rollback cleanup failure remains isolated to the failed batch item',
+    () async {
+      final failingStorage = _FailingCleanupStorageService(
+        documentsDirectoryProvider: () async => documents,
+        temporaryDirectoryProvider: () async => temporary,
+      );
+      final failingProcessor = _FakeBatchProcessor(failingStorage);
+      final failingService = BatchConversionService(
+        processor: failingProcessor,
+        storage: failingStorage,
+        external: external,
+      );
+      String? generatedPath;
+
+      final result = await failingService.convert(
+        entries: [
+          _entry('first', '/input/first.wav'),
+          _entry('second', '/input/second.wav'),
+        ],
+        format: RecordingFormat.mp3,
+        fallbackSettings: RecordingSettings.defaults(),
+        registerOutput:
+            ({
+              required path,
+              required title,
+              required format,
+              required markers,
+            }) async {
+              if (title.startsWith('first')) {
+                generatedPath = path;
+                throw StateError('Injected registration failure.');
+              }
+            },
+      );
+
+      expect(result.completed, 2);
+      expect(result.successes, 1);
+      expect(result.conversionFailureCount, 1);
+      expect(result.conversionFailures.single.title, 'first');
+      expect(generatedPath, isNotNull);
+      expect(await File(generatedPath!).exists(), isTrue);
+    },
+  );
+
+  test(
     'external-copy failure does not invalidate a registered conversion',
     () async {
       final registered = <String>[];
@@ -331,6 +376,18 @@ class _FakeBatchProcessor extends AudioProcessor {
     );
     await File(path).writeAsBytes(const [8, 6, 7, 5, 3, 0, 9], flush: true);
     return path;
+  }
+}
+
+class _FailingCleanupStorageService extends StorageService {
+  _FailingCleanupStorageService({
+    required super.documentsDirectoryProvider,
+    required super.temporaryDirectoryProvider,
+  });
+
+  @override
+  Future<void> deleteManagedAudioIfExists(String path) async {
+    throw FileSystemException('Injected managed cleanup failure.', path);
   }
 }
 
