@@ -40,8 +40,11 @@ jobs:
         with:
           channel: stable
           cache: true
-      - name: Verify committed Dart formatting
-        run: dart format --output=none --set-exit-if-changed lib test tool/generate_brand_assets_v2.dart
+      - name: Expose final canonical Dart formatting diff
+        run: |
+          dart format lib test tool/generate_brand_assets_v2.dart
+          git diff -- lib/models/recording_settings.dart lib/services/batch_conversion_service.dart lib/services/settings_service.dart
+          git diff --quiet -- lib test tool/generate_brand_assets_v2.dart
       - name: Install Linux audio prerequisites
         run: sudo apt-get update && sudo apt-get install -y ffmpeg pulseaudio-utils libjson-glib-dev
       - name: Generate platform hosts
