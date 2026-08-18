@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/sanskarIN/SonicNest/blob/main/SECURITY.md
+    about: Please follow the private/security reporting guidance instead of filing a public bug report.
+  - name: Support and troubleshooting
+    url: https://github.com/sanskarIN/SonicNest/blob/main/SUPPORT.md
+    about: Read the support and troubleshooting guidance before opening a new issue.
