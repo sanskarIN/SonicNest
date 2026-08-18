@@ -54,7 +54,7 @@ class AdvancedAudioProcessor {
       return await operation();
     } catch (_) {
       try {
-        await _storage.deleteIfExists(output);
+        await _storage.deleteManagedAudioIfExists(output);
       } on FileSystemException {
         // Preserve the processing failure as the primary error.
       }
