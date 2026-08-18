@@ -114,7 +114,10 @@ void main() {
         storage,
         probeFailures: const {'/managed/broken.wav'},
       );
-      final service = AudioImportService(storage: storage, processor: processor);
+      final service = AudioImportService(
+        storage: storage,
+        processor: processor,
+      );
 
       await expectLater(
         service.importOne('/picked/broken.wav'),
