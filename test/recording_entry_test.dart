@@ -115,6 +115,50 @@ void main() {
     expect(entry.waveform, [0.5, 0.0, 1.0]);
   });
 
+  test('fractional integer metadata is rejected instead of truncated', () {
+    final entry = RecordingEntry.fromJson({
+      'id': 'fractional-safety',
+      'filePath': '/audio/fractional.wav',
+      'durationMs': 1234.5,
+      'sizeBytes': 4096.5,
+      'bitRate': 192000.5,
+      'sampleRate': 48000.5,
+      'channels': 1.5,
+      'markers': [
+        {'positionMs': 250.5, 'label': 'Fractional marker'},
+      ],
+    });
+
+    expect(entry.durationMs, 0);
+    expect(entry.sizeBytes, 0);
+    expect(entry.bitRate, 0);
+    expect(entry.sampleRate, 0);
+    expect(entry.channels, 1);
+    expect(entry.markers.single.positionMs, 0);
+  });
+
+  test('whole numeric metadata remains accepted', () {
+    final entry = RecordingEntry.fromJson({
+      'id': 'whole-number',
+      'filePath': '/audio/whole.wav',
+      'durationMs': 1234.0,
+      'sizeBytes': 4096.0,
+      'bitRate': 192000.0,
+      'sampleRate': 48000.0,
+      'channels': 2.0,
+      'markers': [
+        {'positionMs': 250.0, 'label': 'Whole marker'},
+      ],
+    });
+
+    expect(entry.durationMs, 1234);
+    expect(entry.sizeBytes, 4096);
+    expect(entry.bitRate, 192000);
+    expect(entry.sampleRate, 48000);
+    expect(entry.channels, 2);
+    expect(entry.markers.single.positionMs, 250);
+  });
+
   test('zero channels remains available as unknown imported metadata', () {
     final entry = RecordingEntry.fromJson({
       'id': 'imported',
