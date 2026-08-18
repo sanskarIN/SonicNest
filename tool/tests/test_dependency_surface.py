@@ -11,7 +11,7 @@ class DependencySurfaceRegressionTest(unittest.TestCase):
         pubspec = (ROOT / "pubspec.yaml").read_text(encoding="utf-8")
         self.assertIn("file_picker: 12.0.0-beta.7", pubspec)
         self.assertIn("share_plus: 13.3.0", pubspec)
-        self.assertIn("wakelock_plus: 1.5.2", pubspec)
+        self.assertIn("wakelock_plus: 1.7.0", pubspec)
 
     def test_file_picker_uses_static_api(self) -> None:
         source = (ROOT / "lib/services/external_actions.dart").read_text(
