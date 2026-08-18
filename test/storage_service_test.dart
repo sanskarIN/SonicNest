@@ -97,6 +97,55 @@ void main() {
     expect(await managed.exists(), isFalse);
   });
 
+  test('temporary cleanup is restricted to SonicNest temporary storage', () async {
+    final managedPath = await storage.uniqueTempPath('waveform', 'pcm');
+    final managed = File(managedPath);
+    final external = File('${sandbox.path}/external.tmp');
+    await managed.writeAsBytes(const [1, 2], flush: true);
+    await external.writeAsBytes(const [3, 4], flush: true);
+
+    await storage.deleteManagedTemporaryIfExists(managed.path);
+    expect(await managed.exists(), isFalse);
+
+    await expectLater(
+      storage.deleteManagedTemporaryIfExists(external.path),
+      throwsA(isA<FileSystemException>()),
+    );
+    expect(await external.exists(), isTrue);
+  });
+
+  test('capture cleanup accepts only managed regular audio files', () async {
+    final active = await createManagedRecording('Active Capture');
+    final temporaryPath = await storage.uniqueTempPath('capture', 'm4a');
+    final temporaryCapture = File(temporaryPath);
+    final external = File('${sandbox.path}/external-capture.wav');
+    await temporaryCapture.writeAsBytes(const [1], flush: true);
+    await external.writeAsBytes(const [2], flush: true);
+
+    await storage.deleteManagedCaptureIfExists(active.path);
+    await storage.deleteManagedCaptureIfExists(temporaryCapture.path);
+
+    expect(await active.exists(), isFalse);
+    expect(await temporaryCapture.exists(), isFalse);
+    await expectLater(
+      storage.deleteManagedCaptureIfExists(external.path),
+      throwsA(isA<FileSystemException>()),
+    );
+    expect(await external.exists(), isTrue);
+  });
+
+  test('capture cleanup rejects unsupported temporary files', () async {
+    final path = await storage.uniqueTempPath('capture-not-audio', 'txt');
+    final file = File(path);
+    await file.writeAsString('keep', flush: true);
+
+    await expectLater(
+      storage.deleteManagedCaptureIfExists(file.path),
+      throwsA(isA<FileSystemException>()),
+    );
+    expect(await file.exists(), isTrue);
+  });
+
   test(
     'managed mutations reject a symlink that points outside storage',
     () async {
@@ -121,6 +170,10 @@ void main() {
       );
       await expectLater(
         storage.deleteManagedAudioIfExists(link.path),
+        throwsA(isA<FileSystemException>()),
+      );
+      await expectLater(
+        storage.deleteManagedCaptureIfExists(link.path),
         throwsA(isA<FileSystemException>()),
       );
 
