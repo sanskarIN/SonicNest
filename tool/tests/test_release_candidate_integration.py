@@ -17,7 +17,7 @@ class ReleaseCandidateIntegrationTest(unittest.TestCase):
         )
         required_markers = (
             "Unified candidate provenance manifest",
-            "actions/download-artifact@v4",
+            "actions/download-artifact@v8",
             "pattern: sonicnest-*-release-candidate",
             "tool/build_release_candidate_manifest.py",
             "RELEASE_CANDIDATE_MANIFEST.json",
