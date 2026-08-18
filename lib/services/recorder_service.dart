@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
+import 'package:path/path.dart' as p;
 import 'package:record/record.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
@@ -310,13 +311,23 @@ class RecorderService extends ChangeNotifier {
       _timer?.cancel();
       await _amplitudeSubscription?.cancel();
       _amplitudeSubscription = null;
+      final requestedCapturePath = _capturePath;
       final recordedPath = await _recorderBackend.stop();
       await _safeStopBackground();
-      final capturePath = recordedPath ?? _capturePath;
+      final capturePath = recordedPath ?? requestedCapturePath;
       final settings = _settings;
       final title = _title;
-      if (capturePath == null || settings == null || title == null) {
+      if (capturePath == null ||
+          requestedCapturePath == null ||
+          settings == null ||
+          title == null) {
         throw StateError('Recorder returned no valid output path.');
+      }
+      if (!p.equals(capturePath, requestedCapturePath)) {
+        throw StateError(
+          'Recorder returned an unexpected output path outside the requested '
+          'capture destination.',
+        );
       }
 
       var finalPath = capturePath;
@@ -331,8 +342,8 @@ class RecorderService extends ChangeNotifier {
         );
         await _safeDeleteCaptureFile(capturePath);
       }
-      if (!await File(finalPath).exists()) {
-        throw StateError('Recorded file was not saved.');
+      if (!await _storage.isManagedAudioPath(finalPath, includeTrash: false)) {
+        throw StateError('Recorded file was not saved in managed storage.');
       }
 
       final result = RecorderResult(
