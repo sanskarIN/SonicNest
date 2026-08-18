@@ -316,7 +316,7 @@ class AppController extends ChangeNotifier {
       }
       selectedRecording = previousSelection;
       if (await storage.isManagedAudioPath(path, includeTrash: false)) {
-        await storage.deleteIfExists(path);
+        await storage.deleteManagedAudioIfExists(path);
       }
       rethrow;
     }
@@ -363,7 +363,7 @@ class AppController extends ChangeNotifier {
           importedCount += 1;
         } catch (_) {
           _recordings.removeWhere((item) => item.id == entry.id);
-          await storage.deleteIfExists(imported.filePath);
+          await storage.deleteManagedAudioIfExists(imported.filePath);
           rethrow;
         }
       }
@@ -464,7 +464,7 @@ class AppController extends ChangeNotifier {
         await _persist();
       } catch (_) {
         _recordings.removeWhere((item) => item.filePath == path);
-        await storage.deleteIfExists(path);
+        await storage.deleteManagedAudioIfExists(path);
         rethrow;
       }
     });
