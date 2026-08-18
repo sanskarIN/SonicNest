@@ -46,7 +46,7 @@ class AudioProcessor {
     } catch (_) {
       for (final output in outputs) {
         try {
-          await _storage.deleteIfExists(output);
+          await _storage.deleteManagedAudioIfExists(output);
         } on FileSystemException {
           // Preserve the processing failure as the primary error.
         }
@@ -137,7 +137,7 @@ class AudioProcessor {
       }
       return result;
     } finally {
-      await _storage.deleteIfExists(pcmPath);
+      await _storage.deleteManagedTemporaryIfExists(pcmPath);
     }
   }
 
@@ -250,7 +250,7 @@ class AudioProcessor {
         return _requireOutput(output);
       });
     } finally {
-      await _storage.deleteIfExists(temp);
+      await _storage.deleteManagedTemporaryIfExists(temp);
     }
   }
 
