@@ -66,12 +66,20 @@ class AudioImportService {
         waveform: waveform,
       );
     } catch (error) {
+      Object? cleanupError;
       if (importedPath != null) {
-        await storage.deleteIfExists(importedPath);
+        try {
+          await storage.deleteIfExists(importedPath);
+        } catch (error) {
+          cleanupError = error;
+        }
       }
+      final cleanupMessage = cleanupError == null
+          ? ''
+          : ' Cleanup also failed: $cleanupError';
       throw AudioImportException(
         sourcePath: sourcePath,
-        message: error.toString(),
+        message: '$error$cleanupMessage',
       );
     }
   }
