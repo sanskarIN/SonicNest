@@ -367,13 +367,6 @@ class StorageService {
     await File(path).delete();
   }
 
-  Future<void> deleteIfExists(String path) async {
-    final file = File(path);
-    if (await file.exists()) {
-      await file.delete();
-    }
-  }
-
   Future<String> importFile(String sourcePath) async {
     final source = File(sourcePath);
     if (!await source.exists()) {
