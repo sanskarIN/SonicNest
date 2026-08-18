@@ -102,8 +102,7 @@ class SettingsService {
         final decoded = jsonDecode(rawSnapshot);
         if (decoded is Map<String, dynamic>) {
           final schemaVersion = decoded['schemaVersion'];
-          if (schemaVersion is int &&
-              schemaVersion != _snapshotSchemaVersion) {
+          if (schemaVersion is int && schemaVersion != _snapshotSchemaVersion) {
             throw UnsupportedSettingsSchemaException(schemaVersion);
           }
           if (schemaVersion == _snapshotSchemaVersion) {
