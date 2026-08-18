@@ -1,6 +1,6 @@
 # SonicNest Remaining Work
 
-This file intentionally contains only work that is still incomplete, requires physical-device evidence, depends on maintainer-owned release credentials, or is a verified repository-hygiene gap. Completed implementation belongs in `what_changed.md` and `PROJECT_STATE.md`.
+This file intentionally contains only work that is still incomplete, requires physical-device evidence, depends on maintainer-owned release credentials, or is a verified repository-hygiene gap. Completed implementation belongs in `what_changed.md`, `PROJECT_STATE.md`, and the final repository audit.
 
 ## Repository hygiene
 
@@ -11,6 +11,12 @@ This file intentionally contains only work that is still incomplete, requires ph
 - [x] Keep the exact hosted release-candidate evidence source-controlled and audit-required in `docs/AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md`.
 - [x] Compile Python release helpers and run repository-owned release-tool regressions in the permanent Repository Integrity Audit. Run `31876149473` passed all **10/10** Python tests plus repository, Bash, and PowerShell checks.
 - [x] Add an offline structural verifier for exported manual-QA JSON so release review can detect malformed evidence, catalog drift, inconsistent summaries, privacy-contract regressions, version mismatch, and optional staleness without claiming the underlying physical/manual tests were performed.
+- [x] Remove stale/temporary write-enabled formatter/ledger workflows and lock the exact maintained workflow allowlist plus permanent read-only permission boundary with regression coverage.
+- [x] Replace unrestricted internal cleanup with intent-specific managed recording/Trash, temporary, and recorder-capture deletion boundaries; remove the obsolete `StorageService.deleteIfExists()` helper after all callers migrate.
+- [x] Reject fractional persisted values for integer-only recording settings instead of silently truncating them.
+- [x] Refuse recognizable unsupported future settings-snapshot schema versions so an older build cannot silently reinterpret and later overwrite a newer settings document.
+- [x] Complete the public open-source maintenance surface with CODEOWNERS, structured issue routing, optional funding links, weekly Dart/Flutter and GitHub Actions dependency-update proposals, maintainer documentation, and permanent regression coverage.
+- [x] Publish `docs/FINAL_REPOSITORY_AUDIT_2026-08-18.md` and keep repository-complete work distinct from still-open physical/accessibility/signing/store/stable-release evidence.
 
 ## Repository-owned release automation
 
@@ -25,9 +31,9 @@ This file intentionally contains only work that is still incomplete, requires ph
 - [x] Add unit and repository-integration regression coverage for the unified candidate manifest. Repository Integrity Audit run `31876149473` passed **10/10** Python release-tool tests.
 - [x] Validate the unified provenance-manifest job against a real hosted five-platform release-candidate run. Run `31876035202` on source `b95d77c4b69c9798f1ecb48d5f69583c4e08de5c` passed preflight, Android, Linux, Windows, macOS, iOS, and the final provenance job. Manifest JSON SHA-256: `8a49759555cad26a60858025d82953ad0e3c3b429aa8138d67f7ef4f86d99b7e`; manifest workflow-artifact digest: `sha256:5fa654434ba304e7b67945250f7c8f4bec14eacbc87effefa5cd2d620885baa3`.
 
-No additional repository-only release-automation gap is currently identified. The remaining unchecked tasks below require real devices/systems, sustained workloads, representative media, accessibility tooling, private signing credentials, distribution-console access, or final release approval.
+No additional repository-only feature, tooling, deterministic reliability, documentation, open-source-maintenance, or release-automation gap is currently identified by the final repository audit. The remaining unchecked tasks below require real devices/systems, sustained workloads, representative media, accessibility tooling, private signing credentials, distribution-console access, translation review, or final release approval. A future reproducible repository defect should still be fixed when discovered.
 
-SonicNest now includes the user-initiated **Diagnostics & QA** report described in `docs/DIAGNOSTICS_AND_QA.md`. Use a fresh privacy-safe report as supporting evidence for relevant manual tests below. The report intentionally excludes recording content, recording titles, file paths, notes, tags, bookmarks, smart-naming text, and input-device names, and it does **not** close any physical-device, accessibility, filesystem, signing, or distribution gate by itself.
+SonicNest includes the user-initiated **Diagnostics & QA** report described in `docs/DIAGNOSTICS_AND_QA.md`. Use a fresh privacy-safe report as supporting evidence for relevant manual tests below. The report intentionally excludes recording content, recording titles, file paths, notes, tags, bookmarks, smart-naming text, and input-device names, and it does **not** close any physical-device, accessibility, filesystem, signing, or distribution gate by itself.
 
 SonicNest also includes **About → Manual QA evidence**, documented in `docs/MANUAL_QA_EVIDENCE.md`. The local ledger mirrors the manual evidence categories below and records only fixed check IDs, `Not run`/`Passed`/`Failed`/`Blocked` status values, and timestamps; it has no free-form tester-note field. Use it to make real-device/system testing reproducible and exportable. JSON exports can be reviewed offline with `tool/verify_manual_qa_evidence.py`; structural verification is supporting evidence only. A status selected in the app or a successful verifier result does not close a task here until the corresponding test has actually been performed and its evidence reviewed.
 
@@ -47,7 +53,7 @@ SonicNest also includes **About → Manual QA evidence**, documented in `docs/MA
 
 ## Reliability and stress validation
 
-Repository automation now provides deterministic baselines for malformed metadata decoding, non-finite/negative numeric normalization, bounded waveform recovery, duplicate ID/path isolation, structural metadata corruption preservation, interrupted `.bak` recovery, corrupt-store reset, a 3,000-entry metadata save/load round-trip, managed-path mutation guards, persistence rollback for library mutations, supported-file discovery, orphaned managed-audio reconstruction, isolated import copy/probe/waveform failures, entity-safe managed/external filename collisions, deterministic batch-conversion failure/stop behavior, Linux package install/startup smoke, and Windows portable-package structure/startup smoke. The checks below intentionally remain incomplete because they require real filesystems, media corpora, devices, UI/performance profiling, abrupt process/device interruption, or sustained workloads rather than synthetic/hosted regression coverage alone.
+Repository automation provides deterministic baselines for malformed metadata/settings decoding, non-finite/negative/fractional numeric normalization, bounded waveform recovery, duplicate ID/path isolation, structural metadata corruption preservation, future-schema refusal, interrupted `.bak` recovery, corrupt-store reset, a 3,000-entry metadata save/load round-trip, managed-path mutation/cleanup guards, persistence rollback for library mutations, supported-file discovery, orphaned managed-audio reconstruction, isolated import copy/probe/waveform failures, entity-safe managed/external filename collisions, deterministic batch-conversion failure/stop behavior, Linux package install/startup smoke, and Windows portable-package structure/startup smoke. The checks below intentionally remain incomplete because they require real filesystems, media corpora, devices, UI/performance profiling, abrupt process/device interruption, or sustained workloads rather than synthetic/hosted regression coverage alone.
 
 - [ ] Low-storage recording and export failure tests.
 - [ ] Disk/file permission failure recovery tests.
