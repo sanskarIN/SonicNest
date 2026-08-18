@@ -66,7 +66,10 @@ String sanitizeFileStem(String input, {String fallback = 'Recording'}) {
     runeCount++;
     byteCount += encodedLength;
   }
-  value = bounded.toString().trimRight();
+  // Truncation can expose a dot or space that was safe only because more text
+  // originally followed it. Re-apply the trailing Windows component rule to
+  // the bounded value before using it as a filename stem.
+  value = bounded.toString().replaceAll(RegExp(r'[. ]+$'), '');
 
   if (value.isEmpty) {
     value = 'Recording';
