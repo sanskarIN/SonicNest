@@ -55,6 +55,18 @@ class ExternalActions {
     return file?.path;
   }
 
+  Future<String?> chooseExportPath(String fileName) async {
+    final directoryPath = await FilePicker.getDirectoryPath();
+    if (directoryPath == null) {
+      return null;
+    }
+    final directory = Directory(directoryPath);
+    if (!await directory.exists()) {
+      throw StateError('The selected destination folder is unavailable.');
+    }
+    return _collisionSafeDestination(directory, p.basename(fileName));
+  }
+
   Future<String?> chooseExportDirectory() {
     return FilePicker.getDirectoryPath();
   }
@@ -73,9 +85,24 @@ class ExternalActions {
       throw StateError('The selected destination folder is unavailable.');
     }
 
-    final fileName = p.basename(sourcePath);
-    final stem = p.basenameWithoutExtension(fileName);
-    final extension = p.extension(fileName);
+    final candidate = await _collisionSafeDestination(
+      directory,
+      p.basename(sourcePath),
+    );
+    final copied = await source.copy(candidate);
+    return copied.path;
+  }
+
+  Future<String> _collisionSafeDestination(
+    Directory directory,
+    String fileName,
+  ) async {
+    final safeName = p.basename(fileName);
+    if (safeName.isEmpty || safeName == '.' || safeName == '..') {
+      throw ArgumentError.value(fileName, 'fileName', 'Invalid export filename.');
+    }
+    final stem = p.basenameWithoutExtension(safeName);
+    final extension = p.extension(safeName);
     var candidate = p.join(directory.path, '$stem$extension');
     var suffix = 2;
 
@@ -83,9 +110,7 @@ class ExternalActions {
       candidate = p.join(directory.path, '$stem ($suffix)$extension');
       suffix++;
     }
-
-    final copied = await source.copy(candidate);
-    return copied.path;
+    return candidate;
   }
 
   Future<bool> _pathOccupied(String path) async {
