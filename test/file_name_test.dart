@@ -47,10 +47,7 @@ void main() {
     });
 
     test('keeps Unicode recording names intact when below the cap', () {
-      expect(
-        sanitizeFileStem('हिंदी बैठक 🎙️ 你好'),
-        'हिंदी बैठक 🎙️ 你好',
-      );
+      expect(sanitizeFileStem('हिंदी बैठक 🎙️ 你好'), 'हिंदी बैठक 🎙️ 你好');
     });
   });
 
