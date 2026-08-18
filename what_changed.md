@@ -2558,3 +2558,37 @@ Validated source revision: `2c5f8c137af393bc37a89dd1f9ddcf78218a7c81`
 
 The validation confirms the repository-owned Gumroad integration and supported automated build/test/package paths. It does **not** replace remaining physical-device microphone/routing/lifecycle/background tests, real accessibility audits, destructive storage/power/process recovery tests, large-library/long-duration soak tests, protected signing/notarization/store-console validation, or stable-release approval.
 
+
+# Continuation — 2026-08-18 — Reliability and persistence hardening
+
+## Repository-owned work completed
+
+- Hardened recording filenames across filesystems: sanitized fallback names, protected Windows reserved device names including suffixed forms, preserved Unicode code points, and bounded stems to 120 code points / 220 UTF-8 bytes.
+- Replaced independent settings writes with one versioned `settings_snapshot_v1` JSON snapshot while retaining legacy keys as read-only migration/corruption fallback.
+- Added canonical-snapshot precedence, damaged-snapshot fallback, wrong-type fallback, roundtrip, and no-new-legacy-write regression coverage.
+- Hardened persisted integer decoding so fractional bitrate, sample-rate, channel-count, and countdown values are rejected to established safe defaults instead of silently truncated. Valid whole-number clamping remains unchanged.
+- Preserved `AudioImportException` as the primary per-file import error even when cleanup of an invalid copied import also fails; cleanup failure remains diagnostic context.
+- Validated generated recording/Trash/temp extensions before path joining, rejecting empty, separator-containing, traversal-shaped, or otherwise unsafe extension text while normalizing safe extensions.
+- Added regression coverage for filename safety, settings snapshots, fractional persisted integer fields, import double-failure isolation, path traversal-shaped extensions, collision allocation, and managed-storage boundaries.
+
+## PR #1 validation evidence
+
+Restored head `b24954a284fa043c95b9c385cef1193cdc57e129` produced:
+
+- Repository Integrity Audit: success.
+- Linux Package CI: success, including release bundle, Debian package creation/verification, metadata inspection, install, smoke test, uninstall, and artifact upload.
+- Windows Build: success, including debug build, release portable package creation/verification, startup smoke test, and artifact upload.
+- Apple Builds: success for iOS no-codesign debug and macOS debug.
+- Flutter CI Linux debug build: success.
+- Flutter analyze/test stopped only at the committed-format gate because hosted Flutter stable 3.47.0 found two continuation regression files still non-canonical. The permanent formatting gate was not weakened; PR #2 applies the exact hosted stable formatter output and restores the permanent CI workflow before its final validation pass.
+
+## Integration history
+
+- PR #1: `Harden generated file extension boundaries`.
+- PR #1 reviewed head: `b24954a284fa043c95b9c385cef1193cdc57e129`.
+- PR #1 merge commit: `a9dc730eba9811103c7f7267431664cda522c66f`.
+- Follow-up PR #2 isolates persisted numeric-integrity hardening and exact hosted formatter correction. It is not treated as integrated until merged.
+
+## Release boundary
+
+SonicNest remains a **development preview**. Physical microphone/routing tests, wired/USB/Bluetooth behavior, interruption/background/lock-screen/media-button behavior, real low-storage/permission/process/power-loss recovery, representative damaged-media tests, long-duration/large-library performance, accessibility audits, native visual QA, representative target-system package QA, protected signing, Apple notarization/store-console validation, and final stable-release approval remain open.

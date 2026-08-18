@@ -42,3 +42,7 @@ At merge time the final restored-head workflow matrix was still queued. It is th
 ## Release boundary
 
 SonicNest remains a **development preview**. Manual/credential-dependent gates remain open, including physical microphone permission/capture/routing, wired/USB/Bluetooth behavior, interruption/background/lock-screen/media buttons, real low-storage/permission/process/power-loss recovery, representative malformed/partial/damaged media, long-duration and large-library performance, accessibility audits, native visual review/screenshots, representative Linux/Windows package QA, Android/Apple/Windows protected signing, Apple notarization/store validation, and final stable-release approval.
+
+## Validation update — 2026-08-18
+
+The restored-head PR #1 matrix completed successfully for Repository Integrity Audit, Linux package CI, Windows build/package CI, Apple iOS/macOS builds, and the Flutter Linux debug build. Flutter analyze/test stopped at the committed-format gate because hosted Flutter stable 3.47.0 found only `test/audio_import_service_test.dart` and `test/settings_service_test.dart` still non-canonical. PR #2 applies the hosted stable formatter exactly, adds persisted numeric-integrity hardening, and restores the permanent non-mutating formatting workflow before final validation.

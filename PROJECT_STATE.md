@@ -562,3 +562,14 @@ next_exact_tasks:
 - Core and advanced FFmpeg processing remove partial managed outputs when processing or output validation fails.
 - Metadata loading now refuses unsupported integer schema versions without rewriting or classifying newer metadata as corruption; malformed schema types remain corruption-isolated.
 - Stable-release classification remains unchanged: physical-device, accessibility, stress, protected-signing, store, and final approval gates remain manual/credential-dependent.
+
+## 2026-08-18 reliability hardening state
+
+- PR #1 integrated generated-path and associated reliability hardening at `a9dc730eba9811103c7f7267431664cda522c66f`.
+- Filenames now protect cross-platform reserved/length/Unicode boundaries.
+- Settings use canonical versioned snapshot persistence with legacy read fallback.
+- Fractional persisted integer fields are rejected instead of silently truncated.
+- Import cleanup failure cannot replace the structured import failure boundary.
+- Generated managed-path extensions are validated before path allocation.
+- PR #1 passed repository integrity, Linux package, Windows build/package, Apple iOS/macOS build, and Flutter Linux debug-build evidence. Its analyze/test job stopped only at a two-file committed-format gate; PR #2 applies the exact hosted formatter output and restores the permanent gate.
+- Release classification remains `development_preview_until_manual_release_gates_are_complete`; manual/credential-dependent release gates remain open.

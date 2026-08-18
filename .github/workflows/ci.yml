@@ -23,7 +23,7 @@ on:
       - '.github/workflows/ci.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: sonicnest-ci-v2-${{ github.ref }}
@@ -36,17 +36,12 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
-          fetch-depth: 0
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
-      - name: Apply hosted stable Dart formatter exactly
-        run: dart format lib test tool/generate_brand_assets_v2.dart
-      - name: Synchronize ledgers and restore permanent CI
-        run: bash tool/temporary_sync_reliability_ledgers.sh
+      - name: Verify committed Dart formatting
+        run: dart format --output=none --set-exit-if-changed lib test tool/generate_brand_assets_v2.dart
       - name: Install Linux audio prerequisites
         run: sudo apt-get update && sudo apt-get install -y ffmpeg pulseaudio-utils libjson-glib-dev
       - name: Generate platform hosts
