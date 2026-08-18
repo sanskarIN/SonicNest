@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import '../models/recording_entry.dart';
 import '../models/recording_settings.dart';
 import 'audio_processor.dart';
@@ -127,7 +125,7 @@ class BatchConversionService {
             )) {
               await storage.deleteManagedAudioIfExists(output);
             }
-          } on FileSystemException {
+          } catch (_) {
             // Rollback cleanup is best effort. Preserve the conversion or
             // registration failure as the per-file result and continue.
           }
