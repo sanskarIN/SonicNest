@@ -102,6 +102,40 @@ void main() {
 
     expect(storage.deletedPaths, isEmpty);
   });
+
+  test('cleanup failure does not escape as an unstructured exception', () async {
+    final storage = _FakeStorageService(
+      importedPaths: const {'/picked/broken.wav': '/managed/broken.wav'},
+      deleteFailures: const {'/managed/broken.wav'},
+    );
+    final processor = _FakeAudioProcessor(
+      storage,
+      probeFailures: const {'/managed/broken.wav'},
+    );
+    final service = AudioImportService(storage: storage, processor: processor);
+
+    await expectLater(
+      service.importOne('/picked/broken.wav'),
+      throwsA(
+        isA<AudioImportException>()
+            .having(
+              (error) => error.sourcePath,
+              'sourcePath',
+              '/picked/broken.wav',
+            )
+            .having(
+              (error) => error.message,
+              'message',
+              allOf(
+                contains('Could not determine audio duration'),
+                contains('Cleanup also failed'),
+              ),
+            ),
+      ),
+    );
+
+    expect(storage.deletedPaths, ['/managed/broken.wav']);
+  });
 }
 
 class _FakeStorageService extends StorageService {
@@ -109,11 +143,13 @@ class _FakeStorageService extends StorageService {
     this.importedPaths = const {},
     this.sizes = const {},
     this.importFailures = const {},
+    this.deleteFailures = const {},
   });
 
   final Map<String, String> importedPaths;
   final Map<String, int> sizes;
   final Set<String> importFailures;
+  final Set<String> deleteFailures;
   final List<String> deletedPaths = [];
 
   @override
@@ -130,6 +166,9 @@ class _FakeStorageService extends StorageService {
   @override
   Future<void> deleteIfExists(String path) async {
     deletedPaths.add(path);
+    if (deleteFailures.contains(path)) {
+      throw FileSystemException('Injected cleanup failure.', path);
+    }
   }
 }
 
