@@ -28,6 +28,29 @@ If validation of a copied import fails and cleanup of the copied file also fails
 
 Regression coverage includes `../wav`, `txt/../../outside`, empty extension input, and `.PCM` normalization.
 
+### Managed cleanup authority
+
+Cleanup paths now distinguish managed audio, managed temporary files, and recorder capture files instead of relying on an unrestricted file-delete helper.
+
+- `deleteManagedTemporaryIfExists` accepts only regular filesystem entries inside the SonicNest temporary directory.
+- `deleteManagedCaptureIfExists` accepts only regular supported-audio files inside the managed Recordings or temporary capture directories.
+- A recorder backend returning an unexpected external path therefore cannot cause SonicNest cleanup to delete that external file.
+- Failed import cleanup now uses the managed-recording delete boundary.
+- Core and advanced FFmpeg output cleanup uses the managed-recording delete boundary.
+- PCM waveform and concat-list cleanup uses the managed-temporary delete boundary.
+- Symlinks/non-regular managed entries remain rejected rather than followed for destructive cleanup.
+
+Deterministic storage regressions cover managed temporary cleanup, external temporary-file preservation, active/temp capture cleanup, external capture preservation, unsupported temp capture rejection, and symlink refusal on supported hosts.
+
+### Permanent workflow hygiene regression
+
+A stale one-shot formatter/ledger workflow and its trigger marker remained tracked after their intended operation. The permanent repository audit already classified that state as invalid, so the temporary write-enabled workflow was removed rather than allowlisted or weakening the audit.
+
+A Python regression now locks both sides of this policy:
+
+- the tracked `.github/workflows/*.yml|*.yaml` set must exactly match the permanent allowlist; and
+- permanent workflows must not request `write-all` or any repository write scope prohibited by `repository_audit.py`.
+
 ## Pull-request integration
 
 - PR: `#1` — `Harden generated file extension boundaries`
@@ -38,6 +61,23 @@ Regression coverage includes `../wav`, `txt/../../outside`, empty extension inpu
 The initial PR validation correctly detected Dart-format drift in five continuation-touched files. Hosted canonical formatting was applied in focused commits. The temporary diagnostic CI edit was then reverted completely; the final PR contains no workflow change, and the permanent non-mutating formatter command remains authoritative.
 
 At merge time the final restored-head workflow matrix was still queued. It is therefore not represented here as successful unless/until GitHub records completion evidence.
+
+## Focused continuation commits after PR integration
+
+- `d48176428ef05f797b3df23c01abfea1c90e0e33` — `ci: remove stale hosted formatter sync workflow`
+- `b7118493736c2b321f38c4d2f72d5ee817b42ea8` — `chore: remove stale formatter sync trigger`
+- `a03efb87adb14539cece2d384c6bcda1252cd024` — `test: lock permanent workflow allowlist and read-only scopes`
+- `89c72d310570ff9098ba9f94a917b2166aac36d4` — `fix: guard recorder and temporary cleanup paths`
+- `87e8facec30f46dc97ac255115f2707aa446c13a` — `test: cover guarded capture and temporary cleanup`
+- `e4d388bcdbe1618860648d54101ff7744b50f17a` — `fix: restrict recorder cleanup to managed capture files`
+- `0e147452adf8d671027a4e12771422c860cec53d` — `fix: guard failed import cleanup inside managed storage`
+- `cb071eab08fe116081a374e1ba674adad9c026f8` — `test: align import cleanup fake with managed delete boundary`
+- `3a1b1bddac7e26e09ec28a532a3b40b362949ea9` — `fix: keep audio processing cleanup inside managed storage`
+- `2e5af811b49963f6189c0475d096ea78f0e0bbbc` — `fix: guard advanced processor cleanup outputs`
+
+## Validation boundary
+
+The repository pushes above trigger the maintained read-only validation workflows. This note does not pre-claim a formatter, analyzer, unit-test, or platform-build result that has not been retrieved as completed GitHub evidence.
 
 ## Release boundary
 
