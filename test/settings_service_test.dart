@@ -45,29 +45,32 @@ void main() {
     expect(snapshot.reducedMotion, isFalse);
   });
 
-  test('settings save and load roundtrip preserves supported values', () async {
-    final service = SettingsService();
-    final snapshot = SettingsSnapshot.defaults().copyWith(
-      recording: RecordingSettings.forPreset(QualityPreset.podcast),
-      themeMode: ThemeMode.dark,
-      defaultPlaybackSpeed: 1.5,
-      skipIntervalSeconds: 30,
-      skipSilence: true,
-      confirmDelete: false,
-      reducedMotion: true,
-    );
+  test(
+    'settings save and load roundtrip preserves supported values',
+    () async {
+      final service = SettingsService();
+      final snapshot = SettingsSnapshot.defaults().copyWith(
+        recording: RecordingSettings.forPreset(QualityPreset.podcast),
+        themeMode: ThemeMode.dark,
+        defaultPlaybackSpeed: 1.5,
+        skipIntervalSeconds: 30,
+        skipSilence: true,
+        confirmDelete: false,
+        reducedMotion: true,
+      );
 
-    await service.save(snapshot);
-    final restored = await service.load();
+      await service.save(snapshot);
+      final restored = await service.load();
 
-    expect(restored.recording.preset, QualityPreset.podcast);
-    expect(restored.themeMode, ThemeMode.dark);
-    expect(restored.defaultPlaybackSpeed, 1.5);
-    expect(restored.skipIntervalSeconds, 30);
-    expect(restored.skipSilence, isTrue);
-    expect(restored.confirmDelete, isFalse);
-    expect(restored.reducedMotion, isTrue);
-  });
+      expect(restored.recording.preset, QualityPreset.podcast);
+      expect(restored.themeMode, ThemeMode.dark);
+      expect(restored.defaultPlaybackSpeed, 1.5);
+      expect(restored.skipIntervalSeconds, 30);
+      expect(restored.skipSilence, isTrue);
+      expect(restored.confirmDelete, isFalse);
+      expect(restored.reducedMotion, isTrue);
+    },
+  );
 
   test('new save writes one canonical coherent settings snapshot', () async {
     final service = SettingsService();
@@ -133,24 +136,27 @@ void main() {
     expect(snapshot.reducedMotion, isTrue);
   });
 
-  test('damaged canonical snapshot falls back to legacy preferences', () async {
-    SharedPreferences.setMockInitialValues(<String, Object>{
-      'settings_snapshot_v1': '{not valid json',
-      'theme_mode': 'dark',
-      'playback_speed': 1.25,
-      'skip_interval': 15,
-      'skip_silence': true,
-      'confirm_delete': false,
-      'reduced_motion': true,
-    });
+  test(
+    'damaged canonical snapshot falls back to legacy preferences',
+    () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'settings_snapshot_v1': '{not valid json',
+        'theme_mode': 'dark',
+        'playback_speed': 1.25,
+        'skip_interval': 15,
+        'skip_silence': true,
+        'confirm_delete': false,
+        'reduced_motion': true,
+      });
 
-    final snapshot = await SettingsService().load();
+      final snapshot = await SettingsService().load();
 
-    expect(snapshot.themeMode, ThemeMode.dark);
-    expect(snapshot.defaultPlaybackSpeed, 1.25);
-    expect(snapshot.skipIntervalSeconds, 15);
-    expect(snapshot.skipSilence, isTrue);
-    expect(snapshot.confirmDelete, isFalse);
-    expect(snapshot.reducedMotion, isTrue);
-  });
+      expect(snapshot.themeMode, ThemeMode.dark);
+      expect(snapshot.defaultPlaybackSpeed, 1.25);
+      expect(snapshot.skipIntervalSeconds, 15);
+      expect(snapshot.skipSilence, isTrue);
+      expect(snapshot.confirmDelete, isFalse);
+      expect(snapshot.reducedMotion, isTrue);
+    },
+  );
 }
