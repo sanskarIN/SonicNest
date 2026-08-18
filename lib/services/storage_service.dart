@@ -110,7 +110,7 @@ class StorageService {
     String extension,
   ) async {
     final stem = sanitizeFileStem(title);
-    final ext = extension.startsWith('.') ? extension.substring(1) : extension;
+    final ext = _normalizeExtension(extension);
     var candidate = p.join(directory.path, '$stem.$ext');
     var suffix = 2;
     while (await _pathOccupied(candidate)) {
@@ -118,6 +118,16 @@ class StorageService {
       suffix++;
     }
     return candidate;
+  }
+
+  String _normalizeExtension(String extension) {
+    final value =
+        (extension.startsWith('.') ? extension.substring(1) : extension)
+            .toLowerCase();
+    if (!RegExp(r'^[a-z0-9]{1,16}$').hasMatch(value)) {
+      throw const FormatException('Unsafe or invalid file extension.');
+    }
+    return value;
   }
 
   Future<bool> _pathOccupied(String path) async {

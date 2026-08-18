@@ -159,6 +159,33 @@ void main() {
     expect(await File(secondPath).readAsBytes(), [2]);
   });
 
+  test('generated paths reject unsafe extension text', () async {
+    await expectLater(
+      storage.uniqueRecordingPath('Escape', '../wav'),
+      throwsA(isA<FormatException>()),
+    );
+    await expectLater(
+      storage.uniqueTempPath('Escape', 'txt/../../outside'),
+      throwsA(isA<FormatException>()),
+    );
+    await expectLater(
+      storage.uniqueTrashPath('Escape', ''),
+      throwsA(isA<FormatException>()),
+    );
+  });
+
+  test('generated paths normalize safe extensions', () async {
+    final path = await storage.uniqueTempPath('Waveform', '.PCM');
+
+    expect(path.endsWith('.pcm'), isTrue);
+    expect(
+      path.startsWith(
+        '${(await storage.tempDirectory).path}${Platform.pathSeparator}',
+      ),
+      isTrue,
+    );
+  });
+
   test(
     'recoverable file discovery returns only supported top-level audio',
     () async {

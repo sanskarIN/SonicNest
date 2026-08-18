@@ -103,39 +103,42 @@ void main() {
     expect(storage.deletedPaths, isEmpty);
   });
 
-  test('cleanup failure does not escape as an unstructured exception', () async {
-    final storage = _FakeStorageService(
-      importedPaths: const {'/picked/broken.wav': '/managed/broken.wav'},
-      deleteFailures: const {'/managed/broken.wav'},
-    );
-    final processor = _FakeAudioProcessor(
-      storage,
-      probeFailures: const {'/managed/broken.wav'},
-    );
-    final service = AudioImportService(storage: storage, processor: processor);
+  test(
+    'cleanup failure does not escape as an unstructured exception',
+    () async {
+      final storage = _FakeStorageService(
+        importedPaths: const {'/picked/broken.wav': '/managed/broken.wav'},
+        deleteFailures: const {'/managed/broken.wav'},
+      );
+      final processor = _FakeAudioProcessor(
+        storage,
+        probeFailures: const {'/managed/broken.wav'},
+      );
+      final service = AudioImportService(storage: storage, processor: processor);
 
-    await expectLater(
-      service.importOne('/picked/broken.wav'),
-      throwsA(
-        isA<AudioImportException>()
-            .having(
-              (error) => error.sourcePath,
-              'sourcePath',
-              '/picked/broken.wav',
-            )
-            .having(
-              (error) => error.message,
-              'message',
-              allOf(
-                contains('Could not determine audio duration'),
-                contains('Cleanup also failed'),
+      await expectLater(
+        service.importOne('/picked/broken.wav'),
+        throwsA(
+          isA<AudioImportException>()
+              .having(
+                (error) => error.sourcePath,
+                'sourcePath',
+                '/picked/broken.wav',
+              )
+              .having(
+                (error) => error.message,
+                'message',
+                allOf(
+                  contains('Could not determine audio duration'),
+                  contains('Cleanup also failed'),
+                ),
               ),
-            ),
-      ),
-    );
+        ),
+      );
 
-    expect(storage.deletedPaths, ['/managed/broken.wav']);
-  });
+      expect(storage.deletedPaths, ['/managed/broken.wav']);
+    },
+  );
 }
 
 class _FakeStorageService extends StorageService {
