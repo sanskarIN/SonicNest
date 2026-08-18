@@ -25,7 +25,7 @@ dependencies:
   shared_preferences: ^2.5.5
   url_launcher: ^6.3.2
   uuid: ^4.6.0
-  wakelock_plus: 1.5.2
+  wakelock_plus: 1.7.0
 
 dev_dependencies:
   flutter_test:
