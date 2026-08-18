@@ -67,6 +67,20 @@ void main() {
     expect(restored.keepScreenAwake, isFalse);
   });
 
+  test('deserialization rejects fractional integer fields', () {
+    final restored = RecordingSettings.fromJson({
+      'bitRate': 192000.5,
+      'sampleRate': 48000.5,
+      'channels': 2.5,
+      'countdownSeconds': 7.5,
+    });
+
+    expect(restored.bitRate, 128000);
+    expect(restored.sampleRate, 44100);
+    expect(restored.channels, 1);
+    expect(restored.countdownSeconds, 0);
+  });
+
   test('transcoded formats are marked correctly', () {
     expect(RecordingFormat.mp3.needsTranscode, isTrue);
     expect(RecordingFormat.ogg.needsTranscode, isTrue);
