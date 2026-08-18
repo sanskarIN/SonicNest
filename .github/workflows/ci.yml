@@ -40,11 +40,22 @@ jobs:
         with:
           channel: stable
           cache: true
-      - name: Expose final canonical Dart formatting diff
+      - name: Apply final canonical Dart formatter in checkout
         run: |
           dart format lib test tool/generate_brand_assets_v2.dart
           git diff -- lib/models/recording_settings.dart lib/services/batch_conversion_service.dart lib/services/settings_service.dart
-          git diff --quiet -- lib test tool/generate_brand_assets_v2.dart
+      - name: Upload exact canonical formatted files
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonicnest-final-canonical-format
+          path: |
+            lib/models/recording_settings.dart
+            lib/services/batch_conversion_service.dart
+            lib/services/settings_service.dart
+          if-no-files-found: error
+          retention-days: 1
+      - name: Confirm diagnostic drift exists
+        run: git diff --quiet -- lib test tool/generate_brand_assets_v2.dart
       - name: Install Linux audio prerequisites
         run: sudo apt-get update && sudo apt-get install -y ffmpeg pulseaudio-utils libjson-glib-dev
       - name: Generate platform hosts
