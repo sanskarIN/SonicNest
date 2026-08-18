@@ -13,13 +13,15 @@ class DependencySurfaceRegressionTest(unittest.TestCase):
         self.assertIn("share_plus: 13.3.0", pubspec)
         self.assertIn("wakelock_plus: 1.7.0", pubspec)
 
-    def test_file_picker_uses_static_api(self) -> None:
+    def test_file_picker_uses_v12_static_api_without_memory_heavy_save(self) -> None:
         source = (ROOT / "lib/services/external_actions.dart").read_text(
             encoding="utf-8"
         )
         self.assertNotIn("FilePicker.platform", source)
+        self.assertNotIn("allowMultiple:", source)
+        self.assertNotIn("FilePicker.saveFile(", source)
         self.assertIn("FilePicker.pickFiles(", source)
-        self.assertIn("FilePicker.saveFile(", source)
+        self.assertIn("FilePicker.pickFile(", source)
         self.assertIn("FilePicker.getDirectoryPath(", source)
 
     def test_share_plus_uses_current_shareplus_api(self) -> None:
