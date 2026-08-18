@@ -1,6 +1,6 @@
 # SonicNest Final Repository Audit — 2026-08-18
 
-This document records the final repository-owned implementation, reliability, open-source maintenance, and documentation audit performed on SonicNest before the remaining work becomes exclusively real-device/system, accessibility, protected-signing, store-console, or stable-release evidence.
+This document records the final repository-owned implementation, reliability, dependency, open-source maintenance, documentation, and automated-validation audit performed on SonicNest before the remaining work becomes exclusively real-device/system, accessibility, protected-signing, store-console, translation-review, or stable-release evidence.
 
 It must not be used to claim that those manual/credential-dependent gates have been completed.
 
@@ -12,6 +12,9 @@ It must not be used to claim that those manual/credential-dependent gates have b
 - Current development line: `0.1.0+1`
 - Release classification: **development preview**
 - Canonical Gumroad storefront: `https://ramsandesh.gumroad.com`
+- Final validation PR: `#15`
+- Validated PR head: `a31792c2f758ef321131239f2a683cc9eb51a0b1`
+- Final contract merge commit: `a5a68f81369f46d2127219940254aa3563d81576`
 
 ## Final source audit findings
 
@@ -50,6 +53,39 @@ Recorder stop accepts only the exact capture destination SonicNest supplied to t
 ### Batch failure isolation
 
 Batch conversion rollback cleanup is best effort. A secondary cleanup failure cannot replace the original conversion/registration failure or abort later selected items. External-output paths are not deleted as part of managed rollback.
+
+### FilePicker v12 import/export migration
+
+The final maintenance pass moved SonicNest away from the earlier FilePicker compatibility pin after current validation exposed both security/maintenance pressure and Android Gradle Plugin registration behavior in the newer lines.
+
+The final reviewed plugin graph is:
+
+- `file_picker: 12.0.0-beta.7`
+- `share_plus: 13.3.0`
+- `wakelock_plus: 1.7.0`
+
+No `dependency_overrides` workaround is used.
+
+The migration required several real validation-driven corrections:
+
+1. `file_picker 11.0.3` was rejected after Android compilation reproduced the upstream legacy-Kotlin/AGP registration failure where `GeneratedPluginRegistrant.java` could not resolve `FilePickerPlugin`.
+2. The FilePicker 12 beta line was selected because it contains the upstream AGP/plugin-registration correction.
+3. `share_plus` was moved to `13.3.0` to align the transitive Windows dependency graph with FilePicker’s win32 6.x line.
+4. `wakelock_plus` was moved to `1.7.0` to complete the same current win32/Kotlin-compatible graph rather than forcing a transitive dependency override.
+5. FilePicker v12 source APIs were migrated: multi-file selection uses `pickFiles()`, single-file selection uses `pickFile()`, and deprecated `allowMultiple` calls are gone.
+6. SonicNest deliberately does **not** use FilePicker v12 `saveFile(bytes:)` for large audio exports. Single-recording export still streams through `File.copy`: FilePicker selects a destination directory, SonicNest allocates a collision-safe destination filename, and the controller copies the managed recording to that path.
+
+`tool/tests/test_dependency_surface.py` and `tool/tests/test_final_repository_contract.py` lock the final dependency/API/export boundary.
+
+### GitHub Actions maintenance
+
+Dependabot surfaced the maintained GitHub Actions runtime upgrades during the final pass. SonicNest reviewed and merged:
+
+- `actions/checkout@v7`
+- `actions/upload-artifact@v7`
+- `actions/download-artifact@v8`
+
+The repository audit was advanced to require the current artifact-action majors, and `tool/tests/test_github_action_versions.py` rejects regression to the old maintained-workflow action versions.
 
 ### Workflow hygiene
 
@@ -96,7 +132,7 @@ The maintained documentation set covers:
 - release-candidate artifact classification and provenance;
 - release procedure and evidence template;
 - security, privacy, support, contribution, conduct, and open-source maintenance;
-- project state, TODO gates, changelog/release notes, and additive continuation history.
+- final repository audit, project state, TODO gates, changelog/release notes, and additive continuation history.
 
 `docs/README.md` remains the documentation index.
 
@@ -106,15 +142,55 @@ Repository code search during the final pass did not identify unresolved `TODO`,
 
 ## Pull-request cleanup
 
-PR `#2` was closed as superseded rather than merged. Its valid numeric-settings hardening was integrated directly in focused `main` commits, while its obsolete temporary write-enabled formatter/ledger workflow machinery was deliberately not integrated.
+Several validation/dependency PRs were deliberately superseded rather than merged when hosted validation exposed a more accurate next step:
 
-PR `#3` is reused only as the clean final validation vehicle after being reset to the exact current `main` state. The validation branch must contain no temporary write-enabled workflow.
+- PR `#2` — valid numeric-settings logic integrated directly; obsolete temporary formatter/ledger workflow excluded.
+- PRs `#10`–`#14` — preserved as validation chronology for formatter, Android plugin-registration, dependency-solver, and FilePicker v12 API findings; none is treated as final evidence.
+- PR `#15` — final clean validation vehicle; its only branch-only change was the permanent final repository-contract regression. It passed the complete maintained matrix and was squash-merged as `a5a68f81369f46d2127219940254aa3563d81576`.
+
+Temporary diagnostic/workflow branches were reset or closed and no temporary write-enabled workflow is tracked on `main`.
 
 ## Final automated validation
 
-**Pending at initial publication of this document.**
+Final validated source/test head: `a31792c2f758ef321131239f2a683cc9eb51a0b1`.
 
-The final clean validation must exercise the maintained read-only workflows against the exact final application/test/tool source. Results are recorded here only after GitHub reports completion. A queued or running job is not represented as successful.
+### Repository Integrity Audit
+
+- Run: `32155054646`
+- Result: **SUCCESS**
+- Covered repository invariants, tracked-source line hygiene, Python tooling/regressions, Bash syntax, PowerShell syntax, maintained workflow allowlist/read-only policy, current GitHub Actions majors, open-source maintenance surfaces, dependency/API contract, and final repository contract.
+
+### Flutter CI
+
+- Run: `32155054681`
+- Result: **SUCCESS**
+- Committed Dart formatting: **SUCCESS**
+- Dependency resolution: **SUCCESS**
+- Flutter static analysis: **SUCCESS**
+- Complete Flutter unit/regression suite: **SUCCESS**
+- Android debug APK: **SUCCESS**
+- Linux debug build: **SUCCESS**
+
+### Windows Build
+
+- Run: `32155054632`
+- Result: **SUCCESS**
+- Windows debug build: **SUCCESS**
+- Windows release build: **SUCCESS**
+- Portable ZIP build: **SUCCESS**
+- Portable structural verification: **SUCCESS**
+- Extracted-package startup smoke: **SUCCESS**
+- Development-preview warning generation: **SUCCESS**
+- Artifact upload through `actions/upload-artifact@v7`: **SUCCESS**
+
+### Apple Builds
+
+- Run: `32155054751`
+- Result: **SUCCESS**
+- macOS debug build: **SUCCESS**
+- iOS no-codesign debug build: **SUCCESS**
+
+All four maintained workflow families above validated the exact PR head `a31792c2f758ef321131239f2a683cc9eb51a0b1`. PR `#15` then merged the permanent final-contract test to `main` as `a5a68f81369f46d2127219940254aa3563d81576`.
 
 ## Remaining manual and credential-dependent gates
 
@@ -139,7 +215,9 @@ The following remain intentionally open and must not be marked complete from rep
 
 ## Completion boundary
 
-No additional repository-only feature, tooling, documentation, deterministic reliability, or open-source-maintenance gap is intentionally left open by this audit. Future repository changes should be driven by:
+No additional reproducible repository-owned feature, tooling, documentation, deterministic reliability, dependency-maintenance, workflow-maintenance, or open-source-maintenance gap is identified by this final audit.
+
+Future repository changes should be driven by:
 
 1. a reproducible defect;
 2. reviewed dependency/security maintenance;
