@@ -167,7 +167,7 @@ class _FakeStorageService extends StorageService {
   Future<int> fileSize(String path) async => sizes[path] ?? 0;
 
   @override
-  Future<void> deleteIfExists(String path) async {
+  Future<void> deleteManagedAudioIfExists(String path) async {
     deletedPaths.add(path);
     if (deleteFailures.contains(path)) {
       throw FileSystemException('Injected cleanup failure.', path);
