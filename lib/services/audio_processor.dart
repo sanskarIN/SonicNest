@@ -55,6 +55,15 @@ class AudioProcessor {
     }
   }
 
+  Future<void> _cleanupTemporary(String path) async {
+    try {
+      await _storage.deleteManagedTemporaryIfExists(path);
+    } on FileSystemException {
+      // Temporary cleanup is best effort and must not replace processing
+      // success/failure with a secondary filesystem cleanup error.
+    }
+  }
+
   Future<String> _requireOutput(String path) async {
     final file = File(path);
     if (!await file.exists() || await file.length() == 0) {
@@ -137,7 +146,7 @@ class AudioProcessor {
       }
       return result;
     } finally {
-      await _storage.deleteManagedTemporaryIfExists(pcmPath);
+      await _cleanupTemporary(pcmPath);
     }
   }
 
@@ -250,7 +259,7 @@ class AudioProcessor {
         return _requireOutput(output);
       });
     } finally {
-      await _storage.deleteManagedTemporaryIfExists(temp);
+      await _cleanupTemporary(temp);
     }
   }
 
