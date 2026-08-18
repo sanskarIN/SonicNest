@@ -172,7 +172,7 @@ String _stringValue(Object? value, [String fallback = '']) =>
     value is String ? value : fallback;
 
 int _nonNegativeIntValue(Object? value, [int fallback = 0]) {
-  if (value is! num || !value.isFinite) {
+  if (value is! num || !value.isFinite || value != value.truncate()) {
     return fallback;
   }
   final parsed = value.toInt();
