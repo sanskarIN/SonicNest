@@ -179,7 +179,9 @@ void main() {
 
     expect(path.endsWith('.pcm'), isTrue);
     expect(
-      path.startsWith('${(await storage.tempDirectory).path}${Platform.pathSeparator}'),
+      path.startsWith(
+        '${(await storage.tempDirectory).path}${Platform.pathSeparator}',
+      ),
       isTrue,
     );
   });
