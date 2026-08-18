@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:path/path.dart' as p;
 
 String sanitizeFileStem(String input, {String fallback = 'Recording'}) {
@@ -47,11 +49,25 @@ String sanitizeFileStem(String input, {String fallback = 'Recording'}) {
     value = '_$value';
   }
 
+  // Keep enough headroom for the extension and collision suffix that the
+  // storage service appends later. The rune limit protects Windows UTF-16
+  // component length, while the UTF-8 byte limit protects common Unix filesystems.
   const maxRunes = 120;
-  final runes = value.runes;
-  if (runes.length > maxRunes) {
-    value = String.fromCharCodes(runes.take(maxRunes)).trimRight();
+  const maxUtf8Bytes = 220;
+  final bounded = StringBuffer();
+  var runeCount = 0;
+  var byteCount = 0;
+  for (final rune in value.runes) {
+    final encodedLength = utf8.encode(String.fromCharCode(rune)).length;
+    if (runeCount >= maxRunes || byteCount + encodedLength > maxUtf8Bytes) {
+      break;
+    }
+    bounded.writeCharCode(rune);
+    runeCount++;
+    byteCount += encodedLength;
   }
+  value = bounded.toString().trimRight();
+
   if (value.isEmpty) {
     value = 'Recording';
   }
