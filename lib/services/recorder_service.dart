@@ -455,10 +455,11 @@ class RecorderService extends ChangeNotifier {
     }
   }
 
-  // Only delete paths created or returned by the active recorder lifecycle.
+  // Recorder cleanup must never remove a backend-returned path outside the
+  // app-owned recording/temporary capture boundaries.
   Future<void> _safeDeleteCaptureFile(String path) async {
     try {
-      await _storage.deleteIfExists(path);
+      await _storage.deleteManagedCaptureIfExists(path);
     } on FileSystemException catch (error) {
       lastError = 'Temporary capture cleanup failed: $error';
     }
