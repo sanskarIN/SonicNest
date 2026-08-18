@@ -246,7 +246,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Download platform candidate artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: sonicnest-*-release-candidate
           path: build/release-candidate/downloaded
