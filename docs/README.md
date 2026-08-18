@@ -9,6 +9,7 @@ This directory contains the maintained technical, user, QA, branding, packaging,
 - [`../README.md`](../README.md) — project overview, major features, quick start, supported platforms, and project links.
 - [`USER_GUIDE.md`](USER_GUIDE.md) — complete end-user guide for recording, Library, resilient import, local metadata recovery, playback, editing, settings, batch conversion/export, privacy, and shortcuts.
 - [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md) — diagnosis/recovery guidance for recorder, codec, routing, import, metadata recovery, playback, export, editor, storage, branding, packaging, and build issues.
+- [`FINAL_REPOSITORY_AUDIT_2026-08-18.md`](FINAL_REPOSITORY_AUDIT_2026-08-18.md) — final repository-owned source/tooling/open-source/documentation audit and the remaining manual/credential-dependent release boundary.
 
 ## Architecture and implementation
 
