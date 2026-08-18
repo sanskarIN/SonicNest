@@ -119,10 +119,7 @@ class BatchConversionService {
       } catch (error) {
         if (output != null) {
           try {
-            if (await storage.isManagedAudioPath(
-              output,
-              includeTrash: false,
-            )) {
+            if (await storage.isManagedAudioPath(output, includeTrash: false)) {
               await storage.deleteManagedAudioIfExists(output);
             }
           } catch (_) {
