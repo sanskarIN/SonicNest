@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sonic_nest/core/file_name.dart';
 
@@ -35,13 +37,13 @@ void main() {
       expect(sanitizeFileStem(longName).runes.length, 120);
     });
 
-    test('caps Unicode names without splitting surrogate pairs', () {
+    test('caps Unicode names without splitting code points', () {
       final longName = List<String>.filled(121, '🎙️').join();
       final result = sanitizeFileStem(longName);
 
-      expect(result.runes.length, 120);
+      expect(result.runes.length, lessThanOrEqualTo(120));
+      expect(utf8.encode(result).length, lessThanOrEqualTo(220));
       expect(result.contains('\uFFFD'), isFalse);
-      expect(result.runes.every((rune) => rune != 0xD83C && rune != 0xDFA4), isTrue);
     });
 
     test('keeps Unicode recording names intact when below the cap', () {
