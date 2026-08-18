@@ -152,4 +152,31 @@ void main() {
     expect(snapshot.confirmDelete, isFalse);
     expect(snapshot.reducedMotion, isTrue);
   });
+
+  test('unsupported future snapshot is refused and preserved', () async {
+    final futureSnapshot = jsonEncode(<String, Object>{
+      'schemaVersion': 2,
+      'themeMode': 'dark',
+      'defaultPlaybackSpeed': 2.0,
+      'skipIntervalSeconds': 30,
+    });
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'settings_snapshot_v1': futureSnapshot,
+      'theme_mode': 'light',
+    });
+
+    await expectLater(
+      SettingsService().load(),
+      throwsA(
+        isA<UnsupportedSettingsSchemaException>().having(
+          (error) => error.schemaVersion,
+          'schemaVersion',
+          2,
+        ),
+      ),
+    );
+
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getString('settings_snapshot_v1'), futureSnapshot);
+  });
 }
