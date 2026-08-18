@@ -37,6 +37,14 @@ void main() {
       expect(sanitizeFileStem(longName).runes.length, 120);
     });
 
+    test('removes a trailing dot exposed only by truncation', () {
+      final prefix = List<String>.filled(119, 'a').join();
+      final result = sanitizeFileStem('$prefix.more-text-after-boundary');
+
+      expect(result, prefix);
+      expect(result.endsWith('.'), isFalse);
+    });
+
     test('caps Unicode names without splitting code points', () {
       final longName = List<String>.filled(121, '🎙️').join();
       final result = sanitizeFileStem(longName);
