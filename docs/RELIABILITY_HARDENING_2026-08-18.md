@@ -35,12 +35,22 @@ Cleanup paths now distinguish managed audio, managed temporary files, and record
 - `deleteManagedTemporaryIfExists` accepts only regular filesystem entries inside the SonicNest temporary directory.
 - `deleteManagedCaptureIfExists` accepts only regular supported-audio files inside the managed Recordings or temporary capture directories.
 - A recorder backend returning an unexpected external path therefore cannot cause SonicNest cleanup to delete that external file.
+- Recorder stop now rejects a backend-returned output path that does not equal the exact capture destination SonicNest supplied.
+- Recorder stop additionally requires the final output to be a regular managed recording before reporting success.
 - Failed import cleanup now uses the managed-recording delete boundary.
+- Controller rollback cleanup for processed outputs, failed imported-entry persistence, and failed duplicate persistence uses the managed-recording delete boundary.
 - Core and advanced FFmpeg output cleanup uses the managed-recording delete boundary.
 - PCM waveform and concat-list cleanup uses the managed-temporary delete boundary.
+- Temporary processor cleanup is best effort so a secondary filesystem cleanup error cannot replace a processing success/failure result.
 - Symlinks/non-regular managed entries remain rejected rather than followed for destructive cleanup.
 
 Deterministic storage regressions cover managed temporary cleanup, external temporary-file preservation, active/temp capture cleanup, external capture preservation, unsupported temp capture rejection, and symlink refusal on supported hosts.
+
+### Batch conversion cleanup isolation
+
+A failed metadata registration after a successful conversion can require rollback deletion of the generated managed output. That cleanup is now best effort. Any cleanup inspection/deletion failure is isolated to the failed batch item rather than aborting the entire conversion loop or replacing the original conversion/registration error.
+
+A dedicated regression injects managed-cleanup failure, verifies the original first-item failure remains in `conversionFailures`, and verifies a later selected item is still processed successfully.
 
 ### Permanent workflow hygiene regression
 
@@ -58,9 +68,17 @@ A Python regression now locks both sides of this policy:
 - Reviewed head: `b24954a284fa043c95b9c385cef1193cdc57e129`
 - Merge commit: `a9dc730eba9811103c7f7267431664cda522c66f`
 
-The initial PR validation correctly detected Dart-format drift in five continuation-touched files. Hosted canonical formatting was applied in focused commits. The temporary diagnostic CI edit was then reverted completely; the final PR contains no workflow change, and the permanent non-mutating formatter command remains authoritative.
+The earlier pull-request validation work exposed formatter drift in continuation-touched files and preserved the permanent non-mutating formatter command as the repository authority.
 
-At merge time the final restored-head workflow matrix was still queued. It is therefore not represented here as successful unless/until GitHub records completion evidence.
+A later PR `#3` validation pass was deliberately used to obtain the exact Flutter 3.47.0 formatter diff after local Flutter/Dart tooling was unavailable. The temporary diagnostic branch edit replaced the formatter step only on that validation branch. The permanent repository audit rejected that edit because the required non-mutating formatter invariant was absent. The diagnostic branch was then force-reset to current `main`, removing that workflow edit completely before clean validation.
+
+The diagnostic formatter output changed exactly three files on the examined merge snapshot:
+
+- `test/audio_import_service_test.dart`
+- `test/settings_service_test.dart`
+- `test/storage_service_test.dart`
+
+Those exact canonical changes were applied to `main` as three focused commits. No successful analyzer/unit-test claim is made from that diagnostic run because its analyze/test job intentionally stopped after the formatting diff was emitted.
 
 ## Focused continuation commits after PR integration
 
@@ -74,10 +92,24 @@ At merge time the final restored-head workflow matrix was still queued. It is th
 - `cb071eab08fe116081a374e1ba674adad9c026f8` — `test: align import cleanup fake with managed delete boundary`
 - `3a1b1bddac7e26e09ec28a532a3b40b362949ea9` — `fix: keep audio processing cleanup inside managed storage`
 - `2e5af811b49963f6189c0475d096ea78f0e0bbbc` — `fix: guard advanced processor cleanup outputs`
+- `b06f93ebcc81f49c989caf0f9cb1f8cc20788537` — `fix: use managed deletion for controller rollback cleanup`
+- `89d58fc8b3f00fd6e1ba691c90b636a9f3176335` — `fix: reject unexpected recorder output paths`
+- `d645b63b2e04a22a91d4b79bc729e552e552fa65` — `fix: keep temporary cleanup best effort during processing`
+- `3b0623eb422dbb6244dadcff772c77117730d358` — `fix: isolate batch rollback cleanup failures`
+- `004355895ae39756c5e0e6154d73b742b8a09f7a` — `test: cover isolated batch cleanup failure`
+- `6d533089973ee11bb46dd3ca555bca0ff203e6f9` — `fix: preserve batch failure across any cleanup error`
+- `dedfc691c16b317878d6ee27a1b63970289d3e21` — `style: apply canonical import test formatting`
+- `5c3a5f229755cd40a5964e7ebe3239e99f39861a` — `style: apply canonical settings test formatting`
+- `ee4e5f374b856cd8736a3ef7d1c63a4c91302583` — `style: apply canonical storage test formatting`
 
-## Validation boundary
+## Validation evidence and boundary
 
-The repository pushes above trigger the maintained read-only validation workflows. This note does not pre-claim a formatter, analyzer, unit-test, or platform-build result that has not been retrieved as completed GitHub evidence.
+Diagnostic PR `#3` evidence retrieved before the clean reset:
+
+- Repository Integrity Audit run `32138198587`: **failed as designed** because the temporary diagnostic branch edit removed the required `dart format --output=none --set-exit-if-changed` invariant.
+- Flutter CI run `32138198565`, analyze/test job `95714489892`: formatter diagnostic completed and emitted the exact three-file diff above; analyzer and unit tests were skipped after the intentional diff failure.
+
+After the diagnostic branch was reset to canonical `main`, PR `#3` was reopened with only the focused `test/managed_cleanup_regression_test.dart` addition. Its maintained read-only workflows are the final validation path. This note does not pre-claim their success while they remain queued/running.
 
 ## Release boundary
 
