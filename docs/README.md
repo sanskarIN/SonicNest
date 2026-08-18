@@ -41,6 +41,7 @@ This directory contains the maintained technical, user, QA, branding, packaging,
 
 ## Privacy, security, support, and open source
 
+- [`OPEN_SOURCE_MAINTENANCE.md`](OPEN_SOURCE_MAINTENANCE.md) — code ownership, issue routing, Dependabot, funding, contribution quality gates, and release-boundary maintenance rules.
 - [`LINKS_AND_PROMOTION.md`](LINKS_AND_PROMOTION.md) — canonical Gumroad/storefront, support, repository, business, promotion, and external-link behavior.
 - [`../PRIVACY.md`](../PRIVACY.md) — local-first recording/data expectations plus diagnostics/manual-evidence storage and explicit external-action boundaries.
 - [`../SECURITY.md`](../SECURITY.md) — security reporting and project security expectations.
