@@ -319,13 +319,48 @@ class StorageService {
         path,
       );
     }
+    await _deleteRegularFileIfExists(path, 'Delete');
+  }
+
+  Future<void> deleteManagedTemporaryIfExists(String path) async {
+    if (!_isWithin(path, (await tempDirectory).path)) {
+      throw FileSystemException(
+        'Temporary cleanup refused a path outside SonicNest temporary storage.',
+        path,
+      );
+    }
+    await _deleteRegularFileIfExists(path, 'Temporary cleanup');
+  }
+
+  Future<void> deleteManagedCaptureIfExists(String path) async {
+    final inRecordingStorage = _isWithin(
+      path,
+      (await recordingsDirectory).path,
+    );
+    final inTemporaryStorage = _isWithin(path, (await tempDirectory).path);
+    if (!inRecordingStorage && !inTemporaryStorage) {
+      throw FileSystemException(
+        'Capture cleanup refused a path outside SonicNest managed storage.',
+        path,
+      );
+    }
+    if (!_hasSupportedAudioExtension(path)) {
+      throw FileSystemException(
+        'Capture cleanup refused an unsupported audio extension.',
+        path,
+      );
+    }
+    await _deleteRegularFileIfExists(path, 'Capture cleanup');
+  }
+
+  Future<void> _deleteRegularFileIfExists(String path, String operation) async {
     final type = await FileSystemEntity.type(path, followLinks: false);
     if (type == FileSystemEntityType.notFound) {
       return;
     }
     if (type != FileSystemEntityType.file) {
       throw FileSystemException(
-        'Delete refused a non-regular managed audio path.',
+        '$operation refused a non-regular managed path.',
         path,
       );
     }
