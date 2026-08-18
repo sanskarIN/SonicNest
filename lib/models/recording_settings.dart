@@ -206,7 +206,8 @@ class RecordingSettings {
       if (name is! String) {
         return fallback;
       }
-      return values.where((value) => value.name == name).firstOrNull ?? fallback;
+      return values.where((value) => value.name == name).firstOrNull ??
+          fallback;
     }
 
     bool isFiniteWholeNumber(Object? value) {
