@@ -21,7 +21,7 @@ class ExternalCopyBatchResult {
 
 class ExternalActions {
   Future<List<String>> pickAudioFiles() async {
-    final result = await FilePicker.platform.pickFiles(
+    final result = await FilePicker.pickFiles(
       allowMultiple: true,
       type: FileType.custom,
       allowedExtensions: const [
@@ -41,7 +41,7 @@ class ExternalActions {
   }
 
   Future<String?> pickSingleAudioFile() async {
-    final result = await FilePicker.platform.pickFiles(
+    final result = await FilePicker.pickFiles(
       allowMultiple: false,
       type: FileType.custom,
       allowedExtensions: const [
@@ -58,11 +58,11 @@ class ExternalActions {
   }
 
   Future<String?> chooseExportPath(String fileName) {
-    return FilePicker.platform.saveFile(fileName: fileName);
+    return FilePicker.saveFile(fileName: fileName);
   }
 
   Future<String?> chooseExportDirectory() {
-    return FilePicker.platform.getDirectoryPath();
+    return FilePicker.getDirectoryPath();
   }
 
   Future<String> copyFileToDirectoryCollisionSafe({
