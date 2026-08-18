@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import '../models/recording_entry.dart';
 import '../models/recording_settings.dart';
 import 'audio_processor.dart';
@@ -117,9 +119,18 @@ class BatchConversionService {
           }
         }
       } catch (error) {
-        if (output != null &&
-            await storage.isManagedAudioPath(output, includeTrash: false)) {
-          await storage.deleteManagedAudioIfExists(output);
+        if (output != null) {
+          try {
+            if (await storage.isManagedAudioPath(
+              output,
+              includeTrash: false,
+            )) {
+              await storage.deleteManagedAudioIfExists(output);
+            }
+          } on FileSystemException {
+            // Rollback cleanup is best effort. Preserve the conversion or
+            // registration failure as the per-file result and continue.
+          }
         }
         conversionFailures.add(
           BatchConversionIssue(title: entry.title, error: error),
