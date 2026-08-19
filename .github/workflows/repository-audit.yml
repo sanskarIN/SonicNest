@@ -35,6 +35,11 @@ jobs:
         run: python3 tool/source_line_audit.py
       - name: Run Python tooling regression tests
         run: python3 -m unittest discover -s tool/tests -p 'test_*.py' -v
+      - name: Build release readiness snapshot
+        run: |
+          python3 tool/build_release_readiness_report.py \
+            --output /tmp/sonicnest-release-readiness.json \
+            --markdown-output /tmp/sonicnest-release-readiness.md
       - name: Validate Bash helper syntax
         run: |
           set -euo pipefail
