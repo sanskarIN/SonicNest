@@ -20,6 +20,7 @@ SCHEMA_VERSION = 1
 DEFAULT_SOURCE = Path("TODO.md")
 DEFAULT_OUTPUT = Path("build/release-readiness.json")
 CHECKLIST_RE = re.compile(r"^- \[(?P<state>[ xX])\] (?P<label>.+?)\s*$")
+CHECKLIST_PREFIX_RE = re.compile(r"^- \[")
 HEADING_RE = re.compile(r"^## (?P<section>.+?)\s*$")
 STABLE_TAG_MARKER = "Tag `v1.0.0` only after all required stable-release gates are complete."
 
@@ -41,10 +42,10 @@ class ChecklistItem:
 def parse_checklist(lines: Iterable[str]) -> list[ChecklistItem]:
     """Parse level-two sections and checklist items while preserving order."""
 
-    current_section = "Uncategorized"
+    current_section: str | None = None
     items: list[ChecklistItem] = []
 
-    for raw_line in lines:
+    for line_number, raw_line in enumerate(lines, start=1):
         line = raw_line.rstrip("\n")
         heading = HEADING_RE.match(line)
         if heading:
@@ -52,16 +53,22 @@ def parse_checklist(lines: Iterable[str]) -> list[ChecklistItem]:
             continue
 
         checklist = CHECKLIST_RE.match(line)
-        if not checklist:
+        if checklist:
+            if current_section is None:
+                raise ValueError(
+                    f"Checklist item appears before a level-two section at line {line_number}"
+                )
+            items.append(
+                ChecklistItem(
+                    section=current_section,
+                    label=checklist.group("label"),
+                    complete=checklist.group("state").casefold() == "x",
+                )
+            )
             continue
 
-        items.append(
-            ChecklistItem(
-                section=current_section,
-                label=checklist.group("label"),
-                complete=checklist.group("state").casefold() == "x",
-            )
-        )
+        if CHECKLIST_PREFIX_RE.match(line):
+            raise ValueError(f"Malformed checklist item at line {line_number}: {line}")
 
     return items
 
