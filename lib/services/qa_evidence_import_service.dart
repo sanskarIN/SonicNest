@@ -157,15 +157,12 @@ class QaEvidenceImportService {
         status: status,
         updatedAtUtc: resultTimestamp,
       );
-      switch (status) {
-        case QaEvidenceStatus.passed:
-          passed++;
-        case QaEvidenceStatus.failed:
-          failed++;
-        case QaEvidenceStatus.blocked:
-          blocked++;
-        case QaEvidenceStatus.notRun:
-          break;
+      if (status == QaEvidenceStatus.passed) {
+        passed++;
+      } else if (status == QaEvidenceStatus.failed) {
+        failed++;
+      } else if (status == QaEvidenceStatus.blocked) {
+        blocked++;
       }
     }
 
