@@ -40,6 +40,8 @@ jobs:
           python3 tool/build_release_readiness_report.py \
             --output /tmp/sonicnest-release-readiness.json \
             --markdown-output /tmp/sonicnest-release-readiness.md
+      - name: Verify release readiness snapshot
+        run: python3 tool/verify_release_readiness_report.py /tmp/sonicnest-release-readiness.json
       - name: Validate Bash helper syntax
         run: |
           set -euo pipefail
