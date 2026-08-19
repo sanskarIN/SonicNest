@@ -55,6 +55,14 @@ class ExternalActions {
     return file?.path;
   }
 
+  Future<String?> pickSingleJsonFile() async {
+    final file = await FilePicker.pickFile(
+      type: FileType.custom,
+      allowedExtensions: const ['json'],
+    );
+    return file?.path;
+  }
+
   Future<String?> chooseExportPath(String fileName) async {
     final directoryPath = await FilePicker.getDirectoryPath();
     if (directoryPath == null) {
