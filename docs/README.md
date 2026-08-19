@@ -17,6 +17,7 @@ This directory contains the maintained technical, user, QA, branding, packaging,
 - [`CODECS.md`](CODECS.md) — format/container/encoder behavior, native capability checks, fallback/transcoding rules, and codec limitations.
 - [`BUILDING.md`](BUILDING.md) — development prerequisites, platform bootstrap, native-brand generation, focused reliability tests, verification commands, and platform build commands.
 - [`METADATA_INTEGRITY.md`](METADATA_INTEGRITY.md) — defensive metadata decoding, corrupt-document preservation, interrupted `.bak` recovery, per-record isolation, deterministic large-library persistence coverage, and manual evidence boundaries.
+- [`DEPENDENCY_STATE.md`](DEPENDENCY_STATE.md) — canonical dependency-state source, protected `PROJECT_STATE.md` stack relationships, verifier command, current compatibility line, and validation boundary.
 - [`BRANDING.md`](BRANDING.md) — deterministic SonicNest brand source and generated native asset integration.
 - [`LINUX_PACKAGING.md`](LINUX_PACKAGING.md) — Debian `.deb` package layout, deterministic build/verification commands, desktop icon integration, hosted-runner install/startup/uninstall smoke, representative-system installation testing, and release boundaries.
 
