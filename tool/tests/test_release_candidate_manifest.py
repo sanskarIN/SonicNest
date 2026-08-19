@@ -127,6 +127,45 @@ class ReleaseCandidateManifestTest(unittest.TestCase):
         with self.assertRaisesRegex(ManifestError, "escapes its artifact directory"):
             self._build()
 
+    def test_rejects_symlinked_payload_even_when_checksum_matches(self) -> None:
+        directory = self.artifact_dirs["macos"]
+        outside = self.root / "outside-release.zip"
+        outside.write_bytes(b"outside-release-payload")
+        linked = directory / "linked-release.zip"
+        try:
+            linked.symlink_to(outside)
+        except (OSError, NotImplementedError) as exc:
+            self.skipTest(f"symbolic links unavailable in this test environment: {exc}")
+
+        digest = hashlib.sha256(outside.read_bytes()).hexdigest()
+        checksum_file = directory / "SHA256SUMS.txt"
+        checksum_file.write_text(
+            checksum_file.read_text(encoding="utf-8")
+            + f"{digest}  {linked.name}\n",
+            encoding="utf-8",
+        )
+
+        with self.assertRaisesRegex(ManifestError, "symbolic link"):
+            self._build()
+
+    def test_rejects_symlinked_required_metadata(self) -> None:
+        directory = self.artifact_dirs["android"]
+        signing = directory / "ANDROID_SIGNING_STATE.txt"
+        signing.unlink()
+        outside = self.root / "outside-signing-state.txt"
+        outside.write_text(
+            "Package: io.github.sanskarin.sonic_nest\n"
+            "Classification: Android Debug certificate / NON-PRODUCTION\n",
+            encoding="utf-8",
+        )
+        try:
+            signing.symlink_to(outside)
+        except (OSError, NotImplementedError) as exc:
+            self.skipTest(f"symbolic links unavailable in this test environment: {exc}")
+
+        with self.assertRaisesRegex(ManifestError, "symbolic link"):
+            self._build()
+
     def test_requires_android_nonproduction_signing_markers(self) -> None:
         report = self.artifact_dirs["android"] / "ANDROID_SIGNING_STATE.txt"
         report.write_text("unexpected signing report\n", encoding="utf-8")
