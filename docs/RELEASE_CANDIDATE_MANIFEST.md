@@ -29,9 +29,12 @@ Every platform artifact directory must contain `RELEASE_CANDIDATE_WARNING.txt` a
 
 Android must also contain `ANDROID_SIGNING_STATE.txt`, including the expected package identity and the explicit `Android Debug certificate / NON-PRODUCTION` classification.
 
+Candidate evidence must consist of ordinary files/directories. The builder refuses a platform artifact directory that is itself a symbolic link and refuses any symbolic link found anywhere inside a platform artifact tree. This prevents provenance hashing from following a link to bytes outside the downloaded candidate directory, even when a checksum entry would otherwise match the linked target.
+
 The builder rejects a candidate when:
 
 - any required platform directory is missing;
+- a platform artifact directory or any contained evidence/payload path is a symbolic link;
 - a required evidence file is missing;
 - a checksum line is malformed;
 - a checksum entry escapes its artifact directory;
@@ -66,13 +69,15 @@ The final manifest directory also contains its own `SHA256SUMS.txt` and a releas
 - tampered payload rejection;
 - payload-without-checksum rejection;
 - checksum path-traversal rejection;
+- symlinked payload rejection even when its target checksum matches;
+- symlinked required-metadata rejection;
 - Android signing-state marker enforcement;
 - missing-platform rejection;
 - full Git SHA enforcement.
 
 `tool/tests/test_release_candidate_integration.py` locks the maintained workflow integration, all five platform artifact arguments, exact source/run binding, final manifest publication, and permanent Repository Integrity Audit execution of the Python release-tool suite.
 
-Repository Integrity Audit run `31876149473` passed Python helper compilation, repository invariants, **10/10** Python release-tool tests, Bash helper parsing, and PowerShell helper parsing.
+Repository Integrity Audit run `31876149473` passed Python helper compilation, repository invariants, **10/10** Python release-tool tests, Bash helper parsing, and PowerShell helper parsing. That run remains historical evidence for its exact source revision; newer repository revisions require their own validation evidence and do not inherit this result automatically.
 
 ## Hosted integration validation
 
