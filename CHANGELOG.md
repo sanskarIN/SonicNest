@@ -5,6 +5,9 @@ All notable project changes are documented here.
 ## [Unreleased]
 
 ### Added
+- Deterministic `tool/verify_project_state_dependencies.py` validation that keeps the dependency/version stack summarized in `PROJECT_STATE.md` synchronized with protected direct runtime constraints in `pubspec.yaml`, with focused unit/CLI regressions and permanent Repository Integrity Audit enforcement.
+- `docs/DEPENDENCY_STATE.md` documenting the canonical dependency-state source, protected stack relationships, current compatibility line, and the boundary between documentation integrity and runtime/plugin validation.
+- Deterministic release-readiness report generation and independent verification tooling that parses canonical `TODO.md` checklist sections, emits JSON/Markdown snapshots, reconciles counts/pending items, and conservatively keeps stable-release approval false while required external gates remain incomplete.
 - Canonical Gumroad storefront integration at `https://ramsandesh.gumroad.com` with an app-wide optional storefront strip, dedicated About/startup visibility, a source-controlled promotional SVG badge, public-documentation highlighting, and regression protection.
 - Permanent line-by-line tracked-text hygiene auditing for merge-conflict markers, invalid UTF-8, source/config trailing whitespace, UTF-8 BOMs, and missing final newlines.
 - Offline `tool/verify_manual_qa_evidence.py` structural review for exported Manual QA JSON, including current-catalog membership, timestamp/status rules, privacy flags, recomputed summaries, optional exact-version/diagnostics/freshness policy, and optional all-pass enforcement without claiming the represented physical tests occurred.
@@ -68,6 +71,7 @@ All notable project changes are documented here.
 - Expanded manual QA matrix covering recorder lifecycle, codec fallback, smart naming, A-B looping, storage, editor processing, accessibility, localization readiness, stress testing, packaging, and signing/release boundaries.
 
 ### Changed
+- `PROJECT_STATE.md` dependency summaries now match the current `pubspec.yaml` compatibility line (`file_picker 12.0.0-beta.7`, `share_plus 13.3.0`, and `wakelock_plus 1.7.0`) and are guarded against future silent drift.
 - Release guidance now requires accepted Manual QA JSON to pass the repository structural verifier under the candidate-specific version/diagnostics/freshness policy while preserving the distinction between internally consistent evidence and an actually performed manual observation.
 - Platform bootstrap now preserves the tracked `analysis_options.yaml` on Bash and PowerShell when `flutter create .` regenerates missing host folders.
 - Core CI validates committed Dart formatting before generated platform-host state, preventing bootstrap-generated analyzer configuration from changing formatter behavior for tracked source.
@@ -88,7 +92,7 @@ All notable project changes are documented here.
 - Linux distribution policy is now decided: GitHub Releases is the initial `.deb` channel; maintainer signing credentials remain outside the repository.
 - Backend diagnostic localization policy is now decided: user-facing summaries are localized while raw OS/plugin/FFmpeg/filesystem details remain technical evidence.
 - Platform organization/namespace standardized on `io.github.sanskarin`.
-- File picker pinned to the Android-compatible `10.3.10` release and accessed through its platform API.
+- File picker is pinned to the Android/AGP-compatible `12.0.0-beta.7` line, with import/export call sites migrated to the v12 API while preserving the validated dependency graph.
 - Recorder cleanup and library file/metadata mutations hardened to reduce orphaned-file and inconsistent-metadata states.
 - Generated Linux/Windows host title patching aligned with current Flutter host paths.
 - CI now separates analyzer informational lints from errors/warnings while still running formatting, analysis, and unit tests.
@@ -109,6 +113,7 @@ All notable project changes are documented here.
 - Startup reconciliation now accepts only existing files inside SonicNest-managed recording/Trash storage before orphan recovery reconstructs missing managed recording entries.
 
 ### Fixed
+- Project-state dependency documentation no longer reports the superseded `file_picker 10.3.10`, `share_plus 12.0.2`, or `wakelock_plus 1.4.0` stack after the runtime dependency graph moved forward.
 - Android hosted release-candidate signing state is no longer mislabeled as unsigned; package verification records the actual Android Debug certificate and explicitly marks the artifacts non-production.
 - Windows portable validation now includes a bounded launch of the fully extracted package rather than relying only on archive structure.
 - Repository workflow allowlisting can no longer be bypassed by committing an unapproved `.yaml` workflow instead of `.yml`.
