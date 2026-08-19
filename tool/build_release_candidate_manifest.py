@@ -153,6 +153,7 @@ def verify_platform_directory(platform: str, directory: Path) -> dict[str, objec
     checksum_path = directory / "SHA256SUMS.txt"
     expected_checksums = parse_checksum_file(checksum_path)
     checksum_verification: list[dict[str, object]] = []
+    normalized_checksum_paths: set[str] = set()
 
     for relative_name, expected_digest in sorted(expected_checksums.items()):
         relative_path = Path(relative_name.replace("\\", "/"))
@@ -161,6 +162,14 @@ def verify_platform_directory(platform: str, directory: Path) -> dict[str, objec
                 f"{platform} checksum entry escapes its artifact directory: "
                 f"{relative_name}"
             )
+        normalized_relative = relative_path.as_posix()
+        if normalized_relative in normalized_checksum_paths:
+            raise ManifestError(
+                f"Duplicate normalized SHA-256 path in {checksum_path}: "
+                f"{normalized_relative!r}"
+            )
+        normalized_checksum_paths.add(normalized_relative)
+
         target = directory / relative_path
         if not target.is_file():
             raise ManifestError(
@@ -174,7 +183,7 @@ def verify_platform_directory(platform: str, directory: Path) -> dict[str, objec
             )
         checksum_verification.append(
             {
-                "path": relative_path.as_posix(),
+                "path": normalized_relative,
                 "sha256": actual_digest,
                 "sizeBytes": target.stat().st_size,
             }
