@@ -1,0 +1,126 @@
+name: Temporary branch ledger synchronization
+
+on:
+  pull_request:
+    types: [synchronize]
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  append-ledger:
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref == 'automation/ledger-sync-20260819'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: automation/ledger-sync-20260819
+          fetch-depth: 0
+      - name: Append exact continuation ledger
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('what_changed.md')
+          text = path.read_text(encoding='utf-8')
+          marker = '# Continuation — 2026-08-19 — Release readiness and dependency-state integrity'
+          if marker in text:
+              raise SystemExit('Continuation marker already exists; refusing duplicate append.')
+
+          addition = r'''
+
+
+# Continuation — 2026-08-19 — Release readiness and dependency-state integrity
+
+## Release-readiness bookkeeping
+
+The repository now has deterministic release-readiness bookkeeping that keeps external stable-release gates visible without claiming they were performed.
+
+- `tool/build_release_readiness_report.py` parses the canonical checklist sections in `TODO.md` and emits deterministic JSON plus optional Markdown.
+- `tool/verify_release_readiness_report.py` independently validates report schema, summary/section reconciliation, pending-item integrity, and conservative stable-release approval.
+- The permanent Repository Integrity Audit builds and verifies a fresh readiness snapshot from the real `TODO.md`.
+- Parser, CLI, malformed-checklist, and independent-verifier regressions are covered under `tool/tests/`.
+- Stable release approval remains false while physical-device, accessibility, sustained-workload, signing, distribution-console, translation-review, or final-release evidence remains incomplete.
+
+Focused release-readiness commits immediately preceding this continuation:
+
+- `047d213c0419ce0fecf734d0fde4bf8ebb839e1b` — release-readiness report builder;
+- `6fccd28b67d5758adc23909df62ac978bbd1408c` — report regressions;
+- `7fa2a7e870e92db50ebd65d519929046d11f4747` — readiness documentation;
+- `352ece77512cb16e57dcb925787713f3f182572f` — test-loading correction;
+- `8719fbd7f3ee1e58b6712bdeb957789246d7857c` — permanent readiness snapshot generation;
+- `28913099167da50629efb5284dacd8d01eead9d9` — readiness CLI coverage;
+- `d82fa593d2c39f5caad3347ec38c4ad2377ca970` — malformed-checklist handling;
+- `8e2b2cc502c018c7fd5f849a62a45ac16687e168` — malformed-checklist regressions;
+- `dabf7621934d633a694bb69a09b58eda26342325` — independent readiness verifier;
+- `fd90389d96ccbc47402d2329ce4069c7eb277e8d` — verifier regressions;
+- `731815cc2749b8b6191f6104081c264f3e3c25b5` — permanent readiness verification;
+- `dd77a61c1f3b8d93e72bece635a92f96b05e0cd3` — readiness documentation synchronization;
+- `1ebd1fb3813ee3f056941a9891b1f611a5cdf3c0` — continuation checkpoint.
+
+## Dependency-state drift found and fixed
+
+A follow-up repository audit found concrete current-state documentation drift. `PROJECT_STATE.md` still described the older import/export and screen-wake dependency line after `pubspec.yaml` had already moved to the validated compatibility graph.
+
+The stale current-state summary was:
+
+- `file_picker 10.3.10 + share_plus 12.0.2`;
+- `wakelock_plus 1.4.0`.
+
+The maintained current-state summary is now synchronized to:
+
+- `file_picker 12.0.0-beta.7`;
+- `share_plus 13.3.0`;
+- `wakelock_plus 1.7.0`.
+
+The existing recorder, player, and FFmpeg stack summary remains aligned with the direct runtime constraints.
+
+The same follow-up audit found a current-state `CHANGELOG.md` sentence that still described `file_picker 10.3.10` as the active pin. That sentence was corrected to the Android/AGP-compatible `12.0.0-beta.7` line and now records the already-completed v12 API migration rather than preserving an obsolete present-tense claim. Historical old dependency values elsewhere in this additive ledger remain historical evidence and are not rewritten as though they never existed.
+
+## Permanent dependency-state integrity guard
+
+Added `tool/verify_project_state_dependencies.py` so the human-readable project-state stack cannot silently drift from protected direct runtime dependency constraints in `pubspec.yaml`.
+
+The verifier is standard-library-only and intentionally conservative. It protects the current recorder/player/processing/import-export/screen-wake relationships, normalizes simple caret constraints for project-state display, derives the maintained FFmpeg `major.minor.x` summary, and rejects missing protected dependencies, nested declarations, unsupported compound ranges, missing canonical stack entries, and exact summary mismatches.
+
+Added `tool/tests/test_verify_project_state_dependencies.py` covering matching dependency state, caret normalization, stale import/export versions, stale screen-wake versions, missing required dependencies, nested protected dependency declarations, unsupported compound constraints, missing canonical stack structure, and CLI success/mismatch behavior.
+
+Added `docs/DEPENDENCY_STATE.md` documenting the canonical source, protected relationships, current compatibility line, validation command, and the distinction between documentation integrity and real plugin/runtime/platform validation.
+
+The permanent read-only Repository Integrity Audit now runs `python3 tool/verify_project_state_dependencies.py`. `tool/repository_audit.py` also requires the verifier, its regression test, its documentation, and the CI invocation so the integrity guard cannot be silently removed together with its enforcement surface.
+
+`TODO.md` now marks only this repository-hygiene gap complete. No external/manual release gate was changed.
+
+Focused dependency-state commits:
+
+- `35f88e5ce0add5f567469c748b7e4962d246988d` — `feat: add project state dependency verifier`;
+- `fbc7960702f8a9c157c68525ac6e996cd2c3fb93` — `test: cover project state dependency drift`;
+- `34fea28e7367bec600475119238a4691988a9905` — `docs: document dependency state integrity`;
+- `1a7b47f0ffc23f910955fb18b0bf04c053e7d482` — `docs: index dependency state integrity guide`;
+- `abe0c3d5d2edc16de67282f95ab57f350c5bc5ef` — `docs: sync project state dependency versions`;
+- `eb96937fda5f80b611f4c4a98a93ec23150e2858` — `ci: verify project state dependency summary`;
+- `f74ce445661bb61b50afe043a50071e1a3a91e93` — `test: lock dependency state integrity surfaces`;
+- `f7e2b89d52c389ca455169a535eec4bf800ce1d5` — `docs: close dependency state hygiene gap`;
+- `c5613f3f139d9ad8618285d6428769356759913e` — `docs: record dependency state and readiness tooling`.
+
+## Evidence boundary preserved
+
+This continuation improves repository truthfulness, deterministic release bookkeeping, and regression protection. It does not complete or infer any unchecked real-device microphone/routing/lifecycle/background behavior, low-storage/permission/process/power interruption, representative malformed or partially written media behavior, accessibility audit, long-duration/performance result, native-brand visual review, protected signing/notarization, distribution-console operation, translation review, or final `v1.0.0` approval.
+
+SonicNest remains a **development preview** until those external evidence gates are actually completed and reviewed.
+'''
+          path.write_text(text.rstrip() + addition + '\n', encoding='utf-8')
+          PY
+
+          git config user.name 'Sanskar'
+          git config user.email 'sanskarin@outlook.in'
+          git add what_changed.md
+          git diff --cached --check
+          git commit -m 'docs: append release readiness and dependency state ledger'
+          git push origin HEAD:automation/ledger-sync-20260819
