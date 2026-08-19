@@ -9,7 +9,8 @@ This directory contains the maintained technical, user, QA, branding, packaging,
 - [`../README.md`](../README.md) — project overview, major features, quick start, supported platforms, and project links.
 - [`USER_GUIDE.md`](USER_GUIDE.md) — complete end-user guide for recording, Library, resilient import, local metadata recovery, playback, editing, settings, batch conversion/export, privacy, and shortcuts.
 - [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md) — diagnosis/recovery guidance for recorder, codec, routing, import, metadata recovery, playback, export, editor, storage, branding, packaging, and build issues.
-- [`FINAL_REPOSITORY_AUDIT_2026-08-18.md`](FINAL_REPOSITORY_AUDIT_2026-08-18.md) — final repository-owned source/tooling/open-source/documentation audit and the remaining manual/credential-dependent release boundary.
+- [`FINAL_REPOSITORY_AUDIT_2026-08-19.md`](FINAL_REPOSITORY_AUDIT_2026-08-19.md) — latest repository-owned continuation audit covering release-readiness, dependency-state, critical-surface, provenance, and PR #18 integration hardening while preserving all manual/release gates.
+- [`FINAL_REPOSITORY_AUDIT_2026-08-18.md`](FINAL_REPOSITORY_AUDIT_2026-08-18.md) — prior fully green repository-owned source/tooling/open-source/documentation audit and its exact validated source revision.
 
 ## Architecture and implementation
 
@@ -29,7 +30,7 @@ This directory contains the maintained technical, user, QA, branding, packaging,
 - [`QA_CHECKLIST.md`](QA_CHECKLIST.md) — complete evidence-based automated/manual QA matrix, including metadata/import automation evidence and intentionally unchecked real malformed-media, storage, performance, accessibility, hardware, and release gates.
 - [`RELEASE_EVIDENCE_TEMPLATE.md`](RELEASE_EVIDENCE_TEMPLATE.md) — structured record for exact commit, workflow, artifact, device, OS, microphone, routing, codec, accessibility, branding, performance, signing, and final-release evidence.
 - [`AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md`](AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md) — exact hosted release-candidate run, per-platform artifact checksums/digests, Android Debug-certificate classification, Windows portable startup-smoke evidence, repository-audit evidence, and the explicit boundary between automation and stable-release approval.
-- [`RELEASE_CANDIDATE_MANIFEST.md`](RELEASE_CANDIDATE_MANIFEST.md) — machine-readable candidate provenance design, per-platform checksum re-verification, source/run binding, Android non-production signing-state enforcement, regression coverage, and the stable-release evidence boundary.
+- [`RELEASE_CANDIDATE_MANIFEST.md`](RELEASE_CANDIDATE_MANIFEST.md) — machine-readable candidate provenance design, per-platform checksum re-verification, source/run binding, Android non-production signing-state enforcement, normalized checksum identity and symlink-safe evidence rules, regression coverage, and the stable-release evidence boundary.
 - Repository issue form **Device / Release QA report** — structured GitHub report for real-device or release-candidate observations.
 
 ## Release preparation
@@ -57,7 +58,7 @@ This directory contains the maintained technical, user, QA, branding, packaging,
 
 - [`../PROJECT_STATE.md`](../PROJECT_STATE.md) — compact machine-readable/current project state and validation boundaries.
 - [`../what_changed.md`](../what_changed.md) — long-form additive continuation history. Do not truncate or replace prior sections; each development continuation appends its exact implementation/validation state.
-- [`CONTINUATION_2026-08-19_RELEASE_READINESS.md`](CONTINUATION_2026-08-19_RELEASE_READINESS.md) — dated checkpoint for the release-readiness and dependency-state integrity continuation and its external-evidence boundary.
+- [`CONTINUATION_2026-08-19_RELEASE_READINESS.md`](CONTINUATION_2026-08-19_RELEASE_READINESS.md) — complete dated checkpoint for release-readiness, dependency-state, critical-surface, symlink/checksum provenance, ambiguity/empty-evidence hardening, PR #18 integration, and the external-evidence boundary.
 
 ## Documentation rule
 
