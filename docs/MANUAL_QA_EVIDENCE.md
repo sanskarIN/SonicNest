@@ -106,8 +106,11 @@ Before a merge can be offered, SonicNest requires:
 - all privacy flags to remain explicitly `false`,
 - valid timezone-aware timestamps in chronological order,
 - assessed result timestamps inside the declared session timeline,
+- the serialized `session.results` map to agree exactly with every assessed status/timestamp in the normalized check list,
 - a summary that exactly matches the check list,
 - a selected JSON file no larger than 2 MiB.
+
+The `session.results` cross-check is deliberate. The export schema carries assessed evidence both in the persisted-session representation and in the normalized all-checks list; import rejects missing, extra, or contradictory redundant evidence instead of silently trusting one representation and ignoring the other.
 
 The merge policy is per check:
 
@@ -173,7 +176,8 @@ Repository tests enforce:
 - explicit privacy flags including `containsFreeFormTesterNotes: false`,
 - preservation of the existing Diagnostics privacy contract when a diagnostic snapshot is attached,
 - newest-result-only non-destructive in-app evidence merging,
-- rejection of wrong-version, weakened-privacy, duplicate/incomplete-catalog, inconsistent-summary, and out-of-timeline JSON imports,
+- rejection of malformed JSON, wrong-version, weakened-privacy, duplicate/incomplete-catalog, inconsistent-summary, generated-before-session, timestamped-`notRun`, catalog-metadata-tamper, and out-of-timeline imports,
+- rejection of missing or contradictory redundant `session.results` evidence,
 - source integration of the bounded JSON picker/share/import/persist workflow,
 - offline verifier rejection of catalog drift, summary drift, stale evidence, privacy-contract regressions, and incomplete all-pass requirements.
 
