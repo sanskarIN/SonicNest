@@ -24,6 +24,8 @@ jobs:
         run: |
           set -euo pipefail
           git pull --ff-only origin main
+          git checkout -B automation/project-state-sync-20260819
+
           python3 - <<'PY'
           from pathlib import Path
 
@@ -109,4 +111,5 @@ This continuation improves repository truthfulness and deterministic release boo
           git add what_changed.md
           git diff --cached --check
           git commit -m 'docs: record dependency state integrity continuation'
-          git push origin HEAD:main
+
+          git push --force-with-lease origin HEAD:refs/heads/automation/project-state-sync-20260819
