@@ -30,7 +30,8 @@ void main() {
     final bundle = assessedBundle();
     final session = bundle['session'] as Map<String, dynamic>;
     final results = session['results'] as Map<String, dynamic>;
-    final result = results['android_microphone_permission'] as Map<String, dynamic>;
+    final result =
+        results['android_microphone_permission'] as Map<String, dynamic>;
     result['status'] = QaEvidenceStatus.failed.name;
 
     expect(
