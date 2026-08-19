@@ -26,8 +26,8 @@ stack:
   player: just_audio 0.10.6 + just_audio_background 0.0.1-beta.17 + just_audio_media_kit 2.1.0
   processing: ffmpeg_kit_flutter_new_audio 2.5.x
   persistence: local JSON metadata + shared_preferences
-  import_export: file_picker 10.3.10 + share_plus 12.0.2
-  screen_wake: wakelock_plus 1.4.0
+  import_export: file_picker 12.0.0-beta.7 + share_plus 13.3.0
+  screen_wake: wakelock_plus 1.7.0
   localization: in-project AppLocalizations scaffold; English currently supported
 supported_platform_targets:
   - Android
@@ -173,6 +173,7 @@ completed_features:
   - Android distribution policy selects Google Play and Play App Signing with a separate upload key
   - Apple distribution policy selects TestFlight/App Store for iOS and signed/notarized GitHub Releases for initial macOS public distribution
   - Windows stable public signing policy requires Authenticode while actual signing credentials/service remain maintainer-owned
+  - deterministic dependency-state summary verification against pubspec.yaml
 diagnostics_qa:
   implementation_source_commit: 00e78d27ebc68f9aa743d8fab5f2ef11f3ee6910
   core_ci_run_id: 31932491771
