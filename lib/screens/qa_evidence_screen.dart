@@ -6,9 +6,11 @@ import 'package:flutter/services.dart';
 import '../controllers/app_controller.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/diagnostics_localizations.dart';
+import '../l10n/qa_import_localizations.dart';
 import '../models/qa_check_catalog.dart';
 import '../models/qa_evidence.dart';
 import '../services/diagnostic_report_service.dart';
+import '../services/qa_evidence_import_service.dart';
 import '../services/qa_evidence_report_service.dart';
 import '../services/qa_evidence_store.dart';
 
@@ -29,11 +31,17 @@ class QaEvidenceScreen extends StatefulWidget {
 class _QaEvidenceScreenState extends State<QaEvidenceScreen> {
   static const _store = QaEvidenceStore();
   static const _reportService = QaEvidenceReportService();
+  static const _importService = QaEvidenceImportService();
+  static const _maxImportBytes = 2 * 1024 * 1024;
 
   QaEvidenceSession? _session;
   Object? _loadError;
   String? _savingCheckId;
   bool _resetting = false;
+  bool _importing = false;
+
+  bool get _interactionLocked =>
+      _savingCheckId != null || _resetting || _importing;
 
   @override
   void initState() {
@@ -68,6 +76,7 @@ class _QaEvidenceScreenState extends State<QaEvidenceScreen> {
     if (session == null ||
         _savingCheckId != null ||
         _resetting ||
+        _importing ||
         session.statusFor(check.id) == status) {
       return;
     }
@@ -100,7 +109,7 @@ class _QaEvidenceScreenState extends State<QaEvidenceScreen> {
   }
 
   Future<void> _reset() async {
-    if (_resetting || _savingCheckId != null) {
+    if (_interactionLocked) {
       return;
     }
     final l10n = AppLocalizations.of(context);
@@ -162,7 +171,7 @@ class _QaEvidenceScreenState extends State<QaEvidenceScreen> {
 
   Future<void> _copyJson() async {
     final bundle = _bundle();
-    if (bundle == null) {
+    if (bundle == null || _interactionLocked) {
       return;
     }
     await Clipboard.setData(ClipboardData(text: bundle.toPrettyJson()));
@@ -174,9 +183,40 @@ class _QaEvidenceScreenState extends State<QaEvidenceScreen> {
         .showSnackBar(SnackBar(content: Text(l10n.qaEvidenceCopied)));
   }
 
+  Future<void> _shareJson() async {
+    final bundle = _bundle();
+    if (bundle == null || _interactionLocked) {
+      return;
+    }
+    final l10n = AppLocalizations.of(context);
+    try {
+      final path = await widget.controller.storage.uniqueTempPath(
+        'SonicNest_QA_Evidence_${DateTime.now().millisecondsSinceEpoch}',
+        'json',
+      );
+      await File(path).writeAsString(bundle.toPrettyJson(), flush: true);
+      await widget.controller.external.shareFile(
+        path,
+        text: l10n.qaEvidencePrivacyDescription,
+      );
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.qaEvidenceShared)));
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.qaEvidenceShareFailed(error))),
+      );
+    }
+  }
+
   Future<void> _shareMarkdown() async {
     final bundle = _bundle();
-    if (bundle == null) {
+    if (bundle == null || _interactionLocked) {
       return;
     }
     final l10n = AppLocalizations.of(context);
@@ -205,6 +245,88 @@ class _QaEvidenceScreenState extends State<QaEvidenceScreen> {
     }
   }
 
+  Future<void> _importJson() async {
+    final current = _session;
+    if (current == null || _interactionLocked) {
+      return;
+    }
+    final l10n = AppLocalizations.of(context);
+    setState(() => _importing = true);
+    try {
+      final path = await widget.controller.external.pickSingleJsonFile();
+      if (path == null) {
+        return;
+      }
+      final file = File(path);
+      final length = await file.length();
+      if (length > _maxImportBytes) {
+        throw StateError('The selected QA evidence file is larger than 2 MiB.');
+      }
+      final source = await file.readAsString();
+      final result = _importService.mergeBundle(
+        source: source,
+        currentSession: current,
+      );
+      if (!mounted) {
+        return;
+      }
+      if (!result.hasChanges) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.qaEvidenceImportNoChanges)),
+        );
+        return;
+      }
+
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(l10n.qaEvidenceImportTitle),
+          content: Text(
+            l10n.qaEvidenceImportDescription(
+              result.sourceAssessedChecks,
+              result.addedChecks,
+              result.updatedChecks,
+              result.ignoredChecks,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(l10n.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(l10n.qaEvidenceImportConfirm),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) {
+        return;
+      }
+
+      await _store.save(result.mergedSession);
+      if (!mounted) {
+        return;
+      }
+      setState(() => _session = result.mergedSession);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.qaEvidenceImported(result.changedChecks))),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.qaEvidenceImportFailed(error))),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _importing = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -214,9 +336,7 @@ class _QaEvidenceScreenState extends State<QaEvidenceScreen> {
         actions: [
           IconButton(
             tooltip: l10n.qaEvidenceReset,
-            onPressed: _session == null || _resetting || _savingCheckId != null
-                ? null
-                : _reset,
+            onPressed: _session == null || _interactionLocked ? null : _reset,
             icon: _resetting
                 ? const SizedBox.square(
                     dimension: 20,
@@ -313,14 +433,29 @@ class _QaEvidenceScreenState extends State<QaEvidenceScreen> {
                   runSpacing: 10,
                   children: [
                     FilledButton.tonalIcon(
-                      onPressed: _copyJson,
+                      onPressed: _interactionLocked ? null : _copyJson,
                       icon: const Icon(Icons.content_copy_outlined),
                       label: Text(l10n.qaEvidenceCopyJson),
                     ),
+                    FilledButton.tonalIcon(
+                      onPressed: _interactionLocked ? null : _shareJson,
+                      icon: const Icon(Icons.data_object_outlined),
+                      label: Text(l10n.qaEvidenceShareJson),
+                    ),
                     FilledButton.icon(
-                      onPressed: _shareMarkdown,
+                      onPressed: _interactionLocked ? null : _shareMarkdown,
                       icon: const Icon(Icons.share_outlined),
                       label: Text(l10n.qaEvidenceShareMarkdown),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _interactionLocked ? null : _importJson,
+                      icon: _importing
+                          ? const SizedBox.square(
+                              dimension: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.file_open_outlined),
+                      label: Text(l10n.qaEvidenceImportJson),
                     ),
                   ],
                 ),
@@ -335,6 +470,7 @@ class _QaEvidenceScreenState extends State<QaEvidenceScreen> {
             session: session,
             initiallyExpanded: index == 0,
             savingCheckId: _savingCheckId,
+            interactionLocked: _interactionLocked,
             onChanged: _setStatus,
           ),
         const SizedBox(height: 20),
@@ -434,6 +570,7 @@ class _CategoryCard extends StatelessWidget {
     required this.session,
     required this.initiallyExpanded,
     required this.savingCheckId,
+    required this.interactionLocked,
     required this.onChanged,
   });
 
@@ -441,6 +578,7 @@ class _CategoryCard extends StatelessWidget {
   final QaEvidenceSession session;
   final bool initiallyExpanded;
   final String? savingCheckId;
+  final bool interactionLocked;
   final Future<void> Function(QaCheckDefinition, QaEvidenceStatus) onChanged;
 
   @override
@@ -471,7 +609,7 @@ class _CategoryCard extends StatelessWidget {
               status: session.statusFor(check.id),
               updatedAt: session.resultFor(check.id)?.updatedAtUtc,
               saving: savingCheckId == check.id,
-              enabled: savingCheckId == null,
+              enabled: savingCheckId == null && !interactionLocked,
               onChanged: (status) => onChanged(check, status),
             ),
         ],
