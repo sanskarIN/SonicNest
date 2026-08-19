@@ -47,6 +47,28 @@ class VerifyReleaseReadinessReportTest(unittest.TestCase):
         report["summary"] = {"total": 99, "pending": 2, "completed": 1}
         self.assertIn("summary.total must equal pending + completed", validate_report(report))
 
+    def test_rejects_zero_item_report_even_when_approval_is_false(self) -> None:
+        report = {
+            "schemaVersion": 1,
+            "source": "TODO.md",
+            "stableReleaseApproved": False,
+            "summary": {"total": 0, "pending": 0, "completed": 0},
+            "sections": [],
+            "pendingItems": [],
+        }
+        self.assertIn("summary.total must be greater than zero", validate_report(report))
+
+    def test_rejects_zero_item_report_claiming_stable_approval(self) -> None:
+        report = {
+            "schemaVersion": 1,
+            "source": "TODO.md",
+            "stableReleaseApproved": True,
+            "summary": {"total": 0, "pending": 0, "completed": 0},
+            "sections": [],
+            "pendingItems": [],
+        }
+        self.assertIn("summary.total must be greater than zero", validate_report(report))
+
     def test_rejects_approval_with_pending_work(self) -> None:
         report = valid_report()
         report["stableReleaseApproved"] = True
@@ -88,6 +110,20 @@ class VerifyReleaseReadinessReportTest(unittest.TestCase):
         item["section"] = "Unknown"
         pending_items[0] = item
         self.assertTrue(any("does not exist in sections" in error for error in validate_report(report)))
+
+    def test_rejects_duplicate_pending_item_identity(self) -> None:
+        report = valid_report()
+        report["summary"] = {"total": 4, "pending": 3, "completed": 1}
+        report["sections"] = [
+            {"name": "Hardware", "pending": 2, "completed": 1},
+            {"name": "Signing", "pending": 1, "completed": 0},
+        ]
+        pending_items = report["pendingItems"]
+        assert isinstance(pending_items, list)
+        pending_items.append(dict(pending_items[0]))
+        self.assertTrue(
+            any("Duplicate pending item identity" in error for error in validate_report(report))
+        )
 
 
 if __name__ == "__main__":
