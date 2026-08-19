@@ -17,6 +17,7 @@ This file intentionally contains only work that is still incomplete, requires ph
 - [x] Refuse recognizable unsupported future settings-snapshot schema versions so an older build cannot silently reinterpret and later overwrite a newer settings document.
 - [x] Complete the public open-source maintenance surface with CODEOWNERS, structured issue routing, optional funding links, weekly Dart/Flutter and GitHub Actions dependency-update proposals, maintainer documentation, and permanent regression coverage.
 - [x] Publish `docs/FINAL_REPOSITORY_AUDIT_2026-08-18.md` and keep repository-complete work distinct from still-open physical/accessibility/signing/store/stable-release evidence.
+- [x] Keep the dependency/version stack summarized in `PROJECT_STATE.md` synchronized with `pubspec.yaml` using `tool/verify_project_state_dependencies.py`, focused regression coverage, documentation, and a permanent read-only Repository Integrity Audit step.
 
 ## Repository-owned release automation
 
