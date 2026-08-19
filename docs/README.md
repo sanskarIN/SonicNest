@@ -35,6 +35,7 @@ This directory contains the maintained technical, user, QA, branding, packaging,
 ## Release preparation
 
 - [`RELEASING.md`](RELEASING.md) — stable-release procedure, source preparation, branding, automated/manual gates, manual-QA JSON structural review, signing boundaries, candidate builds, visual review, tagging, and publication rules.
+- [`RELEASE_READINESS_REPORT.md`](RELEASE_READINESS_REPORT.md) — deterministic `TODO.md` checklist parsing, JSON/Markdown readiness snapshots, independent verification, stable-approval rules, and CI usage.
 - [`UNSIGNED_ARTIFACTS.md`](UNSIGNED_ARTIFACTS.md) — purpose and limitations of the manual unsigned/non-production release-candidate workflow and its checksummed validation artifacts.
 - [`../RELEASE_NOTES.md`](../RELEASE_NOTES.md) — development-preview release notes including metadata/import reliability and package validation boundaries.
 - [`../CHANGELOG.md`](../CHANGELOG.md) — chronological project changes and exact validation evidence.
@@ -56,6 +57,7 @@ This directory contains the maintained technical, user, QA, branding, packaging,
 
 - [`../PROJECT_STATE.md`](../PROJECT_STATE.md) — compact machine-readable/current project state and validation boundaries.
 - [`../what_changed.md`](../what_changed.md) — long-form additive continuation history. Do not truncate or replace prior sections; each development continuation appends its exact implementation/validation state.
+- [`CONTINUATION_2026-08-19_RELEASE_READINESS.md`](CONTINUATION_2026-08-19_RELEASE_READINESS.md) — dated checkpoint for the release-readiness and dependency-state integrity continuation and its external-evidence boundary.
 
 ## Documentation rule
 
