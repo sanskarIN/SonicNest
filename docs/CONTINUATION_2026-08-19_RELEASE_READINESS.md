@@ -39,7 +39,9 @@ The verifier independently rejects:
 - pending-item count drift;
 - pending items assigned to unknown sections;
 - empty pending-item labels/sections;
-- pending items incorrectly marked complete.
+- duplicate pending-item identities;
+- pending items incorrectly marked complete;
+- zero-item reports that could otherwise look structurally valid.
 
 ### Dependency-state integrity
 
@@ -83,7 +85,7 @@ Added and expanded:
 - `tool/tests/test_verify_release_readiness_report.py`;
 - `tool/tests/test_verify_project_state_dependencies.py`.
 
-Coverage includes parsing, state preservation, malformed syntax, orphaned checklist entries, conservative stable-release approval, canonical gate uniqueness, Markdown rendering, CLI output generation, missing-gate CLI failure, schema validation, summary reconciliation, duplicate sections, approval/pending contradictions, section-count drift, pending-item integrity, dependency-summary drift, malformed dependency declarations, and dependency-verifier CLI behavior.
+Coverage includes parsing, state preservation, malformed syntax, orphaned checklist entries, conservative stable-release approval, canonical gate uniqueness, Markdown rendering, CLI output generation, missing-gate CLI failure, schema validation, summary reconciliation, duplicate sections, duplicate checklist identities, approval/pending contradictions, section-count drift, duplicate pending-item identities, zero-item report rejection, pending-item integrity, dependency-summary drift, malformed dependency declarations, and dependency-verifier CLI behavior.
 
 ### Documentation
 
@@ -95,7 +97,7 @@ Added and expanded:
 
 ## Deep repository-integrity hardening pass
 
-A later pass in the same continuation found two additional deterministic repository concerns and closed both without changing runtime behavior or external release gates.
+A later pass in the same continuation found additional deterministic repository concerns and closed them without changing runtime behavior or external release gates.
 
 ### Critical surface retention
 
@@ -127,6 +129,35 @@ Focused commits:
 - `cdabda1f2c20eba6a610ddbfb71816cb2e9123e3` — `fix: reject symlinked release candidate evidence`;
 - `37a7717953ed239eb33979dcaa11cf2afb95a9b3` — `docs: document symlink-safe release provenance`.
 
+### Canonical checksum identity enforcement
+
+A checksum record can represent the same artifact path through syntactic aliases such as `payload.zip`, `./payload.zip`, or Windows-style separator variants. Treating those strings as distinct identities would make provenance evidence ambiguous even when both ultimately reference the same payload.
+
+`tool/build_release_candidate_manifest.py` now normalizes checksum identities before verification and rejects a second entry that collapses to an already-seen artifact-relative path. The manifest records the normalized path identity in `verifiedChecksums`.
+
+`tool/tests/test_release_candidate_manifest.py` covers both dot-path aliases and cross-separator aliases, and `docs/RELEASE_CANDIDATE_MANIFEST.md` documents the normalized-identity rule.
+
+Focused commits:
+
+- `e28a6b2f7e3c0dccdf8c33fd1072c2d81f1bb9ef` — `test: reject duplicate normalized provenance checksums`;
+- `b1f9e19e3d878bf901a0cd21dab42cbda87c3b5c` — `fix: normalize provenance checksum identities`;
+- `8b6c6c69a7c05c55687b6c1ee69be9e9bf383b87` — `docs: document normalized provenance checksums`.
+
+### Ambiguous and empty readiness evidence rejection
+
+The readiness parser and verifier were hardened so structurally ambiguous evidence cannot be accepted merely because aggregate counts reconcile.
+
+`tool/build_release_readiness_report.py` now rejects repeated level-two section headings and duplicate checklist identities within a section. Identical checklist wording remains valid when it appears in different sections.
+
+`tool/verify_release_readiness_report.py` now rejects duplicate pending-item `(section, label)` identities and rejects a report whose summary contains zero checklist items. These checks keep a future malformed or accidentally emptied readiness source from degenerating into apparently valid release evidence.
+
+Focused commits:
+
+- `0666772b03e02e395def334eff41a166d13dfd66` — `test: reject ambiguous readiness checklist identities`;
+- `fab856ebd67195ae0676d71fb9403dd780b36014` — `fix: reject ambiguous readiness checklist identities`;
+- `dd0b2206dda0e9aa7f808e0d0b71c6f613f7cf9b` — `test: reject empty and duplicate readiness evidence`;
+- `4866ea893497b4ddebaed567fcb3cc59606e8fb1` — `fix: fail closed on empty readiness evidence`.
+
 ## Focused commits
 
 Release-readiness commits:
@@ -157,14 +188,16 @@ Dependency-state commits:
 - `f7e2b89d52c389ca455169a535eec4bf800ce1d5` — `docs: close dependency state hygiene gap`
 - `c5613f3f139d9ad8618285d6428769356759913e` — `docs: record dependency state and readiness tooling`
 
-## Validation status
+## Integration status
 
-The repository-side guards are wired into the permanent read-only Repository Integrity Audit. The deep-integrity branch exists specifically to run the complete permanent audit against the combined current source after the new required-surface and symlink regressions. This document does not pre-claim that hosted run before it finishes.
+Pull request `#18` (`docs: validate deep repository integrity hardening`) collected the final eight deep-hardening commits on head `4866ea893497b4ddebaed567fcb3cc59606e8fb1` and was merged into `main` on 2026-08-19 with merge commit `429cf74863a7dfff052fba965f0066b9f25561b5`.
+
+At the point of integration, the PR's Windows Build, Repository Integrity Audit, Flutter CI, and Apple Builds were still reported by GitHub as **queued**, not failed. This checkpoint therefore does not claim a new hosted green result for `4866ea893497b4ddebaed567fcb3cc59606e8fb1` or the merge commit. Earlier recorded green validation remains historical evidence only for its exact source revisions.
 
 The current source remains explicitly pre-stable-release. None of the physical-device, accessibility, signing, store-console, real-filesystem, sustained-workload, translation-review, or other externally evidenced tasks in `TODO.md` were marked complete by this continuation.
 
 ## Canonical ledger boundary
 
-`what_changed.md` remains intact and unmodified by this checkpoint. The GitHub connector available to this continuation supports complete-file replacement but not an atomic append/patch operation, while repository-generated write events did not produce a verifiable feature-branch commit. Replacing the large canonical ledger from partial/truncated content would risk deleting historical project state, so this dated checkpoint remains the additive continuation record for 2026-08-19 until a local Git or other safe append-capable environment can merge it into `what_changed.md` without altering any prior section.
+`what_changed.md` remains intact and unmodified by this checkpoint. The GitHub connector available to this continuation supports complete-file replacement but not an atomic append/patch operation. Replacing the large canonical ledger from partial/truncated content would risk deleting historical project state, so this dated checkpoint remains the additive continuation record for 2026-08-19 until a local Git or other safe append-capable environment can merge it into `what_changed.md` without altering any prior section.
 
-This limitation is documentation-transport-only: the release-readiness tooling, dependency-state verifier, critical-surface retention, symlink-safe provenance hardening, tests, CI guards, `PROJECT_STATE.md`, `TODO.md`, and `CHANGELOG.md` updates described above are already present in repository source. No stable-release evidence gate is inferred from the missing canonical-ledger append.
+This limitation is documentation-transport-only: the release-readiness tooling, dependency-state verifier, critical-surface retention, symlink-safe provenance hardening, normalized checksum identity enforcement, ambiguity/empty-readiness rejection, tests, CI guards, `PROJECT_STATE.md`, `TODO.md`, and `CHANGELOG.md` updates described above are already present in repository source. No stable-release evidence gate is inferred from the missing canonical-ledger append.
