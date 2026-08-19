@@ -180,6 +180,8 @@ class QaEvidenceImportService {
       );
     }
 
+    _validateSessionResults(session['results'], importedResults);
+
     final assessed = passed + failed + blocked;
     _validateSummary(
       root['summary'],
@@ -253,6 +255,29 @@ class QaEvidenceImportService {
       if (privacy[key] != false) {
         throw QaEvidenceImportException(
           'The evidence privacy contract is invalid for $key.',
+        );
+      }
+    }
+  }
+
+  void _validateSessionResults(
+    Object? value,
+    Map<String, QaCheckResult> expectedResults,
+  ) {
+    final results = _map(value, 'session.results');
+    if (results.length != expectedResults.length) {
+      throw const QaEvidenceImportException(
+        'The session results do not match the assessed check list.',
+      );
+    }
+
+    for (final entry in expectedResults.entries) {
+      final sessionResult = QaCheckResult.tryParse(results[entry.key]);
+      if (sessionResult == null ||
+          sessionResult.status != entry.value.status ||
+          sessionResult.updatedAtUtc != entry.value.updatedAtUtc) {
+        throw QaEvidenceImportException(
+          'The session result for ${entry.key} does not match the assessed check list.',
         );
       }
     }
