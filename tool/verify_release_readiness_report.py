@@ -50,6 +50,8 @@ def validate_report(report: Any) -> list[str]:
             if not _is_non_negative_int(value):
                 errors.append(f"{key} must be a non-negative integer")
         if all(_is_non_negative_int(value) for value in (total, pending, completed)):
+            if total == 0:
+                errors.append("summary.total must be greater than zero")
             if total != pending + completed:
                 errors.append("summary.total must equal pending + completed")
             if approved is True and pending != 0:
@@ -92,6 +94,7 @@ def validate_report(report: Any) -> list[str]:
         errors.append("Section completed counts must equal summary.completed")
 
     pending_items = report.get("pendingItems")
+    seen_pending_items: set[tuple[str, str]] = set()
     if not isinstance(pending_items, list):
         errors.append("pendingItems must be an array")
     else:
@@ -105,12 +108,22 @@ def validate_report(report: Any) -> list[str]:
             section = item.get("section")
             label = item.get("label")
             complete = item.get("complete")
-            if not isinstance(section, str) or not section.strip():
+            valid_section = isinstance(section, str) and bool(section.strip())
+            valid_label = isinstance(label, str) and bool(label.strip())
+            if not valid_section:
                 errors.append(f"{prefix}.section must be a non-empty string")
             elif seen_sections and section not in seen_sections:
                 errors.append(f"{prefix}.section does not exist in sections: {section}")
-            if not isinstance(label, str) or not label.strip():
+            if not valid_label:
                 errors.append(f"{prefix}.label must be a non-empty string")
+            if valid_section and valid_label:
+                identity = (section, label)
+                if identity in seen_pending_items:
+                    errors.append(
+                        f"Duplicate pending item identity: section={section!r}, label={label!r}"
+                    )
+                else:
+                    seen_pending_items.add(identity)
             if complete is not False:
                 errors.append(f"{prefix}.complete must be false")
 
