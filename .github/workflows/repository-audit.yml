@@ -31,6 +31,8 @@ jobs:
             | xargs -0 -r python3 -m py_compile
       - name: Run repository integrity audit
         run: python3 tool/repository_audit.py
+      - name: Verify project state dependency summary
+        run: python3 tool/verify_project_state_dependencies.py
       - name: Audit every tracked text/source line
         run: python3 tool/source_line_audit.py
       - name: Run Python tooling regression tests
