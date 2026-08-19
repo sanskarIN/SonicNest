@@ -39,6 +39,18 @@ class ReleaseReadinessReportTest(unittest.TestCase):
         self.assertTrue(items[1].complete)
         self.assertEqual("Signing and distribution", items[2].section)
 
+    def test_checklist_before_section_is_rejected(self) -> None:
+        with self.assertRaisesRegex(ValueError, "before a level-two section"):
+            parse_checklist(["- [ ] Orphaned task"])
+
+    def test_malformed_checklist_state_is_rejected(self) -> None:
+        with self.assertRaisesRegex(ValueError, "Malformed checklist item"):
+            parse_checklist(["## Hardware", "- [?] Ambiguous state"])
+
+    def test_malformed_checklist_spacing_is_rejected(self) -> None:
+        with self.assertRaisesRegex(ValueError, "Malformed checklist item"):
+            parse_checklist(["## Hardware", "- [ ]Missing separator"])
+
     def test_unchecked_tag_gate_keeps_release_unapproved(self) -> None:
         report = build_report(
             [
