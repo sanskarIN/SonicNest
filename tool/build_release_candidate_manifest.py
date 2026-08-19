@@ -125,9 +125,23 @@ def is_payload(path: Path) -> bool:
     return any(name.endswith(suffix) for suffix in PAYLOAD_SUFFIXES)
 
 
+def _reject_symbolic_links(platform: str, directory: Path) -> None:
+    if directory.is_symlink():
+        raise ManifestError(
+            f"{platform} artifact directory must not be a symbolic link: {directory}"
+        )
+    for path in directory.rglob("*"):
+        if path.is_symlink():
+            relative = path.relative_to(directory).as_posix()
+            raise ManifestError(
+                f"{platform} artifact directory contains a symbolic link: {relative}"
+            )
+
+
 def verify_platform_directory(platform: str, directory: Path) -> dict[str, object]:
     if not directory.is_dir():
         raise ManifestError(f"{platform} artifact directory does not exist: {directory}")
+    _reject_symbolic_links(platform, directory)
 
     for required_name in REQUIRED_METADATA[platform]:
         if not (directory / required_name).is_file():
