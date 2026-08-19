@@ -72,7 +72,7 @@ The read-only `Repository Integrity Audit` workflow now:
 7. independently verifies the generated JSON;
 8. continues existing Bash and PowerShell syntax validation.
 
-The maintained workflow retains read-only repository permissions. Temporary synchronization helpers used solely to append the large additive ledger are not part of the permanent workflow set and are removed before final validation.
+The maintained workflow retains read-only repository permissions. Temporary synchronization helpers explored during this continuation are not part of the permanent workflow set and were removed before final validation.
 
 ### Regression coverage
 
@@ -125,10 +125,12 @@ Dependency-state commits:
 
 ## Validation status
 
-The repository-side guards are wired into the permanent read-only Repository Integrity Audit. Final hosted validation for the clean post-ledger tree must be taken from the exact pull-request head after all temporary synchronization helpers are removed; this document does not pre-claim that final run before it exists.
+The repository-side guards are wired into the permanent read-only Repository Integrity Audit. Final hosted validation for the clean continuation branch must be taken from the exact pull-request head after all temporary synchronization helpers are removed; this document does not pre-claim that run before it exists.
 
 The current source remains explicitly pre-stable-release. None of the physical-device, accessibility, signing, store-console, real-filesystem, sustained-workload, translation-review, or other externally evidenced tasks in `TODO.md` were marked complete by this continuation.
 
-## Ledger note
+## Canonical ledger boundary
 
-The previous version of this checkpoint explained that the canonical `what_changed.md` could not safely be replaced from truncated connector output. This continuation now performs the update through an append-only branch operation against the complete checked-out ledger, preserving every prior historical section. Final review must confirm that the pull-request diff contains only the additive continuation block plus intentional checkpoint synchronization before merge.
+`what_changed.md` remains intact and unmodified by this checkpoint. The GitHub connector available to this continuation supports complete-file replacement but not an atomic append/patch operation, while repository-generated write events did not produce a verifiable feature-branch commit. Replacing the large canonical ledger from partial/truncated content would risk deleting historical project state, so this dated checkpoint remains the additive continuation record for 2026-08-19 until a local Git or other safe append-capable environment can merge it into `what_changed.md` without altering any prior section.
+
+This limitation is documentation-transport-only: the release-readiness tooling, dependency-state verifier, tests, CI guard, `PROJECT_STATE.md`, `TODO.md`, and `CHANGELOG.md` updates described above are already present in repository source. No stable-release evidence gate is inferred from the missing canonical-ledger append.
