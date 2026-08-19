@@ -17,11 +17,13 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: main
           fetch-depth: 0
       - name: Synchronize large state files safely
         shell: bash
         run: |
           set -euo pipefail
+          git pull --ff-only origin main
           python3 - <<'PY'
           from pathlib import Path
 
