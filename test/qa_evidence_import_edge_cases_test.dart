@@ -17,14 +17,13 @@ void main() {
       changedAt: startedAt.add(const Duration(minutes: 5)),
     );
     return jsonDecode(
-          reporter
-              .build(
-                generatedAt: startedAt.add(const Duration(minutes: 10)),
-                session: session,
-              )
-              .toPrettyJson(),
-        )
-        as Map<String, dynamic>;
+      reporter
+          .build(
+            generatedAt: startedAt.add(const Duration(minutes: 10)),
+            session: session,
+          )
+          .toPrettyJson(),
+    ) as Map<String, dynamic>;
   }
 
   test('rejects malformed JSON before any merge is attempted', () {
@@ -45,7 +44,9 @@ void main() {
 
   test('rejects a bundle generated before its latest session update', () {
     final bundle = validBundle();
-    bundle['generatedAtUtc'] = startedAt.add(const Duration(minutes: 4)).toIso8601String();
+    bundle['generatedAtUtc'] = startedAt
+        .add(const Duration(minutes: 4))
+        .toIso8601String();
 
     expect(
       () => importer.mergeBundle(
