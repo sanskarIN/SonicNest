@@ -137,15 +137,21 @@ class QaEvidenceSession {
     required DateTime changedAt,
   }) {
     final next = Map<String, QaCheckResult>.from(results);
-    final changedAtUtc = changedAt.toUtc();
+    final requestedAtUtc = changedAt.toUtc();
+    final effectiveChangedAtUtc = requestedAtUtc.isBefore(updatedAtUtc)
+        ? updatedAtUtc
+        : requestedAtUtc;
     if (status == QaEvidenceStatus.notRun) {
       next.remove(checkId);
     } else {
-      next[checkId] = QaCheckResult(status: status, updatedAtUtc: changedAtUtc);
+      next[checkId] = QaCheckResult(
+        status: status,
+        updatedAtUtc: effectiveChangedAtUtc,
+      );
     }
     return QaEvidenceSession._(
       startedAtUtc: startedAtUtc,
-      updatedAtUtc: changedAtUtc,
+      updatedAtUtc: effectiveChangedAtUtc,
       results: next,
     );
   }
