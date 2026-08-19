@@ -271,9 +271,9 @@ class _QaEvidenceScreenState extends State<QaEvidenceScreen> {
         return;
       }
       if (!result.hasChanges) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.qaEvidenceImportNoChanges)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.qaEvidenceImportNoChanges)));
         return;
       }
 

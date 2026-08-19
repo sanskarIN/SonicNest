@@ -68,8 +68,14 @@ class QaEvidenceImportService {
         'The evidence session schema is unsupported by this SonicNest build.',
       );
     }
-    final startedAt = _timestamp(session['startedAtUtc'], 'session.startedAtUtc');
-    final updatedAt = _timestamp(session['updatedAtUtc'], 'session.updatedAtUtc');
+    final startedAt = _timestamp(
+      session['startedAtUtc'],
+      'session.startedAtUtc',
+    );
+    final updatedAt = _timestamp(
+      session['updatedAtUtc'],
+      'session.updatedAtUtc',
+    );
     if (updatedAt.isBefore(startedAt)) {
       throw const QaEvidenceImportException(
         'The evidence session update time is before its start time.',
@@ -89,8 +95,7 @@ class QaEvidenceImportService {
     }
 
     final definitions = {
-      for (final definition in QaCheckCatalog.checks)
-        definition.id: definition,
+      for (final definition in QaCheckCatalog.checks) definition.id: definition,
     };
     final seenIds = <String>{};
     final importedResults = <String, QaCheckResult>{};
@@ -119,8 +124,10 @@ class QaEvidenceImportService {
         );
       }
       if (check['category'] != definition.categoryId ||
-          check['requiresPhysicalTarget'] != definition.requiresPhysicalTarget ||
-          check['requiresExternalTooling'] != definition.requiresExternalTooling) {
+          check['requiresPhysicalTarget'] !=
+              definition.requiresPhysicalTarget ||
+          check['requiresExternalTooling'] !=
+              definition.requiresExternalTooling) {
         throw QaEvidenceImportException(
           'The evidence definition for $id does not match the current QA catalog.',
         );

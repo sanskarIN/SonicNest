@@ -17,14 +17,13 @@ void main() {
       changedAt: startedAt.add(const Duration(minutes: 5)),
     );
     return jsonDecode(
-          reporter
-              .build(
-                generatedAt: startedAt.add(const Duration(minutes: 10)),
-                session: session,
-              )
-              .toPrettyJson(),
-        )
-        as Map<String, dynamic>;
+      reporter
+          .build(
+            generatedAt: startedAt.add(const Duration(minutes: 10)),
+            session: session,
+          )
+          .toPrettyJson(),
+    ) as Map<String, dynamic>;
   }
 
   QaEvidenceSession current() => QaEvidenceSession.fresh(startedAt);
@@ -104,8 +103,12 @@ void main() {
     final session = bundle['session'] as Map<String, dynamic>;
     final checks = bundle['checks'] as List<dynamic>;
     final first = checks.first as Map<String, dynamic>;
-    first['updatedAtUtc'] = startedAt.subtract(const Duration(seconds: 1)).toIso8601String();
-    session['updatedAtUtc'] = startedAt.add(const Duration(minutes: 5)).toIso8601String();
+    first['updatedAtUtc'] = startedAt
+        .subtract(const Duration(seconds: 1))
+        .toIso8601String();
+    session['updatedAtUtc'] = startedAt
+        .add(const Duration(minutes: 5))
+        .toIso8601String();
 
     expect(
       () => importer.mergeBundle(
