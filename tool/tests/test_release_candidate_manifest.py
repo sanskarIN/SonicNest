@@ -127,6 +127,34 @@ class ReleaseCandidateManifestTest(unittest.TestCase):
         with self.assertRaisesRegex(ManifestError, "escapes its artifact directory"):
             self._build()
 
+    def test_rejects_duplicate_normalized_checksum_path(self) -> None:
+        directory = self.artifact_dirs["macos"]
+        payload = directory / "sonicnest-macos-release-unsigned.zip"
+        digest = hashlib.sha256(payload.read_bytes()).hexdigest()
+        checksum_file = directory / "SHA256SUMS.txt"
+        checksum_file.write_text(
+            checksum_file.read_text(encoding="utf-8")
+            + f"{digest}  ./sonicnest-macos-release-unsigned.zip\n",
+            encoding="utf-8",
+        )
+
+        with self.assertRaisesRegex(ManifestError, "Duplicate normalized SHA-256 path"):
+            self._build()
+
+    def test_rejects_cross_separator_duplicate_checksum_path(self) -> None:
+        directory = self.artifact_dirs["windows"]
+        payload = directory / "sonicnest-windows-x64-v0.1.0-portable-unsigned.zip"
+        digest = hashlib.sha256(payload.read_bytes()).hexdigest()
+        checksum_file = directory / "SHA256SUMS.txt"
+        checksum_file.write_text(
+            checksum_file.read_text(encoding="utf-8")
+            + f"{digest}  .\\sonicnest-windows-x64-v0.1.0-portable-unsigned.zip\n",
+            encoding="utf-8",
+        )
+
+        with self.assertRaisesRegex(ManifestError, "Duplicate normalized SHA-256 path"):
+            self._build()
+
     def test_rejects_symlinked_payload_even_when_checksum_matches(self) -> None:
         directory = self.artifact_dirs["macos"]
         outside = self.root / "outside-release.zip"

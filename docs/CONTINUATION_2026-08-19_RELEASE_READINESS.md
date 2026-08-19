@@ -93,6 +93,40 @@ Added and expanded:
 - `docs/DEPENDENCY_STATE.md` with project-state dependency-integrity rules;
 - `docs/README.md`, `CHANGELOG.md`, `TODO.md`, and `PROJECT_STATE.md` to reflect the completed repository-side guards without changing external evidence gates.
 
+## Deep repository-integrity hardening pass
+
+A later pass in the same continuation found two additional deterministic repository concerns and closed both without changing runtime behavior or external release gates.
+
+### Critical surface retention
+
+The repository audit already executed release/readiness and provenance tooling, but not every supporting document, helper, and regression file was protected by `REQUIRED_FILES`. A future deletion could therefore reduce coverage while leaving the generic Python test-discovery command structurally present.
+
+Added `tool/tests/test_repository_required_surfaces.py` and expanded `tool/repository_audit.py` so the maintained release/readiness, manual-QA, provenance, open-source-maintenance, dependency, continuation, and regression surfaces are explicitly required. The regression also enforces uniqueness of `REQUIRED_FILES` entries and existence of every required path.
+
+The repository audit now additionally locks the actual release-readiness generation/verification commands and the unified release-candidate provenance workflow commands, including artifact download, manifest builder invocation, manifest filename, and manifest artifact publication. This prevents a future edit from leaving the supporting files present while silently removing their CI integration.
+
+Focused commits:
+
+- `9ece0635b59d6270fcbb09cbe1ee22950e00de20` — `test: define critical repository required surfaces`;
+- `a317fa3f10a2ec7b819ffb12a2b2363f196bd699` — `test: protect critical release and maintenance surfaces`;
+- `af98a6029b739d73707030ca098b12b0d0d2e39a` — `test: lock release readiness and provenance workflow commands`.
+
+### Symlink-safe provenance evidence
+
+The release-candidate provenance builder previously treated `Path.is_file()` as sufficient evidence ownership. That API follows symbolic links, so a locally supplied candidate directory could make a checksummed path resolve to bytes outside the candidate tree.
+
+`tool/build_release_candidate_manifest.py` now rejects a platform artifact directory that is itself a symbolic link and rejects any symbolic link anywhere inside a platform artifact tree before required metadata is read or payloads are hashed.
+
+`tool/tests/test_release_candidate_manifest.py` now covers both a symlinked payload whose external target has a matching checksum and symlinked required Android signing metadata. The tests skip only on environments where symbolic-link creation itself is unavailable.
+
+`docs/RELEASE_CANDIDATE_MANIFEST.md` documents the ordinary-file/directory evidence boundary and explicitly separates prior historical validation from the need to validate newer source revisions.
+
+Focused commits:
+
+- `4733c0304e15f31524266caf5995e6f89d5cebc1` — `test: reject symlinked release candidate evidence`;
+- `cdabda1f2c20eba6a610ddbfb71816cb2e9123e3` — `fix: reject symlinked release candidate evidence`;
+- `37a7717953ed239eb33979dcaa11cf2afb95a9b3` — `docs: document symlink-safe release provenance`.
+
 ## Focused commits
 
 Release-readiness commits:
@@ -125,7 +159,7 @@ Dependency-state commits:
 
 ## Validation status
 
-The repository-side guards are wired into the permanent read-only Repository Integrity Audit. Final hosted validation for the clean continuation branch must be taken from the exact pull-request head after all temporary synchronization helpers are removed; this document does not pre-claim that run before it exists.
+The repository-side guards are wired into the permanent read-only Repository Integrity Audit. The deep-integrity branch exists specifically to run the complete permanent audit against the combined current source after the new required-surface and symlink regressions. This document does not pre-claim that hosted run before it finishes.
 
 The current source remains explicitly pre-stable-release. None of the physical-device, accessibility, signing, store-console, real-filesystem, sustained-workload, translation-review, or other externally evidenced tasks in `TODO.md` were marked complete by this continuation.
 
@@ -133,4 +167,4 @@ The current source remains explicitly pre-stable-release. None of the physical-d
 
 `what_changed.md` remains intact and unmodified by this checkpoint. The GitHub connector available to this continuation supports complete-file replacement but not an atomic append/patch operation, while repository-generated write events did not produce a verifiable feature-branch commit. Replacing the large canonical ledger from partial/truncated content would risk deleting historical project state, so this dated checkpoint remains the additive continuation record for 2026-08-19 until a local Git or other safe append-capable environment can merge it into `what_changed.md` without altering any prior section.
 
-This limitation is documentation-transport-only: the release-readiness tooling, dependency-state verifier, tests, CI guard, `PROJECT_STATE.md`, `TODO.md`, and `CHANGELOG.md` updates described above are already present in repository source. No stable-release evidence gate is inferred from the missing canonical-ledger append.
+This limitation is documentation-transport-only: the release-readiness tooling, dependency-state verifier, critical-surface retention, symlink-safe provenance hardening, tests, CI guards, `PROJECT_STATE.md`, `TODO.md`, and `CHANGELOG.md` updates described above are already present in repository source. No stable-release evidence gate is inferred from the missing canonical-ledger append.

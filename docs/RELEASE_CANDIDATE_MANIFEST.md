@@ -31,6 +31,8 @@ Android must also contain `ANDROID_SIGNING_STATE.txt`, including the expected pa
 
 Candidate evidence must consist of ordinary files/directories. The builder refuses a platform artifact directory that is itself a symbolic link and refuses any symbolic link found anywhere inside a platform artifact tree. This prevents provenance hashing from following a link to bytes outside the downloaded candidate directory, even when a checksum entry would otherwise match the linked target.
 
+Checksum identities are normalized before verification: Windows-style separators are converted to `/`, relative path syntax is normalized by `pathlib`, and two checksum entries that collapse to the same normalized path are rejected. A candidate therefore cannot represent one payload twice through aliases such as `payload.zip` and `./payload.zip` or separator variants.
+
 The builder rejects a candidate when:
 
 - any required platform directory is missing;
@@ -38,6 +40,7 @@ The builder rejects a candidate when:
 - a required evidence file is missing;
 - a checksum line is malformed;
 - a checksum entry escapes its artifact directory;
+- two checksum entries normalize to the same artifact-relative path;
 - a checksummed file is missing or has different bytes;
 - a release payload exists without a matching entry in `SHA256SUMS.txt`;
 - the Android signing-state report does not contain the required non-production markers;
@@ -69,6 +72,7 @@ The final manifest directory also contains its own `SHA256SUMS.txt` and a releas
 - tampered payload rejection;
 - payload-without-checksum rejection;
 - checksum path-traversal rejection;
+- duplicate normalized checksum-path rejection for dot-path and separator aliases;
 - symlinked payload rejection even when its target checksum matches;
 - symlinked required-metadata rejection;
 - Android signing-state marker enforcement;

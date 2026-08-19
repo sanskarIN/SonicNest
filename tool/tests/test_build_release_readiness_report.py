@@ -51,6 +51,40 @@ class ReleaseReadinessReportTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Malformed checklist item"):
             parse_checklist(["## Hardware", "- [ ]Missing separator"])
 
+    def test_duplicate_level_two_section_is_rejected(self) -> None:
+        with self.assertRaisesRegex(ValueError, "Duplicate level-two section"):
+            parse_checklist(
+                [
+                    "## Hardware",
+                    "- [ ] First hardware check",
+                    "## Hardware",
+                    "- [ ] Second hardware check",
+                ]
+            )
+
+    def test_duplicate_checklist_identity_is_rejected(self) -> None:
+        with self.assertRaisesRegex(ValueError, "Duplicate checklist item"):
+            parse_checklist(
+                [
+                    "## Hardware",
+                    "- [ ] Test microphone routing.",
+                    "- [x] Test microphone routing.",
+                ]
+            )
+
+    def test_same_checklist_text_in_different_sections_is_allowed(self) -> None:
+        items = parse_checklist(
+            [
+                "## Android",
+                "- [ ] Visual review",
+                "## iOS",
+                "- [ ] Visual review",
+                "## Signing and distribution",
+                f"- [ ] {STABLE_TAG_MARKER}",
+            ]
+        )
+        self.assertEqual(3, len(items))
+
     def test_unchecked_tag_gate_keeps_release_unapproved(self) -> None:
         report = build_report(
             [
