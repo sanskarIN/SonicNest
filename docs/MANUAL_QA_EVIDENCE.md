@@ -25,6 +25,8 @@ sonicnest.qaEvidenceSession.v1
 
 Only check IDs that still exist in the source-controlled `QaCheckCatalog` survive load/save. Unknown or removed IDs are dropped so stale evidence cannot silently masquerade as a current release gate. Malformed or unsupported stored sessions fall back to a new empty session.
 
+Persisted session timestamps are also bounded: a session whose update time predates its start is rejected, and individual results outside the declared session timeline are discarded. This prevents malformed local state from being re-exported as apparently valid release evidence.
+
 Selecting **Reset session** removes the persisted evidence and creates a new session with every check in `Not run` state.
 
 ## Status meanings
@@ -74,6 +76,8 @@ Signing/notarization/store-console approval remains governed by the distribution
 - every current catalog check and status,
 - optional attached privacy-safe diagnostic data when supplied by the caller.
 
+**Share evidence JSON** writes the same structured bundle to a bounded temporary JSON file and invokes the existing explicit operating-system share surface. This is the preferred format when evidence will later be merged on another SonicNest test target.
+
 The JSON deliberately includes every current catalog check, including `notRun`, so reviewers can distinguish an incomplete session from a smaller historical catalog.
 
 ### Markdown
@@ -88,6 +92,35 @@ The JSON deliberately includes every current catalog check, including `notRun`, 
 ```
 
 The Markdown file is created only after a user action and handed to SonicNest's existing explicit share surface. There is no automatic upload.
+
+## JSON transfer and non-destructive merge
+
+**Import evidence JSON** allows evidence collected on another test target to be consolidated into the current local QA session. Import is intentionally strict and conservative.
+
+Before a merge can be offered, SonicNest requires:
+
+- the current evidence bundle schema,
+- the exact current SonicNest app version/build,
+- the complete current QA catalog with no unknown, missing, or duplicate check IDs,
+- unchanged category and physical/external-tooling metadata for every check,
+- all privacy flags to remain explicitly `false`,
+- valid timezone-aware timestamps in chronological order,
+- assessed result timestamps inside the declared session timeline,
+- a summary that exactly matches the check list,
+- a selected JSON file no larger than 2 MiB.
+
+The merge policy is per check:
+
+1. An imported assessed result is added when no local assessed result exists.
+2. An imported assessed result replaces local evidence only when its result timestamp is strictly newer.
+3. Older or equal imported results are ignored.
+4. Imported `notRun` values never clear a local `passed`, `failed`, or `blocked` result.
+5. A confirmation dialog shows the add/update/ignored counts before persistence.
+6. If no newer assessed result exists, the local session is left untouched.
+
+Only fixed QA state is persisted from the imported bundle. Any optional diagnostics object present in the selected export is not adopted as imported session state. The user may still collect a fresh privacy-safe diagnostic snapshot explicitly when appropriate.
+
+This merge workflow improves multi-device evidence handling; it does **not** authenticate a tester or prove that a manual observation happened.
 
 ## Offline structural review
 
@@ -108,10 +141,12 @@ See `docs/MANUAL_QA_REVIEW_TOOLING.md` for the complete command and review contr
 3. Open **About → Manual QA evidence**.
 4. Perform only the checks that match the current target/environment.
 5. Mark each performed check `Passed`, `Failed`, or `Blocked` immediately after the observation.
-6. Export the JSON or Markdown evidence before resetting the session.
-7. For JSON evidence, run `tool/verify_manual_qa_evidence.py` with the version/diagnostic/freshness requirements appropriate to the release review.
-8. Store evidence with the release/issue record and identify the exact source/build separately where required by `docs/QA_CHECKLIST.md` and `docs/RELEASING.md`.
-9. Do not mark a repository task complete merely because the in-app status says `Passed` or the structural verifier succeeds; the project release ledger is updated only after the required evidence has actually been reviewed.
+6. Use **Share evidence JSON** before moving to another test target when the results need to be consolidated later.
+7. On another target running the exact same SonicNest app version/build, use **Import evidence JSON**, review the merge counts, and confirm only when the selected source is expected.
+8. Export the consolidated JSON or Markdown evidence before resetting the session.
+9. For JSON evidence, run `tool/verify_manual_qa_evidence.py` with the version/diagnostic/freshness requirements appropriate to the release review.
+10. Store evidence with the release/issue record and identify the exact source/build separately where required by `docs/QA_CHECKLIST.md` and `docs/RELEASING.md`.
+11. Do not mark a repository task complete merely because the in-app status says `Passed`, an import succeeds, or the structural verifier succeeds; the project release ledger is updated only after the required evidence has actually been reviewed.
 
 ## Relationship to Diagnostics & QA
 
@@ -127,6 +162,7 @@ Neither feature can prove microphone quality, accessibility behavior, hardware r
 Repository tests enforce:
 
 - session JSON round-tripping and malformed-session fallback,
+- rejection of backward persisted session timelines and removal of out-of-range result timestamps,
 - explicit removal of `notRun` records,
 - current-catalog-only persistence,
 - reset behavior,
@@ -136,6 +172,9 @@ Repository tests enforce:
 - stale-ID removal from exported bundles,
 - explicit privacy flags including `containsFreeFormTesterNotes: false`,
 - preservation of the existing Diagnostics privacy contract when a diagnostic snapshot is attached,
+- newest-result-only non-destructive in-app evidence merging,
+- rejection of wrong-version, weakened-privacy, duplicate/incomplete-catalog, inconsistent-summary, and out-of-timeline JSON imports,
+- source integration of the bounded JSON picker/share/import/persist workflow,
 - offline verifier rejection of catalog drift, summary drift, stale evidence, privacy-contract regressions, and incomplete all-pass requirements.
 
 These tests protect the evidence mechanism. They do not replace the manual checks represented by the catalog.
