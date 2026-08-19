@@ -76,6 +76,7 @@ class QaEvidenceSession {
     if (json['schemaVersion'] != schemaVersion ||
         startedAt == null ||
         updatedAt == null ||
+        updatedAt.isBefore(startedAt) ||
         rawResults is! Map) {
       return QaEvidenceSession.fresh(fallbackNow);
     }
@@ -87,7 +88,9 @@ class QaEvidenceSession {
         continue;
       }
       final result = QaCheckResult.tryParse(entry.value);
-      if (result != null) {
+      if (result != null &&
+          !result.updatedAtUtc.isBefore(startedAt) &&
+          !result.updatedAtUtc.isAfter(updatedAt)) {
         parsedResults[id] = result;
       }
     }
@@ -157,6 +160,50 @@ class QaEvidenceSession {
     return QaEvidenceSession._(
       startedAtUtc: startedAtUtc,
       updatedAtUtc: updatedAtUtc,
+      results: next,
+    );
+  }
+
+  QaEvidenceSession mergingNewerResults({
+    required Map<String, QaCheckResult> candidates,
+    required Set<String> allowedCheckIds,
+    required DateTime candidateStartedAtUtc,
+  }) {
+    final accepted = <String, QaCheckResult>{};
+    for (final entry in candidates.entries) {
+      if (!allowedCheckIds.contains(entry.key) ||
+          entry.value.status == QaEvidenceStatus.notRun) {
+        continue;
+      }
+      final current = results[entry.key];
+      if (current == null ||
+          entry.value.updatedAtUtc.isAfter(current.updatedAtUtc)) {
+        accepted[entry.key] = entry.value;
+      }
+    }
+    if (accepted.isEmpty) {
+      return this;
+    }
+
+    final next = <String, QaCheckResult>{
+      for (final entry in results.entries)
+        if (allowedCheckIds.contains(entry.key)) entry.key: entry.value,
+      ...accepted,
+    };
+    var nextUpdatedAt = updatedAtUtc;
+    for (final result in next.values) {
+      if (result.updatedAtUtc.isAfter(nextUpdatedAt)) {
+        nextUpdatedAt = result.updatedAtUtc;
+      }
+    }
+    final candidateStart = candidateStartedAtUtc.toUtc();
+    final nextStartedAt = candidateStart.isBefore(startedAtUtc)
+        ? candidateStart
+        : startedAtUtc;
+
+    return QaEvidenceSession._(
+      startedAtUtc: nextStartedAt,
+      updatedAtUtc: nextUpdatedAt,
       results: next,
     );
   }
