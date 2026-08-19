@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import sys
 import unittest
 from pathlib import Path
 
@@ -9,6 +10,7 @@ MODULE_PATH = ROOT / "tool" / "build_release_readiness_report.py"
 SPEC = importlib.util.spec_from_file_location("build_release_readiness_report", MODULE_PATH)
 assert SPEC is not None and SPEC.loader is not None
 MODULE = importlib.util.module_from_spec(SPEC)
+sys.modules[SPEC.name] = MODULE
 SPEC.loader.exec_module(MODULE)
 
 ChecklistItem = MODULE.ChecklistItem
