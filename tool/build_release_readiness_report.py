@@ -40,16 +40,28 @@ class ChecklistItem:
 
 
 def parse_checklist(lines: Iterable[str]) -> list[ChecklistItem]:
-    """Parse level-two sections and checklist items while preserving order."""
+    """Parse level-two sections and checklist items while preserving order.
+
+    Ambiguous repeated section headings or repeated checklist identities fail
+    closed instead of being silently merged into release evidence.
+    """
 
     current_section: str | None = None
     items: list[ChecklistItem] = []
+    seen_sections: set[str] = set()
+    seen_items: set[tuple[str, str]] = set()
 
     for line_number, raw_line in enumerate(lines, start=1):
         line = raw_line.rstrip("\n")
         heading = HEADING_RE.match(line)
         if heading:
-            current_section = heading.group("section")
+            section = heading.group("section")
+            if section in seen_sections:
+                raise ValueError(
+                    f"Duplicate level-two section {section!r} at line {line_number}"
+                )
+            seen_sections.add(section)
+            current_section = section
             continue
 
         checklist = CHECKLIST_RE.match(line)
@@ -58,10 +70,18 @@ def parse_checklist(lines: Iterable[str]) -> list[ChecklistItem]:
                 raise ValueError(
                     f"Checklist item appears before a level-two section at line {line_number}"
                 )
+            label = checklist.group("label")
+            identity = (current_section, label)
+            if identity in seen_items:
+                raise ValueError(
+                    "Duplicate checklist item in section "
+                    f"{current_section!r} at line {line_number}: {label!r}"
+                )
+            seen_items.add(identity)
             items.append(
                 ChecklistItem(
                     section=current_section,
-                    label=checklist.group("label"),
+                    label=label,
                     complete=checklist.group("state").casefold() == "x",
                 )
             )
