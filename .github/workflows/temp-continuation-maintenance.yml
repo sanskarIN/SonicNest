@@ -1,0 +1,94 @@
+name: SonicNest Continuation Maintenance
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tool/continuation_ledger_20260819.py'
+
+permissions:
+  contents: write
+
+jobs:
+  validate-and-record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Configure commit identity
+        shell: bash
+        run: |
+          git config user.name 'Sanskar'
+          git config user.email 'sanskarin@outlook.in'
+      - name: Canonically format tracked Dart
+        shell: bash
+        run: |
+          set -euo pipefail
+          dart format lib test tool/generate_brand_assets_v2.dart
+          git add lib test tool/generate_brand_assets_v2.dart
+          if ! git diff --cached --quiet; then
+            git commit -m 'style: apply canonical QA transfer formatting'
+          fi
+      - name: Install Linux audio prerequisites
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg pulseaudio-utils libjson-glib-dev
+      - name: Generate platform hosts
+        run: bash tool/bootstrap_platforms.sh
+      - name: Resolve dependencies
+        run: flutter pub get
+      - name: Generate deterministic branding source images
+        run: dart tool/generate_brand_assets_v2.dart
+      - name: Static analysis
+        run: flutter analyze --no-fatal-infos
+      - name: Unit tests
+        run: flutter test
+      - name: Restore generated workspace changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git restore .
+          git clean -fd
+      - name: Update continuation ledgers
+        run: python3 tool/continuation_ledger_20260819.py
+      - name: Commit project state
+        shell: bash
+        run: |
+          git add PROJECT_STATE.md
+          git commit -m 'docs: sync project state after QA transfer'
+      - name: Commit changelog
+        shell: bash
+        run: |
+          git add CHANGELOG.md
+          git commit -m 'docs: record QA evidence transfer changes'
+      - name: Commit release notes
+        shell: bash
+        run: |
+          git add RELEASE_NOTES.md
+          git commit -m 'docs: add QA evidence transfer release notes'
+      - name: Commit roadmap
+        shell: bash
+        run: |
+          git add ROADMAP.md
+          git commit -m 'docs: record QA evidence consolidation milestone'
+      - name: Commit remaining-work boundary
+        shell: bash
+        run: |
+          git add TODO.md
+          git commit -m 'docs: keep QA transfer manual gates explicit'
+      - name: Commit continuation log
+        shell: bash
+        run: |
+          git add what_changed.md
+          git commit -m 'docs: record QA transfer continuation'
+      - name: Push validated continuation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin main
+          git push origin HEAD:main
