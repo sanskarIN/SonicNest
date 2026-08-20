@@ -1,0 +1,120 @@
+# SonicNest Web Support
+
+SonicNest treats Web as a first-class build target alongside Android, iOS, macOS, Windows, and Linux.
+
+## Entry point
+
+`lib/main.dart` is the shared application entry point for every target. It conditionally selects:
+
+- `lib/bootstrap/bootstrap_native.dart` when `dart.library.io` is available.
+- `lib/bootstrap/bootstrap_web.dart` when `dart.library.js_interop` is available.
+
+The web branch delegates to `lib/main_web.dart`, which intentionally has no `dart:io`, native FFmpeg, or native media-session dependency.
+
+This arrangement keeps `flutter run` and `flutter build web` on the normal project entry point while preventing native-only packages from entering the browser compilation graph.
+
+## Browser recorder capabilities
+
+The browser surface currently provides:
+
+- microphone permission handling;
+- input-device enumeration and selection;
+- mono or stereo capture requests;
+- automatic gain, echo cancellation, and noise suppression requests where the browser honors them;
+- PCM16 stream recording;
+- pause, resume, stop, and cancel;
+- live amplitude metering;
+- elapsed recording time;
+- local PCM16-to-WAV packaging in pure Dart;
+- in-session recording list;
+- WAV playback from an in-memory byte stream;
+- explicit share/download with browser download fallback;
+- light, dark, and system theme support;
+- responsive browser layout;
+- no automatic audio upload or analytics.
+
+## Native-only capability boundary
+
+The native SonicNest application remains the feature-complete target for filesystem-managed libraries and FFmpeg editing. The current dependency set does not provide Web implementations for the native FFmpeg package or `path_provider`, so the browser build does not pretend those features exist.
+
+The Web surface therefore does not currently claim:
+
+- durable SonicNest managed-library persistence across browser sessions;
+- Trash/recovery filesystem semantics;
+- FFmpeg-backed editing, conversion, normalization, filters, or batch conversion;
+- native foreground services;
+- native lock-screen/media-session integration;
+- native package signing or platform-store integration.
+
+This is an explicit capability boundary, not a hidden failure path. Web users can record, play, and download/share WAV recordings without those native services.
+
+## Reproducible platform generation
+
+Both bootstrap scripts generate all six Flutter hosts when any required host is missing:
+
+```text
+android,ios,macos,linux,windows,web
+```
+
+Use either:
+
+```bash
+bash tool/bootstrap_platforms.sh
+```
+
+or on Windows PowerShell:
+
+```powershell
+./tool/bootstrap_platforms.ps1
+```
+
+Branding tooling also requires and updates the generated Web host. Web launcher metadata and splash generation are enabled in `pubspec.yaml`.
+
+## Run in a browser
+
+After bootstrapping and resolving dependencies:
+
+```bash
+flutter config --enable-web
+flutter run -d chrome
+```
+
+The default `lib/main.dart` automatically selects the browser bootstrap.
+
+## Build the Web release
+
+```bash
+flutter config --enable-web
+bash tool/bootstrap_platforms.sh
+flutter pub get
+bash tool/apply_branding.sh
+flutter build web --release
+```
+
+On Windows, use the PowerShell bootstrap/branding scripts before the same Flutter build command.
+
+The deployable static site is written to `build/web/` by Flutter. Hosting, DNS, TLS, cache headers, and production deployment credentials remain deployment-environment responsibilities and are not committed to this repository.
+
+## CI contract
+
+`.github/workflows/ci.yml` contains a dedicated Web release-build job. It:
+
+1. enables Flutter Web;
+2. generates all platform hosts;
+3. resolves dependencies;
+4. applies SonicNest branding;
+5. runs `flutter build web --release` through the shared default entry point.
+
+The normal validation job still runs formatting, analyzer checks, and the complete Flutter unit-test suite. `test/wav_encoder_test.dart` validates the pure-Dart WAV header and payload logic used by browser recording.
+
+## Browser compatibility and manual QA
+
+Microphone capture depends on browser permission APIs and a secure browsing context in production. Actual input-device behavior, permission prompts, capture quality, playback, browser download/share behavior, responsive layout, and installability should be checked on representative current browsers before a public Web release.
+
+At minimum, manual Web QA should cover current Chromium, Firefox, and Safari families on both desktop and mobile form factors where available. A browser passing the build job does not by itself prove microphone hardware or browser-policy behavior.
+
+## Privacy
+
+The browser implementation records into local process memory and does not automatically upload audio. A finished recording stays in the current in-memory session until the page is refreshed/closed or the user deletes it. Users should explicitly download/share recordings they want to retain.
+
+Any future durable browser storage implementation must preserve SonicNest's privacy-first model and document browser quota, eviction, backup, deletion, and recovery semantics before being presented as equivalent to the native managed library.
