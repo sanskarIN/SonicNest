@@ -9,6 +9,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: temporary-web-reliability-ledger
+  cancel-in-progress: false
+
 jobs:
   append-and-clean:
     runs-on: ubuntu-latest
@@ -22,8 +26,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git pull --ff-only origin main
 
-          cat >> what_changed.md <<'EOF'
+          if ! grep -Fq '# Continuation — 2026-08-20 — Web capture recovery and PCM timing hardening' what_changed.md; then
+            cat >> what_changed.md <<'EOF'
 
 
 # Continuation — 2026-08-20 — Web capture recovery and PCM timing hardening
@@ -85,25 +91,11 @@ Focused commits:
 
 ## Repository-contract and QA protection
 
-`tool/tests/test_web_platform_contract.py` now requires the Web surface to retain:
-
-- `pcm16Duration` usage;
-- explicit capture-failure recovery;
-- the capture-generation guard;
-- startup generation mismatch protection;
-- `cancelOnError: true`.
+`tool/tests/test_web_platform_contract.py` now requires the Web surface to retain `pcm16Duration` usage, explicit capture-failure recovery, the capture-generation guard, startup generation mismatch protection, and `cancelOnError: true`.
 
 `docs/WEB_SUPPORT.md` now documents complete frame validation, byte-derived saved duration, partial-buffer discard, and fail-closed browser capture recovery.
 
-`docs/WEB_QA_CHECKLIST.md` now explicitly requires evidence for:
-
-- recorder start failure returning to a usable stopped state;
-- capture-stream failure during ordinary capture and immediate startup;
-- partial PCM not becoming a finished session recording;
-- timer/amplitude/capture cleanup after failure;
-- successfully starting a new capture after recovery;
-- saved duration matching actual captured PCM/playback behavior, including pause/resume cases;
-- the Web platform contract regression itself.
+`docs/WEB_QA_CHECKLIST.md` now explicitly requires evidence for recorder start failure, ordinary/immediate capture-stream failure, partial-buffer discard, timer/amplitude/capture cleanup, restart after recovery, byte-derived saved duration, pause/resume duration consistency, and the Web platform contract regression itself.
 
 Focused documentation/test commits:
 
@@ -115,13 +107,9 @@ Focused documentation/test commits:
 
 The earlier one-shot six-platform validation from revision `22f97c8b2f4aa673a81b0690f647a6877e0906b1` predates this Web reliability continuation and is not reused as proof for these newer commits.
 
-Application-code revision for this continuation:
+Application-code revision for this continuation: `90ccf23539ddc59dfbdb1eb94263dc3eed72882d`.
 
-- `90ccf23539ddc59dfbdb1eb94263dc3eed72882d`.
-
-Final source/test revision before QA-document synchronization:
-
-- `cef447d5d044f4daf53b8bff9d460ba3a0736999`.
+Final source/test revision before QA-document synchronization: `cef447d5d044f4daf53b8bff9d460ba3a0736999`.
 
 No fresh permanent hosted Flutter CI, Repository Integrity Audit, or six-platform Release Candidate Validation result is pre-claimed in this ledger entry. Those evidence items remain open until their exact run results are observed and recorded. Likewise, no representative Chromium/Firefox/Safari microphone, device-removal, permission, duration, accessibility, production-hosting, or signing gate is marked complete from source review alone.
 
@@ -131,6 +119,7 @@ SonicNest therefore remains a **development preview**.
 
 Do not reimplement complete PCM16 frame validation, byte-derived Web recording duration, capture failure teardown, or the startup generation guard. The next repository-side action is to consume and record fresh permanent CI/audit evidence for the current source when available and fix any reproducible regression it exposes. Beyond that, the remaining Web release work is evidence-driven: representative browser microphone/lifecycle behavior, sustained memory use, accessibility, HTTPS/cache/security hosting review, and exact six-platform release-candidate provenance.
 EOF
+          fi
 
           python3 - <<'PY'
           from pathlib import Path
@@ -175,7 +164,11 @@ EOF
           git config user.name 'Sanskar'
           git config user.email 'sanskarin@outlook.in'
           git add what_changed.md CHANGELOG.md PROJECT_STATE.md
-          git commit -m 'docs: record Web capture reliability hardening'
-          git rm .github/workflows/temporary-web-reliability-ledger.yml
-          git commit -m 'chore: remove temporary Web reliability ledger sync'
-          git push
+          if ! git diff --cached --quiet; then
+            git commit -m 'docs: record Web capture reliability hardening'
+          fi
+          git rm --ignore-unmatch .github/workflows/temporary-web-reliability-ledger.yml
+          if ! git diff --cached --quiet; then
+            git commit -m 'chore: remove temporary Web reliability ledger sync'
+          fi
+          git push origin HEAD:main
