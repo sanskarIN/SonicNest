@@ -45,6 +45,8 @@ class WebPlatformContractTest(unittest.TestCase):
             "pcm16ToWav",
             "pcm16Duration",
             "_recoverFromCaptureFailure",
+            "_captureGeneration",
+            "generation != _captureGeneration",
             "cancelOnError: true",
             "StreamAudioSource",
             "SharePlus.instance.share",
