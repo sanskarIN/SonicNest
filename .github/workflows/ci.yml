@@ -26,7 +26,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: sonicnest-ci-v2-${{ github.ref }}
+  group: sonicnest-ci-v3-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -92,3 +92,23 @@ jobs:
       - name: Generate deterministic branding source images
         run: dart tool/generate_brand_assets_v2.dart
       - run: flutter build linux --debug
+
+  web:
+    name: Web release build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Enable Flutter web
+        run: flutter config --enable-web
+      - name: Generate platform hosts
+        run: bash tool/bootstrap_platforms.sh
+      - run: flutter pub get
+      - name: Apply SonicNest web branding
+        run: bash tool/apply_branding.sh
+      - name: Build browser/PWA release
+        run: flutter build web --release --target lib/main_web.dart
