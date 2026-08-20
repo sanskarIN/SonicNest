@@ -1,0 +1,172 @@
+name: Temporary Six-Platform Expansion Validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/temporary-six-platform-validation.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  validate-and-append-ledger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install Linux build/audio prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev ffmpeg pulseaudio-utils libjson-glib-dev
+      - name: Verify committed Dart formatting
+        run: dart format --output=none --set-exit-if-changed lib test tool/generate_brand_assets_v2.dart
+      - name: Generate all six platform hosts
+        run: bash tool/bootstrap_platforms.sh
+      - name: Resolve dependencies
+        run: flutter pub get
+      - name: Apply deterministic native and Web branding
+        run: bash tool/apply_branding.sh
+      - name: Static analysis
+        run: flutter analyze --no-fatal-infos
+      - name: Flutter unit tests
+        run: flutter test
+      - name: Android debug build
+        run: flutter build apk --debug
+      - name: Linux debug build
+        run: flutter build linux --debug
+      - name: Web release build through shared entry point
+        run: flutter build web --release
+      - name: Compile Python tooling
+        run: find tool -type f -name '*.py' -print0 | xargs -0 -n1 python3 -m py_compile
+      - name: Validate Web repository contract
+        run: python3 tool/tests/test_web_platform_contract.py
+      - name: Validate six-platform candidate manifest behavior
+        run: python3 tool/tests/test_release_candidate_manifest.py
+      - name: Validate release-candidate workflow integration
+        run: python3 tool/tests/test_release_candidate_integration.py
+      - name: Validate required repository surfaces
+        run: python3 tool/tests/test_repository_required_surfaces.py
+      - name: Append additive cross-platform continuation ledger
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            cat <<'EOF'
+
+# Continuation — 2026-08-20 — Six-platform Web expansion
+
+## Goal
+
+Expand SonicNest from its previous five native Flutter targets into a six-target cross-platform application while preserving native functionality and adding an explicit browser-safe capability boundary.
+
+## Platform contract
+
+SonicNest now targets:
+
+- Android
+- iOS
+- macOS
+- Windows
+- Linux
+- Web / modern browsers
+
+The normal `lib/main.dart` entry point is shared by every target. Conditional bootstrap isolates Dart IO/native dependencies from the browser compilation graph.
+
+## Runtime implementation
+
+- Added `lib/bootstrap/bootstrap.dart` with conditional exports for `dart.library.io` and `dart.library.js_interop`.
+- Moved the existing native startup/service graph into `lib/bootstrap/bootstrap_native.dart`.
+- Added `lib/bootstrap/bootstrap_web.dart` and an explicit unsupported-runtime fallback.
+- Added `lib/main_web.dart` as the browser-safe SonicNest recorder surface.
+- Added browser microphone permission handling and input-device enumeration/selection.
+- Added browser PCM16 stream capture with mono/stereo requests, automatic gain, echo cancellation, and noise suppression requests where supported by the browser/runtime.
+- Added browser pause, resume, stop, cancel, live amplitude metering, and elapsed-time behavior.
+- Added in-memory browser-session recording management so Web does not pretend native managed-filesystem persistence exists.
+- Added byte-backed WAV playback through `just_audio` without writing browser recordings to native filesystem paths.
+- Added explicit share/download through `share_plus` with browser download fallback.
+- Kept native FFmpeg editing, durable managed Library/Trash/recovery, native foreground services, and native media-session behavior out of the Web dependency graph instead of exposing non-functional browser controls.
+
+## WAV implementation and tests
+
+- Added `lib/core/wav_encoder.dart` as a pure-Dart PCM16 RIFF/WAVE container writer.
+- WAV generation validates positive sample rate, mono/stereo channel count, and complete 16-bit samples.
+- Added `test/wav_encoder_test.dart` covering RIFF/WAVE headers, mono/stereo byte-rate/block-alignment behavior, payload preservation, and invalid inputs.
+
+## Platform bootstrap and branding
+
+- `tool/bootstrap_platforms.sh` now generates `android,ios,macos,linux,windows,web`.
+- `tool/bootstrap_platforms.ps1` now generates the same six hosts.
+- `pubspec.yaml` enables Web launcher/icon generation.
+- `pubspec.yaml` enables Web splash generation.
+- `tool/apply_branding.sh` and `tool/apply_branding.ps1` now require and brand the generated Web host alongside native hosts.
+- Repository integrity treats committed top-level `web/` scaffolding the same as generated native host scaffolding: it must remain reproducible rather than becoming authoritative committed generated source.
+
+## CI and release-candidate integration
+
+- Core Flutter CI now contains a dedicated Web release build using `flutter build web --release` through the shared default entry point.
+- Manual Release Candidate Validation now contains a Web release-mode job.
+- The Web candidate is archived as `sonicnest-web-release.tar.gz` with an explicit development-preview warning and SHA-256 record.
+- The unified candidate provenance manifest now requires Android, Linux, Windows, macOS, iOS, and Web.
+- Web candidate classification records that native binary signing is not applicable to the static Web bundle while retaining `development-preview` distribution status.
+- Missing or tampered Web candidate bytes fail the same checksum/provenance contract used for native payloads.
+
+## Regression and repository-contract coverage
+
+- Added `tool/tests/test_web_platform_contract.py`.
+- Extended `test/bootstrap_integrity_test.dart` to lock six-target bootstrap, conditional default entry point, and core Web build behavior.
+- Extended release-candidate manifest tests with Web payload inclusion and tamper rejection.
+- Extended release-candidate workflow integration tests with Web job/artifact/provenance markers.
+- Extended repository required-surface tests with Web source/docs/tests.
+- Extended `tool/repository_audit.py` to require Web source, docs, QA, bootstrap, branding, CI, release-candidate, provenance, and generated-host invariants.
+
+## Documentation and release policy
+
+- Added `docs/WEB_SUPPORT.md`.
+- Added `docs/WEB_QA_CHECKLIST.md` covering Chromium, Firefox, Safari/WebKit, permission/device behavior, WAV integrity, playback/share, responsive/accessibility behavior, PWA/installability, production HTTPS/cache/security/rollback, and privacy.
+- Updated README, documentation index, architecture, building, codec, branding, release procedure, candidate-artifact guide, provenance guide, evidence template, TODO, and PROJECT_STATE for the six-platform contract.
+- Preserved the 2026-08-15 hosted release-candidate/provenance runs as historical five-platform evidence only; they are not retroactively described as validating Web.
+- Stable/public Web release remains evidence-dependent on representative real browsers and production hosting even after source/build validation succeeds.
+
+## One-shot exact-source validation
+
+The temporary validation workflow that appended this section completed all preceding validation steps successfully before writing the ledger:
+
+- committed Dart format gate;
+- six-host bootstrap;
+- dependency resolution;
+- deterministic native/Web branding generation;
+- Flutter static analysis;
+- complete Flutter unit tests;
+- Android debug build;
+- Linux debug build;
+- Web release build through `lib/main.dart`;
+- Python tooling compilation;
+- Web platform repository-contract regression;
+- six-platform candidate-manifest regression;
+- release-candidate integration regression;
+- required-repository-surface regression.
+
+EOF
+            printf -- '- Validation source revision before this ledger commit: `%s`\n' "$GITHUB_SHA"
+            cat <<'EOF'
+- This one-shot validation does not replace Windows/macOS/iOS hosted builds, the manual six-platform Release Candidate Validation workflow, physical-device QA, representative browser QA, production signing, notarization, store review, or production Web hosting review.
+- The temporary write-enabled validation workflow is removed after this append so permanent repository workflow policy remains read-only.
+
+## Release classification
+
+SonicNest remains a **development preview**. Six-platform source/build support is implemented, while the exact stable-release gates in `TODO.md`, `docs/QA_CHECKLIST.md`, `docs/WEB_QA_CHECKLIST.md`, and `docs/RELEASING.md` remain evidence-driven.
+EOF
+          } >> what_changed.md
+
+          git config user.name 'Sanskar'
+          git config user.email 'sanskarin@outlook.in'
+          git add what_changed.md
+          git commit -m 'docs: append six-platform validation ledger'
+          git push
