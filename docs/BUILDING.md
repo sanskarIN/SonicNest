@@ -5,6 +5,7 @@
 - Flutter stable with Dart 3.12 or newer.
 - Platform toolchains required by Flutter for the platform being built.
 - Python 3 for the generated-host patch step.
+- Web builds: a Flutter SDK with Web enabled; Chrome is convenient for local `flutter run -d chrome`, while release output is a static bundle and does not require Chrome to be deployed.
 - Linux capture/build validation: PulseAudio utilities, FFmpeg, GTK development packages, and JSON-GLib development files used by the selected audio backends.
 - Debian package validation: `dpkg-deb`, `desktop-file-validate`, and `appstreamcli` on a Debian/Ubuntu-compatible build host.
 - Installed-package GUI startup smoke testing: `xvfb-run` on a disposable Linux validation host.
@@ -29,16 +30,16 @@ flutter pub get
 ./tool/apply_branding.ps1
 ```
 
-The bootstrap scripts generate Flutter host projects with the application organization `io.github.sanskarin`, then apply SonicNest-specific Android, Apple, Linux, and Windows adjustments. Re-run the appropriate bootstrap script after switching to a materially different Flutter SDK.
+The bootstrap scripts generate Flutter host projects for **Android, iOS, macOS, Linux, Windows, and Web** with the application organization `io.github.sanskarin`, then apply SonicNest-specific platform adjustments. Re-run the appropriate bootstrap script after switching to a materially different Flutter SDK.
 
-`tool/apply_branding.sh` and `tool/apply_branding.ps1` generate the raster source images from `tool/generate_brand_assets_v2.dart`, then apply launcher icons and native Android/iOS splash resources. Generated PNG source images are intentionally ignored by Git because they are reproducible from code. See `docs/BRANDING.md`.
+`tool/apply_branding.sh` and `tool/apply_branding.ps1` generate the raster source images from `tool/generate_brand_assets_v2.dart`, then apply launcher icons and splash resources across the generated native and Web hosts. Generated PNG source images are intentionally ignored by Git because they are reproducible from code. See `docs/BRANDING.md`.
 
 ## Manual platform generation
 
 If you need to generate hosts without the helper scripts:
 
 ```powershell
-flutter create . --project-name sonic_nest --org io.github.sanskarin --platforms=android,ios,macos,linux,windows --no-pub
+flutter create . --project-name sonic_nest --org io.github.sanskarin --platforms=android,ios,macos,linux,windows,web --no-pub
 flutter pub get
 ```
 
@@ -48,13 +49,22 @@ After generation, apply the Android files under `tool/platform_overrides/` and r
 python tool/patch_generated_platforms.py
 ```
 
-Then generate/apply native branding:
+Then generate/apply cross-platform branding:
 
 ```bash
 dart tool/generate_brand_assets_v2.dart
 dart run flutter_launcher_icons
 dart run flutter_native_splash:create
 ```
+
+## Shared application entry point
+
+`lib/main.dart` is now the default entry point for all six supported targets. Conditional exports isolate the dependency graphs:
+
+- Dart IO platforms load `lib/bootstrap/bootstrap_native.dart`.
+- Dart Web platforms load `lib/bootstrap/bootstrap_web.dart` using `dart.library.js_interop`.
+
+Native-only `dart:io`, FFmpeg, managed-filesystem, and media-session dependencies therefore do not enter the Web compilation graph. `flutter run` and `flutter build web` use the normal default entry point; no special `--target` is required.
 
 ## Verify Dart and Flutter code
 
@@ -68,18 +78,19 @@ The formatting command is a non-mutating cleanliness check, matching core CI. If
 
 The repository CI treats analyzer errors/warnings as failures while allowing informational style lints to remain non-fatal.
 
-Focused reliability checks can be run while changing local-library persistence, recovery, batch conversion, or audio import behavior:
+Focused reliability checks can be run while changing local-library persistence, recovery, batch conversion, browser WAV output, or audio import behavior:
 
 ```bash
 flutter test test/recording_entry_test.dart test/metadata_store_test.dart
 flutter test test/app_controller_persistence_test.dart test/app_controller_recovery_test.dart
 flutter test test/storage_service_test.dart test/storage_service_non_file_test.dart
 flutter test test/audio_import_service_test.dart test/batch_conversion_service_test.dart
+flutter test test/wav_encoder_test.dart test/bootstrap_integrity_test.dart
 ```
 
-The deterministic suites cover malformed field decoding, corrupt-document preservation, interrupted `.bak` recovery, a 3,000-entry filesystem round-trip, managed-path mutation guards, active/Trash orphan reconstruction, persistence rollback, import cleanup, entity-aware filename collisions, and batch conversion failure/stop isolation. They do not replace real malformed-audio corpus testing, filesystem-failure simulation on target devices, long-duration workloads, or large-library UI/performance profiling.
+The deterministic suites cover malformed field decoding, corrupt-document preservation, interrupted `.bak` recovery, a 3,000-entry filesystem round-trip, managed-path mutation guards, active/Trash orphan reconstruction, persistence rollback, import cleanup, entity-aware filename collisions, batch conversion failure/stop isolation, PCM16 WAV-container correctness, and six-target bootstrap/CI invariants. They do not replace real malformed-audio corpus testing, filesystem-failure simulation on target devices, browser microphone testing, long-duration workloads, or large-library UI/performance profiling.
 
-See `docs/METADATA_INTEGRITY.md`, `docs/MANAGED_STORAGE_BOUNDARY.md`, `docs/RECOVERY_TESTING.md`, and `docs/BATCH_CONVERSION.md` for the invariants behind those tests.
+See `docs/METADATA_INTEGRITY.md`, `docs/MANAGED_STORAGE_BOUNDARY.md`, `docs/RECOVERY_TESTING.md`, `docs/BATCH_CONVERSION.md`, and `docs/WEB_SUPPORT.md` for the invariants behind those tests.
 
 ## Platform builds
 
@@ -106,7 +117,32 @@ flutter build macos --debug
 flutter build ios --debug --no-codesign
 ```
 
-Only run build targets supported by the host OS. Signing, provisioning profiles, keystores, certificates, and store credentials must remain outside the repository.
+Web:
+
+```bash
+flutter config --enable-web
+bash tool/bootstrap_platforms.sh
+flutter pub get
+bash tool/apply_branding.sh
+flutter build web --release
+```
+
+On Windows use the PowerShell bootstrap/branding helpers before `flutter build web --release`.
+
+Only run native build targets supported by the host OS. The Web release output is generated under `build/web/`. Native signing, provisioning profiles, keystores, certificates, store credentials, Web hosting credentials, and DNS/TLS secrets must remain outside the repository.
+
+## Web development and capability boundary
+
+Run the browser build locally with:
+
+```bash
+flutter config --enable-web
+flutter run -d chrome
+```
+
+The Web implementation provides microphone permission handling, input selection, PCM16 capture, pause/resume, amplitude metering, pure-Dart WAV packaging, in-session playback, and explicit share/download. Native FFmpeg editing and durable managed-filesystem library semantics are intentionally unavailable in the browser because the current native dependencies do not provide Web implementations.
+
+A successful Web compile does not prove microphone permissions, capture quality, alternate-device behavior, share/download, installability, responsive UI, accessibility, or production HTTPS/cache behavior. See `docs/WEB_SUPPORT.md`.
 
 ## Android non-production release candidate
 
@@ -171,13 +207,25 @@ The smoke script checks the installed package state and files, re-validates desk
 
 See `docs/LINUX_PACKAGING.md` for package layout, dependencies, CI behavior, installation testing, evidence levels, and release boundaries.
 
+## Web release-candidate package
+
+The manual release-candidate workflow creates a static Web validation payload after `flutter build web --release`:
+
+```text
+sonicnest-web-release.tar.gz
+RELEASE_CANDIDATE_WARNING.txt
+SHA256SUMS.txt
+```
+
+The Web payload is uploaded as `sonicnest-web-release-candidate`, downloaded by the unified manifest job, and re-verified by `tool/build_release_candidate_manifest.py`. A missing or tampered Web payload fails the six-platform manifest contract. See `docs/RELEASE_CANDIDATE_MANIFEST.md`.
+
 ## CI coverage
 
-- `.github/workflows/ci.yml`: deterministic brand image generation, non-mutating format gate, analyzer, unit tests, branded Android debug APK, Linux debug build.
+- `.github/workflows/ci.yml`: deterministic brand image generation, non-mutating format gate, analyzer, unit tests, branded Android debug APK, Linux debug build, and branded Web release build through the default entry point.
 - `.github/workflows/linux-package.yml`: Linux release bundle, Debian package construction, structural verification, checksum verification, package-manager installation, installed-files/metadata checks, virtual-display startup smoke, uninstall cleanup checks, and short-retention CI artifact.
 - `.github/workflows/windows.yml`: branded Windows debug build plus branded release-mode portable ZIP construction, package verification, checksum/package-info output, bounded extracted-package startup smoke, explicit unsigned warning, and short-retention validation artifact.
 - `.github/workflows/macos.yml`: branded macOS debug build and branded iOS no-codesign debug build.
-- `.github/workflows/release-candidate.yml`: manually triggered release-mode validation artifacts across Android, Linux, Windows, macOS, and no-codesign iOS; Android verifies package identity/debug-certificate non-production signing, Windows reuses portable build/verify/smoke helpers, and Linux reuses the Debian package builder/verifier.
+- `.github/workflows/release-candidate.yml`: manually triggered release-mode validation artifacts across Android, Linux, Windows, macOS, no-codesign iOS, and Web; Android verifies package identity/debug-certificate non-production signing, Windows reuses portable build/verify/smoke helpers, Linux reuses the Debian package builder/verifier, Web packages a checksummed static bundle, and the unified manifest requires all six targets.
 - `.github/workflows/repository-audit.yml`: repository invariants, permanent-workflow permission safety, required package/policy markers, and syntax parsing for all tracked top-level Bash/PowerShell helpers.
 
-CI build/package/install/startup-smoke success confirms compilation and repository-controlled package behavior on GitHub-hosted runners; microphone hardware, audio routing, lock-screen/background behavior, device interruptions, real icon/launch visual inspection, long-duration recording, package upgrade behavior on representative maintained systems, accessibility, production signing, and store/publication approval still require target-device or maintainer-secure-environment validation.
+CI build/package/install/startup-smoke success confirms compilation and repository-controlled package behavior on GitHub-hosted runners. Microphone hardware, audio routing, lock-screen/background behavior, device interruptions, real icon/launch visual inspection, browser permission/device behavior, browser share/download, production hosting, long-duration recording, package upgrade behavior on representative maintained systems, accessibility, production signing, and store/publication approval still require target-device, representative-browser, or maintainer-secure-environment validation.
