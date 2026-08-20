@@ -107,7 +107,9 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
 
   @override
   void dispose() {
+    _captureGeneration++;
     _timer?.cancel();
+    _capturedBytes = null;
     unawaited(_recordingSubscription?.cancel());
     unawaited(_amplitudeSubscription?.cancel());
     unawaited(_playerSubscription?.cancel());
@@ -204,6 +206,24 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
     }
   }
 
+  Future<void> _cancelCaptureSubscriptions() async {
+    final recordingSubscription = _recordingSubscription;
+    _recordingSubscription = null;
+    final amplitudeSubscription = _amplitudeSubscription;
+    _amplitudeSubscription = null;
+
+    try {
+      await recordingSubscription?.cancel();
+    } catch (_) {
+      // Local stream cleanup is best-effort after capture termination.
+    }
+    try {
+      await amplitudeSubscription?.cancel();
+    } catch (_) {
+      // Local stream cleanup is best-effort after capture termination.
+    }
+  }
+
   Future<void> _recoverFromCaptureFailure(
     String message, {
     required int generation,
@@ -219,26 +239,12 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
     _timer = null;
     _capturedBytes = null;
 
-    final recordingSubscription = _recordingSubscription;
-    _recordingSubscription = null;
-    final amplitudeSubscription = _amplitudeSubscription;
-    _amplitudeSubscription = null;
-
     try {
       await _recorder.cancel();
     } catch (_) {
       // The browser backend may already have terminated the failed stream.
     }
-    try {
-      await recordingSubscription?.cancel();
-    } catch (_) {
-      // Cleanup is best-effort after a stream failure.
-    }
-    try {
-      await amplitudeSubscription?.cancel();
-    } catch (_) {
-      // Cleanup is best-effort after a stream failure.
-    }
+    await _cancelCaptureSubscriptions();
 
     if (mounted) {
       setState(() {
@@ -254,39 +260,52 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
 
   Future<void> _pauseOrResume() async {
     if (_busy || !_hasActiveCapture) return;
+    final generation = _captureGeneration;
     setState(() => _busy = true);
     try {
       if (_isPaused) {
         await _recorder.resume();
-        if (mounted) setState(() => _recordState = RecordState.record);
+        if (mounted && generation == _captureGeneration) {
+          setState(() => _recordState = RecordState.record);
+        }
       } else {
         await _recorder.pause();
-        if (mounted) setState(() => _recordState = RecordState.pause);
+        if (mounted && generation == _captureGeneration) {
+          setState(() => _recordState = RecordState.pause);
+        }
       }
-    } catch (error) {
-      _showMessage('Could not change recording state: $error');
+    } catch (_) {
+      await _recoverFromCaptureFailure(
+        'Could not change recording state. The incomplete capture was discarded so you can start again safely.',
+        generation: generation,
+      );
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted && generation == _captureGeneration) {
+        setState(() => _busy = false);
+      }
     }
   }
 
   Future<void> _stopRecording() async {
     if (_busy || !_hasActiveCapture) return;
+    final generation = ++_captureGeneration;
     setState(() => _busy = true);
     try {
       await _recorder.stop();
       _timer?.cancel();
       _timer = null;
-      if (mounted) setState(() => _recordState = RecordState.stop);
-
-      await _recordingSubscription?.cancel();
-      _recordingSubscription = null;
-      await _amplitudeSubscription?.cancel();
-      _amplitudeSubscription = null;
+      await _cancelCaptureSubscriptions();
 
       final pcm = _capturedBytes?.takeBytes() ?? Uint8List(0);
       _capturedBytes = null;
       if (pcm.isEmpty) {
+        if (mounted) {
+          setState(() {
+            _recordState = RecordState.stop;
+            _elapsed = Duration.zero;
+            _amplitudeDb = -60.0;
+          });
+        }
         _showMessage('No audio data was captured.');
         return;
       }
@@ -309,41 +328,60 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
         bytes: wav,
         duration: duration,
       );
-      if (!mounted) return;
+      if (!mounted || generation != _captureGeneration) return;
       setState(() {
+        _recordState = RecordState.stop;
         _elapsed = duration;
         _amplitudeDb = -60.0;
         _recordings.insert(0, recording);
       });
-    } catch (error) {
-      _showMessage('Could not finish recording: $error');
+    } catch (_) {
+      await _recoverFromCaptureFailure(
+        'Could not finish recording. The incomplete capture was discarded so you can start again safely.',
+        generation: generation,
+      );
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted && generation == _captureGeneration) {
+        setState(() => _busy = false);
+      }
     }
   }
 
   Future<void> _cancelRecording() async {
     if (_busy || !_hasActiveCapture) return;
+    final generation = ++_captureGeneration;
     setState(() => _busy = true);
+    var backendStopped = true;
     try {
-      await _recorder.cancel();
-      _capturedBytes = null;
+      try {
+        await _recorder.cancel();
+      } catch (_) {
+        try {
+          await _recorder.stop();
+        } catch (_) {
+          backendStopped = false;
+        }
+      }
+
       _timer?.cancel();
       _timer = null;
-      await _recordingSubscription?.cancel();
-      _recordingSubscription = null;
-      await _amplitudeSubscription?.cancel();
-      _amplitudeSubscription = null;
-      if (!mounted) return;
+      _capturedBytes = null;
+      await _cancelCaptureSubscriptions();
+      if (!mounted || generation != _captureGeneration) return;
       setState(() {
         _recordState = RecordState.stop;
         _elapsed = Duration.zero;
         _amplitudeDb = -60.0;
       });
-    } catch (error) {
-      _showMessage('Could not cancel recording: $error');
+      if (!backendStopped) {
+        _showMessage(
+          'The recording was discarded locally, but the browser could not confirm microphone shutdown. Reload the page if the browser microphone indicator remains active.',
+        );
+      }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted && generation == _captureGeneration) {
+        setState(() => _busy = false);
+      }
     }
   }
 
