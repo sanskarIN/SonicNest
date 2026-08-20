@@ -7,6 +7,7 @@ import 'package:record/record.dart';
 import 'package:share_plus/share_plus.dart';
 
 import 'core/theme.dart';
+import 'core/wav_encoder.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -59,8 +60,10 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
 
   StreamSubscription<Uint8List>? _recordingSubscription;
   StreamSubscription<Amplitude>? _amplitudeSubscription;
+  StreamSubscription<PlayerState>? _playerSubscription;
   Timer? _timer;
   BytesBuilder? _capturedBytes;
+
   RecordConfig _effectiveConfig = const RecordConfig(
     encoder: AudioEncoder.pcm16bits,
     sampleRate: 44100,
@@ -69,10 +72,9 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
     echoCancel: true,
     noiseSuppress: true,
   );
-
   RecordState _recordState = RecordState.stop;
   Duration _elapsed = Duration.zero;
-  double _amplitudeDb = -60;
+  double _amplitudeDb = -60.0;
   bool _busy = false;
   bool _autoGain = true;
   bool _echoCancel = true;
@@ -94,16 +96,21 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
       if (!mounted) return;
       setState(() => _effectiveConfig = config);
     });
-    _refreshDevices(requestPermission: false);
+    _playerSubscription = _player.playerStateStream.listen((state) {
+      if (!mounted || state.processingState != ProcessingState.completed) return;
+      setState(() => _playingId = null);
+    });
+    unawaited(_refreshDevices(requestPermission: false));
   }
 
   @override
   void dispose() {
     _timer?.cancel();
-    _recordingSubscription?.cancel();
-    _amplitudeSubscription?.cancel();
-    _recorder.dispose();
-    _player.dispose();
+    unawaited(_recordingSubscription?.cancel());
+    unawaited(_amplitudeSubscription?.cancel());
+    unawaited(_playerSubscription?.cancel());
+    unawaited(_recorder.dispose());
+    unawaited(_player.dispose());
     super.dispose();
   }
 
@@ -150,28 +157,33 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
       );
       _effectiveConfig = config;
       _capturedBytes = BytesBuilder(copy: false);
+
       final stream = await _recorder.startStream(config);
       _recordingSubscription = stream.listen(
         (chunk) => _capturedBytes?.add(chunk),
         onError: (_) => _showMessage('Browser audio capture failed.'),
       );
+
       await _amplitudeSubscription?.cancel();
       _amplitudeSubscription = _recorder
           .onAmplitudeChanged(const Duration(milliseconds: 120))
           .listen((value) {
             if (!mounted) return;
-            setState(() => _amplitudeDb = value.current.clamp(-60, 0));
+            setState(() {
+              _amplitudeDb = value.current.clamp(-60.0, 0.0).toDouble();
+            });
           });
 
       _elapsed = Duration.zero;
       _timer?.cancel();
+      if (!mounted) return;
+      setState(() => _recordState = RecordState.record);
       _timer = Timer.periodic(const Duration(seconds: 1), (_) {
         if (!mounted || !_isRecording) return;
         setState(() => _elapsed += const Duration(seconds: 1));
       });
-      if (!mounted) return;
-      setState(() => _recordState = RecordState.record);
     } catch (error) {
+      _capturedBytes = null;
       _showMessage('Could not start recording: $error');
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -203,6 +215,8 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
       await _recorder.stop();
       _timer?.cancel();
       _timer = null;
+      if (mounted) setState(() => _recordState = RecordState.stop);
+
       await _recordingSubscription?.cancel();
       _recordingSubscription = null;
       await _amplitudeSubscription?.cancel();
@@ -215,7 +229,7 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
         return;
       }
 
-      final wav = _pcm16ToWav(
+      final wav = pcm16ToWav(
         pcm,
         sampleRate: _effectiveConfig.sampleRate,
         channels: _effectiveConfig.numChannels,
@@ -230,19 +244,13 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
       );
       if (!mounted) return;
       setState(() {
-        _recordState = RecordState.stop;
-        _amplitudeDb = -60;
+        _amplitudeDb = -60.0;
         _recordings.insert(0, recording);
       });
     } catch (error) {
       _showMessage('Could not finish recording: $error');
     } finally {
-      if (mounted) {
-        setState(() {
-          _busy = false;
-          if (!_hasActiveCapture) _recordState = RecordState.stop;
-        });
-      }
+      if (mounted) setState(() => _busy = false);
     }
   }
 
@@ -262,7 +270,7 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
       setState(() {
         _recordState = RecordState.stop;
         _elapsed = Duration.zero;
-        _amplitudeDb = -60;
+        _amplitudeDb = -60.0;
       });
     } catch (error) {
       _showMessage('Could not cancel recording: $error');
@@ -281,8 +289,7 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
       await _player.setAudioSource(_BytesAudioSource(recording.bytes));
       if (!mounted) return;
       setState(() => _playingId = recording.id);
-      await _player.play();
-      if (mounted) setState(() {});
+      unawaited(_player.play());
     } catch (error) {
       _showMessage('Could not play this recording: $error');
     }
@@ -311,7 +318,7 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
 
   void _delete(WebRecording recording) {
     if (_playingId == recording.id) {
-      _player.stop();
+      unawaited(_player.stop());
       _playingId = null;
     }
     setState(() => _recordings.removeWhere((item) => item.id == recording.id));
@@ -369,11 +376,7 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
                       Center(
                         child: Text(
                           _formatDuration(_elapsed),
-                          style: theme.textTheme.displaySmall?.copyWith(
-                            fontFeatures: const <FontFeature>[
-                              FontFeature.tabularFigures(),
-                            ],
-                          ),
+                          style: theme.textTheme.displaySmall,
                         ),
                       ),
                       const SizedBox(height: 18),
@@ -573,7 +576,9 @@ class _AmplitudeMeter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final normalized = ((valueDb + 60) / 60).clamp(0.0, 1.0);
+    final normalized = ((valueDb + 60.0) / 60.0)
+        .clamp(0.0, 1.0)
+        .toDouble();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
@@ -606,43 +611,6 @@ class _BytesAudioSource extends StreamAudioSource {
       contentType: 'audio/wav',
     );
   }
-}
-
-Uint8List _pcm16ToWav(
-  Uint8List pcm, {
-  required int sampleRate,
-  required int channels,
-}) {
-  final safeSampleRate = sampleRate > 0 ? sampleRate : 44100;
-  final safeChannels = channels == 2 ? 2 : 1;
-  const bitsPerSample = 16;
-  final blockAlign = safeChannels * bitsPerSample ~/ 8;
-  final byteRate = safeSampleRate * blockAlign;
-  final dataLength = pcm.length;
-  final output = Uint8List(44 + dataLength);
-  final header = ByteData.sublistView(output);
-
-  void ascii(int offset, String value) {
-    for (var i = 0; i < value.length; i++) {
-      output[offset + i] = value.codeUnitAt(i);
-    }
-  }
-
-  ascii(0, 'RIFF');
-  header.setUint32(4, 36 + dataLength, Endian.little);
-  ascii(8, 'WAVE');
-  ascii(12, 'fmt ');
-  header.setUint32(16, 16, Endian.little);
-  header.setUint16(20, 1, Endian.little);
-  header.setUint16(22, safeChannels, Endian.little);
-  header.setUint32(24, safeSampleRate, Endian.little);
-  header.setUint32(28, byteRate, Endian.little);
-  header.setUint16(32, blockAlign, Endian.little);
-  header.setUint16(34, bitsPerSample, Endian.little);
-  ascii(36, 'data');
-  header.setUint32(40, dataLength, Endian.little);
-  output.setRange(44, output.length, pcm);
-  return output;
 }
 
 String _formatDuration(Duration duration) {
