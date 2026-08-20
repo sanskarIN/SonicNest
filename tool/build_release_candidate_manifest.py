@@ -10,7 +10,7 @@ import re
 import sys
 from pathlib import Path
 
-EXPECTED_PLATFORMS = ("android", "linux", "windows", "macos", "ios")
+EXPECTED_PLATFORMS = ("android", "linux", "windows", "macos", "ios", "web")
 REQUIRED_METADATA = {
     "android": (
         "RELEASE_CANDIDATE_WARNING.txt",
@@ -21,6 +21,7 @@ REQUIRED_METADATA = {
     "windows": ("RELEASE_CANDIDATE_WARNING.txt", "SHA256SUMS.txt"),
     "macos": ("RELEASE_CANDIDATE_WARNING.txt", "SHA256SUMS.txt"),
     "ios": ("RELEASE_CANDIDATE_WARNING.txt", "SHA256SUMS.txt"),
+    "web": ("RELEASE_CANDIDATE_WARNING.txt", "SHA256SUMS.txt"),
 }
 CLASSIFICATIONS = {
     "android": {
@@ -46,6 +47,11 @@ CLASSIFICATIONS = {
     "ios": {
         "build": "release",
         "signing": "no-codesign",
+        "distribution": "development-preview hosted validation only",
+    },
+    "web": {
+        "build": "release",
+        "signing": "not applicable to static web bundle",
         "distribution": "development-preview hosted validation only",
     },
 }
