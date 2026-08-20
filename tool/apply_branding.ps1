@@ -7,7 +7,7 @@ if (-not (Get-Command dart -ErrorAction SilentlyContinue)) {
     throw 'Dart is required. Install Flutter and place its bin directory on PATH.'
 }
 
-$RequiredHosts = @('android', 'ios', 'macos', 'windows')
+$RequiredHosts = @('android', 'ios', 'macos', 'windows', 'web')
 foreach ($HostDirectory in $RequiredHosts) {
     if (-not (Test-Path (Join-Path $Root $HostDirectory))) {
         throw 'Platform hosts are missing. Run tool/bootstrap_platforms.ps1 first.'
@@ -26,7 +26,7 @@ if ($LASTEXITCODE -ne 0) {
 
 dart run flutter_native_splash:create
 if ($LASTEXITCODE -ne 0) {
-    throw "Native splash generation failed with exit code $LASTEXITCODE."
+    throw "Splash generation failed with exit code $LASTEXITCODE."
 }
 
-Write-Host 'SonicNest native launcher icons and splash assets are applied.'
+Write-Host 'SonicNest launcher icons and splash assets are applied across native and web hosts.'
