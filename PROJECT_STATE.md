@@ -17,7 +17,7 @@ gumroad_integration_validation:
   linux_package_run: 32030915109
   result: success
   scope: formatter + static analysis + Flutter tests + Android/Linux/Windows/macOS/iOS builds + Windows portable smoke + Debian build/install/smoke/uninstall + repository line/tooling audit
-current_phase: Cross-platform release hardening
+current_phase: Six-platform cross-platform release hardening
 current_version: 0.1.0
 release_classification: development_preview_until_manual_release_gates_are_complete
 stack:
@@ -35,6 +35,21 @@ supported_platform_targets:
   - macOS
   - Windows
   - Linux
+  - Web
+web_platform:
+  shared_entry_point: lib/main.dart
+  conditional_bootstrap: dart.library.js_interop -> lib/bootstrap/bootstrap_web.dart
+  browser_entry_surface: lib/main_web.dart
+  capture: PCM16 stream through record with pure-Dart WAV packaging
+  session_storage: in-memory only until explicit share/download
+  native_only_features_not_claimed: FFmpeg editing + durable managed-filesystem library/recovery + native media sessions
+  build_command: flutter build web --release
+  core_ci_build: required
+  release_candidate_artifact: sonicnest-web-release.tar.gz + SHA-256
+  unified_candidate_manifest: required as sixth platform
+  documentation: docs/WEB_SUPPORT.md
+  qa_checklist: docs/WEB_QA_CHECKLIST.md
+  public_release_status: pending representative browser and production-hosting evidence
 android_distribution:
   initial_public_channel: Google Play
   signing_model: Play App Signing with a separate maintainer-controlled upload key
@@ -69,11 +84,24 @@ linux_distribution:
   public_artifacts: verified Debian .deb + SHA-256 checksum
   apt_repository: not initially operated
   signing_credentials: maintainer-owned and outside repository
+web_distribution:
+  artifact_format: generated static Flutter Web bundle archived as .tar.gz for candidate evidence
+  production_channel: HTTPS static hosting provider/domain not yet selected as a stable-release claim
+  signing_model: binary signing not applicable to static Web bundle; checksum/provenance plus hosting controls apply
+  hosting_dns_tls_credentials: deployment-environment owned and outside repository
+  policy: docs/WEB_SUPPORT.md
+  qa: docs/WEB_QA_CHECKLIST.md
 completed_features:
   - canonical Gumroad storefront highlighted in the shared app shell About startup README support and maintained public documentation with regression protection
   - project architecture and Material 3 design system
-  - branded Flutter startup screen with recoverable startup failure state
-  - local-first recording metadata and cross-platform-safe filename allocation
+  - shared default application entry point with conditional Dart IO and dart.library.js_interop bootstrap isolation
+  - browser-safe Web recorder that excludes dart:io native FFmpeg path-provider and native media-session dependency paths
+  - Web microphone permission input-device selection PCM16 stream capture pause resume stop cancel and amplitude metering
+  - pure-Dart PCM16 RIFF/WAV packaging with mono stereo header and invalid-input regression coverage
+  - in-memory browser session recording list with byte-stream WAV playback and explicit share/download fallback
+  - Web light dark system theme support and responsive browser layout
+  - branded Flutter startup screen with recoverable startup failure state on native application targets
+  - local-first recording metadata and cross-platform-safe filename allocation on native managed-storage targets
   - tolerant metadata field decoding and malformed-record isolation
   - structural metadata corruption preservation with timestamped diagnostic copies
   - interrupted metadata replacement recovery from recordings.json.bak
@@ -95,7 +123,8 @@ completed_features:
   - recorder transition guards and failed-capture cleanup
   - runtime encoder support checks with intermediate capture fallback
   - M4A WAV FLAC Opus native paths when supported
-  - MP3 OGG AAC and unsupported-native-format conversion pipeline
+  - MP3 OGG AAC and unsupported-native-format conversion pipeline on native targets
+  - explicit Web codec boundary using PCM16 capture and WAV output without false FFmpeg/transcoding claims
   - quality presets and custom settings
   - smart filename templates with prefix suffix category date time sequence and component date-time tokens
   - optional screen-wake behavior during active recording with stop cancel error cleanup
@@ -140,26 +169,29 @@ completed_features:
   - unit and CLI regression coverage for manual-QA evidence verification executed by the permanent Repository Integrity Audit
   - About privacy support GitHub email and Buy Me a Coffee links
   - original vector branding assets
-  - deterministic native branding source raster generation
-  - Android iOS native splash generation and Android iOS macOS Windows launcher icon generation
+  - deterministic cross-platform branding source raster generation
+  - Android iOS Web splash generation and Android iOS macOS Windows Web launcher icon generation
   - Android foreground recording service overrides
-  - Bash and PowerShell reproducible platform bootstrap tooling
+  - Bash and PowerShell reproducible six-platform bootstrap tooling for Android iOS macOS Linux Windows and Web
   - Debian Linux package builder verifier desktop entry AppStream metadata generated icon integration and package checksums
   - hosted-runner Debian package install installed-payload GUI startup smoke and uninstall cleanup validation
   - dedicated Linux Debian package CI and Debian release-candidate artifact integration
   - versioned Windows x64 portable ZIP builder verifier checksum/package-info output and bounded extracted-package startup smoke
   - Android hosted release-candidate package identity and non-production Debug-certificate verification
-  - cross-platform release-candidate workflow producing Android Linux Windows macOS and iOS release-mode validation artifacts from one clean source revision
-  - exact automated release evidence record with inner artifact SHA-256 values and workflow artifact digests
-  - unified machine-readable release-candidate provenance manifest that re-verifies all five platform payload checksum records and binds evidence to the full source SHA workflow run and attempt
+  - current cross-platform release-candidate workflow producing Android Linux Windows macOS iOS and Web release-mode validation artifacts from one source revision
+  - Web release-candidate static bundle packaging with explicit warning and SHA-256 evidence
+  - exact historical automated release evidence record with inner artifact SHA-256 values and workflow artifact digests
+  - unified machine-readable release-candidate provenance manifest contract that now requires and re-verifies all six platform payload checksum records and binds evidence to the full source SHA workflow run and attempt
   - hosted provenance manifest explicitly preserves per-platform signing classifications and stableReleaseApproved false
-  - Python release-tool unit and workflow-integration regressions executed by the permanent Repository Integrity Audit
+  - Python release-tool unit and workflow-integration regressions including Web tamper rejection executed by the permanent Repository Integrity Audit
   - repository workflow allowlist rejecting leftover temporary one-shot workflows and permanent write permissions including write-all
   - repository audit recognizes both .yml and .yaml workflow files
+  - repository audit rejects committed generated web host scaffolding alongside native generated hosts
+  - repository audit requires Web bootstrap entry point WAV encoder Web docs Web QA tests CI and release-candidate markers
   - unit tests open-source docs GitHub project templates and release documentation
-  - analyzer unit-test Android Linux Windows macOS and unsigned iOS build workflows
+  - analyzer unit-test Android Linux Windows macOS unsigned iOS and Web build workflows
   - core CI path filtering that avoids documentation-only rebuild churn
-  - detailed QA checklist release procedure development-preview release notes and remaining-work tracker
+  - detailed native QA checklist dedicated Web QA checklist release procedure development-preview release notes and remaining-work tracker
   - supported-extension regular-file managed audio boundary with symbolic-link and non-file refusal
   - entity-safe collision allocation for managed and external destinations including broken symbolic links
   - active and Trash orphan reconstruction with startup unsafe-metadata removal
@@ -169,7 +201,7 @@ completed_features:
   - lazy native AudioRecorder construction without constructor-time method-channel side effects
   - localization policy separating translated product summaries from raw technical diagnostic evidence
   - GitHub Releases selected as the initial public Linux Debian package channel
-  - source-controlled store listing and privacy declaration draft for Android Apple macOS Windows and Linux distribution review
+  - source-controlled store listing and privacy declaration draft for Android Apple macOS Windows and Linux distribution review plus dedicated Web support/privacy/release guidance
   - Android distribution policy selects Google Play and Play App Signing with a separate upload key
   - Apple distribution policy selects TestFlight/App Store for iOS and signed/notarized GitHub Releases for initial macOS public distribution
   - Windows stable public signing policy requires Authenticode while actual signing credentials/service remain maintainer-owned
@@ -250,11 +282,26 @@ platform_bootstrap_integrity:
   preserves_analysis_options_bash: true
   preserves_analysis_options_powershell: true
   committed_format_check_precedes_generated_host_bootstrap: true
+  generated_targets: android,ios,macos,linux,windows,web
+  conditional_default_entry_point: true
+  web_generated_host_commit_rejected_by_repository_audit: true
   regression_test: test/bootstrap_integrity_test.dart
-
+web_cross_platform_state:
+  implementation_date: 2026-08-20
+  default_entry_point: lib/main.dart
+  browser_surface: lib/main_web.dart
+  wav_encoder: lib/core/wav_encoder.dart
+  core_ci_web_release_build: configured
+  release_candidate_web_artifact: configured
+  unified_six_platform_manifest: configured
+  repository_contract_test: tool/tests/test_web_platform_contract.py
+  hosted_validation_for_current_revision: pending
+  real_browser_validation: pending
+  production_hosting_validation: pending
 release_evidence_boundary:
   diagnostics_feature_date: 2026-08-16
-  note: The 2026-08-15 five-platform release-candidate and unified provenance artifacts predate Diagnostics & QA and are evidence only for their exact historical source revisions.
+  historical_note: The 2026-08-15 release-candidate and unified provenance artifacts are five-platform historical evidence only; they predate Diagnostics & QA and the 2026-08-20 Web target.
+  current_note: The current six-platform implementation has new runtime build workflow and provenance changes and therefore requires its own hosted validation; it does not inherit green status from the historical five-platform runs.
 partial_features:
   - English is the only shipped locale; diagnostic-text policy is decided, while additional locales still require translation review, text-expansion testing, and accessibility QA
   - Windows and Linux do not yet expose a dedicated SonicNest system-wide media-session integration beyond the selected desktop playback backend
@@ -267,8 +314,10 @@ partial_features:
   - Windows portable packaging and hosted extracted-startup smoke are automated, while real microphone routing accessibility visual review and Authenticode trust remain manual or credential-dependent release gates
   - Android release-mode APK/AAB compilation and Debug-certificate classification are automated, while protected upload-key/Play App Signing and physical-device/store validation remain maintainer/manual gates
   - macOS release-mode and iOS no-codesign release-mode compilation are automated, while Apple provisioning signing notarization TestFlight/App Store and real-hardware validation remain maintainer/manual gates
+  - Web recording playback and share/download are implemented with browser-safe dependencies while native FFmpeg editing durable managed-library persistence Trash/recovery and native media sessions remain intentionally native-only capability boundaries
+  - Web compile candidate packaging and checksum/provenance contracts are automated while representative Chromium Firefox Safari microphone accessibility PWA and production HTTPS hosting evidence remains manual
 pending_manual_validation:
-  - microphone permission accepted denied revoked and permanently denied behavior on devices
+  - microphone permission accepted denied revoked and permanently denied behavior on native devices
   - Android and Apple background lock-screen media-session and interruption behavior on physical devices
   - keep-screen-awake behavior on physical devices
   - countdown and rapid lifecycle interactions on physical devices
@@ -277,8 +326,8 @@ pending_manual_validation:
   - low-storage failure and recovery
   - disk and file permission failure recovery on target systems
   - abrupt process device and power interruption during metadata and managed-audio mutations followed by recovery verification
-  - recovered-orphan behavior with real playable partially written and damaged audio on each maintained platform
-  - malformed audio imports across supported operating systems using representative corpus files
+  - recovered-orphan behavior with real playable partially written and damaged audio on each maintained native platform
+  - malformed audio imports across supported native operating systems using representative corpus files
   - batch conversion and direct export quality large-batch destination-loss and low-storage behavior on representative real recordings
   - desktop secondary-click ergonomics on Windows macOS and Linux
   - advanced editor output quality on representative voice and music recordings
@@ -291,11 +340,20 @@ pending_manual_validation:
   - Android protected upload-key Play App Signing and Play Console candidate validation
   - Apple provisioning signing notarization TestFlight App Store Connect and protected release validation
   - Windows Authenticode signing and trust verification on the exact final public package
+  - Web microphone allow deny revoke retry and alternate-input behavior on representative current Chromium Firefox and Safari families
+  - Web mono stereo effective configuration amplitude pause resume stop cancel playback and external WAV integrity on representative browsers
+  - Web share API and download fallback behavior across browsers that expose different capabilities
+  - Web long-capture and multiple-recording memory behavior on representative desktop and lower-memory mobile browsers
+  - Web responsive zoom keyboard screen-reader theme branding and PWA/installability review
+  - Web production HTTPS DNS TLS cache-update security-header rollback and deployment review
   - stable release approval and v1.0.0 tag only after all required evidence gates complete
 latest_automated_validation:
   formatter_clean_source_commit: 0eb56abad482c8c296d9f80ef060ebddbba95e7b
   canonical_format_commit: 403aee21f783cc78e3c8eaa7a3ca2de0184379c1
   non_mutating_format_gate_commit: 32ced086fac27fd2f4f808674afa511647a863e9
+  current_six_platform_revision:
+    status: implementation_committed_pending_fresh_hosted_validation
+    reason: Web runtime bootstrap CI release-candidate provenance audit and documentation changes postdate every historical green run recorded below
   core_flutter_ci:
     run_id: 31934843541
     source_commit: 0eb56abad482c8c296d9f80ef060ebddbba95e7b
@@ -307,6 +365,7 @@ latest_automated_validation:
   release_candidate:
     run_id: 31873121457
     source_commit: 048870ec8dc26a16e2451310460d3e03c9084dc7
+    historical_scope: Android Linux Windows macOS iOS only; predates Web target
     source_preflight: success
     android_release_nonproduction: success
     android_debug_certificate_verification: success
@@ -326,6 +385,7 @@ latest_automated_validation:
     run_id: 31876035202
     source_commit: b95d77c4b69c9798f1ecb48d5f69583c4e08de5c
     run_attempt: 1
+    historical_scope: five-platform provenance only; no Web artifact or manifest entry
     source_preflight: success
     android_release_nonproduction: success
     linux_release_and_deb: success
@@ -369,19 +429,19 @@ latest_automated_validation:
     manual_qa_verifier_source_commit: c65f01e62dcca9c250e6b304fcc137e9a78c8b84
     manual_qa_verifier_result: success
   validation_relationship:
-    - formatter-clean revision 4e0fbf16534a60e2d3209c5ec5f54d4982903f8c remains the exact debug/source-quality baseline with analysis tests Android and Linux debug validation
-    - release-candidate revision 048870ec8dc26a16e2451310460d3e03c9084dc7 remains the earlier fully green cross-platform release-mode hosted artifact baseline
-    - provenance release-candidate revision b95d77c4b69c9798f1ecb48d5f69583c4e08de5c validates the unified machine-readable checksum/source/run binding on a complete five-platform hosted matrix
-    - commits after b95d77c4 are documentation tests audit-policy and trigger-restoration changes and do not alter the runtime application code represented by the candidate
+    - formatter-clean revision 4e0fbf16534a60e2d3209c5ec5f54d4982903f8c remains the exact historical debug/source-quality baseline with analysis tests Android and Linux debug validation
+    - release-candidate revision 048870ec8dc26a16e2451310460d3e03c9084dc7 remains the earlier green five-native-platform release-mode hosted artifact baseline
+    - provenance release-candidate revision b95d77c4b69c9798f1ecb48d5f69583c4e08de5c validates the unified machine-readable checksum/source/run binding on the historical five-platform hosted matrix
+    - the 2026-08-20 Web expansion changes runtime bootstrap browser code CI release-candidate provenance auditing and documentation after those historical revisions and therefore requires fresh validation
     - manual-QA verifier revision c65f01e62dcca9c250e6b304fcc137e9a78c8b84 passed permanent Repository Integrity Audit run 32016347023 including Python compilation and tool regression discovery
-    - stable release still requires the unchecked real-system and maintainer-credential gates
+    - stable release still requires the unchecked real-system browser and maintainer-credential gates
 known_limitations:
-  - codec availability and effective sample bitrate channel and DSP settings depend on OS device and runtime support
+  - codec availability and effective sample bitrate channel and DSP settings depend on OS device browser and runtime support
   - sharing silence-skip media-session input-device and screen-wake capabilities differ by platform backend
   - A-B loop is application-managed and requires real-device timing validation
   - generated platform hosts require the Flutter SDK and repository bootstrap tooling
   - batch conversion and direct export are sequential and non-destructive; very large batches require performance validation
-  - deterministic import and orphan-recovery failures use controlled test doubles and do not substitute for malformed or partially written real-media corpora on each platform
+  - deterministic import and orphan-recovery failures use controlled test doubles and do not substitute for malformed or partially written real-media corpora on each native platform
   - deterministic 3000-entry metadata roundtrip proves persistence integrity rather than real UI latency memory pressure or filesystem performance
   - metadata and managed-storage rollback/recovery tests do not substitute for low-storage abrupt-power process-kill permission-revocation and filesystem-failure evidence on real systems
   - metadata backup/orphan recovery cannot recreate audio bytes deleted or irreversibly damaged outside SonicNest
@@ -389,20 +449,26 @@ known_limitations:
   - hosted Windows startup smoke proves only bounded launch of the extracted portable package and does not prove microphone routing accessibility desktop integration or Authenticode trust
   - hosted Android release-mode artifacts are signed by the Android Debug certificate and are intentionally non-production
   - hosted macOS and iOS release-mode artifacts are unsigned/no-codesign validation artifacts and are not public Apple distributables
-  - unified provenance manifest proves hosted artifact checksum/source/run consistency only and does not convert validation artifacts into stable signed distributables
-  - manual-QA structural verification proves export/catalog/privacy/summary consistency only and does not authenticate the tester or reproduce the physical accessibility stress filesystem branding signing or distribution observation
-  - automated compilation cannot substitute for microphone hardware interruption background lock-screen routing media-button accessibility storage-failure and long-duration QA
-  - signed distributable packages require maintainer-owned signing material that must not be committed
+  - Web release compilation and checksummed static packaging do not prove real browser permission microphone playback share PWA accessibility memory or production-hosting behavior
+  - current Web session recordings are memory-backed and must be explicitly downloaded/shared for retention; durable native managed-library and recovery semantics are not claimed on Web
+  - native FFmpeg editing/conversion is not exposed on Web because the selected native FFmpeg dependency has no browser implementation
+  - unified provenance manifest proves hosted artifact checksum/source/run consistency only and does not convert validation artifacts into stable signed or hosted distributables
+  - manual-QA structural verification proves export/catalog/privacy/summary consistency only and does not authenticate the tester or reproduce the physical accessibility stress filesystem branding signing hosting or distribution observation
+  - automated compilation cannot substitute for microphone hardware interruption background lock-screen routing media-button accessibility browser-policy storage-failure and long-duration QA
+  - signed native distributable packages and production Web hosting credentials require maintainer-owned material that must not be committed
 branch: main
 commit_identity:
   name: Sanskar
   email: sanskarin@outlook.in
 next_exact_tasks:
   - execute docs/QA_CHECKLIST.md on representative Android iOS macOS Windows and Linux hardware
+  - execute docs/WEB_QA_CHECKLIST.md on representative Chromium Firefox and Safari browser families
   - verify countdown screen-wake microphone routing interruption and media-session behavior on physical devices
-  - run abrupt process interruption permission failure and low-storage recovery scenarios against the managed metadata and orphan-recovery paths on representative systems
-  - run real playable partially written and damaged managed-audio orphan recovery scenarios on each maintained platform
-  - run a privacy-safe malformed audio corpus through import on each maintained platform and record per-file results
+  - verify Web permission input selection capture pause resume WAV playback share/download and session-memory behavior on representative browsers
+  - validate a production-like HTTPS Web host including cache updates PWA behavior security headers and rollback before public Web release
+  - run abrupt process interruption permission failure and low-storage recovery scenarios against the managed metadata and orphan-recovery paths on representative native systems
+  - run real playable partially written and damaged managed-audio orphan recovery scenarios on each maintained native platform
+  - run a privacy-safe malformed audio corpus through import on each maintained native platform and record per-file results
   - profile thousands of Library entries in the real UI for latency memory and scrolling behavior rather than relying only on metadata serialization tests
   - install the Debian package on representative Debian Ubuntu family systems and verify launcher icon microphone routing upgrade and uninstall behavior with release evidence
   - extract the Windows portable ZIP on representative Windows systems and verify microphone routing accessibility branding cleanup and final Authenticode status for a public candidate
@@ -411,11 +477,27 @@ next_exact_tasks:
   - evaluate dedicated Windows and Linux system media-session integration only where maintained platform support is suitable
   - evaluate cursor-anchored platform-native desktop context menus only if they materially improve usability over the implemented action surface
   - profile multi-hour recordings and large libraries
-  - resolve any reproducible device-only issues discovered by manual QA
-  - capture real screenshots and review native icon launch assets from tested release candidates
-  - configure protected Android Apple and Windows signing only in maintainer-owned release environments after manual gates are satisfied
-  - tag v1.0.0 only after the exact signed/public candidates complete every required release gate
+  - profile long and repeated Web captures for browser memory pressure
+  - resolve any reproducible device/browser-only issues discovered by manual QA
+  - capture real screenshots and review native and Web/PWA icon launch assets from tested release candidates
+  - configure protected Android Apple Windows signing and production Web deployment credentials only in maintainer-owned release environments after manual gates are satisfied
+  - tag v1.0.0 only after the exact signed/hosted public candidates complete every required release gate
 ```
+
+## Current six-platform expansion — 2026-08-20
+
+- SonicNest now targets Android, iOS, macOS, Windows, Linux, and Web from one shared default Flutter entry point.
+- Native startup was isolated behind a Dart IO conditional bootstrap; Web startup is isolated behind `dart.library.js_interop` so native-only imports do not enter browser compilation.
+- The Web recorder supports microphone permission, input enumeration/selection, PCM16 streaming, pause/resume/stop/cancel, amplitude metering, local WAV packaging, in-session playback, and explicit share/download fallback.
+- `lib/core/wav_encoder.dart` and `test/wav_encoder_test.dart` provide a pure-Dart WAV container path and deterministic regression coverage.
+- Both platform bootstrap scripts now generate `android,ios,macos,linux,windows,web`.
+- Branding generation now includes Web launcher/icon metadata and Web splash resources.
+- Core CI has a dedicated `flutter build web --release` job through the normal `lib/main.dart` entry point.
+- Manual Release Candidate Validation now creates a checksummed `sonicnest-web-release.tar.gz` artifact and the unified provenance manifest requires all six platform artifact directories.
+- `tool/tests/test_web_platform_contract.py` plus repository-audit invariants protect the Web entry point, six-target bootstrap, branding, CI, release candidate, provenance, and documentation surfaces.
+- `docs/WEB_SUPPORT.md` and `docs/WEB_QA_CHECKLIST.md` document browser capabilities, native-only boundaries, privacy, browser QA, PWA/hosting checks, and release evidence.
+- Historical green runs listed below remain valid only for their exact historical source revisions. None of the 2026-08-15 five-platform runs is being reused as proof that the current Web implementation builds or works in real browsers.
+- Current classification remains **development preview** until fresh hosted six-platform validation plus representative real-browser and production-hosting evidence is obtained.
 
 ## Latest exact validation — external batch export
 
@@ -446,11 +528,11 @@ next_exact_tasks:
 
 ## Latest exact validation — deterministic native branding
 
-- Validated source revision: `40c4a758debef136c2d8c977c321446cca2697cd`
+- Validated source revision: `40c4a758debef136c2d8c977c321446cca2697cd`.
 - Core run `31776174696`: brand source generation, analyzer, tests, Android branded APK, and Linux build **SUCCESS**.
 - Windows run `31776174725`: native branding generation and Windows debug build **SUCCESS**.
 - Apple run `31776174715`: native branding generation plus macOS and unsigned-iOS debug builds **SUCCESS**.
-- Android/iOS native splash generation and Android/iOS/macOS/Windows launcher-icon generation are repository-automatable and implemented.
+- Android/iOS native splash generation and Android/iOS/macOS/Windows launcher-icon generation are repository-automatable and implemented in that historical revision.
 - OS-level visual inspection remains a manual/release-distribution gate.
 - Release classification remains **development preview**.
 
@@ -529,31 +611,32 @@ next_exact_tasks:
 - Linux public channel remains GitHub Releases with verified `.deb` + SHA-256 checksum; no initial custom APT repository.
 - Release classification remains **development preview** pending the unchecked real-device/filesystem/accessibility/performance/branding/signing/release evidence gates.
 
-## Final cross-platform automated release-candidate validation — 2026-08-15
+## Historical five-platform automated release-candidate validation — 2026-08-15
 
 - Candidate source revision: `048870ec8dc26a16e2451310460d3e03c9084dc7`.
 - Release Candidate Validation run `31873121457`: **SUCCESS** across Source preflight, Android release-mode non-production APK/AAB, Linux release bundle + Debian package, Windows release portable ZIP + verify + extracted startup smoke, macOS release archive, and iOS release no-codesign archive.
+- This run predates the 2026-08-20 Web target and therefore contains no Web build or browser artifact evidence.
 - Android Debug-certificate identity and non-production classification were verified before upload; exact certificate and artifact hashes are recorded in `docs/AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md`.
 - Windows permanent package CI run `31872928500` independently passed release build, portable package construction/verification, extracted startup smoke, and artifact publication.
 - Clean candidate-tree repository audit run `31873122160`: **SUCCESS**.
 - Strengthened repository audit run `31874506476` on commit `64c121fa0e5c81531a3710b1d67b88fb3dfc93db`: **SUCCESS** after adding `.yaml` workflow recognition and `write-all`/write-scope rejection.
-- The automated evidence is release-mode structural/build/package evidence only. SonicNest remains a **development preview** until physical-device, representative real-system, accessibility, long-duration/performance, protected signing/notarization, and stable-release approval gates are completed.
+- The automated evidence is release-mode structural/build/package evidence only. SonicNest remains a **development preview** until physical-device, representative real-system/browser, accessibility, long-duration/performance, protected signing/notarization, production hosting, and stable-release approval gates are completed.
 
-## Unified release-candidate provenance validation — 2026-08-15
+## Historical five-platform unified release-candidate provenance validation — 2026-08-15
 
 - Provenance source revision: `b95d77c4b69c9798f1ecb48d5f69583c4e08de5c`.
 - Release Candidate Validation run `31876035202`: **SUCCESS** for Source preflight, Android, Linux, Windows, macOS, iOS, and the final **Unified candidate provenance manifest** job.
-- `tool/build_release_candidate_manifest.py` re-verified all platform payloads against each artifact set's `SHA256SUMS.txt`, required the Android Debug/NON-PRODUCTION signing-state markers, and bound the result to the exact full source SHA, workflow run, workflow attempt, and application version.
+- This run predates Web candidate integration. Its manifest contains five platform entries and must not be used as evidence for the current six-platform implementation.
+- `tool/build_release_candidate_manifest.py` at that historical revision re-verified all five platform payloads against each artifact set's `SHA256SUMS.txt`, required the Android Debug/NON-PRODUCTION signing-state markers, and bound the result to the exact full source SHA, workflow run, workflow attempt, and application version.
 - Manifest application version: `0.1.0+1`.
 - Manifest release classification: `development-preview`.
 - Manifest `stableReleaseApproved`: `false`.
 - `RELEASE_CANDIDATE_MANIFEST.json` SHA-256: `8a49759555cad26a60858025d82953ad0e3c3b429aa8138d67f7ef4f86d99b7e`.
 - Independent post-download recomputation matched the recorded manifest SHA-256 exactly.
 - Manifest workflow artifact digest: `sha256:5fa654434ba304e7b67945250f7c8f4bec14eacbc87effefa5cd2d620885baa3`.
-- Permanent Repository Integrity Audit run `31876149473` passed Python compilation, repository invariants, **10/10** Python release-tool tests, Bash syntax, and PowerShell syntax.
+- Permanent Repository Integrity Audit run `31876149473` passed Python compilation, repository invariants, **10/10** Python release-tool tests, Bash syntax, and PowerShell syntax for that historical source.
 - The temporary narrow documentation-path push trigger used to obtain this validation was removed in commit `79b5195e7f207ebc1076e38faecb5c4c9c2447e7`; the permanent release-candidate workflow is again manual `workflow_dispatch` only.
-- This provenance evidence proves hosted checksum/source/run consistency. It does not complete physical-device, real-system, accessibility, protected signing/notarization, store, or stable-release gates.
-
+- This provenance evidence proves historical hosted checksum/source/run consistency. It does not complete Web build/browser evidence or physical-device, real-system, accessibility, protected signing/notarization, store, hosting, or stable-release gates.
 
 ## Latest source-line hardening — 2026-08-17
 
@@ -562,4 +645,4 @@ next_exact_tasks:
 - Recorder cancellation now attempts a backend stop fallback when backend cancellation fails and always releases background/wake state through cleanup paths.
 - Core and advanced FFmpeg processing remove partial managed outputs when processing or output validation fails.
 - Metadata loading now refuses unsupported integer schema versions without rewriting or classifying newer metadata as corruption; malformed schema types remain corruption-isolated.
-- Stable-release classification remains unchanged: physical-device, accessibility, stress, protected-signing, store, and final approval gates remain manual/credential-dependent.
+- Stable-release classification remains unchanged: physical-device, accessibility, stress, protected-signing, store/hosting, and final approval gates remain manual/credential-dependent.
