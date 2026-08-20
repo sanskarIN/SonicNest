@@ -7,7 +7,7 @@ if (-not (Get-Command flutter -ErrorAction SilentlyContinue)) {
     throw 'Flutter is required. Install the stable Flutter SDK and place flutter on PATH.'
 }
 
-$RequiredHosts = @('android', 'ios', 'macos', 'linux', 'windows')
+$RequiredHosts = @('android', 'ios', 'macos', 'linux', 'windows', 'web')
 $MissingHost = $false
 foreach ($HostDirectory in $RequiredHosts) {
     if (-not (Test-Path (Join-Path $Root $HostDirectory))) {
@@ -28,7 +28,7 @@ if ($MissingHost) {
         flutter create . `
             --project-name sonic_nest `
             --org io.github.sanskarin `
-            --platforms=android,ios,macos,linux,windows `
+            --platforms=android,ios,macos,linux,windows,web `
             --no-pub
         if ($LASTEXITCODE -ne 0) {
             throw "Flutter platform generation failed with exit code $LASTEXITCODE."
@@ -74,4 +74,4 @@ if ($LASTEXITCODE -ne 0) {
     throw "Platform patching failed with exit code $LASTEXITCODE."
 }
 
-Write-Host 'SonicNest platform scaffolding is ready.'
+Write-Host 'SonicNest platform scaffolding is ready for Android, iOS, macOS, Linux, Windows, and Web.'
