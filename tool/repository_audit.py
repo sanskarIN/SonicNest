@@ -30,6 +30,15 @@ REQUIRED_FILES = (
     "what_changed.md",
     "pubspec.yaml",
     "analysis_options.yaml",
+    "lib/main.dart",
+    "lib/main_web.dart",
+    "lib/bootstrap/bootstrap.dart",
+    "lib/bootstrap/bootstrap_native.dart",
+    "lib/bootstrap/bootstrap_web.dart",
+    "lib/bootstrap/bootstrap_unsupported.dart",
+    "lib/core/wav_encoder.dart",
+    "test/bootstrap_integrity_test.dart",
+    "test/wav_encoder_test.dart",
     "docs/ANDROID_DISTRIBUTION_POLICY.md",
     "docs/APPLE_DISTRIBUTION_POLICY.md",
     "docs/ARCHITECTURE.md",
@@ -61,6 +70,8 @@ REQUIRED_FILES = (
     "docs/UNSIGNED_ARTIFACTS.md",
     "docs/USER_GUIDE.md",
     "docs/TROUBLESHOOTING.md",
+    "docs/WEB_QA_CHECKLIST.md",
+    "docs/WEB_SUPPORT.md",
     "docs/WINDOWS_PACKAGING.md",
     "docs/WINDOWS_SIGNING_POLICY.md",
     "packaging/linux/debian/sonicnest.desktop",
@@ -93,6 +104,7 @@ REQUIRED_FILES = (
     "tool/tests/test_source_line_audit.py",
     "tool/tests/test_verify_project_state_dependencies.py",
     "tool/tests/test_verify_release_readiness_report.py",
+    "tool/tests/test_web_platform_contract.py",
     "tool/build_linux_deb.sh",
     "tool/verify_linux_deb.sh",
     "tool/smoke_test_installed_linux_deb.sh",
@@ -143,6 +155,7 @@ GENERATED_HOST_PREFIXES = (
     "macos/",
     "linux/",
     "windows/",
+    "web/",
 )
 
 ALLOWED_GENERATED_HOST_PATH_PREFIXES: tuple[str, ...] = ()
@@ -195,7 +208,9 @@ def is_text_candidate(path: Path) -> bool:
     return b"\x00" not in data
 
 
-def require_fragments(errors: list[str], path: Path, fragments: tuple[str, ...], label: str) -> None:
+def require_fragments(
+    errors: list[str], path: Path, fragments: tuple[str, ...], label: str
+) -> None:
     if not path.exists():
         return
     text = path.read_text(encoding="utf-8", errors="ignore")
@@ -204,7 +219,9 @@ def require_fragments(errors: list[str], path: Path, fragments: tuple[str, ...],
             errors.append(f"{label} is missing required invariant: {fragment}")
 
 
-def require_fragments_casefold(errors: list[str], path: Path, fragments: tuple[str, ...], label: str) -> None:
+def require_fragments_casefold(
+    errors: list[str], path: Path, fragments: tuple[str, ...], label: str
+) -> None:
     if not path.exists():
         return
     text = path.read_text(encoding="utf-8", errors="ignore").casefold()
@@ -272,7 +289,7 @@ def audit() -> list[str]:
             errors.append(f"Signing/private material must not be tracked: {relative}")
         if relative.startswith("assets/generated/") and lower.endswith(".png"):
             errors.append(
-                "Generated native branding PNGs must stay reproducible rather than tracked: "
+                "Generated cross-platform branding PNGs must stay reproducible rather than tracked: "
                 f"{relative}"
             )
         if any(relative.startswith(prefix) for prefix in GENERATED_HOST_PREFIXES):
@@ -327,8 +344,52 @@ def audit() -> list[str]:
             "flutter_launcher_icons:",
             "flutter_native_splash:",
             "assets/generated/sonicnest_icon.png",
+            "web:\n    generate: true",
+            "web: true",
         ),
         "pubspec.yaml",
+    )
+
+    require_fragments(
+        errors,
+        ROOT / "lib/bootstrap/bootstrap.dart",
+        (
+            "dart.library.io",
+            "dart.library.js_interop",
+            "bootstrap_native.dart",
+            "bootstrap_web.dart",
+        ),
+        "bootstrap.dart",
+    )
+    require_fragments(
+        errors,
+        ROOT / "lib/main_web.dart",
+        (
+            "AudioRecorder",
+            "startStream",
+            "pcm16ToWav",
+            "StreamAudioSource",
+            "downloadFallbackEnabled: true",
+        ),
+        "main_web.dart",
+    )
+    require_fragments(
+        errors,
+        ROOT / "tool/bootstrap_platforms.sh",
+        (
+            "! -d web",
+            "--platforms=android,ios,macos,linux,windows,web",
+        ),
+        "bootstrap_platforms.sh",
+    )
+    require_fragments(
+        errors,
+        ROOT / "tool/bootstrap_platforms.ps1",
+        (
+            "'web'",
+            "--platforms=android,ios,macos,linux,windows,web",
+        ),
+        "bootstrap_platforms.ps1",
     )
 
     require_fragments(
@@ -459,6 +520,12 @@ def audit() -> list[str]:
             "tool/smoke_test_windows_portable.ps1",
             "sonicnest-macos-release-unsigned.zip",
             "sonicnest-ios-release-unsigned.zip",
+            "name: Web release-mode artifact",
+            "flutter build web --release",
+            "sonicnest-web-release.tar.gz",
+            "sonicnest-web-release-candidate",
+            "needs: [android, linux, windows, macos, ios, web]",
+            "--artifact web=",
         ),
         "release-candidate.yml",
     )
@@ -512,6 +579,9 @@ def audit() -> list[str]:
             "dart format --output=none --set-exit-if-changed",
             "flutter analyze --no-fatal-infos",
             "flutter test",
+            "name: Web release build",
+            "flutter config --enable-web",
+            "flutter build web --release",
         ),
         "ci.yml",
     )
@@ -592,6 +662,32 @@ def audit() -> list[str]:
             "maintainer",
         ),
         "WINDOWS_SIGNING_POLICY.md",
+    )
+    require_fragments_casefold(
+        errors,
+        ROOT / "docs/WEB_SUPPORT.md",
+        (
+            "first-class build target",
+            "dart.library.js_interop",
+            "flutter build web --release",
+            "native-only capability boundary",
+            "release-candidate evidence",
+            "privacy",
+        ),
+        "WEB_SUPPORT.md",
+    )
+    require_fragments_casefold(
+        errors,
+        ROOT / "docs/WEB_QA_CHECKLIST.md",
+        (
+            "Chromium",
+            "Firefox",
+            "Safari",
+            "Microphone permission",
+            "Hosting and cache policy",
+            "Privacy and security review",
+        ),
+        "WEB_QA_CHECKLIST.md",
     )
 
     gitignore = (
