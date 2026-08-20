@@ -27,11 +27,11 @@ restore_analysis_options() {
 }
 trap restore_analysis_options EXIT
 
-if [[ ! -d android || ! -d ios || ! -d macos || ! -d linux || ! -d windows ]]; then
+if [[ ! -d android || ! -d ios || ! -d macos || ! -d linux || ! -d windows || ! -d web ]]; then
   flutter create . \
     --project-name sonic_nest \
     --org io.github.sanskarin \
-    --platforms=android,ios,macos,linux,windows \
+    --platforms=android,ios,macos,linux,windows,web \
     --no-pub
 fi
 
@@ -48,4 +48,4 @@ cp tool/platform_overrides/android/app/src/main/kotlin/io/github/sanskarin/sonic
 
 python3 tool/patch_generated_platforms.py
 
-echo "SonicNest platform scaffolding is ready."
+echo "SonicNest platform scaffolding is ready for Android, iOS, macOS, Linux, Windows, and Web."
