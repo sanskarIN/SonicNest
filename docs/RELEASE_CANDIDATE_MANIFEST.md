@@ -2,7 +2,9 @@
 
 SonicNest uses a machine-readable provenance manifest to bind one hosted cross-platform release-candidate run to the exact Git source revision and to the checksummed platform artifacts produced by that run.
 
-This manifest is **validation evidence**, not stable-release approval. It never upgrades unsigned, no-codesign, Android Debug-signed, development-preview, or otherwise non-production artifacts into public production releases.
+The current maintained contract covers **Android, Linux, Windows, macOS, iOS, and Web**.
+
+This manifest is **validation evidence**, not stable-release approval. It never upgrades unsigned, no-codesign, Android Debug-signed, browser-build, development-preview, or otherwise non-production artifacts into public production releases.
 
 ## Builder
 
@@ -15,6 +17,7 @@ python3 tool/build_release_candidate_manifest.py \
   --artifact windows=<windows-artifact-directory> \
   --artifact macos=<macos-artifact-directory> \
   --artifact ios=<ios-artifact-directory> \
+  --artifact web=<web-artifact-directory> \
   --source-sha <40-character-git-sha> \
   --workflow-run-id <github-actions-run-id> \
   --workflow-run-attempt <attempt-number> \
@@ -25,9 +28,11 @@ The builder uses only the Python standard library.
 
 ## Required platform evidence
 
-Every platform artifact directory must contain `RELEASE_CANDIDATE_WARNING.txt` and `SHA256SUMS.txt`.
+Every one of the six platform artifact directories must contain `RELEASE_CANDIDATE_WARNING.txt` and `SHA256SUMS.txt`.
 
 Android must also contain `ANDROID_SIGNING_STATE.txt`, including the expected package identity and the explicit `Android Debug certificate / NON-PRODUCTION` classification.
+
+The Web artifact directory contains the checksummed `sonicnest-web-release.tar.gz` static release bundle produced from `flutter build web --release`. Its classification explicitly records that binary signing is not applicable to the static Web bundle and that the artifact remains development-preview validation evidence.
 
 Candidate evidence must consist of ordinary files/directories. The builder refuses a platform artifact directory that is itself a symbolic link and refuses any symbolic link found anywhere inside a platform artifact tree. This prevents provenance hashing from following a link to bytes outside the downloaded candidate directory, even when a checksum entry would otherwise match the linked target.
 
@@ -35,7 +40,7 @@ Checksum identities are normalized before verification: Windows-style separators
 
 The builder rejects a candidate when:
 
-- any required platform directory is missing;
+- any required platform directory is missing, including Web;
 - a platform artifact directory or any contained evidence/payload path is a symbolic link;
 - a required evidence file is missing;
 - a checksum line is malformed;
@@ -57,7 +62,7 @@ The generated JSON records:
 - GitHub Actions workflow run ID and attempt;
 - development-preview release classification;
 - an explicit `stableReleaseApproved: false` marker;
-- platform-specific build/signing/distribution classifications;
+- platform-specific build/signing/distribution classifications for all six targets;
 - every file in each downloaded platform artifact directory;
 - file size and SHA-256 for every recorded file;
 - the platform payload checksums re-verified from each `SHA256SUMS.txt`.
@@ -68,8 +73,9 @@ The final manifest directory also contains its own `SHA256SUMS.txt` and a releas
 
 `tool/tests/test_release_candidate_manifest.py` covers:
 
-- successful five-platform manifest construction;
-- tampered payload rejection;
+- successful six-platform manifest construction;
+- Web classification and browser-payload inclusion;
+- native and Web tampered-payload rejection;
 - payload-without-checksum rejection;
 - checksum path-traversal rejection;
 - duplicate normalized checksum-path rejection for dot-path and separator aliases;
@@ -79,15 +85,31 @@ The final manifest directory also contains its own `SHA256SUMS.txt` and a releas
 - missing-platform rejection;
 - full Git SHA enforcement.
 
-`tool/tests/test_release_candidate_integration.py` locks the maintained workflow integration, all five platform artifact arguments, exact source/run binding, final manifest publication, and permanent Repository Integrity Audit execution of the Python release-tool suite.
+`tool/tests/test_release_candidate_integration.py` locks the maintained workflow integration, all six platform artifact arguments, Web release packaging, exact source/run binding, final manifest publication, and permanent Repository Integrity Audit execution of the Python release-tool suite.
 
-Repository Integrity Audit run `31876149473` passed Python helper compilation, repository invariants, **10/10** Python release-tool tests, Bash helper parsing, and PowerShell helper parsing. That run remains historical evidence for its exact source revision; newer repository revisions require their own validation evidence and do not inherit this result automatically.
+## Current maintained workflow
 
-## Hosted integration validation
+The maintained release-candidate workflow waits for Android, Linux, Windows, macOS, iOS, and Web candidate jobs. It then downloads the six platform artifact sets, re-verifies their payload checksum records through the builder, and uploads one unified provenance manifest as a separate short-retention artifact.
 
-The maintained release-candidate workflow downloads the five platform artifact sets only after all platform jobs succeed, re-verifies their payload checksum records through the builder, and then uploads the unified manifest as a separate short-retention artifact.
+The Web job:
 
-Exact hosted validation completed successfully:
+1. enables Flutter Web;
+2. regenerates the six platform hosts;
+3. resolves dependencies and applies SonicNest branding;
+4. builds `flutter build web --release` through the normal shared entry point;
+5. archives the generated static site as `sonicnest-web-release.tar.gz`;
+6. writes an explicit development-preview/browser-QA warning;
+7. writes and later re-verifies the payload SHA-256.
+
+A successful hosted Web build proves that the browser bundle compiled and that the archived bytes match their checksum. It does not prove microphone or browser-policy behavior on real browsers.
+
+## Historical hosted integration evidence
+
+The exact hosted evidence below predates Web release-candidate integration and therefore remains **five-platform historical evidence only**. It must not be read as validation of the current six-platform source revision.
+
+Repository Integrity Audit run `31876149473` passed Python helper compilation, repository invariants, **10/10** Python release-tool tests, Bash helper parsing, and PowerShell helper parsing for its historical source revision.
+
+Historical Release Candidate Validation evidence:
 
 - source SHA: `b95d77c4b69c9798f1ecb48d5f69583c4e08de5c`;
 - Release Candidate Validation run: `31876035202`;
@@ -100,33 +122,36 @@ Exact hosted validation completed successfully:
 - iOS release-mode no-codesign job: **SUCCESS**;
 - Unified candidate provenance manifest job: **SUCCESS**.
 
-The generated manifest records application version `0.1.0+1`, `releaseClassification: development-preview`, and `stableReleaseApproved: false`.
+That historical run did **not** contain the current Web candidate job or Web manifest entry. The generated historical manifest records application version `0.1.0+1`, `releaseClassification: development-preview`, and `stableReleaseApproved: false`.
 
-Exact manifest evidence:
+Historical manifest evidence:
 
 - `RELEASE_CANDIDATE_MANIFEST.json` SHA-256: `8a49759555cad26a60858025d82953ad0e3c3b429aa8138d67f7ef4f86d99b7e`;
 - independent post-download recomputation: `8a49759555cad26a60858025d82953ad0e3c3b429aa8138d67f7ef4f86d99b7e`;
 - manifest workflow artifact digest: `sha256:5fa654434ba304e7b67945250f7c8f4bec14eacbc87effefa5cd2d620885baa3`.
 
-The narrow push trigger used solely to obtain this hosted evidence was removed after validation. The maintained release-candidate workflow is again manual `workflow_dispatch` only.
+The narrow push trigger used solely to obtain that historical evidence was removed after validation. The maintained release-candidate workflow remains manual `workflow_dispatch` only.
 
-The full exact platform payload hashes and workflow artifact digests are preserved in `AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md` and the additive `../what_changed.md` continuation ledger.
+The full exact historical platform payload hashes and workflow artifact digests are preserved in `AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md` and the additive `../what_changed.md` continuation ledger. The current six-platform revision requires its own hosted validation evidence and does not inherit the older run automatically.
 
 ## Evidence boundary
 
-A green provenance-manifest job proves that the hosted artifacts downloaded by that job match their per-platform checksum records and that the manifest binds those bytes to the recorded source SHA and workflow run.
+A green current provenance-manifest job proves that the hosted artifacts downloaded by that job match their per-platform checksum records and that the manifest binds those bytes to the recorded source SHA and workflow run.
 
 It does **not** prove:
 
 - physical microphone permission/capture/routing behavior;
 - Bluetooth, wired, USB, interruption, background, lock-screen, or media-button behavior;
+- browser microphone permission prompts, device enumeration, capture/playback quality, or browser policy behavior;
+- Web share/download behavior on every browser;
+- Web responsive-layout, accessibility, PWA installation, cache, hosting, TLS, DNS, or deployment behavior;
 - real low-storage or permission-revocation recovery;
 - long-duration or large-library performance;
 - accessibility quality;
-- real launcher/splash/desktop visual quality;
+- real launcher/splash/desktop/browser visual quality;
 - Android Play production signing;
 - Apple signing/provisioning/notarization;
 - Windows Authenticode trust;
-- store acceptance or final `v1.0.0` approval.
+- store acceptance, production hosting approval, or final stable-release approval.
 
 Those gates remain evidence-dependent and must stay unchecked until they are actually completed on the exact release candidate.
