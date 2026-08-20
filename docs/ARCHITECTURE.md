@@ -2,18 +2,40 @@
 
 ## Design goals
 
-Reliability and recording safety take priority over visual polish. The project uses service boundaries so recorder, processing, storage, player, metadata recovery, orphan reconstruction, import validation, batch conversion, external export, and UI logic can be tested and evolved independently.
+Reliability and recording safety take priority over visual polish. The project uses service boundaries so recorder, processing, storage, player, metadata recovery, orphan reconstruction, import validation, batch conversion, external export, browser recording, and UI logic can be tested and evolved independently.
+
+Cross-platform support is capability-aware rather than pretending every runtime exposes the same operating-system services. The six supported Flutter targets share one default entry point, while native-only dependencies are isolated from the browser compilation graph.
 
 ## Layers
 
+- `lib/bootstrap/`: conditional application startup that selects native or Web dependency graphs from the shared `lib/main.dart` entry point.
 - `lib/models/`: immutable recording and settings data with defensive metadata decoding and numeric/waveform normalization.
-- `lib/services/`: filesystem, metadata, microphone recorder, player, FFmpeg processing, external actions, isolated audio-import validation, managed-library orphan recovery, and deterministic batch-conversion orchestration.
-- `lib/controllers/`: application orchestration, state transitions, persistence rollback, and startup reconciliation.
-- `lib/screens/`: feature-level presentation and user interaction.
+- `lib/services/`: native filesystem, metadata, microphone recorder, player, FFmpeg processing, external actions, isolated audio-import validation, managed-library orphan recovery, and deterministic batch-conversion orchestration.
+- `lib/controllers/`: native application orchestration, state transitions, persistence rollback, and startup reconciliation.
+- `lib/screens/`: feature-level native presentation and user interaction.
 - `lib/widgets/`: reusable responsive components.
-- `lib/core/`: theme, constants, naming/file helpers, and utility types.
+- `lib/core/`: theme, constants, naming/file helpers, utility types, and the platform-neutral PCM16 WAV encoder.
+- `lib/main_web.dart`: browser-safe recorder presentation/orchestration that imports no `dart:io`, native FFmpeg, native path-provider, or native media-session layer.
 
-## Managed storage and metadata recovery
+## Conditional application bootstrap
+
+`lib/main.dart` is intentionally tiny:
+
+```dart
+import 'bootstrap/bootstrap.dart';
+
+Future<void> main() => bootstrapSonicNest();
+```
+
+`lib/bootstrap/bootstrap.dart` conditionally exports the correct implementation:
+
+- `dart.library.io` selects `bootstrap_native.dart` for Android, iOS, macOS, Windows, and Linux.
+- `dart.library.js_interop` selects `bootstrap_web.dart` for browser builds.
+- `bootstrap_unsupported.dart` is an explicit fail-closed fallback for an unknown Dart runtime.
+
+This separation is architectural, not merely visual. The native branch may import `dart:io`, `path_provider`, FFmpeg, native media sessions, and managed-filesystem services. The Web branch never imports those native-only dependency paths, allowing the normal `flutter build web` command to compile from the same default application entry point.
+
+## Native managed storage and metadata recovery
 
 Audio files live in the application documents directory under `SonicNest/Recordings`. Metadata is stored separately as JSON under application support. Trash moves audio to the dedicated local `SonicNest/.trash` directory until permanent deletion.
 
@@ -42,6 +64,8 @@ Startup treats the primary and backup as recoverable state:
 7. If duplicate recording IDs or normalized file paths appear, retain the first valid record and isolate later duplicates.
 
 Model decoding type-checks optional fields, filters malformed list members, skips malformed nested markers, rejects negative/non-finite numeric metadata, preserves zero as the imported-media unknown-channel state, and bounds finite recovered waveform samples to `0.0..1.0`.
+
+These managed-filesystem semantics belong to the native branch. The browser implementation does not claim equivalent durable filesystem recovery semantics.
 
 ## Managed orphan recovery
 
@@ -79,11 +103,11 @@ The design provides per-item consistency and recovery behavior. It does not clai
 
 See `docs/METADATA_INTEGRITY.md`, `docs/MANAGED_STORAGE_BOUNDARY.md`, and `docs/RECOVERY_TESTING.md` for the detailed contract.
 
-## Recording pipeline
+## Native recording pipeline
 
 `RecorderService` deliberately does not instantiate the native `AudioRecorder` in its constructor. The native backend is created lazily when an operation actually needs recorder-plugin functionality. This keeps service construction free of native method-channel side effects, improves deterministic controller testing, and does not change production microphone behavior once recording/list-device functionality is invoked.
 
-The recording path is:
+The native recording path is:
 
 1. Validate microphone permission and recorder state.
 2. Resolve requested format/preset and query encoder support.
@@ -94,9 +118,28 @@ The recording path is:
 7. If metadata persistence fails after final audio exists, remove the unsaved in-memory entry but preserve the managed audio for startup recovery.
 8. If conversion fails, surface an actionable error instead of claiming success.
 
+## Web recording pipeline
+
+The Web branch intentionally uses a smaller browser-safe pipeline instead of importing the native services.
+
+1. Request browser microphone permission through `AudioRecorder`.
+2. Enumerate browser input devices and optionally select one.
+3. Build a PCM16 `RecordConfig` with mono/stereo and browser audio-processing requests.
+4. Start `AudioRecorder.startStream()` and collect PCM bytes in memory.
+5. Subscribe to amplitude changes for the live meter.
+6. Support pause, resume, stop, and cancel through the recorder API.
+7. Track the effective recorder configuration through the configuration-change callback.
+8. On stop, wrap the PCM16 byte stream in a RIFF/WAVE container using `lib/core/wav_encoder.dart`.
+9. Keep the finished WAV in the current in-memory browser session.
+10. Play it through a byte-backed `StreamAudioSource` or explicitly share/download it through `share_plus`.
+
+The browser does not automatically upload recording bytes. Refreshing/closing the page discards the in-memory session unless the user has explicitly downloaded/shared the recording.
+
+The pure-Dart WAV encoder rejects invalid sample rates, unsupported channel counts, and incomplete PCM16 samples. `test/wav_encoder_test.dart` verifies RIFF/WAVE structure, byte rate, block alignment, payload placement, and invalid-input behavior.
+
 ## Audio import transaction
 
-`AudioImportService` owns per-file managed-copy validation. It is deliberately separate from platform picker/UI orchestration so copy/probe/waveform failure behavior can be tested deterministically.
+`AudioImportService` owns per-file managed-copy validation on native platforms. It is deliberately separate from platform picker/UI orchestration so copy/probe/waveform failure behavior can be tested deterministically.
 
 For each selected source:
 
@@ -111,13 +154,15 @@ For each selected source:
 
 ## Editor pipeline
 
-All editor operations create a new file. The original remains unchanged. FFmpeg commands are generated from internally managed paths and validated numeric parameters.
+All native editor operations create a new file. The original remains unchanged. FFmpeg commands are generated from internally managed paths and validated numeric parameters.
 
 Generated editor output is registered through the managed Library transaction. Failed registration cleanup is limited to eligible managed regular audio and must not delete an external caller-supplied path.
 
+FFmpeg-backed editing is not part of the current Web branch because the selected audio-focused FFmpeg dependency has no Web implementation. The browser UI does not expose a fake or non-functional editor surface.
+
 ## Batch conversion pipeline
 
-`BatchConversionService` owns the sequential batch execution loop used by `BatchConvertScreen`.
+`BatchConversionService` owns the sequential native batch execution loop used by `BatchConvertScreen`.
 
 For each selected source it:
 
@@ -138,24 +183,53 @@ See `docs/BATCH_CONVERSION.md` for the exact execution and evidence boundary.
 
 ## External export collision safety
 
-`ExternalActions` copies files sequentially and allocates collision-safe destination names. Destination occupancy is checked without following links; ordinary files, directories, symbolic links, broken links, and uninspectable paths are treated as occupied. This avoids overwriting or following an unexpected filesystem entity in a user-selected folder.
+`ExternalActions` copies files sequentially on native platforms and allocates collision-safe destination names. Destination occupancy is checked without following links; ordinary files, directories, symbolic links, broken links, and uninspectable paths are treated as occupied. This avoids overwriting or following an unexpected filesystem entity in a user-selected folder.
+
+The Web branch instead uses explicit browser share/download behavior and does not claim native destination-path collision semantics.
 
 ## Storage accounting
 
-User-visible `Recordings` and Trash counts/bytes use the same definition as recovery: supported top-level regular managed audio. Unsupported files, nested arbitrary files, directories, and links are not counted as Library recordings.
+Native user-visible `Recordings` and Trash counts/bytes use the same definition as recovery: supported top-level regular managed audio. Unsupported files, nested arbitrary files, directories, and links are not counted as Library recordings.
 
 Temporary processing storage is measured separately because backend work files can legitimately use different extensions and directory structures.
 
+The current Web session is memory-backed and does not report itself as equivalent native managed storage.
+
 ## Platform strategy
 
-Flutter host scaffolding changes with Flutter/Gradle/Xcode versions. `tool/bootstrap_platforms.sh` generates host projects from the installed Flutter SDK, then applies SonicNest-specific platform permissions and capabilities from `tool/platform_overrides/`.
+Flutter host scaffolding changes with Flutter/Gradle/Xcode/browser tooling versions. `tool/bootstrap_platforms.sh` and `tool/bootstrap_platforms.ps1` generate all six host projects from the installed Flutter SDK:
+
+```text
+android,ios,macos,linux,windows,web
+```
+
+The scripts then apply SonicNest-specific native permissions/capabilities and generated branding. Host scaffolding remains reproducible rather than committed as permanent generated source.
+
+`pubspec.yaml` enables generated launcher/icon metadata for Android, iOS, Windows, macOS, and Web plus generated splash assets for Android, iOS, and Web. Linux desktop packaging consumes the deterministic generated SonicNest brand image through the Debian packaging path.
+
+## Build and release evidence strategy
+
+Core CI builds representative Android, Linux, and Web outputs in addition to analyzer/test validation. Dedicated workflows cover Windows and Apple hosts plus Linux packaging.
+
+The manually triggered release-candidate workflow produces separate development-preview artifacts for Android, Linux, Windows, macOS, iOS, and Web. The Web job packages `build/web/` as `sonicnest-web-release.tar.gz` with a SHA-256 record. The unified candidate manifest requires all six platform artifact directories and fails closed if any platform payload is missing, altered, symlinked, or otherwise violates its evidence contract.
+
+Compilation and checksum evidence remain distinct from real-device/browser QA and from production signing/hosting approval.
 
 ## Repository automation boundary
 
 Permanent GitHub Actions workflows are explicitly allowlisted by `tool/repository_audit.py`. Maintained workflows must remain read-only (`contents: read`). Temporary/one-shot write-enabled workflow files are not valid permanent repository state and cause the integrity audit to fail if they remain tracked.
 
-This protects the repository from continuation helpers silently becoming long-lived write-capable automation while preserving dedicated permanent workflows for core CI, Windows, Apple, Linux packaging, release-candidate validation, and repository integrity.
+This protects the repository from continuation helpers silently becoming long-lived write-capable automation while preserving dedicated permanent workflows for core CI, Windows, Apple, Linux packaging, six-platform release-candidate validation, and repository integrity.
 
 ## Distribution boundary
 
-The first repository-supported public Linux channel is GitHub Releases with the verified Debian `.deb` and SHA-256 checksum. SonicNest does not initially operate an APT repository. Signing credentials remain maintainer-owned and outside the repository. See `docs/LINUX_DISTRIBUTION_POLICY.md` and `docs/RELEASING.md`.
+Current distribution policy is platform-specific:
+
+- Android: Google Play is the intended initial public channel, with production signing outside the repository.
+- iOS: TestFlight/App Store, with protected Apple signing/provisioning outside the repository.
+- macOS: signed/notarized GitHub Releases after external signing/notarization gates.
+- Windows: Authenticode-verified portable ZIP through GitHub Releases after real-system gates.
+- Linux: verified Debian `.deb` plus SHA-256 through GitHub Releases; no initial custom APT repository.
+- Web: repository-controlled static release build is reproducible, but production host selection, TLS, DNS, cache policy, deployment credentials, and representative browser QA remain external release decisions.
+
+See the platform distribution documents, `docs/WEB_SUPPORT.md`, `docs/RELEASE_CANDIDATE_MANIFEST.md`, and `docs/RELEASING.md` for release boundaries.
