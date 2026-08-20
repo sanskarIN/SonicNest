@@ -27,7 +27,8 @@ The browser surface currently provides:
 - elapsed recording time while capture is active;
 - finished-recording duration derived from the actual captured PCM16 frame count rather than the UI timer;
 - complete mono/stereo PCM frame validation before WAV creation;
-- fail-closed cleanup of partial in-memory capture state after start/stream failures;
+- fail-closed cleanup of partial in-memory capture state after start/stream/control-transition failures;
+- generation invalidation so stale stream errors cannot overwrite a later Stop/Cancel/dispose transition;
 - local PCM16-to-WAV packaging in pure Dart;
 - in-session recording list;
 - WAV playback from an in-memory byte stream;
@@ -37,6 +38,10 @@ The browser surface currently provides:
 - no automatic audio upload or analytics.
 
 A browser capture-stream failure does not create a finished recording from partial bytes. SonicNest cancels the recorder where possible, closes capture/amplitude subscriptions, discards the incomplete in-memory buffer, resets timer/amplitude state, returns the recorder to the stopped state, and presents a recoverable message so the user can start a new recording.
+
+Recorder control transitions use the same safety boundary. A Pause/Resume failure is treated as an unknown backend state and the incomplete capture is discarded rather than allowing the UI and microphone backend to diverge. Stop and Cancel invalidate the current stream generation before their backend transition, so a late error from the old stream cannot race the requested control action. A Stop failure is recovered fail-closed. Cancel always discards local PCM and closes local capture/amplitude subscriptions even if browser cancellation itself throws; SonicNest then attempts a backend Stop fallback. If neither browser operation can confirm microphone shutdown, the UI explains that local capture was discarded and instructs the user to reload if the browser microphone indicator remains active.
+
+Widget disposal also invalidates the active capture generation before local subscriptions and recorder/player resources are disposed. This prevents a late capture callback from trying to revive state owned by a page that is leaving the widget tree.
 
 ## Native-only capability boundary
 
@@ -110,7 +115,7 @@ The deployable static site is written to `build/web/` by Flutter. Hosting, DNS, 
 4. applies SonicNest branding;
 5. runs `flutter build web --release` through the shared default entry point.
 
-The normal validation job still runs formatting, analyzer checks, and the complete Flutter unit-test suite. `test/wav_encoder_test.dart` validates the pure-Dart WAV header/payload logic, PCM frame-alignment rejection, and byte-derived duration behavior used by browser recording. `tool/tests/test_web_platform_contract.py` locks the browser recovery markers alongside the platform isolation contract. `test/bootstrap_integrity_test.dart` locks the six-target bootstrap list, conditional application entry point, and Web build command.
+The normal validation job still runs formatting, analyzer checks, and the complete Flutter unit-test suite. `test/wav_encoder_test.dart` validates the pure-Dart WAV header/payload logic, PCM frame-alignment rejection, and byte-derived duration behavior used by browser recording. `tool/tests/test_web_platform_contract.py` locks browser isolation, start/stream recovery, generation invalidation, fail-closed Pause/Resume/Stop behavior, and Cancel cleanup/fallback markers. `test/bootstrap_integrity_test.dart` locks the six-target bootstrap list, conditional application entry point, and Web build command.
 
 ## Release-candidate evidence
 
@@ -140,6 +145,10 @@ Recommended evidence includes:
 - mono and stereo requests where supported;
 - pause/resume timing and audio continuity;
 - injected/real capture interruption followed by clean stopped-state recovery with no partial recording inserted;
+- injected Pause/Resume/Stop backend failures followed by clean fail-closed recovery;
+- Cancel when browser cancellation succeeds, when cancellation throws but Stop fallback succeeds, and when neither operation can confirm microphone shutdown;
+- late stream errors during Stop/Cancel not changing the newly requested state;
+- navigation/reload/disposal during capture not reviving stale recorder UI state;
 - saved WAV duration compared with independently observed audio duration, including pause/resume cases;
 - long capture and memory behavior;
 - playback completion and repeated playback;
