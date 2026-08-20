@@ -1,6 +1,6 @@
 # SonicNest Release Evidence Record
 
-Use one copy of this template for each release candidate that is being considered for public distribution. Do not mark an item passed without recording the device, OS, build, and actual observation.
+Use one copy of this template for each release candidate that is being considered for public distribution or production Web deployment. Do not mark an item passed without recording the exact device/browser/OS, build/artifact, and actual observation.
 
 ## Candidate identity
 
@@ -13,12 +13,15 @@ Use one copy of this template for each release candidate that is being considere
 - Dependency lock/source state reviewed: Yes / No
 - `what_changed.md` reviewed against this commit: Yes / No
 - `PROJECT_STATE.md` reviewed against this commit: Yes / No
+- Intended release targets: Android / iOS / macOS / Windows / Linux / Web
+- Web production domain/host, if Web is in scope:
 
 ## Automated validation evidence
 
 - Core analyzer/test workflow run:
 - Android build workflow run:
 - Linux build workflow run:
+- Web release build workflow/job result:
 - Linux Debian package workflow run:
 - Windows debug/package workflow run:
 - Windows portable package verification result:
@@ -27,6 +30,7 @@ Use one copy of this template for each release candidate that is being considere
 - iOS no-codesign build workflow run:
 - Repository integrity workflow run:
 - Release-candidate artifact workflow run:
+- Release-candidate run attempt:
 - Unified release-candidate manifest job result:
 - Unified manifest artifact name:
 - Unified manifest artifact workflow digest:
@@ -34,7 +38,8 @@ Use one copy of this template for each release candidate that is being considere
 - Manifest `sourceSha` equals exact candidate commit: Yes / No
 - Manifest `applicationVersion` equals `pubspec.yaml`: Yes / No
 - Manifest workflow run ID/attempt matches candidate run: Yes / No
-- Manifest contains Android/Linux/Windows/macOS/iOS entries: Yes / No
+- Manifest contains Android/Linux/Windows/macOS/iOS/Web entries: Yes / No
+- Manifest Web classification says static-bundle binary signing is not applicable: Yes / No
 - Manifest `stableReleaseApproved` is `false` for hosted development-preview evidence: Yes / No
 - Platform payload checksums re-verified by manifest builder: Yes / No
 - Android hosted candidate package ID:
@@ -50,12 +55,17 @@ Use one copy of this template for each release candidate that is being considere
 - Windows portable artifact SHA-256:
 - macOS artifact SHA-256:
 - iOS validation artifact SHA-256:
+- Web release-candidate archive filename:
+- Web release-candidate archive SHA-256:
+- Web `SHA256SUMS.txt` independently verified after download: Yes / No
 
-The unified hosted provenance manifest is an additional consistency/evidence layer. It does not replace per-platform signing verification, real-system QA, protected production signing, notarization, or store validation.
+The unified hosted provenance manifest is an additional consistency/evidence layer. It does not replace per-platform signing verification, real-system/browser QA, protected production signing/notarization, store validation, or production Web hosting review.
 
-## Manual QA ledger review evidence
+Historical five-platform manifests that predate Web support must not be recorded as evidence that the current six-platform candidate passed Web validation.
 
-Create a fresh **About → Manual QA evidence** session for the exact candidate/target being tested. Where runtime context is relevant, attach a fresh **Diagnostics & QA** snapshot before export.
+## Native manual-QA ledger review evidence
+
+Create a fresh **About → Manual QA evidence** session for the exact native candidate/target being tested. Where runtime context is relevant, attach a fresh **Diagnostics & QA** snapshot before export.
 
 - Manual-QA JSON evidence filename:
 - Evidence collected from candidate version:
@@ -78,9 +88,11 @@ Create a fresh **About → Manual QA evidence** session for the exact candidate/
 
 A passing structural verifier result means the exported ledger matches the current source-controlled schema/catalog and the selected review policy. It does **not** prove that any represented microphone, accessibility, stress, filesystem, branding, package, signing, or distribution test was actually performed correctly.
 
-## Device matrix
+Web-specific manual evidence is recorded in the browser/hosting sections below and against `docs/WEB_QA_CHECKLIST.md`; the native in-app ledger must not be used as a substitute for actual browser observations.
 
-Add a row for every tested target. Never reuse a pass from an older source revision.
+## Native device matrix
+
+Add a row for every tested native target. Never reuse a pass from an older source revision.
 
 | Platform | Device / model | OS version | Input/output hardware | Build/artifact | Tester | Date | Result |
 |---|---|---|---|---|---|---|---|
@@ -90,9 +102,19 @@ Add a row for every tested target. Never reuse a pass from an older source revis
 | Windows |  |  |  |  |  |  |  |
 | Linux |  |  |  |  |  |  |  |
 
-## Recorder lifecycle evidence
+## Web browser matrix
 
-For each tested platform record Pass / Fail / Not applicable plus notes.
+Record every representative browser/OS combination used to validate the exact Web candidate/deployment.
+
+| Browser family/version | OS/device | Form factor | Candidate URL/artifact | Microphone/input | WAV playback/share | Accessibility/layout | Tester | Date | Result |
+|---|---|---|---|---|---|---|---|---|---|
+| Chromium |  |  |  |  |  |  |  |  |  |
+| Firefox |  |  |  |  |  |  |  |  |  |
+| Safari/WebKit |  |  |  |  |  |  |  |  |  |
+
+## Native recorder lifecycle evidence
+
+For each tested native platform record Pass / Fail / Not applicable plus notes.
 
 - First microphone permission grant:
 - Permission denied:
@@ -113,7 +135,7 @@ For each tested platform record Pass / Fail / Not applicable plus notes.
 
 Notes / evidence links:
 
-## Input routing evidence
+## Native input routing evidence
 
 Record the actual hardware used.
 
@@ -126,9 +148,9 @@ Record the actual hardware used.
 
 Notes / evidence links:
 
-## Codec/output evidence
+## Native codec/output evidence
 
-For every supported target format tested, record platform, actual file properties, playback result inside SonicNest, and at least one external playback result.
+For every supported native target format tested, record platform, actual file properties, playback result inside SonicNest, and at least one external playback result.
 
 | Format | Platform | Direct/fallback path | Actual codec/container | Duration correct | SonicNest playback | External playback | Result |
 |---|---|---|---|---|---|---|---|
@@ -140,7 +162,71 @@ For every supported target format tested, record platform, actual file propertie
 | OGG/Vorbis |  |  |  |  |  |  |  |
 | AAC |  |  |  |  |  |  |  |
 
-## Library, Trash, and export evidence
+## Web recording and WAV evidence
+
+Complete this section against the exact static candidate/deployment. Use `docs/WEB_QA_CHECKLIST.md` as the detailed test source.
+
+### Permission and input
+
+- Page load does not request microphone automatically: Pass / Fail
+- First explicit recording action permission allow path:
+- Permission deny path:
+- Permission revoke + retry path:
+- Browser default microphone:
+- Input-device enumeration after permission where exposed:
+- Alternate microphone selection where supported:
+- Device disconnect/removal handling:
+
+### Capture lifecycle
+
+- Record -> Stop:
+- Record -> Pause -> Resume -> Stop:
+- Cancel discards unfinished capture:
+- Rapid/repeated captures:
+- Recorder error returns UI to usable state:
+- Amplitude meter responds and remains finite/bounded:
+- Timer advances only during active recording:
+- Mono request result:
+- Stereo request result where supported:
+- Automatic gain request result where supported:
+- Echo cancellation request result where supported:
+- Noise suppression request result where supported:
+- Effective sample rate recorded for WAV header:
+- Effective channel count recorded for WAV header:
+
+### WAV and playback
+
+- SonicNest in-memory WAV playback:
+- Playback completion returns UI to non-playing state:
+- Replay same recording:
+- Switch to another recording:
+- Delete currently playing recording safely stops playback:
+- Downloaded/shared WAV SHA-256, if archived:
+- Independent external player used:
+- Independent playback result:
+- Observed duration vs capture duration:
+- Channel/sample metadata inspected:
+
+### Share/download
+
+- Web Share with files result where supported:
+- Download fallback result where Web Share with files is unavailable:
+- Generated filename result:
+- User cancellation behavior:
+- Repeated share/download leaves source recording unchanged:
+
+### Session-memory boundary
+
+- UI explains current-session retention: Yes / No
+- Refresh/close does not claim durable save: Yes / No
+- Multiple-recording memory observation:
+- Longest browser recording tested:
+- Lower-memory mobile browser observation:
+- Network inspection confirms no automatic recording upload: Yes / No
+
+Evidence links / notes:
+
+## Native Library, Trash, and export evidence
 
 - Search/sort/filter behavior:
 - Exact tag/date filters:
@@ -160,7 +246,9 @@ For every supported target format tested, record platform, actual file propertie
 
 Notes / evidence links:
 
-## Metadata, managed-storage, and recovery evidence
+The current Web target intentionally does not claim durable native managed Library/Trash/recovery/FFmpeg batch/export behavior. Record Web share/download in the Web section rather than marking native filesystem features passed in a browser.
+
+## Native metadata, managed-storage, and recovery evidence
 
 Use privacy-safe controlled data. Record the exact platform, filesystem conditions, candidate SHA/artifact, observation, and whether the recovered file was independently playable.
 
@@ -192,7 +280,7 @@ Use privacy-safe controlled data. Record the exact platform, filesystem conditio
 
 Exact test paths/data descriptions or evidence links:
 
-## Playback/media-session evidence
+## Native playback/media-session evidence
 
 - Play/pause/seek:
 - Speed/volume:
@@ -209,7 +297,7 @@ Exact test paths/data descriptions or evidence links:
 
 Notes / evidence links:
 
-## Editor listening evidence
+## Native editor listening evidence
 
 Use representative voice and music recordings. Record actual source files or reproducible descriptions where privacy permits.
 
@@ -232,7 +320,11 @@ Use representative voice and music recordings. Record actual source files or rep
 
 Listening notes / artifacts:
 
+The current Web build does not expose the native FFmpeg editor and must not be marked as having passed these native editor operations.
+
 ## Accessibility evidence
+
+### Native
 
 - Android TalkBack:
 - iOS VoiceOver:
@@ -244,9 +336,25 @@ Listening notes / artifacts:
 - Reduced-motion preference:
 - Focus order and visible focus:
 
+### Web
+
+- Chromium keyboard-only navigation:
+- Firefox keyboard-only navigation:
+- Safari/WebKit keyboard-only navigation:
+- Browser screen-reader/tool used:
+- Recorder controls expose understandable labels:
+- Recording row actions expose understandable labels:
+- Visible focus:
+- 200% browser zoom:
+- Narrow mobile layout:
+- Wide desktop layout:
+- Light/dark/system theme:
+
 Notes / evidence links:
 
-## Native branding evidence
+## Branding evidence
+
+### Native
 
 - Android legacy icon:
 - Android adaptive masks:
@@ -261,9 +369,18 @@ Notes / evidence links:
 - Windows extracted portable-package icon surfaces:
 - Linux Debian desktop-entry icon:
 - Linux launcher/menu/task-switcher icon behavior:
-- Real screenshots captured from this exact candidate:
 
-Screenshot/evidence links:
+### Web / PWA
+
+- Browser favicon/app icon:
+- Startup background/splash transition:
+- High-DPI icon/rendering:
+- Installed-PWA icon/launch treatment where supported:
+- Mobile home-screen icon treatment where supported:
+- Branding update/cache refresh result:
+
+- Real screenshots captured from this exact candidate: Yes / No
+- Screenshot/evidence links:
 
 ## Android hosted candidate signing evidence
 
@@ -337,7 +454,63 @@ Record this separately from CI structural verification. A CI-created `.deb` is n
 
 Notes / evidence links:
 
+## Web production hosting evidence
+
+Complete only when Web is in release scope. Do not record repository build success as hosting approval.
+
+### Deployment identity
+
+- Production domain/URL:
+- Hosting provider/service:
+- Deployed source commit SHA:
+- Deployed version/tag:
+- Exact `sonicnest-web-release.tar.gz` or deployable bundle SHA-256:
+- Exact unified manifest SHA-256:
+- Deployment date/time and timezone:
+- Deployer/reviewer:
+
+### Transport and delivery
+
+- HTTPS valid on production URL: Yes / No
+- HTTP -> HTTPS behavior reviewed: Yes / No / N/A
+- DNS target reviewed: Yes / No
+- TLS certificate/issuer/expiry reviewed without recording private material: Yes / No
+- JavaScript/Wasm/static MIME types correct: Yes / No
+- Compression/content delivery result:
+- `index.html` cache policy reviewed: Yes / No
+- Fingerprinted/static-asset cache policy reviewed: Yes / No
+- Service-worker/cache update behavior tested: Yes / No
+- Controlled newer deployment reaches existing clients: Yes / No
+- Rollback to known-good bundle tested: Yes / No
+- Security headers reviewed for compatibility and security: Yes / No
+
+### Privacy/security
+
+- Static bundle inspected for deployment/signing credentials: Pass / Fail
+- Production network capture shows no automatic audio upload: Pass / Fail
+- Production network capture shows no hidden analytics: Pass / Fail
+- Microphone begins only through intended explicit user flow: Pass / Fail
+- Share/download remains explicit user action: Pass / Fail
+- Public source-map/debug-output policy reviewed: Yes / No
+- Third-party Web dependency notices reviewed: Yes / No
+
+### Production browser retest
+
+- Chromium-family result:
+- Firefox result:
+- Safari/WebKit result:
+- Mobile browser result(s):
+- Production microphone permission/capture result:
+- Production alternate-input result where supported:
+- Production WAV playback/share/download result:
+- Production responsive/accessibility result:
+- Production PWA/install result where supported:
+
+Notes / evidence links:
+
 ## Performance and stress evidence
+
+### Native
 
 - Library size tested:
 - Managed recording-file count tested during startup orphan scan:
@@ -351,20 +524,33 @@ Notes / evidence links:
 - Startup/orphan-scan timing observations:
 - Crash/hang observations:
 
+### Web
+
+- Longest browser recording tested:
+- Largest in-session WAV tested:
+- Maximum simultaneous in-session recordings tested:
+- Browser/device memory observations:
+- CPU/thermal observations on mobile browser:
+- Repeated start/stop session count tested:
+- Page reload/close behavior during idle capture states:
+- Browser crash/hang observations:
+
 ## Privacy/security review
 
 - No unintended analytics/telemetry introduced:
 - No automatic recording upload introduced:
 - Permissions match documented need:
-- Managed-path guards reviewed against the candidate source:
-- Corrupt/recovery diagnostic files handled as privacy-sensitive local data:
-- Manual-QA evidence privacy flags structurally verified: Yes / No
+- Native managed-path guards reviewed against the candidate source:
+- Native corrupt/recovery diagnostic files handled as privacy-sensitive local data:
+- Native Manual-QA evidence privacy flags structurally verified: Yes / No / N/A
+- Web session-memory boundary matches `docs/WEB_SUPPORT.md`: Yes / No / N/A
+- Web production network behavior reviewed: Yes / No / N/A
 - Privacy document matches behavior:
 - Security document reviewed:
 - Dependency/license notices reviewed:
-- No secrets/signing material committed:
+- No secrets/signing/deployment material committed or embedded in public artifacts:
 
-## Signing and distribution evidence
+## Signing, distribution, and hosting evidence
 
 Leave credential-dependent results blank until performed in the maintainer's secure environment.
 
@@ -387,23 +573,29 @@ Leave credential-dependent results blank until performed in the maintainer's sec
 - Windows signing identity/result:
 - Linux selected public channel: GitHub Releases Debian `.deb`
 - Linux package/repository signing identity/result, if adopted:
-- Store metadata/privacy declarations reviewed:
+- Web selected production host/domain:
+- Web deployment credential environment reviewed: Yes / No
+- Web production HTTPS/browser/hosting approval result:
+- Native store metadata/privacy declarations reviewed:
+- Web public privacy/capability copy reviewed:
 
 ## Defects and disposition
 
 List every reproducible defect found during this candidate's testing.
 
-| ID/link | Severity | Platform | Reproduction | Fixed in SHA | Retested | Disposition |
+| ID/link | Severity | Platform/browser | Reproduction | Fixed in SHA | Retested | Disposition |
 |---|---|---|---|---|---|---|
 |  |  |  |  |  |  |  |
 
 ## Final decision
 
 - Stable-release gates complete: Yes / No
+- Native release targets approved:
+- Web production deployment approved: Yes / No / Not in scope
 - Known critical/high-priority reproducible defects: None / List
-- Exact signed/distributable source SHA:
+- Exact signed/distributable/deployed source SHA:
 - Exact release tag:
 - Final approver:
 - Approval date:
 
-A `Yes` decision is valid only when the required items in `docs/QA_CHECKLIST.md` and `docs/RELEASING.md` are complete for the same source revision and artifacts recorded above.
+A `Yes` stable decision is valid only when the required native items in `docs/QA_CHECKLIST.md`, Web items in `docs/WEB_QA_CHECKLIST.md` where Web is in scope, and the release procedure in `docs/RELEASING.md` are complete for the same source revision and exact artifacts/deployment recorded above.
