@@ -1,37 +1,41 @@
 # Releasing SonicNest
 
-SonicNest uses semantic versioning. A release must not be declared stable only because CI compiles the application. Recorder releases also require the hardware, accessibility, branding, lifecycle, storage, packaging, and distribution checks in `docs/QA_CHECKLIST.md`.
+SonicNest uses semantic versioning. A release must not be declared stable only because CI compiles the application. Recorder releases also require the hardware, browser, accessibility, branding, lifecycle, storage, packaging/hosting, and distribution checks in `docs/QA_CHECKLIST.md` and `docs/WEB_QA_CHECKLIST.md`.
 
-Selected initial public channels:
+Selected/defined initial public-channel strategy:
 
 - **Android:** Google Play with Play App Signing and a separately protected maintainer upload key. See `docs/ANDROID_DISTRIBUTION_POLICY.md`.
 - **iOS:** TestFlight/App Store with maintainer-owned Apple signing/provisioning. See `docs/APPLE_DISTRIBUTION_POLICY.md`.
 - **macOS:** signed/notarized GitHub Releases. See `docs/APPLE_DISTRIBUTION_POLICY.md`.
 - **Windows:** GitHub Releases with a versioned x64 portable ZIP containing the final Authenticode-verified binaries and a checksum generated after signing/package bytes are final. See `docs/WINDOWS_PACKAGING.md` and `docs/WINDOWS_SIGNING_POLICY.md`.
 - **Linux:** GitHub Releases with the verified Debian `.deb` and its SHA-256 checksum. See `docs/LINUX_DISTRIBUTION_POLICY.md`.
+- **Web:** reproducible static Flutter Web output served over production HTTPS. The repository defines build, checksum/provenance, privacy, and browser-QA requirements, while the final public hosting provider/domain remains a release decision. See `docs/WEB_SUPPORT.md` and `docs/WEB_QA_CHECKLIST.md`.
 
 ## In-app manual evidence ledger
 
-For candidate QA, use **About → Manual QA evidence** to record the tester-reported state of the source-controlled manual checks. When runtime/storage/recorder/settings context matters, first open **About → Diagnostics & QA** and choose **Open QA evidence with this snapshot** so the current privacy-safe diagnostic report travels with the exported manual evidence bundle.
+For native candidate QA, use **About → Manual QA evidence** to record the tester-reported state of the source-controlled manual checks. When runtime/storage/recorder/settings context matters, first open **About → Diagnostics & QA** and choose **Open QA evidence with this snapshot** so the current privacy-safe diagnostic report travels with the exported manual evidence bundle.
 
-The ledger stores only fixed check IDs, `notRun`/`passed`/`failed`/`blocked` status values, and timestamps. It has no free-form tester-note field and does not automatically upload evidence. The exact candidate source/artifact, target hardware/OS, signing state, and any external observations still need to be identified in the release evidence record. A manually selected `Passed` status never overrides the required hardware, accessibility, filesystem, signing, notarization, store-console, or final approval gates.
+The ledger stores only fixed check IDs, `notRun`/`passed`/`failed`/`blocked` status values, and timestamps. It has no free-form tester-note field and does not automatically upload evidence. The exact candidate source/artifact, target hardware/OS, signing state, and any external observations still need to be identified in the release evidence record. A manually selected `Passed` status never overrides the required hardware, accessibility, filesystem, signing, notarization, browser, hosting, store-console, or final approval gates.
 
-Before accepting an exported JSON ledger into release evidence, run `python3 tool/verify_manual_qa_evidence.py <evidence.json>`. For candidate-bound review, use the applicable `--expected-version`, `--require-diagnostics`, and freshness policy described in `docs/MANUAL_QA_REVIEW_TOOLING.md`. The verifier detects structural/catalog/privacy/summary inconsistencies; it does not prove that the tester performed the underlying check.
+Before accepting an exported JSON ledger into native release evidence, run `python3 tool/verify_manual_qa_evidence.py <evidence.json>`. For candidate-bound review, use the applicable `--expected-version`, `--require-diagnostics`, and freshness policy described in `docs/MANUAL_QA_REVIEW_TOOLING.md`. The verifier detects structural/catalog/privacy/summary inconsistencies; it does not prove that the tester performed the underlying check.
+
+Web-specific manual evidence is currently maintained through `docs/WEB_QA_CHECKLIST.md` and the release evidence record rather than being inferred from the native in-app ledger.
 
 ## 1. Prepare the source tree
 
 1. Update the version in `pubspec.yaml`.
 2. Update `CHANGELOG.md`, `RELEASE_NOTES.md`, `PROJECT_STATE.md`, and `what_changed.md`.
-3. Run platform bootstrap using the Flutter SDK intended for release.
+3. Run platform bootstrap using the Flutter SDK intended for release; confirm all six generated hosts are available: Android, iOS, macOS, Linux, Windows, and Web.
 4. Resolve dependencies without introducing unreviewed lockfile or plugin changes.
-5. Regenerate deterministic SonicNest native-brand source images and native icon/splash resources using `tool/apply_branding.sh` or `tool/apply_branding.ps1`.
-6. Confirm that no secrets, signing files, local paths, certificates, provisioning profiles, service-account credentials, or build outputs are staged.
-7. Confirm generated branding PNG source outputs remain reproducible and are not accidentally committed as authoritative source files.
+5. Regenerate deterministic SonicNest native/Web brand source images and icon/splash resources using `tool/apply_branding.sh` or `tool/apply_branding.ps1`.
+6. Confirm that no secrets, signing files, local paths, certificates, provisioning profiles, service-account credentials, Web deployment credentials, or build outputs are staged.
+7. Confirm generated branding PNG source outputs and generated platform host trees remain reproducible and are not accidentally committed as authoritative source files.
 8. Confirm the Android package/signing policy in `docs/ANDROID_DISTRIBUTION_POLICY.md` matches the intended Play candidate.
 9. Confirm the iOS/macOS signing/distribution policy in `docs/APPLE_DISTRIBUTION_POLICY.md` matches the intended Apple candidates.
 10. For Linux, confirm the Debian package metadata under `packaging/linux/debian/` matches the release identity, launcher behavior, and AppStream information.
 11. For Windows, confirm the portable package contract and public signing boundary in `docs/WINDOWS_PACKAGING.md` and `docs/WINDOWS_SIGNING_POLICY.md` match the intended candidate.
-12. Review `docs/STORE_LISTING.md` against the exact release candidate before copying listing/privacy material into a distribution console.
+12. For Web, confirm `docs/WEB_SUPPORT.md` and `docs/WEB_QA_CHECKLIST.md` match the intended browser/hosting release scope and that production host/DNS/TLS/deployment credentials remain outside the repository.
+13. Review `docs/STORE_LISTING.md` against the exact native release candidate before copying listing/privacy material into a distribution console; separately review Web-facing privacy/capability copy against the deployed browser candidate.
 
 ## 2. Required automated checks
 
@@ -63,7 +67,7 @@ flutter pub get
 ./tool/apply_branding.ps1
 ```
 
-Require the maintained GitHub workflows for Android, Linux, Linux Debian packaging, Windows, macOS, and iOS no-codesign validation to pass for the release source revision. Android, Windows, macOS, and iOS builds must include generated SonicNest branding resources.
+Require maintained GitHub validation for the exact source revision, including core formatting/analyzer/tests, Android and Linux builds, the Web release build, Linux Debian packaging, Windows build/package validation, and macOS/iOS no-codesign validation. Android, Windows, macOS, iOS, and Web build surfaces must include generated SonicNest branding resources.
 
 The manual release-candidate workflow must additionally prove the repository-controlled release-mode packaging paths:
 
@@ -72,10 +76,13 @@ The manual release-candidate workflow must additionally prove the repository-con
 - Windows: build the release bundle, create the versioned portable ZIP using `tool/build_windows_portable.ps1`, verify it using `tool/verify_windows_portable.ps1`, and run the bounded extracted-package startup smoke using `tool/smoke_test_windows_portable.ps1`.
 - macOS: compile/package the release-mode app as non-public signing/notarization evidence only.
 - iOS: compile/package the release-mode app with `--no-codesign` as non-installable validation evidence only.
+- Web: run `flutter build web --release`, archive the generated static site as `sonicnest-web-release.tar.gz`, and produce a matching `SHA256SUMS.txt` plus development-preview warning.
 
-The repository integrity audit must also pass, including all tracked top-level Bash and PowerShell helper parsing, permanent-workflow read-only permission checks, required policy/document presence, package-script invariants, and release-candidate safety markers.
+The unified candidate provenance job must download **all six** platform artifact sets and successfully build `RELEASE_CANDIDATE_MANIFEST.json` with `stableReleaseApproved: false` until stable gates are complete. A missing or checksum-mismatched Web payload must fail the same provenance contract as a native payload. See `docs/RELEASE_CANDIDATE_MANIFEST.md`.
 
-## 3. Required manual recorder checks
+The repository integrity audit must also pass, including Python tooling tests, tracked-text/source auditing, generated-host boundaries including `web/`, permanent-workflow read-only permission checks, required policy/document presence, package-script invariants, six-platform bootstrap/CI/release markers, and tracked top-level Bash/PowerShell helper parsing.
+
+## 3. Required native recorder checks
 
 Complete `docs/QA_CHECKLIST.md` on representative physical hardware. At minimum verify:
 
@@ -95,9 +102,30 @@ Complete `docs/QA_CHECKLIST.md` on representative physical hardware. At minimum 
 
 Record evidence and device/OS versions. Export the corresponding manual-QA JSON where the in-app ledger is used, structurally verify it with `tool/verify_manual_qa_evidence.py`, and preserve the verified file with the candidate evidence. Do not check off an item without actually testing it; structural verification is not a substitute for the observation.
 
-## 4. Required native-brand visual review
+## 4. Required Web/browser checks
 
-Automated generation/compilation confirms resource validity, not final visual quality. Before a stable tag, inspect a release candidate on the intended OS surfaces.
+Complete `docs/WEB_QA_CHECKLIST.md` against the exact candidate bytes intended for deployment. At minimum verify:
+
+- current representative Chromium, Firefox, and Safari/WebKit families where available;
+- production-like HTTPS secure-context behavior;
+- microphone allow/deny/revoke/retry behavior;
+- default and alternate microphone enumeration/selection where exposed;
+- Record/Pause/Resume/Stop/Cancel, amplitude, timing, repeated captures, and error recovery;
+- mono/stereo and effective sample/channel behavior where supported;
+- generated WAV integrity in SonicNest and an independent player;
+- playback completion/replay/switching and delete-while-playing behavior;
+- Web Share with files where supported plus download fallback where it is not;
+- long/repeated capture memory behavior on desktop and lower-memory mobile browsers;
+- responsive layout, browser zoom, keyboard focus, screen-reader basics, and light/dark/system themes;
+- PWA/install behavior where the browser exposes it;
+- production MIME types, cache/service-worker update behavior, security headers, rollback, and deployment secret hygiene;
+- browser network inspection proving there is no automatic recording upload or hidden analytics.
+
+The Web implementation intentionally keeps completed recordings in the current page session unless the user explicitly shares/downloads them. Do not claim native managed-library persistence, Trash/recovery, FFmpeg editing, or native media-session parity on Web while those browser implementations do not exist.
+
+## 5. Required brand visual review
+
+Automated generation/compilation confirms resource validity, not final visual quality. Before a stable tag, inspect the exact release candidate on intended OS/browser surfaces.
 
 Android:
 - legacy launcher icon;
@@ -126,29 +154,43 @@ Linux:
 - inspect launcher/menu/task-switcher surfaces on the tested desktop environments;
 - verify package install, upgrade, launch, and uninstall behavior before publishing the package.
 
+Web:
+- verify favicon/app icon rendering on representative browser/OS combinations;
+- verify startup background/splash transition in light/dark/system settings;
+- inspect installed-PWA icon/launch treatment where supported;
+- verify high-DPI and mobile home-screen icon treatment where applicable;
+- verify a branding update does not remain indefinitely hidden behind stale browser/PWA cache state.
+
 Capture real screenshots from tested builds rather than fabricated or mock release screenshots.
 
-## 5. Signing boundaries
+## 6. Signing, credentials, and hosting boundaries
 
-Signing material is maintainer-owned and must never be committed.
+Signing/deployment material is maintainer-owned and must never be committed.
 
 - **Android:** production distribution uses Google Play. Use Play App Signing and a separately protected maintainer upload key. Hosted candidate APK/AAB output is verified as Android Debug-certificate **NON-PRODUCTION** evidence and must not be relabeled as a Play production candidate. See `docs/ANDROID_DISTRIBUTION_POLICY.md`.
 - **iOS:** use maintainer-owned Apple certificates, provisioning, App Store Connect configuration, and TestFlight/App Store distribution. Hosted `--no-codesign` output is not installable App Store evidence.
 - **macOS:** initial public distribution uses GitHub Releases only after Developer ID signing and notarization. Hosted macOS candidate output is not a signed/notarized public artifact. See `docs/APPLE_DISTRIBUTION_POLICY.md`.
 - **Windows:** the initial public channel is the versioned x64 portable ZIP. Public stable Windows binaries must follow `docs/WINDOWS_SIGNING_POLICY.md`; package the final signed bytes, verify the packaged executable with `tool/verify_windows_portable.ps1 -RequireSignature`, run the bounded startup smoke, and generate the public ZIP checksum only after those bytes are final. Hosted CI remains unsigned.
 - **Linux:** GitHub Releases is the initial channel for the verified Debian `.deb` plus checksum. SonicNest does not initially operate an APT repository, so APT repository-index signing is not applicable. Development-preview CI packages can remain unsigned and must not be represented as signed stable artifacts.
+- **Web:** executable binary signing is not the distribution model for the static bundle. Stable Web publication requires exact-build checksum/provenance evidence plus reviewed HTTPS hosting, DNS/TLS, cache/update/security-header behavior, rollback, and protected deployment credentials. Host tokens, DNS credentials, TLS private keys, CI deployment secrets, or service-account material must remain outside this public repository/static bundle.
 
-Any detached signatures, signing services, store credentials, certificates, keys, provisioning profiles, service-account JSON, passwords, or notarization credentials must remain outside this public repository.
+Any detached signatures, signing services, store credentials, certificates, keys, provisioning profiles, service-account JSON, passwords, deployment tokens, DNS credentials, or notarization credentials must remain outside this public repository.
 
-## 6. Build release candidates
+## 7. Build release candidates
 
 After platform bootstrap, dependency resolution, and branding generation, typical Flutter commands are:
 
 ```bash
 flutter build apk --release
 flutter build appbundle --release
-flutter build windows --release
 flutter build linux --release
+flutter build web --release
+```
+
+On their required host operating systems also build:
+
+```text
+flutter build windows --release
 flutter build macos --release
 flutter build ios --release
 ```
@@ -176,18 +218,13 @@ For the selected Windows portable package target, on Windows PowerShell:
 ./tool/smoke_test_windows_portable.ps1 -StartupSeconds 8
 ```
 
-The Windows `unsigned` suffix is for hosted/development candidate evidence only. After maintainer-owned signing is actually performed for a final public candidate, package the signed bundle with an appropriate label and require signature verification plus startup smoke on the exact resulting archive:
+For Web, preserve the exact deployable `build/web/` candidate and/or the release-candidate workflow's `sonicnest-web-release.tar.gz` plus SHA-256/provenance evidence. Do not silently rebuild different bytes between browser QA and production deployment without repeating candidate evidence.
 
-```powershell
-./tool/verify_windows_portable.ps1 -ArchivePath '<final-portable-zip>' -RequireSignature
-./tool/smoke_test_windows_portable.ps1 -ArchivePath '<final-portable-zip>' -StartupSeconds 8
-```
+Platform availability depends on the build host. iOS and macOS require macOS/Xcode. Windows builds require Windows. Debian package construction requires a compatible Linux host with `dpkg-deb`. Web release compilation is handled by Flutter Web tooling, while real microphone behavior and production hosting still require representative browsers and an HTTPS deployment environment.
 
-Platform availability depends on the build host. iOS and macOS require macOS/Xcode. Windows builds require Windows. Debian package construction requires a compatible Linux host with `dpkg-deb`. Signing identities/credentials must be injected only from the maintainer's secure release environment.
+The manual `.github/workflows/release-candidate.yml` workflow is configured to create release-mode **non-production validation artifacts** across Android, Linux, Windows, macOS, no-codesign iOS, and Web, followed by one six-platform provenance manifest. Those artifacts remain non-public candidates until all applicable manual and credential/hosting-dependent gates are complete.
 
-The manual `.github/workflows/release-candidate.yml` workflow creates release-mode **non-production validation artifacts** across Android, Linux, Windows, macOS, and no-codesign iOS. Those artifacts remain non-public candidates until all manual and credential-dependent gates are complete.
-
-## 7. Protected distribution steps
+## 8. Protected distribution and deployment steps
 
 ### Android / Google Play
 
@@ -230,29 +267,42 @@ The manual `.github/workflows/release-candidate.yml` workflow creates release-mo
 2. Validate fresh install, launch, microphone/audio-stack behavior, upgrade where applicable, desktop integration, accessibility, and uninstall on representative Debian/Ubuntu-family systems.
 3. Publish the exact verified `.deb` and matching SHA-256 only after candidate approval.
 
-## 8. Final release review
+### Web / production HTTPS host
 
-Before tagging/publishing:
+1. Freeze the exact source/version and exact `build/web/` bytes that completed automated and browser QA.
+2. Select/configure the intended host/domain and protected deployment credentials outside the repository.
+3. Deploy over HTTPS with reviewed MIME types, cache/service-worker update policy, and security headers compatible with microphone/audio functionality.
+4. Verify the production URL on representative browsers, including microphone permission/capture/playback/share/download and responsive/accessibility checks applicable to the target scope.
+5. Verify update propagation by deploying a controlled newer candidate and confirming clients do not remain permanently pinned to obsolete cached assets.
+6. Verify rollback to a known-good bundle.
+7. Inspect the production network/static bundle for accidental credentials, unexpected recording upload, or hidden analytics.
+8. Record the deployed artifact checksum/provenance, host/domain, deployment timestamp/revision, browser/OS evidence, and reviewer in release evidence.
+
+## 9. Final release review
+
+Before tagging/publishing/deploying:
 
 - verify Privacy, Security, Support, license, and third-party notices;
 - verify the Buy Me a Coffee and project/contact links;
-- verify generated native icon/splash resources visually on real release candidates;
-- verify selected platform signing/distribution policies match the exact candidate;
+- verify generated native and Web/PWA icon/splash/startup resources visually on real release candidates;
+- verify selected platform signing/distribution/hosting policies match the exact candidate;
 - verify the Linux `.deb` real-system install/upgrade/uninstall evidence;
 - verify the Windows portable ZIP real-system extraction/launch/recorder/accessibility/branding evidence and Authenticode verification;
 - verify Android Play and Apple TestFlight/App Store evidence where those channels are being shipped;
 - verify macOS signing/notarization evidence where macOS is being shipped;
+- verify Web browser QA and production HTTPS/cache/security/rollback evidence where Web is being shipped;
 - capture real screenshots from the tested release candidate;
-- review `docs/STORE_LISTING.md` against the exact tested build and current distribution-console requirements;
-- structurally verify every accepted manual-QA JSON export with `tool/verify_manual_qa_evidence.py` and the candidate-specific version/diagnostics/freshness policy;
+- review `docs/STORE_LISTING.md` against the exact tested native builds and current distribution-console requirements;
+- structurally verify every accepted native manual-QA JSON export with `tool/verify_manual_qa_evidence.py` and the candidate-specific version/diagnostics/freshness policy;
+- review completed `docs/WEB_QA_CHECKLIST.md` evidence for the exact deployed Web candidate;
 - confirm no known critical/high-priority reproducible defects remain;
-- confirm all manual release gates are documented and backed by reviewed evidence rather than ledger status alone;
-- review generated package sizes and included permissions;
-- confirm every published artifact comes from the exact tested/tagged source revision and every signing claim matches the exact distributed bytes.
+- confirm all manual release gates are documented and backed by reviewed evidence rather than ledger/checklist status alone;
+- review generated native package and Web bundle sizes and included permissions/content;
+- confirm every published/deployed artifact comes from the exact tested/tagged source revision and every signing/hosting claim matches the exact distributed bytes.
 
-## 9. Tag and publish
+## 10. Tag, publish, and deploy
 
-After all gates are satisfied, create an annotated semantic-version tag, publish release notes, and attach/upload only verified distributable artifacts and checksums.
+After all gates are satisfied, create an annotated semantic-version tag, publish release notes, and attach/upload/deploy only verified distributable artifacts and checksums/provenance records.
 
 For Android, use the protected Google Play flow in `docs/ANDROID_DISTRIBUTION_POLICY.md`. Do not use the hosted Android Debug-certificate candidate as a production upload.
 
@@ -260,6 +310,8 @@ For iOS, use the TestFlight/App Store flow in `docs/APPLE_DISTRIBUTION_POLICY.md
 
 For Linux, publish the verified `.deb` and its SHA-256 checksum on the corresponding GitHub Release and identify the tested Debian/Ubuntu-family environments in the release notes. Do not claim APT repository support unless a separately maintained and signed repository is actually deployed.
 
-For Windows, publish the final Authenticode-verified versioned x64 portable ZIP and its SHA-256 checksum on the corresponding GitHub Release. Identify the Windows versions/architectures actually tested and the non-secret signing identity information recorded in `docs/RELEASE_EVIDENCE_TEMPLATE.md`. Do not claim Microsoft Store, MSIX, MSI, installer, or managed-update support unless that separate channel has actually been built and validated.
+For Windows, publish the final Authenticode-verified versioned x64 portable ZIP and its SHA-256 checksum on the corresponding GitHub Release. Identify the Windows versions/architectures actually tested and the non-secret signing identity information recorded in release evidence. Do not claim Microsoft Store, MSIX, MSI, installer, or managed-update support unless that separate channel has actually been built and validated.
 
-Never publish a build that was not produced from the tagged source revision.
+For Web, deploy only the exact static bundle that completed the required automated provenance and real-browser/hosting review. Identify the tested browser/OS scope and production domain/host evidence in the release notes. Do not claim native managed-library/FFmpeg feature parity or offline persistence beyond what the tested browser implementation actually provides.
+
+Never publish or deploy a build that was not produced from the tagged source revision.
