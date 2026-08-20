@@ -76,6 +76,7 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
   Duration _elapsed = Duration.zero;
   double _amplitudeDb = -60.0;
   bool _busy = false;
+  bool _recoveringCaptureFailure = false;
   bool _autoGain = true;
   bool _echoCancel = true;
   bool _noiseSuppress = true;
@@ -161,7 +162,14 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
       final stream = await _recorder.startStream(config);
       _recordingSubscription = stream.listen(
         (chunk) => _capturedBytes?.add(chunk),
-        onError: (_) => _showMessage('Browser audio capture failed.'),
+        onError: (Object _, StackTrace __) {
+          unawaited(
+            _recoverFromCaptureFailure(
+              'Browser audio capture stopped unexpectedly. You can start a new recording.',
+            ),
+          );
+        },
+        cancelOnError: true,
       );
 
       await _amplitudeSubscription?.cancel();
@@ -183,11 +191,58 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
         setState(() => _elapsed += const Duration(seconds: 1));
       });
     } catch (error) {
-      _capturedBytes = null;
-      _showMessage('Could not start recording: $error');
+      await _recoverFromCaptureFailure(
+        'Could not start recording. Check browser microphone access and try again.',
+      );
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted && !_recoveringCaptureFailure) {
+        setState(() => _busy = false);
+      }
     }
+  }
+
+  Future<void> _recoverFromCaptureFailure(String message) async {
+    if (_recoveringCaptureFailure) return;
+    _recoveringCaptureFailure = true;
+    if (mounted) {
+      setState(() => _busy = true);
+    }
+
+    _timer?.cancel();
+    _timer = null;
+    _capturedBytes = null;
+
+    final recordingSubscription = _recordingSubscription;
+    _recordingSubscription = null;
+    final amplitudeSubscription = _amplitudeSubscription;
+    _amplitudeSubscription = null;
+
+    try {
+      await _recorder.cancel();
+    } catch (_) {
+      // The browser backend may already have terminated the failed stream.
+    }
+    try {
+      await recordingSubscription?.cancel();
+    } catch (_) {
+      // Cleanup is best-effort after a stream failure.
+    }
+    try {
+      await amplitudeSubscription?.cancel();
+    } catch (_) {
+      // Cleanup is best-effort after a stream failure.
+    }
+
+    if (mounted) {
+      setState(() {
+        _recordState = RecordState.stop;
+        _elapsed = Duration.zero;
+        _amplitudeDb = -60.0;
+        _busy = false;
+      });
+      _showMessage(message);
+    }
+    _recoveringCaptureFailure = false;
   }
 
   Future<void> _pauseOrResume() async {
@@ -229,6 +284,11 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
         return;
       }
 
+      final duration = pcm16Duration(
+        pcm,
+        sampleRate: _effectiveConfig.sampleRate,
+        channels: _effectiveConfig.numChannels,
+      );
       final wav = pcm16ToWav(
         pcm,
         sampleRate: _effectiveConfig.sampleRate,
@@ -240,10 +300,11 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
         title: 'Web recording $id',
         createdAt: DateTime.now(),
         bytes: wav,
-        duration: _elapsed,
+        duration: duration,
       );
       if (!mounted) return;
       setState(() {
+        _elapsed = duration;
         _amplitudeDb = -60.0;
         _recordings.insert(0, recording);
       });
