@@ -18,7 +18,7 @@
 
 ## Status
 
-Current development version: **0.1.0**. The repository is structured as a production project with automated analysis/tests, Android/Linux/Windows/macOS/iOS/Web build validation, Debian Linux package validation, Windows portable-package validation, non-production release-candidate validation, open-source documentation, continuation state, reproducible platform bootstrap and branding tooling, and explicit manual release gates. This is still a development preview until the physical-device/browser and signed-release checklist is complete.
+Current development version: **0.1.0**. The repository is structured as a production project with automated analysis/tests, Android/Linux/Windows/macOS/iOS/Web build validation, Debian Linux package validation, Windows portable-package validation, six-platform non-production release-candidate configuration, open-source documentation, continuation state, reproducible platform bootstrap and branding tooling, and explicit manual release gates. This is still a development preview until fresh hosted validation for the current six-platform revision plus physical-device/browser, accessibility, signing, and production-hosting gates are complete.
 
 ## Major features
 
@@ -47,7 +47,7 @@ Current development version: **0.1.0**. The repository is structured as a produc
 - Non-destructive FFmpeg-backed editing: keep selection, cut selection, split, merge, normalize, fades, silence removal/insertion, gain changes, basic noise cleanup, compressor, limiter, high-pass/low-pass filters, format conversion, draggable selection handles, selection undo/redo, and export presets.
 - Browser-safe Web recorder with microphone permission, input-device selection, PCM16 capture, pause/resume, amplitude metering, local WAV packaging, in-session playback, and explicit share/download without importing native filesystem or FFmpeg services.
 - In-app **Diagnostics & QA** reports provide privacy-safe runtime, aggregate library/storage, recorder-state, and settings evidence for physical-device/support testing. Reports exclude recording content, titles, paths, notes, tags, bookmarks, smart-naming text, and input-device names; they are created only on user request and are never automatically uploaded.
-- In-app **Manual QA evidence** sessions mirror the remaining real-device/system release checks and persist only fixed check IDs, `Not run`/`Passed`/`Failed`/`Blocked` status, and timestamps. Evidence can be copied as JSON or explicitly shared as Markdown, has no free-form tester-note field, drops stale catalog IDs, and never turns a manual observation into an automatic release approval.
+- In-app **Manual QA evidence** sessions mirror the remaining real-device/system release checks and persist only fixed source-controlled check IDs, `Not run`/`Passed`/`Failed`/`Blocked` status, and timestamps. Evidence can be copied as JSON or explicitly shared as Markdown, has no free-form tester-note field, drops stale catalog IDs, and never turns a manual observation into an automatic release approval.
 - Native and Web launcher/splash branding generated reproducibly from project-controlled SonicNest mark geometry, plus branded Flutter startup UI with startup-error recovery.
 - Debian `.deb` packaging for Linux with desktop entry, AppStream metadata, generated SonicNest icon integration, package checksums, structural verification, hosted-runner installation/startup smoke, and uninstall cleanup verification.
 - Initial public Linux distribution policy: verified `.deb` + SHA-256 checksum through GitHub Releases; no initial custom APT repository.
@@ -90,7 +90,7 @@ Debian `.deb` is the initial repository-supported Linux installation package. It
 
 A versioned x64 portable ZIP is the initial repository-supported Windows package. It is built from the complete generated Flutter Windows release bundle. Hosted validation ZIPs are unsigned; a stable public Windows ZIP must satisfy the Authenticode and real-system gates before publication through the initial GitHub Releases channel. See `docs/WINDOWS_PACKAGING.md` and `docs/WINDOWS_SIGNING_POLICY.md`.
 
-Web uses the normal Flutter entry point and a browser-safe service surface. Recording, pause/resume, amplitude, input selection, WAV playback, and explicit share/download are supported by the Web implementation. Native FFmpeg editing and native filesystem-managed library/recovery semantics are not falsely exposed in browsers because the current FFmpeg and `path_provider` dependencies do not provide Web implementations. See `docs/WEB_SUPPORT.md` for the complete capability and QA boundary.
+Web uses the normal Flutter entry point and a browser-safe service surface. Recording, pause/resume, amplitude, input selection, WAV playback, and explicit share/download are supported by the Web implementation. Native FFmpeg editing and native filesystem-managed library/recovery semantics are not falsely exposed in browsers because the current FFmpeg and `path_provider` dependencies do not provide Web implementations. See `docs/WEB_SUPPORT.md` for the complete capability boundary and `docs/WEB_QA_CHECKLIST.md` for exact-browser release evidence.
 
 ## Quick start
 
@@ -135,11 +135,11 @@ flutter test
 
 The formatting step is an enforcement check and must not rewrite source during validation. If it reports drift, apply canonical `dart format` locally, review/commit that output, and rerun validation.
 
-GitHub Actions compile representative native builds and now also compile a Web release through the shared default entry point. The Linux package workflow builds a release-mode Linux bundle, creates a Debian package, verifies its payload/metadata/icon/checksum structure, installs it through the package manager, smoke-starts the installed application under a bounded virtual display, removes the package, verifies package-owned integration cleanup, and publishes a short-retention validation artifact. The Windows workflow also builds a release-mode Windows bundle, creates a versioned portable ZIP, verifies its required runtime/data layout and checksum, checks for common private/signing material, smoke-starts the extracted package for a bounded interval, adds an explicit unsigned warning, and publishes a short-retention validation artifact. The manual release-candidate workflow validates Android package identity/debug-certificate non-production signing state and creates release-mode evidence for Android, Linux, Windows, macOS, and no-codesign iOS. Web build validation is part of the core CI workflow.
+GitHub Actions compile representative native builds and a Web release through the shared default entry point. The Linux package workflow builds a release-mode Linux bundle, creates a Debian package, verifies its payload/metadata/icon/checksum structure, installs it through the package manager, smoke-starts the installed application under a bounded virtual display, removes the package, verifies package-owned integration cleanup, and publishes a short-retention validation artifact. The Windows workflow builds a release-mode Windows bundle, creates a versioned portable ZIP, verifies its required runtime/data layout and checksum, checks for common private/signing material, smoke-starts the extracted package for a bounded interval, adds an explicit unsigned warning, and publishes a short-retention validation artifact. The manual release-candidate workflow is configured for **Android, Linux, Windows, macOS, iOS, and Web**: Web is built as a release static bundle, archived with a SHA-256 record, and required by the unified six-platform provenance manifest. The historical hosted release-candidate/provenance runs recorded in `PROJECT_STATE.md` predate Web support and are not treated as validation of the current six-platform revision.
 
-The repository audit validates required project/policy files, sensitive-material rules, permanent-workflow read-only permissions, package/release invariants, and parses all tracked `tool/*.sh` and `tool/*.ps1` helpers.
+The repository audit validates required project/policy files, sensitive-material rules, permanent-workflow read-only permissions, generated-host boundaries including `web/`, six-platform bootstrap/CI/release invariants, package/release invariants, and parses all tracked `tool/*.sh` and `tool/*.ps1` helpers.
 
-Hardware-dependent recorder, interruption, background, routing, screen-wake, media-button, batch-performance, native-brand visual inspection, representative Linux installation, Windows real-system portable-package behavior, browser permission/device behavior, filesystem-failure, malformed-real-media, accessibility, production signing, store submission, and lock-screen behavior still require real target-system, representative-browser, or protected maintainer-environment evidence. The Manual QA evidence screen provides a local/exportable status ledger for native observations but does not mark repository gates complete. Exact latest validated source/workflow relationships are maintained in `PROJECT_STATE.md` and `what_changed.md`; older historical validation revisions remain in the repository history rather than being presented here as the current state.
+Hardware-dependent recorder, interruption, background, routing, screen-wake, media-button, batch-performance, native/Web brand visual inspection, representative Linux installation, Windows real-system portable-package behavior, browser permission/device/share/PWA behavior, production Web hosting/cache/TLS behavior, filesystem-failure, malformed-real-media, accessibility, production signing, store submission, and lock-screen behavior still require real target-system, representative-browser, or protected maintainer-environment evidence. The Manual QA evidence screen provides a local/exportable status ledger for native observations but does not mark repository gates complete; Web-specific manual evidence is defined in `docs/WEB_QA_CHECKLIST.md`. Exact latest source/workflow relationships are maintained in `PROJECT_STATE.md` and `what_changed.md`.
 
 ## Build a Web release
 
@@ -200,8 +200,10 @@ Native recording uses platform encoders through `record`. Formats requiring tran
 
 ## Building, integrity, recovery, localization, packaging, QA, and releases
 
-- `docs/BUILDING.md` — platform bootstrap/build commands.
-- `docs/WEB_SUPPORT.md` — Web entry point, browser recording features, capability boundaries, CI, privacy, and QA.
+- `docs/BUILDING.md` — six-platform bootstrap/build commands and CI coverage.
+- `docs/WEB_SUPPORT.md` — Web entry point, browser recording features, capability boundaries, CI, release-candidate evidence, privacy, and QA.
+- `docs/WEB_QA_CHECKLIST.md` — real-browser permission, microphone, WAV, playback/share, responsive/accessibility, PWA, privacy, and production-hosting release gates.
+- `docs/RELEASE_CANDIDATE_MANIFEST.md` — six-platform checksummed candidate provenance contract and historical evidence boundary.
 - `docs/METADATA_INTEGRITY.md` — metadata corruption isolation, transaction rollback, reconciliation, and orphan recovery.
 - `docs/MANAGED_STORAGE_BOUNDARY.md` — supported regular-file boundaries, symbolic-link refusal, collision safety, and accounting.
 - `docs/RECOVERY_TESTING.md` — reproducible recovery validation scenarios.
@@ -216,12 +218,12 @@ Native recording uses platform encoders through `record`. Formats requiring tran
 - `docs/LINUX_DISTRIBUTION_POLICY.md` — initial GitHub Releases `.deb` distribution/signing boundary.
 - `docs/WINDOWS_PACKAGING.md` — initial Windows portable ZIP package/channel, structural verification, and bounded startup-smoke contract.
 - `docs/WINDOWS_SIGNING_POLICY.md` — stable public Windows Authenticode policy and private-credential boundary.
-- `docs/STORE_LISTING.md` — source-controlled listing copy and privacy-declaration draft for distribution review.
+- `docs/STORE_LISTING.md` — source-controlled listing copy and privacy-declaration draft for native distribution review.
 - `docs/UNSIGNED_ARTIFACTS.md` — platform-specific non-production candidate-artifact classification and boundaries.
-- `docs/QA_CHECKLIST.md` — hardware and stable-release evidence checklist.
+- `docs/QA_CHECKLIST.md` — native hardware/system and stable-release evidence checklist.
 - `docs/RELEASING.md` — release procedure.
 - `RELEASE_NOTES.md` — development-preview release notes.
-- `TODO.md` — evidence-based remaining gates.
+- `TODO.md` — evidence-based remaining gates, including fresh six-platform hosted validation and Web release checks.
 
 ## Contributing
 
