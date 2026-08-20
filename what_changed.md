@@ -1389,7 +1389,7 @@ Core Flutter CI run `31807193932` validated revision `a88aeadadda017b0aced4dbc25
 The cross-platform controller source revision `3bf63e69186a7a538f7d0587f3d361e00c2e29e9` also passed:
 
 - Windows build run `31807141053`: SUCCESS;
-- Apple build run `31807141166`: macOS debug SUCCESS and unsigned-iOS debug SUCCESS.
+- Apple run `31807141166`: macOS debug SUCCESS and unsigned-iOS debug SUCCESS.
 
 Repository Integrity Audit run `31808325649` passed on revision `44adfb292b1b26074ad7659a2b3843b62069db9f` after the cleaned permanent workflow set, workflow allowlist/read-only invariant, QA evidence, architecture, and roadmap synchronization were in place.
 
@@ -2558,3 +2558,94 @@ Validated source revision: `2c5f8c137af393bc37a89dd1f9ddcf78218a7c81`
 
 The validation confirms the repository-owned Gumroad integration and supported automated build/test/package paths. It does **not** replace remaining physical-device microphone/routing/lifecycle/background tests, real accessibility audits, destructive storage/power/process recovery tests, large-library/long-duration soak tests, protected signing/notarization/store-console validation, or stable-release approval.
 
+
+# Continuation — 2026-08-20 — Web capture recovery and PCM timing hardening
+
+## Objective
+
+Continue the six-platform SonicNest hardening work by reviewing the newly added browser recorder for deterministic failure behavior rather than adding another feature surface. The review found concrete Web capture-state and PCM accounting risks that could be fixed and regression-protected in repository source without claiming representative-browser evidence.
+
+## Complete PCM16 frame validation
+
+`lib/core/wav_encoder.dart` now validates complete PCM16 channel frames rather than only checking for an even byte count. A valid mono frame requires two bytes and a valid stereo frame requires four bytes. Partial stereo frames therefore fail before a malformed WAV can be produced.
+
+The same pure-Dart helper now exposes `pcm16Duration(...)`, which derives duration from the actual complete PCM frame count and effective sample rate. Finished browser recordings use this byte-derived duration rather than copying the one-second presentation timer into saved metadata.
+
+Regression coverage now includes:
+
+- one-second mono duration from PCM bytes;
+- one-second stereo duration from PCM bytes;
+- incomplete mono sample rejection;
+- incomplete stereo frame rejection;
+- shared validation between WAV creation and duration calculation.
+
+Focused commits:
+
+- `f4a5e718607cb7618946eef372a17d908583c8df` — `fix(web): validate complete PCM frames`.
+- `0949fdb3ef8530c1b3227edfd30401f4a99d7213` — `test(web): cover PCM frame duration and alignment`.
+
+## Browser capture failure recovery
+
+The first Web recorder implementation reported a capture-stream error but did not deterministically tear down the active session. A browser/device/backend failure could therefore leave timer, amplitude, recorder state, or partial capture bytes alive while the UI still looked active.
+
+`lib/main_web.dart` now treats browser start/stream failure as a fail-closed capture boundary:
+
+- the timer is cancelled;
+- incomplete PCM bytes are discarded rather than promoted into a finished recording;
+- recorder and amplitude subscriptions are detached/cancelled;
+- recorder cancellation is attempted even when the backend may already have terminated the stream;
+- elapsed time and amplitude state are reset;
+- recorder state returns to `stop`;
+- controls become usable for a new capture;
+- the user receives a recoverable browser-capture message.
+
+The stream subscription uses `cancelOnError: true` so the failing stream itself cannot continue delivering bytes after its terminal error path.
+
+Focused commit:
+
+- `64a21e0608ca9e142f13598036045b20cc1b1661` — `fix(web): recover cleanly from capture stream failures`.
+
+## Immediate-start recovery race closure
+
+A second review of the recovery implementation identified a startup race: a stream can fail immediately while `_startRecording()` is still installing amplitude/timer state. Without an explicit startup-generation guard, the remainder of startup could overwrite the just-restored stopped state.
+
+The recorder now uses a monotonic capture generation token. Every new start receives a generation, failure recovery invalidates that generation before asynchronous cleanup, and the startup path checks that its generation is still current before it is allowed to publish the recording state or timer. Amplitude setup occurs before the error-listened capture stream so immediate synchronous/near-synchronous stream failure is also covered by cleanup. A stale failure from an older generation is ignored rather than mutating a newer capture.
+
+Focused commits:
+
+- `90ccf23539ddc59dfbdb1eb94263dc3eed72882d` — `fix(web): prevent capture recovery startup race`.
+- `cef447d5d044f4daf53b8bff9d460ba3a0736999` — `test(web): lock startup recovery generation guard`.
+
+## Repository-contract and QA protection
+
+`tool/tests/test_web_platform_contract.py` now requires the Web surface to retain `pcm16Duration` usage, explicit capture-failure recovery, the capture-generation guard, startup generation mismatch protection, and `cancelOnError: true`.
+
+`docs/WEB_SUPPORT.md` now documents complete frame validation, byte-derived saved duration, partial-buffer discard, and fail-closed browser capture recovery.
+
+`docs/WEB_QA_CHECKLIST.md` now explicitly requires evidence for recorder start failure, ordinary/immediate capture-stream failure, partial-buffer discard, timer/amplitude/capture cleanup, restart after recovery, byte-derived saved duration, pause/resume duration consistency, and the Web platform contract regression itself.
+
+Focused documentation/test commits:
+
+- `78b9359dcb6198e45bc8d3a47165c4939e2f0e39` — `test(web): lock capture recovery contract`.
+- `13ea39fb9aae277dec1b8cd02f61e9db9fc9f515` — `docs(web): document capture recovery and sample timing`.
+- `5717093fb0fc96ba41f02d92035219402e9d9a81` — `docs(web): expand capture recovery QA gates`.
+
+## Validation boundary
+
+The earlier one-shot six-platform validation from revision `22f97c8b2f4aa673a81b0690f647a6877e0906b1` predates this Web reliability continuation and is not reused as proof for these newer commits.
+
+Application-code revision for this continuation:
+
+- `90ccf23539ddc59dfbdb1eb94263dc3eed72882d`.
+
+Final source/test revision before QA-document synchronization:
+
+- `cef447d5d044f4daf53b8bff9d460ba3a0736999`.
+
+No fresh permanent hosted Flutter CI, Repository Integrity Audit, or six-platform Release Candidate Validation result is pre-claimed in this ledger entry. Those evidence items remain open until their exact run results are observed and recorded. Likewise, no representative Chromium/Firefox/Safari microphone, device-removal, permission, duration, accessibility, production-hosting, or signing gate is marked complete from source review alone.
+
+SonicNest therefore remains a **development preview**.
+
+## Exact continuation point
+
+Do not reimplement complete PCM16 frame validation, byte-derived Web recording duration, capture failure teardown, or the startup generation guard. The next repository-side action is to consume and record fresh permanent CI/audit evidence for the current source when available and fix any reproducible regression it exposes. Beyond that, the remaining Web release work is evidence-driven: representative browser microphone/lifecycle behavior, sustained memory use, accessibility, HTTPS/cache/security hosting review, and exact six-platform release-candidate provenance.
