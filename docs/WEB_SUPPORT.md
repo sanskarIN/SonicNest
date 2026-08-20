@@ -24,7 +24,10 @@ The browser surface currently provides:
 - PCM16 stream recording;
 - pause, resume, stop, and cancel;
 - live amplitude metering;
-- elapsed recording time;
+- elapsed recording time while capture is active;
+- finished-recording duration derived from the actual captured PCM16 frame count rather than the UI timer;
+- complete mono/stereo PCM frame validation before WAV creation;
+- fail-closed cleanup of partial in-memory capture state after start/stream failures;
 - local PCM16-to-WAV packaging in pure Dart;
 - in-session recording list;
 - WAV playback from an in-memory byte stream;
@@ -32,6 +35,8 @@ The browser surface currently provides:
 - light, dark, and system theme support;
 - responsive browser layout;
 - no automatic audio upload or analytics.
+
+A browser capture-stream failure does not create a finished recording from partial bytes. SonicNest cancels the recorder where possible, closes capture/amplitude subscriptions, discards the incomplete in-memory buffer, resets timer/amplitude state, returns the recorder to the stopped state, and presents a recoverable message so the user can start a new recording.
 
 ## Native-only capability boundary
 
@@ -105,7 +110,7 @@ The deployable static site is written to `build/web/` by Flutter. Hosting, DNS, 
 4. applies SonicNest branding;
 5. runs `flutter build web --release` through the shared default entry point.
 
-The normal validation job still runs formatting, analyzer checks, and the complete Flutter unit-test suite. `test/wav_encoder_test.dart` validates the pure-Dart WAV header and payload logic used by browser recording. `test/bootstrap_integrity_test.dart` locks the six-target bootstrap list, conditional application entry point, and Web build command.
+The normal validation job still runs formatting, analyzer checks, and the complete Flutter unit-test suite. `test/wav_encoder_test.dart` validates the pure-Dart WAV header/payload logic, PCM frame-alignment rejection, and byte-derived duration behavior used by browser recording. `tool/tests/test_web_platform_contract.py` locks the browser recovery markers alongside the platform isolation contract. `test/bootstrap_integrity_test.dart` locks the six-target bootstrap list, conditional application entry point, and Web build command.
 
 ## Release-candidate evidence
 
@@ -134,6 +139,8 @@ Recommended evidence includes:
 - default and alternate microphone selection;
 - mono and stereo requests where supported;
 - pause/resume timing and audio continuity;
+- injected/real capture interruption followed by clean stopped-state recovery with no partial recording inserted;
+- saved WAV duration compared with independently observed audio duration, including pause/resume cases;
 - long capture and memory behavior;
 - playback completion and repeated playback;
 - share/download success and generated WAV playback outside SonicNest;
@@ -145,6 +152,6 @@ Recommended evidence includes:
 
 ## Privacy
 
-The browser implementation records into local process memory and does not automatically upload audio. A finished recording stays in the current in-memory session until the page is refreshed/closed or the user deletes it. Users should explicitly download/share recordings they want to retain.
+The browser implementation records into local process memory and does not automatically upload audio. A finished recording stays in the current in-memory session until the page is refreshed/closed or the user deletes it. Failed/incomplete capture buffers are discarded rather than promoted into the session list. Users should explicitly download/share recordings they want to retain.
 
 Any future durable browser storage implementation must preserve SonicNest's privacy-first model and document browser quota, eviction, backup, deletion, and recovery semantics before being presented as equivalent to the native managed library.
