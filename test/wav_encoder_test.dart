@@ -38,7 +38,25 @@ void main() {
     expect(header.getUint16(32, Endian.little), 4);
   });
 
-  test('pcm16ToWav rejects invalid format metadata', () {
+  test('pcm16Duration derives duration from complete mono frames', () {
+    final pcm = Uint8List(16000 * 2);
+
+    expect(
+      pcm16Duration(pcm, sampleRate: 16000, channels: 1),
+      const Duration(seconds: 1),
+    );
+  });
+
+  test('pcm16Duration derives duration from complete stereo frames', () {
+    final pcm = Uint8List(48000 * 2 * 2);
+
+    expect(
+      pcm16Duration(pcm, sampleRate: 48000, channels: 2),
+      const Duration(seconds: 1),
+    );
+  });
+
+  test('PCM helpers reject invalid format metadata and partial frames', () {
     expect(
       () => pcm16ToWav(Uint8List(2), sampleRate: 0, channels: 1),
       throwsArgumentError,
@@ -49,6 +67,14 @@ void main() {
     );
     expect(
       () => pcm16ToWav(Uint8List(1), sampleRate: 44100, channels: 1),
+      throwsArgumentError,
+    );
+    expect(
+      () => pcm16ToWav(Uint8List(2), sampleRate: 44100, channels: 2),
+      throwsArgumentError,
+    );
+    expect(
+      () => pcm16Duration(Uint8List(2), sampleRate: 44100, channels: 2),
       throwsArgumentError,
     );
   });
