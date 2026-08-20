@@ -49,6 +49,7 @@ class ReleaseCandidateManifestTest(unittest.TestCase):
             "windows": ("sonicnest-windows-x64-v0.1.0-portable-unsigned.zip",),
             "macos": ("sonicnest-macos-release-unsigned.zip",),
             "ios": ("sonicnest-ios-release-unsigned.zip",),
+            "web": ("sonicnest-web-release.tar.gz",),
         }
         result: dict[str, Path] = {}
         for platform in EXPECTED_PLATFORMS:
@@ -98,10 +99,22 @@ class ReleaseCandidateManifestTest(unittest.TestCase):
             [entry["platform"] for entry in manifest["platforms"]],
             list(EXPECTED_PLATFORMS),
         )
+        web = next(
+            entry for entry in manifest["platforms"] if entry["platform"] == "web"
+        )
+        self.assertEqual(web["build"], "release")
+        self.assertEqual(web["signing"], "not applicable to static web bundle")
 
     def test_rejects_tampered_payload(self) -> None:
         target = self.artifact_dirs["ios"] / "sonicnest-ios-release-unsigned.zip"
         target.write_bytes(b"tampered")
+
+        with self.assertRaisesRegex(ManifestError, "checksum mismatch"):
+            self._build()
+
+    def test_rejects_web_payload_tampering(self) -> None:
+        target = self.artifact_dirs["web"] / "sonicnest-web-release.tar.gz"
+        target.write_bytes(b"tampered-web")
 
         with self.assertRaisesRegex(ManifestError, "checksum mismatch"):
             self._build()
