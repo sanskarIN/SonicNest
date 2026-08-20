@@ -45,6 +45,7 @@ class WebPlatformContractTest(unittest.TestCase):
             "pcm16ToWav",
             "pcm16Duration",
             "_recoverFromCaptureFailure",
+            "_cancelCaptureSubscriptions",
             "_captureGeneration",
             "generation != _captureGeneration",
             "cancelOnError: true",
@@ -53,6 +54,24 @@ class WebPlatformContractTest(unittest.TestCase):
             "downloadFallbackEnabled: true",
         )
         for marker in required:
+            with self.subTest(marker=marker):
+                self.assertIn(marker, web)
+
+    def test_web_capture_controls_fail_closed(self) -> None:
+        web = self._text("lib/main_web.dart")
+
+        self.assertGreaterEqual(
+            web.count("final generation = ++_captureGeneration;"),
+            3,
+            "start, stop, and cancel must each establish a new capture generation",
+        )
+        for marker in (
+            "Could not change recording state. The incomplete capture was discarded",
+            "Could not finish recording. The incomplete capture was discarded",
+            "The recording was discarded locally, but the browser could not confirm microphone shutdown",
+            "await _cancelCaptureSubscriptions();",
+            "_captureGeneration++;\n    _timer?.cancel();",
+        ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, web)
 
