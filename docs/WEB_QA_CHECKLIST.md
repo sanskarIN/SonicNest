@@ -12,8 +12,9 @@ For the exact candidate revision:
 - [ ] `flutter analyze --no-fatal-infos`
 - [ ] `flutter test`
 - [ ] `flutter build web --release`
-- [ ] `test/wav_encoder_test.dart` passes.
+- [ ] `test/wav_encoder_test.dart` passes, including complete PCM16 frame alignment and byte-derived duration cases.
 - [ ] `test/bootstrap_integrity_test.dart` passes.
+- [ ] `python3 tool/tests/test_web_platform_contract.py` passes, including capture-recovery generation guards.
 - [ ] Repository Integrity Audit passes.
 - [ ] Manual Release Candidate Validation Web job succeeds.
 - [ ] `sonicnest-web-release.tar.gz` is produced.
@@ -78,7 +79,11 @@ Record exact browser/OS versions in external release evidence. Do not hard-code 
 - [ ] Cancel discards the unfinished in-memory capture.
 - [ ] Stop after pause works.
 - [ ] Repeated start/stop sessions work without a page refresh.
-- [ ] Recorder failure returns the UI to a usable state.
+- [ ] Recorder start failure returns the UI to stopped/usable state.
+- [ ] Capture-stream failure returns the UI to stopped/usable state even when it occurs immediately during recorder startup.
+- [ ] A capture-stream failure discards partial in-memory PCM instead of inserting a finished recording.
+- [ ] Timer, amplitude stream, and recorder stream no longer remain active after capture failure.
+- [ ] A new recording can be started successfully after a recovered capture failure.
 - [ ] No finished recording is inserted when no audio bytes were captured.
 
 ## Audio constraints and channels
@@ -101,6 +106,8 @@ Where supported by the browser/hardware combination:
 - [ ] Timer advances while actively recording.
 - [ ] Timer does not advance while paused.
 - [ ] Timer resets for a new capture.
+- [ ] Finished-recording duration is derived from captured PCM frames and remains consistent with independently observed playback duration.
+- [ ] Pause/resume sessions do not inherit UI-timer drift into the saved recording duration.
 - [ ] Display remains usable during a long recording.
 
 ## WAV integrity
@@ -109,7 +116,7 @@ For recordings produced on each representative browser:
 
 - [ ] SonicNest can play the finished in-memory WAV.
 - [ ] Downloaded/shared WAV opens in at least one independent audio player.
-- [ ] WAV duration is reasonably consistent with the captured session.
+- [ ] WAV duration is reasonably consistent with the captured audio and the session-list duration.
 - [ ] Mono/stereo channel metadata matches the effective capture configuration.
 - [ ] No obvious header corruption exists after repeated recordings.
 - [ ] Long-capture output remains playable.
@@ -137,6 +144,7 @@ For recordings produced on each representative browser:
 
 - [ ] UI clearly explains that browser recordings are retained only for the current page session.
 - [ ] Refreshing/closing the page does not claim that an unsaved browser recording is durably stored.
+- [ ] Failed/incomplete capture buffers do not appear in the finished session list.
 - [ ] No automatic upload occurs.
 - [ ] No hidden analytics/network recording transfer occurs.
 - [ ] Deleting an in-session item removes it from the current session list.
