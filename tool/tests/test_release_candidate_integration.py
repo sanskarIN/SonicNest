@@ -27,6 +27,10 @@ class ReleaseCandidateIntegrationTest(unittest.TestCase):
             "--artifact windows=",
             "--artifact macos=",
             "--artifact ios=",
+            "--artifact web=",
+            "sonicnest-web-release-candidate",
+            "sonicnest-web-release.tar.gz",
+            "flutter build web --release",
             "--source-sha \"${GITHUB_SHA}\"",
             "--workflow-run-id \"${GITHUB_RUN_ID}\"",
         )
