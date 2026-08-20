@@ -110,5 +110,5 @@ jobs:
       - run: flutter pub get
       - name: Apply SonicNest web branding
         run: bash tool/apply_branding.sh
-      - name: Build browser/PWA release
-        run: flutter build web --release --target lib/main_web.dart
+      - name: Build browser release through default entry point
+        run: flutter build web --release
