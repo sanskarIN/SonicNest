@@ -9,9 +9,9 @@ SonicNest treats Web as a first-class build target alongside Android, iOS, macOS
 - `lib/bootstrap/bootstrap_native.dart` when `dart.library.io` is available.
 - `lib/bootstrap/bootstrap_web.dart` when `dart.library.js_interop` is available.
 
-The web branch delegates to `lib/main_web.dart`, which intentionally has no `dart:io`, native FFmpeg, or native media-session dependency.
+The Web branch delegates to `lib/main_web.dart`, which intentionally has no `dart:io`, native FFmpeg, native filesystem, or native media-session dependency.
 
-This arrangement keeps `flutter run` and `flutter build web` on the normal project entry point while preventing native-only packages from entering the browser compilation graph.
+This arrangement keeps `flutter run` and `flutter build web` on the normal project entry point while preventing native-only packages from entering the browser compilation graph. The `dart.library.js_interop` condition also follows the modern Dart Web capability marker rather than relying on deprecated HTML-library detection.
 
 ## Browser recorder capabilities
 
@@ -95,7 +95,7 @@ On Windows, use the PowerShell bootstrap/branding scripts before the same Flutte
 
 The deployable static site is written to `build/web/` by Flutter. Hosting, DNS, TLS, cache headers, and production deployment credentials remain deployment-environment responsibilities and are not committed to this repository.
 
-## CI contract
+## Core CI contract
 
 `.github/workflows/ci.yml` contains a dedicated Web release-build job. It:
 
@@ -105,13 +105,43 @@ The deployable static site is written to `build/web/` by Flutter. Hosting, DNS, 
 4. applies SonicNest branding;
 5. runs `flutter build web --release` through the shared default entry point.
 
-The normal validation job still runs formatting, analyzer checks, and the complete Flutter unit-test suite. `test/wav_encoder_test.dart` validates the pure-Dart WAV header and payload logic used by browser recording.
+The normal validation job still runs formatting, analyzer checks, and the complete Flutter unit-test suite. `test/wav_encoder_test.dart` validates the pure-Dart WAV header and payload logic used by browser recording. `test/bootstrap_integrity_test.dart` locks the six-target bootstrap list, conditional application entry point, and Web build command.
+
+## Release-candidate evidence
+
+`.github/workflows/release-candidate.yml` also contains a Web release-candidate job. It builds the browser release through the same default entry point, archives the generated static site as `sonicnest-web-release.tar.gz`, writes an explicit development-preview warning, writes `SHA256SUMS.txt`, and uploads `sonicnest-web-release-candidate`.
+
+The unified release-candidate provenance manifest now requires all six targets:
+
+```text
+android, linux, windows, macos, ios, web
+```
+
+`tool/build_release_candidate_manifest.py` rejects a missing Web candidate, a Web payload whose bytes no longer match its checksum, and any other platform evidence that violates the same fail-closed artifact rules. The Web entry records release build classification, marks binary signing as not applicable to the static bundle, and remains explicitly development-preview evidence.
+
+See `docs/RELEASE_CANDIDATE_MANIFEST.md` for the complete provenance contract. Historical release-candidate runs that predate Web integration remain historical five-platform evidence and do not validate the current six-platform revision.
 
 ## Browser compatibility and manual QA
 
 Microphone capture depends on browser permission APIs and a secure browsing context in production. Actual input-device behavior, permission prompts, capture quality, playback, browser download/share behavior, responsive layout, and installability should be checked on representative current browsers before a public Web release.
 
-At minimum, manual Web QA should cover current Chromium, Firefox, and Safari families on both desktop and mobile form factors where available. A browser passing the build job does not by itself prove microphone hardware or browser-policy behavior.
+At minimum, manual Web QA should cover current Chromium, Firefox, and Safari families on desktop and mobile form factors where available. A browser passing the build job does not by itself prove microphone hardware or browser-policy behavior.
+
+Recommended evidence includes:
+
+- first-run allow/deny microphone flows;
+- permission revocation and retry;
+- default and alternate microphone selection;
+- mono and stereo requests where supported;
+- pause/resume timing and audio continuity;
+- long capture and memory behavior;
+- playback completion and repeated playback;
+- share/download success and generated WAV playback outside SonicNest;
+- narrow/mobile and wide/desktop responsive layouts;
+- keyboard/focus and screen-reader basics;
+- light/dark/system theme behavior;
+- PWA/browser installability where the target browser exposes installation;
+- production HTTPS hosting and cache-update behavior.
 
 ## Privacy
 
