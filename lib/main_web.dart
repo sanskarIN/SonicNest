@@ -85,6 +85,7 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
   List<InputDevice> _devices = const <InputDevice>[];
   int? _playingId;
   int _nextRecordingId = 1;
+  int _captureGeneration = 0;
 
   bool get _isRecording => _recordState == RecordState.record;
   bool get _isPaused => _recordState == RecordState.pause;
@@ -139,6 +140,7 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
 
   Future<void> _startRecording() async {
     if (_busy || _hasActiveCapture) return;
+    final generation = ++_captureGeneration;
     setState(() => _busy = true);
     try {
       if (!await _recorder.hasPermission()) {
@@ -160,18 +162,6 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
       _capturedBytes = BytesBuilder(copy: false);
 
       final stream = await _recorder.startStream(config);
-      _recordingSubscription = stream.listen(
-        (chunk) => _capturedBytes?.add(chunk),
-        onError: (Object _, StackTrace __) {
-          unawaited(
-            _recoverFromCaptureFailure(
-              'Browser audio capture stopped unexpectedly. You can start a new recording.',
-            ),
-          );
-        },
-        cancelOnError: true,
-      );
-
       await _amplitudeSubscription?.cancel();
       _amplitudeSubscription = _recorder
           .onAmplitudeChanged(const Duration(milliseconds: 120))
@@ -181,29 +171,46 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
               _amplitudeDb = value.current.clamp(-60.0, 0.0).toDouble();
             });
           });
+      _recordingSubscription = stream.listen(
+        (chunk) => _capturedBytes?.add(chunk),
+        onError: (Object _, StackTrace __) {
+          unawaited(
+            _recoverFromCaptureFailure(
+              'Browser audio capture stopped unexpectedly. You can start a new recording.',
+              generation: generation,
+            ),
+          );
+        },
+        cancelOnError: true,
+      );
 
       _elapsed = Duration.zero;
       _timer?.cancel();
-      if (!mounted) return;
+      if (!mounted || generation != _captureGeneration) return;
       setState(() => _recordState = RecordState.record);
       _timer = Timer.periodic(const Duration(seconds: 1), (_) {
         if (!mounted || !_isRecording) return;
         setState(() => _elapsed += const Duration(seconds: 1));
       });
-    } catch (error) {
+    } catch (_) {
       await _recoverFromCaptureFailure(
         'Could not start recording. Check browser microphone access and try again.',
+        generation: generation,
       );
     } finally {
-      if (mounted && !_recoveringCaptureFailure) {
+      if (mounted && generation == _captureGeneration) {
         setState(() => _busy = false);
       }
     }
   }
 
-  Future<void> _recoverFromCaptureFailure(String message) async {
-    if (_recoveringCaptureFailure) return;
+  Future<void> _recoverFromCaptureFailure(
+    String message, {
+    required int generation,
+  }) async {
+    if (generation != _captureGeneration || _recoveringCaptureFailure) return;
     _recoveringCaptureFailure = true;
+    _captureGeneration++;
     if (mounted) {
       setState(() => _busy = true);
     }
