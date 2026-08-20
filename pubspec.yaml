@@ -53,6 +53,11 @@ flutter_launcher_icons:
   image_path_ios: assets/generated/sonicnest_icon.png
   remove_alpha_ios: true
   background_color_ios: "#4856E8"
+  web:
+    generate: true
+    image_path: assets/generated/sonicnest_icon.png
+    background_color: "#4856E8"
+    theme_color: "#4856E8"
   windows:
     generate: true
     image_path: assets/generated/sonicnest_icon.png
@@ -67,7 +72,7 @@ flutter_native_splash:
   image: assets/generated/sonicnest_splash.png
   android: true
   ios: true
-  web: false
+  web: true
   android_min_sdk: 23
   android_12:
     color: "#F7F7FC"
