@@ -19,6 +19,15 @@ CRITICAL_REQUIRED_FILES = {
     "docs/OPEN_SOURCE_MAINTENANCE.md",
     "docs/RELEASE_CANDIDATE_MANIFEST.md",
     "docs/RELEASE_READINESS_REPORT.md",
+    "docs/WEB_QA_CHECKLIST.md",
+    "docs/WEB_SUPPORT.md",
+    "lib/bootstrap/bootstrap.dart",
+    "lib/bootstrap/bootstrap_native.dart",
+    "lib/bootstrap/bootstrap_web.dart",
+    "lib/main_web.dart",
+    "lib/core/wav_encoder.dart",
+    "test/bootstrap_integrity_test.dart",
+    "test/wav_encoder_test.dart",
     "tool/build_release_candidate_manifest.py",
     "tool/build_release_readiness_report.py",
     "tool/patch_generated_platforms.py",
@@ -38,6 +47,7 @@ CRITICAL_REQUIRED_FILES = {
     "tool/tests/test_repository_audit.py",
     "tool/tests/test_repository_required_surfaces.py",
     "tool/tests/test_verify_release_readiness_report.py",
+    "tool/tests/test_web_platform_contract.py",
 }
 
 
