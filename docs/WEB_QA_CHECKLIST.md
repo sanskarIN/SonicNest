@@ -14,7 +14,7 @@ For the exact candidate revision:
 - [ ] `flutter build web --release`
 - [ ] `test/wav_encoder_test.dart` passes, including complete PCM16 frame alignment and byte-derived duration cases.
 - [ ] `test/bootstrap_integrity_test.dart` passes.
-- [ ] `python3 tool/tests/test_web_platform_contract.py` passes, including capture-recovery generation guards.
+- [ ] `python3 tool/tests/test_web_platform_contract.py` passes, including capture-recovery generation guards and fail-closed recorder-control markers.
 - [ ] Repository Integrity Audit passes.
 - [ ] Manual Release Candidate Validation Web job succeeds.
 - [ ] `sonicnest-web-release.tar.gz` is produced.
@@ -47,6 +47,7 @@ Record exact browser/OS versions in external release evidence. Do not hard-code 
 - [ ] Browser back/forward behavior does not leave capture in an unsafe state.
 - [ ] Reload while idle is clean.
 - [ ] Reload during active capture produces browser-appropriate interruption behavior without claiming the recording was saved.
+- [ ] Navigating away/disposal during capture does not allow a late stream callback to restore stale recording UI state.
 
 ## Microphone permission
 
@@ -85,6 +86,14 @@ Record exact browser/OS versions in external release evidence. Do not hard-code 
 - [ ] Timer, amplitude stream, and recorder stream no longer remain active after capture failure.
 - [ ] A new recording can be started successfully after a recovered capture failure.
 - [ ] No finished recording is inserted when no audio bytes were captured.
+- [ ] A Pause backend failure fails closed to a stopped/usable state and does not preserve an uncertain partial recording.
+- [ ] A Resume backend failure fails closed to a stopped/usable state and does not preserve an uncertain partial recording.
+- [ ] A Stop backend failure discards the incomplete capture and returns to a restartable state.
+- [ ] A late capture-stream error delivered while Stop is in progress cannot overwrite the requested Stop transition.
+- [ ] A late capture-stream error delivered while Cancel is in progress cannot overwrite the requested Cancel transition.
+- [ ] Cancel still clears timer, amplitude/capture subscriptions, and partial PCM when browser `cancel()` throws.
+- [ ] When browser `cancel()` throws but backend `stop()` succeeds, local capture is discarded and the UI remains restartable.
+- [ ] When neither browser Cancel nor Stop can confirm microphone shutdown, local capture is discarded and the UI gives the user a clear reload/microphone-indicator warning.
 
 ## Audio constraints and channels
 
