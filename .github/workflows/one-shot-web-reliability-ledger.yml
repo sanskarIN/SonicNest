@@ -1,0 +1,147 @@
+name: One-shot Web reliability ledger sync
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/one-shot-web-reliability-ledger.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Append focused continuation records
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'Sanskar'
+          git config user.email 'sanskarin@outlook.in'
+
+          if ! grep -Fq 'Web stream completion and playback reliability — 2026-08-23' CHANGELOG.md; then
+            cat >> CHANGELOG.md <<'EOF'
+
+## Web stream completion and playback reliability — 2026-08-23
+
+- Hardened the browser recorder so an unexpected clean capture-stream completion is handled through the same fail-closed recovery boundary as an explicit stream error. Partial PCM is discarded, subscriptions/timer/amplitude state are cleaned up, and the recorder returns to a restartable stopped state.
+- Reused capture-generation invalidation so normal Stop/Cancel/dispose transitions ignore late completion callbacks from an older browser stream.
+- Locked microphone refresh, input selection, mono/stereo selection, automatic gain, echo cancellation, and noise suppression while recorder transition work is busy as well as while capture is active.
+- Fixed in-session Web playback so pausing and pressing Play on the same recording resumes the loaded source/position instead of reloading from the beginning.
+- Playback start/resume operations are awaited; asynchronous failures clear stale playing-row state and use the existing recoverable user message.
+- Expanded `tool/tests/test_web_platform_contract.py`, `docs/WEB_SUPPORT.md`, and `docs/WEB_QA_CHECKLIST.md`, and added `docs/WEB_RELIABILITY_HARDENING_2026-08-23.md`.
+- No physical-browser, accessibility, hosting, signing, or stable-release gate is closed by these source changes. SonicNest remains a development preview pending the unchecked evidence in `TODO.md`.
+EOF
+            git add CHANGELOG.md
+            git commit -m 'docs(web): record 2026-08-23 reliability changelog'
+          fi
+
+          if ! grep -Fq 'Web reliability hardening — 2026-08-23' PROJECT_STATE.md; then
+            cat >> PROJECT_STATE.md <<'EOF'
+
+## Web reliability hardening — 2026-08-23
+
+- Unexpected clean browser capture-stream completion now enters the shared fail-closed recovery path instead of leaving recording UI state active after audio delivery has ended.
+- The existing capture-generation boundary makes late stream errors/completion callbacks stale after Stop, Cancel, or disposal, preventing an older stream from overwriting a newer requested state.
+- Browser microphone/device/channel/DSP controls now share a busy-or-active transition lock so settings cannot change while recorder state is being negotiated.
+- Same-recording Web playback pause/resume keeps the loaded source and position; playback futures are observed and stale playing-row state is cleared when playback fails.
+- Repository regression coverage in `tool/tests/test_web_platform_contract.py` locks stream completion recovery, transition input locking, playback resume behavior, and awaited playback.
+- Manual browser evidence remains required for device removal/stream termination, permission recovery, playback behavior, representative Chromium/Firefox/Safari/WebKit coverage, accessibility, long-session memory, and production hosting.
+- No fresh hosted six-platform candidate/audit evidence is inferred from this source update; historical validation remains scoped to its exact revisions.
+- Release classification remains **development preview**.
+EOF
+            git add PROJECT_STATE.md
+            git commit -m 'docs(web): sync project state with Web reliability hardening'
+          fi
+
+          if ! grep -Fq '# Continuation — 2026-08-23 — Web stream completion, transition locking, and playback recovery' what_changed.md; then
+            cat >> what_changed.md <<'EOF'
+
+# Continuation — 2026-08-23 — Web stream completion, transition locking, and playback recovery
+
+## Objective
+
+Continue repository-owned Web reliability hardening after the 2026-08-20 capture-error and PCM-timing work. Source review identified three deterministic gaps that could be fixed without pretending to provide representative-browser evidence: an unexpectedly completed capture stream had no `onDone` recovery path, input settings remained editable while recorder transitions were busy, and pausing then replaying the same in-session recording reloaded its source while playback failures were not observed by the caller.
+
+## Unexpected clean capture-stream completion
+
+The Web recorder now routes an unexpected stream `onDone` callback through the same `_recoverFromCaptureFailure(...)` boundary used for capture errors. When the current capture generation ends unexpectedly, SonicNest:
+
+- invalidates the capture generation;
+- cancels the presentation timer;
+- discards incomplete in-memory PCM rather than promoting it to a finished recording;
+- attempts backend recorder cancellation;
+- closes capture and amplitude subscriptions;
+- resets elapsed/amplitude/record state;
+- returns controls to a restartable stopped state;
+- presents a recoverable interruption message.
+
+Normal Stop and Cancel increment the generation before asking the browser backend to terminate. A completion callback caused by those requested transitions therefore belongs to an older generation and cannot race the new state. Disposal also invalidates the active generation first, preserving the same stale-callback rule while the page leaves the widget tree.
+
+Focused implementation commit:
+
+- `db6203bb2b95b44095fca5709bedc71163029fdb` — `fix(web): harden stream completion and playback state`.
+
+## Recorder-transition input locking
+
+Added one shared `_canChangeInputSettings` boundary requiring both `!_busy` and `!_hasActiveCapture`. The following browser controls now use it:
+
+- refresh microphones;
+- selected microphone;
+- mono/stereo channel request;
+- automatic gain;
+- echo cancellation;
+- noise suppression.
+
+This closes the gap where a user could change the visible requested configuration while start/pause/resume/stop/cancel work was still in flight and the browser backend state was uncertain.
+
+## In-session playback recovery
+
+Same-recording Web playback now distinguishes pause from source selection. If the selected recording is already loaded, pressing its control pauses or resumes the existing player instead of calling `setAudioSource(...)` again and restarting from the beginning.
+
+Playback is awaited rather than launched through an unobserved future. A backend failure therefore reaches the existing catch path, clears stale `_playingId` state for that row, and surfaces the recoverable playback message.
+
+## Regression and documentation protection
+
+`tool/tests/test_web_platform_contract.py` now locks:
+
+- explicit capture-stream `onDone` recovery;
+- the shared busy/active input-settings lock;
+- same-recording playback resume behavior;
+- awaited playback and rejection of the old unobserved `unawaited(_player.play())` pattern.
+
+Focused regression commit:
+
+- `88115e11f7bfcb1cd007ac4e09977b90e1604378` — `test(web): lock stream completion and playback recovery`.
+
+Documentation commits:
+
+- `536684637b6adf2725e801957cd90df153e50523` — `docs(web): record stream completion reliability hardening`;
+- `4c4f30df584a8e9b96dd6269d1bc4a7f68af0912` — `docs(web): expand stream completion and playback QA gates`;
+- `1355b86a35781de82c1d4094fe61d6652c533367` — `docs(web): document clean stream and playback recovery`.
+
+The focused hardening record is `docs/WEB_RELIABILITY_HARDENING_2026-08-23.md`. `docs/WEB_QA_CHECKLIST.md` now requires real-browser evidence for unexpected clean stream termination, settings locking during transitions, stale completion callbacks during Stop/Cancel, same-row playback resume, and playback-failure state recovery.
+
+## Validation boundary
+
+These commits provide repository-source behavior and source-contract regression protection only. No fresh hosted Flutter CI, Repository Integrity Audit, manual six-platform Release Candidate Validation, physical microphone test, representative Chromium/Firefox/Safari/WebKit test, accessibility audit, production HTTPS hosting review, or protected signing result is claimed merely from this continuation.
+
+The unchecked items in `TODO.md` remain authoritative and intentionally include those evidence/credential-dependent gates. SonicNest remains a **development preview**.
+
+## Exact continuation point
+
+Do not reimplement the 2026-08-20 PCM frame/duration and capture-error generation work or the 2026-08-23 clean-stream completion, transition-locking, and playback-resume work. The next repository-side action is to observe fresh permanent workflow results for the current source when available and fix only reproducible failures. Beyond that, continue with real browser/device/accessibility/stress/hosting/signing evidence rather than converting hosted source review into manual-release proof.
+EOF
+            git add what_changed.md
+            git commit -m 'docs: append 2026-08-23 Web reliability continuation'
+          fi
+
+          rm -f .github/workflows/one-shot-web-reliability-ledger.yml
+          git add -A .github/workflows/one-shot-web-reliability-ledger.yml
+          git commit -m 'chore: remove one-shot Web reliability ledger sync'
+          git push origin HEAD:main
