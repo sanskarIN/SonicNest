@@ -28,18 +28,26 @@ The browser surface currently provides:
 - finished-recording duration derived from the actual captured PCM16 frame count rather than the UI timer;
 - complete mono/stereo PCM frame validation before WAV creation;
 - fail-closed cleanup of partial in-memory capture state after start/stream/control-transition failures;
-- generation invalidation so stale stream errors cannot overwrite a later Stop/Cancel/dispose transition;
+- fail-closed recovery when the browser closes the capture stream unexpectedly without reporting an explicit stream error;
+- generation invalidation so stale stream errors or completion callbacks cannot overwrite a later Stop/Cancel/dispose transition;
+- transition locking so microphone/channel/processing input settings cannot change while recorder state is uncertain;
 - local PCM16-to-WAV packaging in pure Dart;
 - in-session recording list;
 - WAV playback from an in-memory byte stream;
+- same-recording pause/resume without reloading the source from the beginning;
+- observed playback failures with stale playing-row state cleared on failure;
 - explicit share/download with browser download fallback;
 - light, dark, and system theme support;
 - responsive browser layout;
 - no automatic audio upload or analytics.
 
-A browser capture-stream failure does not create a finished recording from partial bytes. SonicNest cancels the recorder where possible, closes capture/amplitude subscriptions, discards the incomplete in-memory buffer, resets timer/amplitude state, returns the recorder to the stopped state, and presents a recoverable message so the user can start a new recording.
+A browser capture-stream failure or unexpected clean stream completion does not create a finished recording from partial bytes. SonicNest cancels the recorder where possible, closes capture/amplitude subscriptions, discards the incomplete in-memory buffer, resets timer/amplitude state, returns the recorder to the stopped state, and presents a recoverable message so the user can start a new recording.
 
-Recorder control transitions use the same safety boundary. A Pause/Resume failure is treated as an unknown backend state and the incomplete capture is discarded rather than allowing the UI and microphone backend to diverge. Stop and Cancel invalidate the current stream generation before their backend transition, so a late error from the old stream cannot race the requested control action. A Stop failure is recovered fail-closed. Cancel always discards local PCM and closes local capture/amplitude subscriptions even if browser cancellation itself throws; SonicNest then attempts a backend Stop fallback. If neither browser operation can confirm microphone shutdown, the UI explains that local capture was discarded and instructs the user to reload if the browser microphone indicator remains active.
+Recorder control transitions use the same safety boundary. A Pause/Resume failure is treated as an unknown backend state and the incomplete capture is discarded rather than allowing the UI and microphone backend to diverge. Stop and Cancel invalidate the current stream generation before their backend transition, so a late error or completion callback from the old stream cannot race the requested control action. A Stop failure is recovered fail-closed. Cancel always discards local PCM and closes local capture/amplitude subscriptions even if browser cancellation itself throws; SonicNest then attempts a backend Stop fallback. If neither browser operation can confirm microphone shutdown, the UI explains that local capture was discarded and instructs the user to reload if the browser microphone indicator remains active.
+
+Input-device and processing settings share a single transition lock. They are unavailable not only while capture is actively recording/paused, but also while start/pause/resume/stop/cancel work is in flight. This prevents the controls from displaying a setting that differs from the configuration currently being negotiated with the browser recorder backend.
+
+In-session playback keeps the same loaded byte source when the user pauses and resumes a recording. Playback operations are awaited so asynchronous backend failures can be surfaced through SonicNest's recoverable message path; a failure clears stale playing-row state rather than leaving the row looking active.
 
 Widget disposal also invalidates the active capture generation before local subscriptions and recorder/player resources are disposed. This prevents a late capture callback from trying to revive state owned by a page that is leaving the widget tree.
 
@@ -115,7 +123,7 @@ The deployable static site is written to `build/web/` by Flutter. Hosting, DNS, 
 4. applies SonicNest branding;
 5. runs `flutter build web --release` through the shared default entry point.
 
-The normal validation job still runs formatting, analyzer checks, and the complete Flutter unit-test suite. `test/wav_encoder_test.dart` validates the pure-Dart WAV header/payload logic, PCM frame-alignment rejection, and byte-derived duration behavior used by browser recording. `tool/tests/test_web_platform_contract.py` locks browser isolation, start/stream recovery, generation invalidation, fail-closed Pause/Resume/Stop behavior, and Cancel cleanup/fallback markers. `test/bootstrap_integrity_test.dart` locks the six-target bootstrap list, conditional application entry point, and Web build command.
+The normal validation job still runs formatting, analyzer checks, and the complete Flutter unit-test suite. `test/wav_encoder_test.dart` validates the pure-Dart WAV header/payload logic, PCM frame-alignment rejection, and byte-derived duration behavior used by browser recording. `tool/tests/test_web_platform_contract.py` locks browser isolation, start/stream recovery, unexpected stream-completion recovery, generation invalidation, fail-closed Pause/Resume/Stop behavior, Cancel cleanup/fallback markers, recorder-transition input locking, and same-recording playback resume/error-observation markers. `test/bootstrap_integrity_test.dart` locks the six-target bootstrap list, conditional application entry point, and Web build command.
 
 ## Release-candidate evidence
 
@@ -143,15 +151,17 @@ Recommended evidence includes:
 - permission revocation and retry;
 - default and alternate microphone selection;
 - mono and stereo requests where supported;
+- input settings remaining locked during recorder transition work and restoring after recovery;
 - pause/resume timing and audio continuity;
 - injected/real capture interruption followed by clean stopped-state recovery with no partial recording inserted;
+- clean capture-stream termination without an explicit error followed by the same fail-closed recovery;
 - injected Pause/Resume/Stop backend failures followed by clean fail-closed recovery;
 - Cancel when browser cancellation succeeds, when cancellation throws but Stop fallback succeeds, and when neither operation can confirm microphone shutdown;
-- late stream errors during Stop/Cancel not changing the newly requested state;
+- late stream errors/completion callbacks during Stop/Cancel not changing the newly requested state;
 - navigation/reload/disposal during capture not reviving stale recorder UI state;
 - saved WAV duration compared with independently observed audio duration, including pause/resume cases;
 - long capture and memory behavior;
-- playback completion and repeated playback;
+- playback pause then resume on the same row without restarting at zero, playback completion, playback failure recovery, and repeated playback;
 - share/download success and generated WAV playback outside SonicNest;
 - narrow/mobile and wide/desktop responsive layouts;
 - keyboard/focus and screen-reader basics;
