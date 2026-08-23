@@ -14,7 +14,7 @@ For the exact candidate revision:
 - [ ] `flutter build web --release`
 - [ ] `test/wav_encoder_test.dart` passes, including complete PCM16 frame alignment and byte-derived duration cases.
 - [ ] `test/bootstrap_integrity_test.dart` passes.
-- [ ] `python3 tool/tests/test_web_platform_contract.py` passes, including capture-recovery generation guards and fail-closed recorder-control markers.
+- [ ] `python3 tool/tests/test_web_platform_contract.py` passes, including capture-recovery generation guards, clean stream-completion recovery, fail-closed recorder-control markers, busy-transition input locking, and same-recording playback resume markers.
 - [ ] Repository Integrity Audit passes.
 - [ ] Manual Release Candidate Validation Web job succeeds.
 - [ ] `sonicnest-web-release.tar.gz` is produced.
@@ -69,6 +69,8 @@ Record exact browser/OS versions in external release evidence. Do not hard-code 
 - [ ] Device removal during capture produces a recoverable stop/error path rather than false success.
 - [ ] Refresh-device action does not interrupt an active capture.
 - [ ] Device selection is disabled while capture is active.
+- [ ] Refresh, device selection, channel selection, automatic gain, echo cancellation, and noise suppression are all disabled while start/pause/resume/stop/cancel transitions are busy.
+- [ ] Input settings become editable again after a failed transition has recovered to the stopped state.
 
 ## Recording lifecycle
 
@@ -82,15 +84,18 @@ Record exact browser/OS versions in external release evidence. Do not hard-code 
 - [ ] Repeated start/stop sessions work without a page refresh.
 - [ ] Recorder start failure returns the UI to stopped/usable state.
 - [ ] Capture-stream failure returns the UI to stopped/usable state even when it occurs immediately during recorder startup.
-- [ ] A capture-stream failure discards partial in-memory PCM instead of inserting a finished recording.
-- [ ] Timer, amplitude stream, and recorder stream no longer remain active after capture failure.
-- [ ] A new recording can be started successfully after a recovered capture failure.
+- [ ] Unexpected clean capture-stream completion (`onDone`) is treated as an interrupted capture and returns the UI to stopped/usable state rather than leaving the timer running.
+- [ ] A capture-stream failure or unexpected completion discards partial in-memory PCM instead of inserting a finished recording.
+- [ ] Timer, amplitude stream, and recorder stream no longer remain active after capture failure or unexpected completion.
+- [ ] A new recording can be started successfully after a recovered capture failure or unexpected completion.
 - [ ] No finished recording is inserted when no audio bytes were captured.
 - [ ] A Pause backend failure fails closed to a stopped/usable state and does not preserve an uncertain partial recording.
 - [ ] A Resume backend failure fails closed to a stopped/usable state and does not preserve an uncertain partial recording.
 - [ ] A Stop backend failure discards the incomplete capture and returns to a restartable state.
 - [ ] A late capture-stream error delivered while Stop is in progress cannot overwrite the requested Stop transition.
+- [ ] A late capture-stream completion delivered while Stop is in progress cannot overwrite the requested Stop transition.
 - [ ] A late capture-stream error delivered while Cancel is in progress cannot overwrite the requested Cancel transition.
+- [ ] A late capture-stream completion delivered while Cancel is in progress cannot overwrite the requested Cancel transition.
 - [ ] Cancel still clears timer, amplitude/capture subscriptions, and partial PCM when browser `cancel()` throws.
 - [ ] When browser `cancel()` throws but backend `stop()` succeeds, local capture is discarded and the UI remains restartable.
 - [ ] When neither browser Cancel nor Stop can confirm microphone shutdown, local capture is discarded and the UI gives the user a clear reload/microphone-indicator warning.
@@ -134,9 +139,11 @@ For recordings produced on each representative browser:
 
 - [ ] Play starts the selected recording.
 - [ ] Pause works.
-- [ ] Replaying the same recording works.
+- [ ] Pressing Play again on the same paused recording resumes the existing source/position instead of reloading it from the beginning.
+- [ ] Replaying the same recording after completion works.
 - [ ] Switching to a different recording works.
 - [ ] Playback completion returns the row/UI to a non-playing state.
+- [ ] Playback failure clears stale playing-row state and presents a recoverable user-visible message.
 - [ ] Deleting the currently selected/playing in-session item stops playback safely.
 - [ ] Audio output route follows normal browser/OS behavior.
 
