@@ -107,6 +107,20 @@ class WebPlatformContractTest(unittest.TestCase):
             "refresh, device, channel, and audio-processing controls must share the same transition lock",
         )
 
+    def test_web_microphone_picker_follows_selected_device_state(self) -> None:
+        web = self._text("lib/main_web.dart")
+
+        self.assertIn(
+            "key: ValueKey<String?>(_selectedDevice?.id),\n                        initialValue: _selectedDevice?.id,",
+            web,
+            "the stateful form field must remount when browser device refresh changes the selected microphone",
+        )
+        self.assertIn(
+            "!devices.any((device) => device.id == _selectedDevice!.id)",
+            web,
+        )
+        self.assertIn("_selectedDevice = null;", web)
+
     def test_web_playback_resumes_without_reloading_source(self) -> None:
         web = self._text("lib/main_web.dart")
 
