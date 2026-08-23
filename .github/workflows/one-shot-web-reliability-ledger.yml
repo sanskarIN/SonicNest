@@ -1,5 +1,6 @@
 name: One-shot Web reliability ledger sync
 
+# Second commit intentionally triggers this already-present temporary workflow.
 on:
   push:
     branches: [main]
