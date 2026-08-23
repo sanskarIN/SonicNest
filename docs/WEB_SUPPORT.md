@@ -19,6 +19,7 @@ The browser surface currently provides:
 
 - microphone permission handling;
 - input-device enumeration and selection;
+- synchronized microphone-picker state when browser device refresh changes or removes the selected device;
 - mono or stereo capture requests;
 - automatic gain, echo cancellation, and noise suppression requests where the browser honors them;
 - PCM16 stream recording;
@@ -35,7 +36,8 @@ The browser surface currently provides:
 - in-session recording list;
 - WAV playback from an in-memory byte stream;
 - same-recording pause/resume without reloading the source from the beginning;
-- observed playback failures with stale playing-row state cleared on failure;
+- awaited playback operations plus player-wide asynchronous error observation;
+- stale playing-row cleanup when playback or a new source load fails;
 - explicit share/download with browser download fallback;
 - light, dark, and system theme support;
 - responsive browser layout;
@@ -47,9 +49,11 @@ Recorder control transitions use the same safety boundary. A Pause/Resume failur
 
 Input-device and processing settings share a single transition lock. They are unavailable not only while capture is actively recording/paused, but also while start/pause/resume/stop/cancel work is in flight. This prevents the controls from displaying a setting that differs from the configuration currently being negotiated with the browser recorder backend.
 
-In-session playback keeps the same loaded byte source when the user pauses and resumes a recording. Playback operations are awaited so asynchronous backend failures can be surfaced through SonicNest's recoverable message path; a failure clears stale playing-row state rather than leaving the row looking active.
+The microphone form field is keyed by the selected browser-device ID. Flutter form-field `initialValue` initializes/reset the internal field state rather than continuously tracking later application state, so a selected-device change remounts the field. When a refresh discovers that the previously selected device no longer exists, `_selectedDevice` is reset and the visible picker returns to the browser-default state instead of retaining a stale removed-device label.
 
-Widget disposal also invalidates the active capture generation before local subscriptions and recorder/player resources are disposed. This prevents a late capture callback from trying to revive state owned by a page that is leaving the widget tree.
+In-session playback keeps the same loaded byte source when the user pauses and resumes a recording. Playback operations are awaited so immediate backend failures can be surfaced through SonicNest's recoverable message path. SonicNest also subscribes to `AudioPlayer.errorStream` for player errors emitted after an immediate operation has returned. An asynchronous playback failure clears the active row; switching to a different recording clears the previous row before loading the new source so a failed source load cannot leave stale selection state. The error paths coordinate their reporting so the same active-recording failure is not deliberately surfaced twice merely because both the player-wide stream and the awaited operation observe it.
+
+Widget disposal invalidates the active capture generation before local subscriptions and recorder/player resources are disposed. It also cancels both player state and player-error subscriptions. This prevents late capture or playback callbacks from trying to revive state owned by a page that is leaving the widget tree.
 
 ## Native-only capability boundary
 
@@ -123,7 +127,7 @@ The deployable static site is written to `build/web/` by Flutter. Hosting, DNS, 
 4. applies SonicNest branding;
 5. runs `flutter build web --release` through the shared default entry point.
 
-The normal validation job still runs formatting, analyzer checks, and the complete Flutter unit-test suite. `test/wav_encoder_test.dart` validates the pure-Dart WAV header/payload logic, PCM frame-alignment rejection, and byte-derived duration behavior used by browser recording. `tool/tests/test_web_platform_contract.py` locks browser isolation, start/stream recovery, unexpected stream-completion recovery, generation invalidation, fail-closed Pause/Resume/Stop behavior, Cancel cleanup/fallback markers, recorder-transition input locking, and same-recording playback resume/error-observation markers. `test/bootstrap_integrity_test.dart` locks the six-target bootstrap list, conditional application entry point, and Web build command.
+The normal validation job still runs formatting, analyzer checks, and the complete Flutter unit-test suite. `test/wav_encoder_test.dart` validates the pure-Dart WAV header/payload logic, PCM frame-alignment rejection, and byte-derived duration behavior used by browser recording. `tool/tests/test_web_platform_contract.py` locks browser isolation, start/stream recovery, unexpected stream-completion recovery, generation invalidation, fail-closed Pause/Resume/Stop behavior, Cancel cleanup/fallback markers, recorder-transition input locking, microphone-picker synchronization, same-recording playback resume, and player-wide asynchronous error-observation/cleanup markers. `test/bootstrap_integrity_test.dart` locks the six-target bootstrap list, conditional application entry point, and Web build command.
 
 ## Release-candidate evidence
 
@@ -150,6 +154,7 @@ Recommended evidence includes:
 - first-run allow/deny microphone flows;
 - permission revocation and retry;
 - default and alternate microphone selection;
+- selected-device display synchronization after refresh/removal;
 - mono and stereo requests where supported;
 - input settings remaining locked during recorder transition work and restoring after recovery;
 - pause/resume timing and audio continuity;
@@ -161,7 +166,8 @@ Recommended evidence includes:
 - navigation/reload/disposal during capture not reviving stale recorder UI state;
 - saved WAV duration compared with independently observed audio duration, including pause/resume cases;
 - long capture and memory behavior;
-- playback pause then resume on the same row without restarting at zero, playback completion, playback failure recovery, and repeated playback;
+- playback pause then resume on the same row without restarting at zero;
+- playback completion, different-source load failure, asynchronous player error recovery, and repeated playback;
 - share/download success and generated WAV playback outside SonicNest;
 - narrow/mobile and wide/desktop responsive layouts;
 - keyboard/focus and screen-reader basics;
