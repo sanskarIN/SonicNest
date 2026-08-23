@@ -123,6 +123,26 @@ class WebPlatformContractTest(unittest.TestCase):
         self.assertGreaterEqual(web.count("await _player.play();"), 2)
         self.assertNotIn("unawaited(_player.play());", web)
 
+    def test_web_playback_observes_async_player_errors(self) -> None:
+        web = self._text("lib/main_web.dart")
+
+        for marker in (
+            "StreamSubscription<PlayerException>? _playerErrorSubscription;",
+            "_player.errorStream.listen((error) {",
+            "_lastPlayerErrorRecordingId = failedRecordingId;",
+            "Could not continue playback:",
+            "unawaited(_playerErrorSubscription?.cancel());",
+            "final errorAlreadyReported = _lastPlayerErrorRecordingId == recording.id;",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, web)
+
+        self.assertIn(
+            "if (mounted && _playingId != null) {\n        setState(() => _playingId = null);\n      }\n      await _player.setAudioSource",
+            web,
+            "switching sources must clear the previous row before a new source can fail to load",
+        )
+
     def test_all_bootstrap_helpers_generate_web_host(self) -> None:
         bash = self._text("tool/bootstrap_platforms.sh")
         powershell = self._text("tool/bootstrap_platforms.ps1")
