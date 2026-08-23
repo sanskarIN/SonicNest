@@ -90,6 +90,7 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
   bool get _isRecording => _recordState == RecordState.record;
   bool get _isPaused => _recordState == RecordState.pause;
   bool get _hasActiveCapture => _isRecording || _isPaused;
+  bool get _canChangeInputSettings => !_busy && !_hasActiveCapture;
 
   @override
   void initState() {
@@ -179,6 +180,14 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
           unawaited(
             _recoverFromCaptureFailure(
               'Browser audio capture stopped unexpectedly. You can start a new recording.',
+              generation: generation,
+            ),
+          );
+        },
+        onDone: () {
+          unawaited(
+            _recoverFromCaptureFailure(
+              'Browser audio capture ended unexpectedly. You can start a new recording.',
               generation: generation,
             ),
           );
@@ -387,16 +396,23 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
 
   Future<void> _play(WebRecording recording) async {
     try {
-      if (_playingId == recording.id && _player.playing) {
-        await _player.pause();
+      if (_playingId == recording.id) {
+        if (_player.playing) {
+          await _player.pause();
+        } else {
+          await _player.play();
+        }
         if (mounted) setState(() {});
         return;
       }
       await _player.setAudioSource(_BytesAudioSource(recording.bytes));
       if (!mounted) return;
       setState(() => _playingId = recording.id);
-      unawaited(_player.play());
+      await _player.play();
     } catch (error) {
+      if (mounted && _playingId == recording.id) {
+        setState(() => _playingId = null);
+      }
       _showMessage('Could not play this recording: $error');
     }
   }
@@ -447,9 +463,9 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
         actions: <Widget>[
           IconButton(
             tooltip: 'Refresh microphones',
-            onPressed: _hasActiveCapture
-                ? null
-                : () => _refreshDevices(requestPermission: true),
+            onPressed: _canChangeInputSettings
+                ? () => _refreshDevices(requestPermission: true)
+                : null,
             icon: const Icon(Icons.mic_external_on_outlined),
           ),
         ],
@@ -558,9 +574,8 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
                             ),
                           ),
                         ],
-                        onChanged: _hasActiveCapture
-                            ? null
-                            : (id) {
+                        onChanged: _canChangeInputSettings
+                            ? (id) {
                                 setState(() {
                                   _selectedDevice = id == null
                                       ? null
@@ -568,7 +583,8 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
                                           (device) => device.id == id,
                                         );
                                 });
-                              },
+                              }
+                            : null,
                       ),
                       const SizedBox(height: 12),
                       SegmentedButton<int>(
@@ -577,35 +593,34 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
                           ButtonSegment<int>(value: 2, label: Text('Stereo')),
                         ],
                         selected: <int>{_channels},
-                        onSelectionChanged: _hasActiveCapture
-                            ? null
-                            : (values) =>
-                                  setState(() => _channels = values.first),
+                        onSelectionChanged: _canChangeInputSettings
+                            ? (values) =>
+                                  setState(() => _channels = values.first)
+                            : null,
                       ),
                       const SizedBox(height: 10),
                       SwitchListTile.adaptive(
                         contentPadding: EdgeInsets.zero,
                         value: _autoGain,
-                        onChanged: _hasActiveCapture
-                            ? null
-                            : (value) => setState(() => _autoGain = value),
+                        onChanged: _canChangeInputSettings
+                            ? (value) => setState(() => _autoGain = value)
+                            : null,
                         title: const Text('Automatic gain'),
                       ),
                       SwitchListTile.adaptive(
                         contentPadding: EdgeInsets.zero,
                         value: _echoCancel,
-                        onChanged: _hasActiveCapture
-                            ? null
-                            : (value) => setState(() => _echoCancel = value),
+                        onChanged: _canChangeInputSettings
+                            ? (value) => setState(() => _echoCancel = value)
+                            : null,
                         title: const Text('Echo cancellation'),
                       ),
                       SwitchListTile.adaptive(
                         contentPadding: EdgeInsets.zero,
                         value: _noiseSuppress,
-                        onChanged: _hasActiveCapture
-                            ? null
-                            : (value) =>
-                                  setState(() => _noiseSuppress = value),
+                        onChanged: _canChangeInputSettings
+                            ? (value) => setState(() => _noiseSuppress = value)
+                            : null,
                         title: const Text('Noise suppression'),
                       ),
                     ],
