@@ -573,6 +573,7 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
                       Text('Input settings', style: theme.textTheme.titleLarge),
                       const SizedBox(height: 16),
                       DropdownButtonFormField<String?>(
+                        key: ValueKey<String?>(_selectedDevice?.id),
                         initialValue: _selectedDevice?.id,
                         decoration: const InputDecoration(
                           labelText: 'Microphone',
