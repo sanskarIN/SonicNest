@@ -49,6 +49,8 @@ class WebPlatformContractTest(unittest.TestCase):
             "_captureGeneration",
             "generation != _captureGeneration",
             "cancelOnError: true",
+            "onDone: () {",
+            "_canChangeInputSettings",
             "StreamAudioSource",
             "SharePlus.instance.share",
             "downloadFallbackEnabled: true",
@@ -74,6 +76,52 @@ class WebPlatformContractTest(unittest.TestCase):
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, web)
+
+    def test_web_capture_stream_completion_is_fail_closed(self) -> None:
+        web = self._text("lib/main_web.dart")
+
+        for marker in (
+            "onDone: () {",
+            "Browser audio capture ended unexpectedly. You can start a new recording.",
+            "generation: generation",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, web)
+
+        self.assertGreaterEqual(
+            web.count("_recoverFromCaptureFailure("),
+            6,
+            "startup, stream error, stream completion, pause/resume, and stop paths must recover through the shared fail-closed handler",
+        )
+
+    def test_web_input_settings_lock_during_capture_transitions(self) -> None:
+        web = self._text("lib/main_web.dart")
+
+        self.assertIn(
+            "bool get _canChangeInputSettings => !_busy && !_hasActiveCapture;",
+            web,
+        )
+        self.assertGreaterEqual(
+            web.count("_canChangeInputSettings"),
+            7,
+            "refresh, device, channel, and audio-processing controls must share the same transition lock",
+        )
+
+    def test_web_playback_resumes_without_reloading_source(self) -> None:
+        web = self._text("lib/main_web.dart")
+
+        for marker in (
+            "if (_playingId == recording.id) {",
+            "await _player.pause();",
+            "await _player.play();",
+            "if (mounted && _playingId == recording.id)",
+            "setState(() => _playingId = null);",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, web)
+
+        self.assertGreaterEqual(web.count("await _player.play();"), 2)
+        self.assertNotIn("unawaited(_player.play());", web)
 
     def test_all_bootstrap_helpers_generate_web_host(self) -> None:
         bash = self._text("tool/bootstrap_platforms.sh")
