@@ -61,6 +61,7 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
   StreamSubscription<Uint8List>? _recordingSubscription;
   StreamSubscription<Amplitude>? _amplitudeSubscription;
   StreamSubscription<PlayerState>? _playerSubscription;
+  StreamSubscription<PlayerException>? _playerErrorSubscription;
   Timer? _timer;
   BytesBuilder? _capturedBytes;
 
@@ -84,6 +85,7 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
   InputDevice? _selectedDevice;
   List<InputDevice> _devices = const <InputDevice>[];
   int? _playingId;
+  int? _lastPlayerErrorRecordingId;
   int _nextRecordingId = 1;
   int _captureGeneration = 0;
 
@@ -103,6 +105,15 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
       if (!mounted || state.processingState != ProcessingState.completed) return;
       setState(() => _playingId = null);
     });
+    _playerErrorSubscription = _player.errorStream.listen((error) {
+      final failedRecordingId = _playingId;
+      if (!mounted || failedRecordingId == null) return;
+      _lastPlayerErrorRecordingId = failedRecordingId;
+      setState(() => _playingId = null);
+      _showMessage(
+        'Could not continue playback: ${error.message ?? 'browser audio error'}',
+      );
+    });
     unawaited(_refreshDevices(requestPermission: false));
   }
 
@@ -114,6 +125,7 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
     unawaited(_recordingSubscription?.cancel());
     unawaited(_amplitudeSubscription?.cancel());
     unawaited(_playerSubscription?.cancel());
+    unawaited(_playerErrorSubscription?.cancel());
     unawaited(_recorder.dispose());
     unawaited(_player.dispose());
     super.dispose();
@@ -395,6 +407,7 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
   }
 
   Future<void> _play(WebRecording recording) async {
+    _lastPlayerErrorRecordingId = null;
     try {
       if (_playingId == recording.id) {
         if (_player.playing) {
@@ -405,15 +418,22 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
         if (mounted) setState(() {});
         return;
       }
+
+      if (mounted && _playingId != null) {
+        setState(() => _playingId = null);
+      }
       await _player.setAudioSource(_BytesAudioSource(recording.bytes));
       if (!mounted) return;
       setState(() => _playingId = recording.id);
       await _player.play();
     } catch (error) {
+      final errorAlreadyReported = _lastPlayerErrorRecordingId == recording.id;
       if (mounted && _playingId == recording.id) {
         setState(() => _playingId = null);
       }
-      _showMessage('Could not play this recording: $error');
+      if (!errorAlreadyReported) {
+        _showMessage('Could not play this recording: $error');
+      }
     }
   }
 
