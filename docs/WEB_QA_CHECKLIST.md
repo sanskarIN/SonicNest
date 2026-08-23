@@ -14,7 +14,7 @@ For the exact candidate revision:
 - [ ] `flutter build web --release`
 - [ ] `test/wav_encoder_test.dart` passes, including complete PCM16 frame alignment and byte-derived duration cases.
 - [ ] `test/bootstrap_integrity_test.dart` passes.
-- [ ] `python3 tool/tests/test_web_platform_contract.py` passes, including capture-recovery generation guards, clean stream-completion recovery, fail-closed recorder-control markers, busy-transition input locking, and same-recording playback resume markers.
+- [ ] `python3 tool/tests/test_web_platform_contract.py` passes, including capture-recovery generation guards, clean stream-completion recovery, fail-closed recorder-control markers, busy-transition input locking, microphone picker synchronization, same-recording playback resume, and asynchronous player-error recovery markers.
 - [ ] Repository Integrity Audit passes.
 - [ ] Manual Release Candidate Validation Web job succeeds.
 - [ ] `sonicnest-web-release.tar.gz` is produced.
@@ -66,6 +66,8 @@ Record exact browser/OS versions in external release evidence. Do not hard-code 
 - [ ] Alternate built-in/external microphone can be selected where supported.
 - [ ] Selected device is used for the next recording where the browser honors selection.
 - [ ] Device unplug/removal before capture is handled safely.
+- [ ] After a selected device disappears and microphones are refreshed, the microphone field visibly returns to Browser default rather than displaying a stale removed-device selection.
+- [ ] Selecting another microphone updates both the backing selection and the visible form-field selection after the widget rebuild.
 - [ ] Device removal during capture produces a recoverable stop/error path rather than false success.
 - [ ] Refresh-device action does not interrupt an active capture.
 - [ ] Device selection is disabled while capture is active.
@@ -142,8 +144,11 @@ For recordings produced on each representative browser:
 - [ ] Pressing Play again on the same paused recording resumes the existing source/position instead of reloading it from the beginning.
 - [ ] Replaying the same recording after completion works.
 - [ ] Switching to a different recording works.
+- [ ] A failure while loading a different recording does not leave the previously selected row marked as active.
 - [ ] Playback completion returns the row/UI to a non-playing state.
 - [ ] Playback failure clears stale playing-row state and presents a recoverable user-visible message.
+- [ ] A player error emitted asynchronously after playback has started is observed, clears the active row, and leaves the session list usable.
+- [ ] A player error that reaches both the player-wide error stream and the awaited operation path does not deliberately produce duplicate user error messages.
 - [ ] Deleting the currently selected/playing in-session item stops playback safely.
 - [ ] Audio output route follows normal browser/OS behavior.
 
