@@ -9,7 +9,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "tool" / "build_release_readiness_report.py"
-TAG_GATE = "Tag `v1.0.0` only after all required stable-release gates are complete."
+TAG_GATE = "Tag `v2.18.12` only after all required stable-release gates are complete."
 
 
 class ReleaseReadinessCliTest(unittest.TestCase):
@@ -82,6 +82,37 @@ class ReleaseReadinessCliTest(unittest.TestCase):
             )
 
             self.assertNotEqual(0, result.returncode)
+            self.assertFalse(output.exists())
+
+    def test_cli_rejects_outdated_release_tag_gate(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            temp = Path(directory)
+            source = temp / "TODO.md"
+            output = temp / "readiness.json"
+            source.write_text(
+                "# Remaining work\n\n"
+                "## Signing and distribution\n\n"
+                "- [ ] Tag `v2.18.11` only after all required stable-release gates are complete.\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT),
+                    "--source",
+                    str(source),
+                    "--output",
+                    str(output),
+                ],
+                cwd=ROOT,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertNotEqual(0, result.returncode)
+            self.assertIn("v2.18.12", result.stderr)
             self.assertFalse(output.exists())
 
 
