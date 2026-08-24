@@ -18,7 +18,7 @@ gumroad_integration_validation:
   result: success
   scope: formatter + static analysis + Flutter tests + Android/Linux/Windows/macOS/iOS builds + Windows portable smoke + Debian build/install/smoke/uninstall + repository line/tooling audit
 current_phase: Six-platform cross-platform release hardening
-current_version: 0.1.0
+current_version: 2.18.12
 release_classification: development_preview_until_manual_release_gates_are_complete
 stack:
   ui: Flutter / Dart
@@ -26,7 +26,7 @@ stack:
   player: just_audio 0.10.6 + just_audio_background 0.0.1-beta.17 + just_audio_media_kit 2.1.0
   processing: ffmpeg_kit_flutter_new_audio 2.5.x
   persistence: local JSON metadata + shared_preferences
-  import_export: file_picker 12.0.0-beta.7 + share_plus 13.3.0
+  import_export: file_picker 12.0.0 + share_plus 13.3.0
   screen_wake: wakelock_plus 1.7.0
   localization: in-project AppLocalizations scaffold; English currently supported
 supported_platform_targets:
@@ -403,7 +403,7 @@ latest_automated_validation:
     linux_bundle_sha256: fbecb458fec864d451f0ba67e0b70f58f34710de883d5d4c8c86e32ab3238bd6
     linux_deb_sha256: eee447e80713f8c4102c200349cfae0873da1948dc0e2740f1b7d058a07d26e1
     windows_portable_sha256: c0cbc9ef7d00481e9f39fc058d5747779372dd61454a542eb5ce487d2da68ff3
-    macos_archive_sha256: 0a4b2ac2c097e0f53eabbf84909ddc8f28bd28bd8bc37a0ea189b4ebc810733a
+    macos_archive_sha256: 0a4b2ac2c097e0f53eabbf84909ddc8f28d28bd8bc37a0ea189b4ebc810733a
     ios_archive_sha256: a6b77c3d3a5badc305c7d7ebfc3a5a646197b48f09c1000854980fcffaaf17a7
     evidence_document: docs/AUTOMATED_RELEASE_EVIDENCE_2026-08-15.md
   permanent_windows_package_ci:
