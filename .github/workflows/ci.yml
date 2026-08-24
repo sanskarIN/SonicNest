@@ -42,6 +42,11 @@ jobs:
           cache: true
       - name: Verify committed Dart formatting
         run: dart format --output=none --set-exit-if-changed lib test tool/generate_brand_assets_v2.dart
+      - name: Print canonical formatter diff on failure
+        if: failure()
+        run: |
+          dart format lib/main_web.dart test/qa_evidence_import_edge_cases_test.dart
+          git diff -- lib/main_web.dart test/qa_evidence_import_edge_cases_test.dart
       - name: Install Linux audio prerequisites
         run: sudo apt-get update && sudo apt-get install -y ffmpeg pulseaudio-utils libjson-glib-dev
       - name: Generate platform hosts
