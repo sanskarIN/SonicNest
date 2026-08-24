@@ -2,9 +2,8 @@
 """Verify SonicNest release-version metadata stays synchronized.
 
 The Flutter package version in pubspec.yaml is the build source of truth. This
-helper keeps the human-maintained current version in PROJECT_STATE.md aligned
-with the semantic-version portion of that package version while also enforcing
-an explicit positive numeric Flutter build number.
+helper keeps PROJECT_STATE.md and the runtime AppConstants version/build values
+aligned with it while enforcing an explicit positive numeric build number.
 """
 
 from __future__ import annotations
@@ -40,6 +39,12 @@ def _single_match(pattern: str, text: str, label: str) -> str:
     return matches[0].strip()
 
 
+def _parse_semantic_version(value: str, label: str) -> str:
+    if re.fullmatch(r"(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)", value) is None:
+        raise ReleaseVersionError(f"{label} must use MAJOR.MINOR.PATCH")
+    return value
+
+
 def parse_pubspec_version(pubspec_text: str) -> ReleaseVersion:
     value = _single_match(
         r"^version:\s*([^\s#]+)\s*(?:#.*)?$",
@@ -68,31 +73,61 @@ def parse_project_state_version(project_state_text: str) -> str:
         project_state_text,
         "PROJECT_STATE.md current_version",
     )
-    if re.fullmatch(
-        r"(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)",
-        value,
-    ) is None:
+    return _parse_semantic_version(value, "PROJECT_STATE.md current_version")
+
+
+def parse_runtime_version(constants_text: str) -> ReleaseVersion:
+    semantic_version = _single_match(
+        r"^\s*static const appVersion = '([^']+)';\s*$",
+        constants_text,
+        "AppConstants.appVersion",
+    )
+    build = _single_match(
+        r"^\s*static const appBuildNumber = '([^']+)';\s*$",
+        constants_text,
+        "AppConstants.appBuildNumber",
+    )
+    _parse_semantic_version(semantic_version, "AppConstants.appVersion")
+    if re.fullmatch(r"[1-9]\d*", build) is None:
         raise ReleaseVersionError(
-            "PROJECT_STATE.md current_version must use MAJOR.MINOR.PATCH"
+            "AppConstants.appBuildNumber must be a positive numeric build number"
         )
-    return value
+    return ReleaseVersion(semantic_version, int(build))
 
 
-def verify(pubspec_text: str, project_state_text: str) -> list[str]:
+def verify(
+    pubspec_text: str,
+    project_state_text: str,
+    constants_text: str,
+) -> list[str]:
     pubspec_version = parse_pubspec_version(pubspec_text)
     project_version = parse_project_state_version(project_state_text)
-    if project_version == pubspec_version.semantic_version:
-        return []
-    return [
-        "PROJECT_STATE.md current_version is stale: "
-        f"expected {pubspec_version.semantic_version!r}, found {project_version!r}"
-    ]
+    runtime_version = parse_runtime_version(constants_text)
+    errors: list[str] = []
+    if project_version != pubspec_version.semantic_version:
+        errors.append(
+            "PROJECT_STATE.md current_version is stale: "
+            f"expected {pubspec_version.semantic_version!r}, found {project_version!r}"
+        )
+    if runtime_version.semantic_version != pubspec_version.semantic_version:
+        errors.append(
+            "AppConstants.appVersion is stale: "
+            f"expected {pubspec_version.semantic_version!r}, "
+            f"found {runtime_version.semantic_version!r}"
+        )
+    if runtime_version.build_number != pubspec_version.build_number:
+        errors.append(
+            "AppConstants.appBuildNumber is stale: "
+            f"expected {pubspec_version.build_number!r}, "
+            f"found {runtime_version.build_number!r}"
+        )
+    return errors
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
-            "Verify that SonicNest pubspec and PROJECT_STATE release-version "
+            "Verify that SonicNest pubspec, PROJECT_STATE, and runtime version "
             "metadata agree."
         )
     )
@@ -108,6 +143,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=ROOT / "PROJECT_STATE.md",
         help="PROJECT_STATE.md path",
     )
+    parser.add_argument(
+        "--constants",
+        type=Path,
+        default=ROOT / "lib" / "core" / "constants.dart",
+        help="runtime constants Dart file path",
+    )
     return parser
 
 
@@ -116,7 +157,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         pubspec_text = args.pubspec.read_text(encoding="utf-8")
         project_state_text = args.project_state.read_text(encoding="utf-8")
-        errors = verify(pubspec_text, project_state_text)
+        constants_text = args.constants.read_text(encoding="utf-8")
+        errors = verify(pubspec_text, project_state_text, constants_text)
     except (OSError, UnicodeError, ReleaseVersionError) as exc:
         print(f"Release-version verification could not run: {exc}", file=sys.stderr)
         return 2
