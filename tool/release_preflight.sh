@@ -11,6 +11,9 @@ for command in flutter dart python3; do
   fi
 done
 
+python3 tool/verify_project_state_dependencies.py
+python3 tool/verify_release_version.py
+
 bash tool/bootstrap_platforms.sh
 flutter pub get
 bash tool/apply_branding.sh
