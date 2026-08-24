@@ -158,7 +158,7 @@ Repository automation provides deterministic baselines for malformed metadata/se
 - [ ] Review production Web cache/service-worker/security-header/rollback behavior against the exact final browser candidate.
 - [ ] Produce signed native release candidates where the selected distribution channel requires signing.
 - [ ] Complete the release checklist in `docs/RELEASING.md` including Web evidence.
-- [ ] Tag `v1.0.0` only after all required native and Web stable-release gates are complete.
+- [ ] Tag `v2.18.12` only after all required stable-release gates are complete.
 
 ## External batch export validation
 
