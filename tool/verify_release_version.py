@@ -12,8 +12,8 @@ from __future__ import annotations
 import argparse
 import re
 import sys
-from dataclasses import dataclass
 from pathlib import Path
+from typing import NamedTuple
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -22,8 +22,7 @@ class ReleaseVersionError(ValueError):
     """Raised when release-version metadata cannot be interpreted safely."""
 
 
-@dataclass(frozen=True)
-class ReleaseVersion:
+class ReleaseVersion(NamedTuple):
     semantic_version: str
     build_number: int
 
@@ -42,14 +41,19 @@ def _single_match(pattern: str, text: str, label: str) -> str:
 
 
 def parse_pubspec_version(pubspec_text: str) -> ReleaseVersion:
-    value = _single_match(r"^version:\s*([^\s#]+)\s*(?:#.*)?$", pubspec_text, "pubspec version")
+    value = _single_match(
+        r"^version:\s*([^\s#]+)\s*(?:#.*)?$",
+        pubspec_text,
+        "pubspec version",
+    )
     match = re.fullmatch(
         r"(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)\+([1-9]\d*)",
         value,
     )
     if match is None:
         raise ReleaseVersionError(
-            "pubspec version must use MAJOR.MINOR.PATCH+BUILD with a positive numeric build number"
+            "pubspec version must use MAJOR.MINOR.PATCH+BUILD with a positive "
+            "numeric build number"
         )
     major, minor, patch, build = match.groups()
     return ReleaseVersion(
@@ -64,7 +68,10 @@ def parse_project_state_version(project_state_text: str) -> str:
         project_state_text,
         "PROJECT_STATE.md current_version",
     )
-    if re.fullmatch(r"(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)", value) is None:
+    if re.fullmatch(
+        r"(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)",
+        value,
+    ) is None:
         raise ReleaseVersionError(
             "PROJECT_STATE.md current_version must use MAJOR.MINOR.PATCH"
         )
@@ -85,7 +92,8 @@ def verify(pubspec_text: str, project_state_text: str) -> list[str]:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
-            "Verify that SonicNest pubspec and PROJECT_STATE release-version metadata agree."
+            "Verify that SonicNest pubspec and PROJECT_STATE release-version "
+            "metadata agree."
         )
     )
     parser.add_argument(
