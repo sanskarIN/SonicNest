@@ -67,7 +67,8 @@ void main() {
     final bundle = validBundle();
     final checks = bundle['checks'] as List<dynamic>;
     final first = checks.first as Map<String, dynamic>;
-    first['requiresPhysicalTarget'] = !(first['requiresPhysicalTarget'] as bool);
+    first['requiresPhysicalTarget'] =
+        !(first['requiresPhysicalTarget'] as bool);
 
     expect(
       () => importer.mergeBundle(

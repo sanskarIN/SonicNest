@@ -18,7 +18,7 @@ gumroad_integration_validation:
   result: success
   scope: formatter + static analysis + Flutter tests + Android/Linux/Windows/macOS/iOS builds + Windows portable smoke + Debian build/install/smoke/uninstall + repository line/tooling audit
 current_phase: Six-platform cross-platform release hardening
-current_version: 0.1.0
+current_version: 2.18.12
 release_classification: development_preview_until_manual_release_gates_are_complete
 stack:
   ui: Flutter / Dart
@@ -26,7 +26,7 @@ stack:
   player: just_audio 0.10.6 + just_audio_background 0.0.1-beta.17 + just_audio_media_kit 2.1.0
   processing: ffmpeg_kit_flutter_new_audio 2.5.x
   persistence: local JSON metadata + shared_preferences
-  import_export: file_picker 12.0.0-beta.7 + share_plus 13.3.0
+  import_export: file_picker 12.0.0 + share_plus 13.3.0
   screen_wake: wakelock_plus 1.7.0
   localization: in-project AppLocalizations scaffold; English currently supported
 supported_platform_targets:

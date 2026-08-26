@@ -1,3 +1,5 @@
+// ignore_for_file: experimental_member_use
+
 import 'dart:async';
 import 'dart:typed_data';
 
@@ -102,7 +104,9 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
       setState(() => _effectiveConfig = config);
     });
     _playerSubscription = _player.playerStateStream.listen((state) {
-      if (!mounted || state.processingState != ProcessingState.completed) return;
+      if (!mounted || state.processingState != ProcessingState.completed) {
+        return;
+      }
       setState(() => _playingId = null);
     });
     _playerErrorSubscription = _player.errorStream.listen((error) {
@@ -188,7 +192,7 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
           });
       _recordingSubscription = stream.listen(
         (chunk) => _capturedBytes?.add(chunk),
-        onError: (Object _, StackTrace __) {
+        onError: (Object _, StackTrace _) {
           unawaited(
             _recoverFromCaptureFailure(
               'Browser audio capture stopped unexpectedly. You can start a new recording.',
@@ -468,7 +472,8 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
 
   void _showMessage(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -718,9 +723,7 @@ class _AmplitudeMeter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final normalized = ((valueDb + 60.0) / 60.0)
-        .clamp(0.0, 1.0)
-        .toDouble();
+    final normalized = ((valueDb + 60.0) / 60.0).clamp(0.0, 1.0).toDouble();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[

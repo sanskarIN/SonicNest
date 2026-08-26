@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[2]
 class DependencySurfaceRegressionTest(unittest.TestCase):
     def test_security_reviewed_runtime_versions_are_tracked(self) -> None:
         pubspec = (ROOT / "pubspec.yaml").read_text(encoding="utf-8")
-        self.assertIn("file_picker: 12.0.0-beta.7", pubspec)
+        self.assertIn("file_picker: 12.0.0", pubspec)
         self.assertIn("share_plus: 13.3.0", pubspec)
         self.assertIn("wakelock_plus: 1.7.0", pubspec)
 

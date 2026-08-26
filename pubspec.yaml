@@ -1,7 +1,7 @@
 name: sonic_nest
 description: Privacy-first, cross-platform sound and voice recorder.
 publish_to: 'none'
-version: 0.1.0+1
+version: 2.18.12+21812
 
 environment:
   sdk: '>=3.12.0 <4.0.0'
@@ -10,7 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  file_picker: 12.0.0-beta.7
+  file_picker: 12.0.0
   ffmpeg_kit_flutter_new_audio: ^2.5.0
   intl: ^0.20.3
   just_audio: ^0.10.6
