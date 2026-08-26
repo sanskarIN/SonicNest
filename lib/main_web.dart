@@ -1,3 +1,5 @@
+// ignore_for_file: experimental_member_use
+
 import 'dart:async';
 import 'dart:typed_data';
 
@@ -102,8 +104,9 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
       setState(() => _effectiveConfig = config);
     });
     _playerSubscription = _player.playerStateStream.listen((state) {
-      if (!mounted || state.processingState != ProcessingState.completed)
+      if (!mounted || state.processingState != ProcessingState.completed) {
         return;
+      }
       setState(() => _playingId = null);
     });
     _playerErrorSubscription = _player.errorStream.listen((error) {
@@ -189,7 +192,7 @@ class _WebRecorderScreenState extends State<WebRecorderScreen> {
           });
       _recordingSubscription = stream.listen(
         (chunk) => _capturedBytes?.add(chunk),
-        onError: (Object _, StackTrace __) {
+        onError: (Object _, StackTrace _) {
           unawaited(
             _recoverFromCaptureFailure(
               'Browser audio capture stopped unexpectedly. You can start a new recording.',
