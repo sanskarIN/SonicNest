@@ -117,58 +117,79 @@ class ExternalActions {
     final extension = p.extension(safeName);
     var candidate = p.join(directory.path, '$stem$extension');
     var suffix = 2;
-    while (await File(candidate).exists()) {
-      candidate = p.join(
-        directory.path,
-        '$stem ($suffix)$extension',
-      );
+
+    while (await _pathOccupied(candidate)) {
+      candidate = p.join(directory.path, '$stem ($suffix)$extension');
       suffix++;
     }
     return candidate;
   }
 
+  Future<bool> _pathOccupied(String path) async {
+    try {
+      return await FileSystemEntity.type(path, followLinks: false) !=
+          FileSystemEntityType.notFound;
+    } on FileSystemException {
+      // Do not choose a destination path that cannot be inspected safely.
+      return true;
+    }
+  }
+
   Future<ExternalCopyBatchResult> copyFilesToDirectoryCollisionSafe({
-    required List<String> sourcePaths,
+    required Iterable<String> sourcePaths,
     required String directoryPath,
   }) async {
     final copiedPaths = <String>[];
     final failures = <String, String>{};
+
     for (final sourcePath in sourcePaths) {
       try {
-        copiedPaths.add(
-          await copyFileToDirectoryCollisionSafe(
-            sourcePath: sourcePath,
-            directoryPath: directoryPath,
-          ),
+        final copied = await copyFileToDirectoryCollisionSafe(
+          sourcePath: sourcePath,
+          directoryPath: directoryPath,
         );
+        copiedPaths.add(copied);
       } catch (error) {
         failures[sourcePath] = error.toString();
       }
     }
+
     return ExternalCopyBatchResult(
-      copiedPaths: copiedPaths,
-      failures: failures,
+      copiedPaths: List.unmodifiable(copiedPaths),
+      failures: Map.unmodifiable(failures),
     );
   }
 
-  Future<void> openUrl(String value) async {
-    final uri = Uri.tryParse(value);
-    if (uri == null || !uri.hasScheme) {
-      throw ArgumentError.value(value, 'value', 'Invalid URL.');
-    }
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      throw StateError('Unable to open the requested URL.');
-    }
-  }
+  Future<void> shareFile(String path, {String? text}) =>
+      shareFiles([path], text: text);
 
-  Future<ShareResult> shareFiles(List<String> paths) async {
+  Future<void> shareFiles(List<String> paths, {String? text}) async {
     if (paths.isEmpty) {
-      throw ArgumentError.value(paths, 'paths', 'No files selected.');
+      return;
     }
-    return SharePlus.instance.share(
+    await SharePlus.instance.share(
       ShareParams(
         files: paths.map(XFile.new).toList(growable: false),
+        text: text,
       ),
     );
+  }
+
+  Future<void> launchExternal(String url) async {
+    final uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      throw StateError('Could not open external link.');
+    }
+  }
+
+  Future<void> composeEmail(String email, {String? subject}) async {
+    final uri = Uri(
+      scheme: 'mailto',
+      path: email,
+      queryParameters: subject == null ? null : {'subject': subject},
+    );
+    if (!await launchUrl(uri)) {
+      throw StateError('Could not open an email application.');
+    }
   }
 }
