@@ -37,7 +37,7 @@ class FinalRepositoryContractTest(unittest.TestCase):
 
     def test_formatter_clean_v12_export_contract_is_tracked(self) -> None:
         pubspec = self._text("pubspec.yaml")
-        self.assertIn("file_picker: 12.0.0-beta.7", pubspec)
+        self.assertIn("file_picker: 12.0.0", pubspec)
         self.assertIn("share_plus: 13.3.0", pubspec)
         self.assertIn("wakelock_plus: 1.7.0", pubspec)
         external = self._text("lib/services/external_actions.dart")
@@ -54,7 +54,7 @@ class FinalRepositoryContractTest(unittest.TestCase):
         text = self._text("docs/FINAL_REPOSITORY_AUDIT_2026-08-18.md")
         self.assertIn("development preview", text)
         self.assertIn("Remaining manual and credential-dependent gates", text)
-        self.assertIn("No additional repository-only feature", text)
+        self.assertIn("No additional reproducible repository-owned feature", text)
 
 
 if __name__ == "__main__":

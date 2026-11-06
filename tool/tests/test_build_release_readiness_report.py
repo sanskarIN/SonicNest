@@ -14,13 +14,37 @@ sys.modules[SPEC.name] = MODULE
 SPEC.loader.exec_module(MODULE)
 
 ChecklistItem = MODULE.ChecklistItem
-STABLE_TAG_MARKER = MODULE.STABLE_TAG_MARKER
+RELEASE_VERSION = "2.18.12"
+STABLE_TAG_MARKER = MODULE.stable_tag_marker(RELEASE_VERSION)
 build_report = MODULE.build_report
 parse_checklist = MODULE.parse_checklist
+parse_release_version = MODULE.parse_release_version
 render_markdown = MODULE.render_markdown
 
 
 class ReleaseReadinessReportTest(unittest.TestCase):
+    def test_parse_release_version_uses_pubspec_semantic_version(self) -> None:
+        self.assertEqual(
+            "2.18.12",
+            parse_release_version("name: sonic_nest\nversion: 2.18.12+21812\n"),
+        )
+
+    def test_parse_release_version_rejects_missing_build_number(self) -> None:
+        with self.assertRaisesRegex(ValueError, "MAJOR.MINOR.PATCH\\+BUILD"):
+            parse_release_version("name: sonic_nest\nversion: 2.18.12\n")
+
+    def test_parse_release_version_rejects_duplicate_version_lines(self) -> None:
+        with self.assertRaisesRegex(ValueError, "exactly one"):
+            parse_release_version(
+                "version: 2.18.12+21812\nversion: 9.9.9+999\n"
+            )
+
+    def test_stable_tag_marker_uses_requested_release_version(self) -> None:
+        self.assertEqual(
+            "Tag `v2.18.12` only after all required stable-release gates are complete.",
+            STABLE_TAG_MARKER,
+        )
+
     def test_parse_checklist_preserves_sections_and_states(self) -> None:
         items = parse_checklist(
             [
@@ -92,6 +116,7 @@ class ReleaseReadinessReportTest(unittest.TestCase):
                 ChecklistItem("Signing and distribution", STABLE_TAG_MARKER, False),
             ],
             "TODO.md",
+            RELEASE_VERSION,
         )
 
         self.assertFalse(report["stableReleaseApproved"])
@@ -105,6 +130,7 @@ class ReleaseReadinessReportTest(unittest.TestCase):
                 ChecklistItem("Signing and distribution", STABLE_TAG_MARKER, True),
             ],
             "TODO.md",
+            RELEASE_VERSION,
         )
 
         self.assertFalse(report["stableReleaseApproved"])
@@ -116,6 +142,7 @@ class ReleaseReadinessReportTest(unittest.TestCase):
                 ChecklistItem("Signing and distribution", STABLE_TAG_MARKER, True),
             ],
             "TODO.md",
+            RELEASE_VERSION,
         )
 
         self.assertTrue(report["stableReleaseApproved"])
@@ -126,6 +153,21 @@ class ReleaseReadinessReportTest(unittest.TestCase):
             build_report(
                 [ChecklistItem("Hardware", "Physical test", False)],
                 "TODO.md",
+                RELEASE_VERSION,
+            )
+
+    def test_outdated_tag_gate_is_rejected(self) -> None:
+        with self.assertRaisesRegex(ValueError, "v2.18.12"):
+            build_report(
+                [
+                    ChecklistItem(
+                        "Signing",
+                        MODULE.stable_tag_marker("2.18.11"),
+                        False,
+                    )
+                ],
+                "TODO.md",
+                RELEASE_VERSION,
             )
 
     def test_duplicate_tag_gate_is_rejected(self) -> None:
@@ -136,6 +178,7 @@ class ReleaseReadinessReportTest(unittest.TestCase):
                     ChecklistItem("Signing", STABLE_TAG_MARKER, False),
                 ],
                 "TODO.md",
+                RELEASE_VERSION,
             )
 
     def test_markdown_summary_only_lists_sections_with_pending_items(self) -> None:
@@ -146,6 +189,7 @@ class ReleaseReadinessReportTest(unittest.TestCase):
                 ChecklistItem("Signing and distribution", STABLE_TAG_MARKER, False),
             ],
             "TODO.md",
+            RELEASE_VERSION,
         )
 
         markdown = render_markdown(report)

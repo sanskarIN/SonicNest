@@ -9,6 +9,16 @@ foreach ($Command in @('flutter', 'dart', 'python')) {
     }
 }
 
+python tool/verify_project_state_dependencies.py
+if ($LASTEXITCODE -ne 0) {
+    throw "Dependency-state verification failed with exit code $LASTEXITCODE."
+}
+
+python tool/verify_release_version.py
+if ($LASTEXITCODE -ne 0) {
+    throw "Release-version verification failed with exit code $LASTEXITCODE."
+}
+
 ./tool/bootstrap_platforms.ps1
 if ($LASTEXITCODE -ne 0) {
     throw "Platform bootstrap failed with exit code $LASTEXITCODE."

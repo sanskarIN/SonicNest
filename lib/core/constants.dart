@@ -3,8 +3,8 @@ class AppConstants {
   const AppConstants._();
 
   static const appName = 'SonicNest';
-  static const appVersion = '0.1.0';
-  static const appBuildNumber = '1';
+  static const appVersion = '2.18.12';
+  static const appBuildNumber = '21812';
   static const appVersionWithBuild = '$appVersion+$appBuildNumber';
   static const appDisplayVersion = '$appVersion ($appBuildNumber)';
   static const developerCredit = 'Made by the Sanskar';

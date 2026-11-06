@@ -33,10 +33,10 @@ class ExternalActions {
         'aac',
       ],
     );
-    if (result == null) {
+    if (result.isEmpty) {
       return [];
     }
-    return result.files.map((file) => file.path).whereType<String>().toList();
+    return result.map((file) => file.path).whereType<String>().toList();
   }
 
   Future<String?> pickSingleAudioFile() async {

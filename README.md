@@ -18,7 +18,7 @@
 
 ## Status
 
-Current development version: **0.1.0**. The repository is structured as a production project with automated analysis/tests, Android/Linux/Windows/macOS/iOS/Web build validation, Debian Linux package validation, Windows portable-package validation, six-platform non-production release-candidate configuration, open-source documentation, continuation state, reproducible platform bootstrap and branding tooling, and explicit manual release gates. This is still a development preview until fresh hosted validation for the current six-platform revision plus physical-device/browser, accessibility, signing, and production-hosting gates are complete.
+Current development version: **2.18.12** (`2.18.12+21812`). The repository is structured as a production project with automated analysis/tests, Android/Linux/Windows/macOS/iOS/Web build validation, Debian Linux package validation, Windows portable-package validation, six-platform non-production release-candidate configuration, open-source documentation, continuation state, reproducible platform bootstrap and branding tooling, and explicit manual release gates. This is still a development preview until fresh hosted validation for the exact 2.18.12 six-platform revision plus physical-device/browser, accessibility, signing, and production-hosting gates are complete.
 
 ## Major features
 
@@ -203,6 +203,7 @@ Native recording uses platform encoders through `record`. Formats requiring tran
 - `docs/BUILDING.md` — six-platform bootstrap/build commands and CI coverage.
 - `docs/WEB_SUPPORT.md` — Web entry point, browser recording features, capability boundaries, CI, release-candidate evidence, privacy, and QA.
 - `docs/WEB_QA_CHECKLIST.md` — real-browser permission, microphone, WAV, playback/share, responsive/accessibility, PWA, privacy, and production-hosting release gates.
+- `docs/RELEASE_2.18.12.md` — exact 2.18.12 candidate identity, dependency migration, automated acceptance gates, manual/credential boundaries, evidence requirements, and promotion rule.
 - `docs/RELEASE_CANDIDATE_MANIFEST.md` — six-platform checksummed candidate provenance contract and historical evidence boundary.
 - `docs/METADATA_INTEGRITY.md` — metadata corruption isolation, transaction rollback, reconciliation, and orphan recovery.
 - `docs/MANAGED_STORAGE_BOUNDARY.md` — supported regular-file boundaries, symbolic-link refusal, collision safety, and accounting.
